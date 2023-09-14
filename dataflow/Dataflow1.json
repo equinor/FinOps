@@ -1,0 +1,89 @@
+{
+	"name": "Dataflow1",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "TestRawCSVSource",
+						"type": "DatasetReference"
+					},
+					"name": "RawCSVSource"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "CleanedCSVDestSink",
+						"type": "DatasetReference"
+					},
+					"name": "CleanedCSVSink"
+				}
+			],
+			"transformations": [],
+			"scriptLines": [
+				"parameters{",
+				"     Year as string,",
+				"     Month as string",
+				"}",
+				"source(output(",
+				"          AccountId as string,",
+				"          AccountName as string,",
+				"          AccountOwnerEmail as string,",
+				"          AdditionalInfo as string,",
+				"          ConsumedQuantity as string,",
+				"          ConsumedService as string,",
+				"          ConsumedServiceId as string,",
+				"          Cost as string,",
+				"          CostCenter as string,",
+				"          Date as string,",
+				"          DepartmentId as string,",
+				"          DepartmentName as string,",
+				"          InstanceId as string,",
+				"          MeterCategory as string,",
+				"          MeterId as string,",
+				"          MeterName as string,",
+				"          MeterRegion as string,",
+				"          MeterSubCategory as string,",
+				"          Product as string,",
+				"          ProductId as string,",
+				"          ResourceGroup as string,",
+				"          ResourceLocation as string,",
+				"          ResourceLocationId as string,",
+				"          ResourceRate as string,",
+				"          ServiceAdministratorId as string,",
+				"          ServiceInfo1 as string,",
+				"          ServiceInfo2 as string,",
+				"          StoreServiceIdentifier as string,",
+				"          SubscriptionGuid as string,",
+				"          SubscriptionId as string,",
+				"          SubscriptionName as string,",
+				"          Tags as string,",
+				"          UnitOfMeasure as string,",
+				"          PartNumber as string,",
+				"          ResourceGuid as string,",
+				"          OfferId as string,",
+				"          ChargesBilledSeparately as string,",
+				"          Location as string,",
+				"          ServiceName as string,",
+				"          ServiceTier as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     skipLines: 2,",
+				"     partitionBy('hash', 1)) ~> RawCSVSource",
+				"RawCSVSource sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:[(concat($Year,'-',$Month,'-cleaned.csv'))],",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> CleanedCSVSink"
+			]
+		}
+	}
+}

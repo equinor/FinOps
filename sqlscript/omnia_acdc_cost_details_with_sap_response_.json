@@ -1,0 +1,20 @@
+{
+	"name": "omnia_acdc_cost_details_with_sap_response_",
+	"properties": {
+		"folder": {
+			"name": "Ad Hoc Cost Report Requests"
+		},
+		"content": {
+			"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW cost_details_from_acdc\nAS \n\nSELECT\n    WBS,\n    SubscriptionId,\n    SubscriptionName,\n    ResourceGroup,\n    CONVERT(float,REPLACE(Amount,',','.')) as [Amount],\n    ServiceNowAppName,\n    --Posting_Date,\n    CONVERT(DATE, FORMAT(Posting_Date, '##-##-####'), 105) as Posting_Date,\n    --(CAST(SUBSTRING(cast(Posting_Date as varchar),5,4) AS varchar) + '-' + CAST(substring(cast(Posting_Date as varchar),3,2) AS varchar) + '-' + CAST(substring(cast(Posting_Date as varchar),1,2) AS varchar))as Posting_Date,\n    Company_Code,\n    AllocType,\n    ResourceCostAllocationType,\n    LatestCostAllocationCode,\n    LatestCostCenter,\n    Period\nFROM\n    OPENROWSET(\n        BULK 'https://omniaacdcdlsprod.dfs.core.windows.net/costreports/monthly/*/*/omnia_acdc_cost_details_with_sap_response.csv',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW = TRUE\n    ) AS [result]\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

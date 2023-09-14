@@ -1,0 +1,189 @@
+{
+	"name": "TimeSeriesML",
+	"properties": {
+		"folder": {
+			"name": "tsc/dev"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sprkpool33large",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "112g",
+			"driverCores": 16,
+			"executorMemory": "112g",
+			"executorCores": 16,
+			"numExecutors": 1,
+			"runAsWorkspaceSystemIdentity": false,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "true",
+				"spark.dynamicAllocation.minExecutors": "1",
+				"spark.dynamicAllocation.maxExecutors": "4",
+				"spark.autotune.trackingId": "4544d127-120e-4b07-b3fc-24989784edf1"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"synapse_widget": {
+				"version": "0.1"
+			},
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
+				"name": "sprkpool33large",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net",
+					"authHeader": null
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 16,
+				"memory": 112,
+				"extraHeader": null
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "code",
+				"source": [
+					"pip install pandas numpy statsmodels matplotlib"
+				],
+				"execution_count": 1
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"import pandas as pd\r\n",
+					"import numpy as np\r\n",
+					"import matplotlib.pyplot as plt\r\n",
+					"from statsmodels.tsa.statespace.sarimax import SARIMAX\r\n",
+					"from statsmodels.graphics.tsaplots import plot_acf, plot_pacf"
+				],
+				"execution_count": 2
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# 生成示例数据\r\n",
+					"np.random.seed(42)\r\n",
+					"dates = pd.date_range(start='2020-01-01', periods=24, freq='M')\r\n",
+					"sales = np.random.randint(100, 1000, size=len(dates))\r\n",
+					"\r\n",
+					"# 创建时间序列 DataFrame\r\n",
+					"data = pd.DataFrame({'Date': dates, 'Sales': sales})\r\n",
+					"data.set_index('Date', inplace=True)\r\n",
+					"\r\n",
+					"# 绘制时间序列图\r\n",
+					"plt.figure(figsize=(10, 6))\r\n",
+					"plt.plot(data, label='Sales')\r\n",
+					"plt.xlabel('Date')\r\n",
+					"plt.ylabel('Sales')\r\n",
+					"plt.legend()\r\n",
+					"plt.title('Monthly Sales Time Series')\r\n",
+					"plt.show()\r\n",
+					"\r\n",
+					"# 分解时间序列\r\n",
+					"from statsmodels.tsa.seasonal import seasonal_decompose\r\n",
+					"\r\n",
+					"result = seasonal_decompose(data['Sales'], model='additive')\r\n",
+					"result.plot()\r\n",
+					"plt.show()"
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"\r\n",
+					"# 平稳性检验\r\n",
+					"from statsmodels.tsa.stattools import adfuller\r\n",
+					"\r\n",
+					"result = adfuller(data['Sales'])\r\n",
+					"print('ADF Statistic:', result[0])\r\n",
+					"print('p-value:', result[1])\r\n",
+					"print('Critical Values:', result[4])\r\n",
+					"\r\n",
+					"# 绘制自相关图和偏自相关图\r\n",
+					"fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))\r\n",
+					"plot_acf(data['Sales'], lags=12, ax=ax1)\r\n",
+					"plot_pacf(data['Sales'], lags=12, ax=ax2)\r\n",
+					"plt.show()\r\n",
+					"\r\n",
+					"# 拟合 SARIMA 模型\r\n",
+					"order = (1, 1, 1)\r\n",
+					"seasonal_order = (1, 1, 1, 12)\r\n",
+					"\r\n",
+					"model = SARIMAX(data['Sales'], order=order, seasonal_order=seasonal_order)\r\n",
+					"results = model.fit()\r\n",
+					"\r\n",
+					"# 打印模型摘要\r\n",
+					"print(results.summary())\r\n",
+					"\r\n",
+					"# 预测未来销售\r\n",
+					"forecast_periods = 12\r\n",
+					"forecast = results.get_forecast(steps=forecast_periods)\r\n",
+					"forecast_index = pd.date_range(start=data.index[-1], periods=forecast_periods + 1, closed='right', freq='M')\r\n",
+					"\r\n",
+					"# 绘制原始数据和预测结果\r\n",
+					"plt.figure(figsize=(10, 6))\r\n",
+					"plt.plot(data.index, data['Sales'], label='Historical Sales')\r\n",
+					"plt.plot(forecast_index, forecast.predicted_mean, label='Forecasted Sales', color='orange')\r\n",
+					"plt.fill_between(forecast_index, forecast.conf_int()[:, 0], forecast.conf_int()[:, 1], color='orange', alpha=0.2)\r\n",
+					"plt.xlabel('Date')\r\n",
+					"plt.ylabel('Sales')\r\n",
+					"plt.legend()\r\n",
+					"plt.title('Historical and Forecasted Sales')\r\n",
+					"plt.show()\r\n",
+					""
+				],
+				"execution_count": 4
+			}
+		]
+	}
+}

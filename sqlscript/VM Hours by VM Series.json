@@ -1,0 +1,20 @@
+{
+	"name": "VM Hours by VM Series",
+	"properties": {
+		"folder": {
+			"name": "Ad Hoc Cost Report Requests/Cloud Cost Facts"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    --top 100 *\n    format([Date], 'yyyy-MM') as [Date]\n    ,upper(MeterSubCategory) as [VM Series]\n    --,FORMAT(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\n    --,Quantity\n    ,format(sum(Quantity), 'N', 'en-us') as Quantity\n    --,UnitOfMeasure\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAmortizedCost/2023*/ACMMonthlyAmortizedCost_2023*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where MeterCategory = 'Virtual Machines'\n    group BY upper(MeterSubCategory), format([Date], 'yyyy-MM')\n    order by [Date], sum(Quantity) DESC\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

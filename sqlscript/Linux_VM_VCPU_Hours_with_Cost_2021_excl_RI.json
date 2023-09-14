@@ -1,0 +1,20 @@
+{
+	"name": "Linux_VM_VCPU_Hours_with_Cost_2021_excl_RI",
+	"properties": {
+		"folder": {
+			"name": "OGBG Benchmark 2022/2021"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    JSON_VALUE(AdditionalInfo, '$.ServiceType') as ServiceType,\n    substring(FORMAT ([Date],'yyyy-MM-dd') ,0,8) as [Date],\n    sum(ConsumedQuantity) as ConsumedQuantity,\n    sum(Cost) as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://omniaacdcdlsprod.dfs.core.windows.net/tempdata/monthly/2021/*/*_cleaned.csv',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW = TRUE\n    ) AS [result]\nWHERE MeterCategory = 'Virtual Machines' and MeterSubCategory != 'Reservation-Base VM' and MeterSubCategory NOT LIKE '%Windows%'\n--WHERE MeterCategory = 'Virtual Machines' and ConsumedService = 'Microsoft.MachineLearningServices' and MeterName = 'Compute' and AdditionalInfo NOT LIKE '%Standard_DS[0-9]_v2%'\nGROUP BY JSON_VALUE(AdditionalInfo, '$.ServiceType'), substring(FORMAT ([Date],'yyyy-MM-dd') ,0,8)\n--GROUP BY JSON_VALUE(AdditionalInfo, '$.ServiceType')\n--GROUP BY REPLACE(REPLACE(SUBSTRING(AdditionalInfo,CHARINDEX('Standard_',AdditionalInfo)+11,2),'_',''),'s','')\nORDER BY substring(FORMAT ([Date],'yyyy-MM-dd') ,0,8), ConsumedQuantity DESC\n\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

@@ -1,0 +1,20 @@
+{
+	"name": "Storage - Blob Cost",
+	"properties": {
+		"folder": {
+			"name": "Ad Hoc Cost Report Requests"
+		},
+		"content": {
+			"query": "SELECT\n    --TOP 100 *\n    ResourceName\n    --,format([Date], 'yyyy-MM-dd') as [Date]\n    ,MeterCategory\n    ,MeterSubCategory\n    ,MeterName\n    ,UnitOfMeasure\n    ,sum(Quantity) as Quantity\n    ,UnitPrice\n    ,EffectivePrice\n    ,sum(CostInBillingCurrency) as CostInBillingCurrency\n    ,PartNumber\n    ,PlanName\n    ,ResourceLocation\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/20230301-20230331/ACMMonthlyActualCost_20230301-20230331.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where SubscriptionId = '66638e28-3650-4b8c-a097-c0945a79fd90' \n        and MeterCategory = 'Storage'\n        and ResourceName = 'asdashared'\n        and MeterSubCategory = 'Tiered Block Blob'\n        and MeterName like '%Data Stored'\n    group by \n        ResourceName\n        --format([Date], 'yyyy-MM-dd')\n        ,MeterCategory\n        ,MeterSubCategory\n        ,MeterName\n        ,UnitOfMeasure\n        --,Quantity\n        ,UnitPrice\n        ,EffectivePrice\n        --,CostInBillingCurrency\n        ,PartNumber\n        ,PlanName\n        ,ResourceLocation",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

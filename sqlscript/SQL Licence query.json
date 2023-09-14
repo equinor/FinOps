@@ -1,0 +1,20 @@
+{
+	"name": "SQL Licence query",
+	"properties": {
+		"folder": {
+			"name": "Ad Hoc Cost Report Requests"
+		},
+		"content": {
+			"query": "SELECT\n    SubscriptionName\n    ,ResourceGroup\n    ,ProductName\n    ,ResourceName\n    --,Quantity\n    --,UnitPrice\n    --,benefitName\n    ,sum(CostInBillingCurrency) as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/202305*/ACMMonthlyActualCost_*.parquet',\n        --BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/daily/ACMDailyActualCost/ACMDailyActualCost.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where \n        (SubscriptionName = 'S009-Desktop-Service TS1' \n        or SubscriptionName = 'S220-Desktop-Service TS2')\n        and MeterCategory = 'Virtual Machines Licenses'\n        and ProductName like 'SQL%'\n        and (ProductName not like 'SQL Server Dev%' AND ProductName not like 'SQL Server Ex%')\n        --and ResourceName = 'CVD-200661'\n    group by SubscriptionName, ResourceGroup, ProductName, ResourceName--, Quantity, UnitPrice, benefitName\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

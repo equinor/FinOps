@@ -1,0 +1,20 @@
+{
+	"name": "MeterCategory Count",
+	"properties": {
+		"folder": {
+			"name": "OGBG Benchmark 2022/2022"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    --TOP 5 *,\n    MeterCategory\n    ,count(distinct ResourceId) as [Count]\n    --,sum(Quantity) as Quantity\n    --,sum(CostInBillingCurrency) as Cost\n    --,UnitOfMeasure\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/2022*/ACMMonthlyActualCost_*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    group by MeterCategory\n    order by MeterCategory\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

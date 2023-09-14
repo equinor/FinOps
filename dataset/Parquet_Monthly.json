@@ -1,0 +1,194 @@
+{
+	"name": "Parquet_Monthly",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "s037-cost-management-WorkspaceDefaultStorage",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"Year_yyyy": {
+				"type": "string",
+				"defaultValue": "TBC"
+			},
+			"Month_mm": {
+				"type": "string",
+				"defaultValue": "TBC"
+			}
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileSystem": {
+					"value": "@concat('/usage/monthly/',dataset().Year_yyyy,'/',dataset().Month_mm,'/')",
+					"type": "Expression"
+				}
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": [
+			{
+				"name": "AccountId",
+				"type": "UTF8"
+			},
+			{
+				"name": "AccountName",
+				"type": "UTF8"
+			},
+			{
+				"name": "AccountOwnerEmail",
+				"type": "UTF8"
+			},
+			{
+				"name": "AdditionalInfo",
+				"type": "UTF8"
+			},
+			{
+				"name": "ConsumedQuantity",
+				"type": "DOUBLE"
+			},
+			{
+				"name": "ConsumedService",
+				"type": "UTF8"
+			},
+			{
+				"name": "ConsumedServiceId",
+				"type": "UTF8"
+			},
+			{
+				"name": "Cost",
+				"type": "DOUBLE"
+			},
+			{
+				"name": "CostCenter",
+				"type": "UTF8"
+			},
+			{
+				"name": "Date",
+				"type": "UTF8"
+			},
+			{
+				"name": "DepartmentId",
+				"type": "UTF8"
+			},
+			{
+				"name": "DepartmentName",
+				"type": "UTF8"
+			},
+			{
+				"name": "InstanceId",
+				"type": "UTF8"
+			},
+			{
+				"name": "MeterCategory",
+				"type": "UTF8"
+			},
+			{
+				"name": "MeterId",
+				"type": "UTF8"
+			},
+			{
+				"name": "MeterName",
+				"type": "UTF8"
+			},
+			{
+				"name": "MeterRegion",
+				"type": "UTF8"
+			},
+			{
+				"name": "MeterSubCategory",
+				"type": "UTF8"
+			},
+			{
+				"name": "Product",
+				"type": "UTF8"
+			},
+			{
+				"name": "ProductId",
+				"type": "UTF8"
+			},
+			{
+				"name": "ResourceGroup",
+				"type": "UTF8"
+			},
+			{
+				"name": "ResourceLocation",
+				"type": "UTF8"
+			},
+			{
+				"name": "ResourceLocationId",
+				"type": "UTF8"
+			},
+			{
+				"name": "ResourceRate",
+				"type": "DOUBLE"
+			},
+			{
+				"name": "ServiceAdministratorId",
+				"type": "UTF8"
+			},
+			{
+				"name": "ServiceInfo1",
+				"type": "UTF8"
+			},
+			{
+				"name": "ServiceInfo2",
+				"type": "UTF8"
+			},
+			{
+				"name": "StoreServiceIdentifier",
+				"type": "UTF8"
+			},
+			{
+				"name": "SubscriptionGuid",
+				"type": "UTF8"
+			},
+			{
+				"name": "SubscriptionId",
+				"type": "UTF8"
+			},
+			{
+				"name": "SubscriptionName",
+				"type": "UTF8"
+			},
+			{
+				"name": "Tags",
+				"type": "UTF8"
+			},
+			{
+				"name": "UnitOfMeasure",
+				"type": "UTF8"
+			},
+			{
+				"name": "PartNumber",
+				"type": "UTF8"
+			},
+			{
+				"name": "ResourceGuid",
+				"type": "UTF8"
+			},
+			{
+				"name": "OfferId",
+				"type": "UTF8"
+			},
+			{
+				"name": "ChargesBilledSeparately",
+				"type": "UTF8"
+			},
+			{
+				"name": "Location",
+				"type": "UTF8"
+			},
+			{
+				"name": "ServiceName",
+				"type": "UTF8"
+			},
+			{
+				"name": "ServiceTier",
+				"type": "UTF8"
+			}
+		]
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}

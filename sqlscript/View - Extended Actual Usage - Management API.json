@@ -1,0 +1,20 @@
+{
+	"name": "View - Extended Actual Usage - Management API",
+	"properties": {
+		"folder": {
+			"name": "Views"
+		},
+		"content": {
+			"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW Extended_Actual_Usage_Management_API\nAS\n\nSELECT\n    *\n    ,Quantity * cast(ai_VCPUs as int) as CPUHours\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/*/Extended*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

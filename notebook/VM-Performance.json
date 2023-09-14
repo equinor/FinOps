@@ -1,0 +1,252 @@
+{
+	"name": "VM-Performance",
+	"properties": {
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sparkpool32",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "56g",
+			"driverCores": 8,
+			"executorMemory": "56g",
+			"executorCores": 8,
+			"numExecutors": 2,
+			"runAsWorkspaceSystemIdentity": true,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "093ddd57-cd57-46d0-a2d5-7912456326ea"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"synapse_widget": {
+				"version": "0.1"
+			},
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
+				"name": "sparkpool32",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net",
+					"authHeader": null
+				},
+				"sparkVersion": "3.2",
+				"nodeCount": 3,
+				"cores": 8,
+				"memory": 56,
+				"extraHeader": null
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"KVUri = 'https://acm-toolkit-kv.vault.azure.net/'"
+				],
+				"execution_count": 7
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# Import Azure Resource Graph library\n",
+					"#import azure.mgmt.resourcegraph as arg\n",
+					"\n",
+					"# Import specific methods and models from other libraries\n",
+					"from azure.mgmt.resource import SubscriptionClient\n",
+					"from azure.keyvault.secrets import SecretClient\n",
+					"from azure.identity import DefaultAzureCredential, ClientSecretCredential, AzureCliCredential, ManagedIdentityCredential\n",
+					"import pandas as pd\n",
+					"import json\n",
+					"import requests\n",
+					"from datetime import timedelta, datetime\n",
+					"from requests.structures import CaseInsensitiveDict\n",
+					"\n",
+					"def get_token(KVUri):\n",
+					"    \n",
+					"    #KVUri = os.environ[\"CFG_KEY_VAULT_URL\"]\n",
+					"    #credential = DefaultAzureCredential()\n",
+					"    credential = ManagedIdentityCredential(client_id='6b32e22c-0279-46d8-a304-ae1fdf47100e')\n",
+					"    #token = credential.get_token(\"https://vault.azure.net/.default\")\n",
+					"    client = SecretClient(vault_url=KVUri, credential=credential)\n",
+					"\n",
+					"    client_id = client.get_secret('Azure-Cost-Management-Metrics-Reader-Client-Id').value\n",
+					"    client_secret = client.get_secret('Python-Azure-Cost-Management-Metrics-Reader').value\n",
+					"    tenant_id = client.get_secret('tenantID').value\n",
+					"    #database = get_keyvault_value(key_vault_client, 'synapseDatabaseName')\n",
+					"    #server = get_keyvault_value(key_vault_client, 'synapseServerName')\n",
+					"    authorityHostUrl = client.get_secret('msAuthorityURL').value\n",
+					"\n",
+					"    credential = ClientSecretCredential(tenant_id, client_id, client_secret, authority=authorityHostUrl)\n",
+					"    token = credential.get_token(\"https://management.azure.com/.default\")\n",
+					"\n",
+					"    return token, credential, client_id, client_secret, tenant_id\n",
+					"\n",
+					"# Wrap all the work in a function\n",
+					"def get_subscription_list(credential):\n",
+					"\n",
+					"    # Get your credentials from Azure CLI (development only!) and get your subscription list\n",
+					"    #credential = AzureCliCredential(scopes=\"http://S037-RI-Reporting-SP/.default\")\n",
+					"    subsClient = SubscriptionClient(credential)\n",
+					"    subsRaw = []\n",
+					"    for sub in subsClient.subscriptions.list():\n",
+					"        subsRaw.append(sub.as_dict())\n",
+					"    subsList = []\n",
+					"    for sub in subsRaw:\n",
+					"        subsList.append(sub.get('subscription_id'))\n",
+					"\n",
+					"    #print(f'Subscription List: {subsList}')\n",
+					"\n",
+					"    return subsList\n",
+					"\n",
+					"def get_vm_list(credential, subsList, strQuery, resource_list, skip_token=''):\n",
+					"\n",
+					"    # Create Azure Resource Graph client and set options\n",
+					"    argClient = arg.ResourceGraphClient(credential)\n",
+					"\n",
+					"    if skip_token == '':\n",
+					"        argQueryOptions = arg.models.QueryRequestOptions(result_format=\"objectArray\")\n",
+					"    else:\n",
+					"        argQueryOptions = arg.models.QueryRequestOptions(skip_token=skip_token, result_format=\"objectArray\")\n",
+					"\n",
+					"    # Create query\n",
+					"    argQuery = arg.models.QueryRequest(subscriptions=subsList, query=strQuery, options=argQueryOptions)\n",
+					"\n",
+					"    #print(f'Arg Query: {argQuery}')\n",
+					"\n",
+					"    # Run query\n",
+					"    argResults = argClient.resources(argQuery)\n",
+					"\n",
+					"    # Show Python object\n",
+					"    #print(f'Arg Results: {argResults}')\n",
+					"\n",
+					"    new_page = pd.read_json(json.dumps(argResults.data))\n",
+					"    resource_list = pd.concat([resource_list, new_page], ignore_index=True)\n",
+					"   \n",
+					"    return resource_list, argResults.skip_token\n",
+					"\n",
+					"def get_access_token(url, client_id, client_secret):\n",
+					"    response = requests.post(\n",
+					"        url,\n",
+					"        data={\"grant_type\": \"client_credentials\"},\n",
+					"        auth=(client_id, client_secret),\n",
+					"    )\n",
+					"    print(f'Response: {response}')\n",
+					"    return response.json()[\"access_token\"]\n",
+					"\n",
+					"container = 'performance'\n",
+					"vm_path = 'vm'\n",
+					"cpu_avg_folder = 'percentage_cpu'\n",
+					"\n",
+					"year = (datetime.now() - timedelta(days=1)).strftime('%Y')\n",
+					"month = (datetime.now() - timedelta(days=1)).strftime('%m')\n",
+					"day = (datetime.now() - timedelta(days=1)).strftime('%d')\n",
+					"\n",
+					"performance_store = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + vm_path + '/' + cpu_avg_folder + '/' + year + '/' + month + '/' + day + '/'\n",
+					"\n",
+					"## Get subscription, resourcegroup and name of every VM that the service principal has access to in graph   \n",
+					"token, credential, client_id, client_secret, tenant_id = get_token(KVUri)\n",
+					"resource_query = \"resources | where type == 'microsoft.compute/virtualmachines' or type == 'microsoft.compute/virtualmachinescalesets' | project subscriptionId, resourceGroup, name\"\n",
+					"subsList = get_subscription_list(credential)\n",
+					"resource_list = pd.DataFrame()\n",
+					"resource_list, skip_token = get_vm_list(credential, subsList, resource_query, resource_list)\n",
+					"while skip_token != None:\n",
+					"    resource_list, skip_token = get_vm_list(credential, subsList, resource_query, resource_list, skip_token)\n",
+					"resource_list.sort_values(by=['subscriptionId', 'resourceGroup', 'name'], inplace=True, ignore_index=True)\n",
+					"print(resource_list)\n",
+					"print(f'Number of VMs: {len(resource_list)}')\n",
+					"\n",
+					"## Retrieve the vCPU % performance indicator for each VM in the resource_list\n",
+					"\n",
+					"start_date = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')\n",
+					"end_date = (datetime.now()).strftime('%Y-%m-%d')\n",
+					"print(start_date)\n",
+					"print(end_date)\n",
+					"interval = 'PT1M'\n",
+					"\n",
+					"headers = CaseInsensitiveDict()\n",
+					"headers[\"Authorization\"] = \"Bearer {}\".format(token.token)\n",
+					"headers[\"Host\"] = \"management.azure.com\"\n",
+					"\n",
+					"vm_perf = pd.DataFrame(columns=['timeStamp', 'average', 'value.unit', 'value.name', 'value.id'])\n",
+					"\n",
+					"for index, row in resource_list.iterrows():\n",
+					"    url = 'https://management.azure.com/subscriptions/' + row['subscriptionId'] + '/resourceGroups/' + row['resourceGroup'] + '/providers/Microsoft.Compute/virtualMachines/' + row['name'] + '/providers/microsoft.insights/metrics?api-version=2018-01-01&metricnames=Percentage CPU&timespan=' + start_date +'T00:00:00Z/' + end_date + 'T00:00:00Z&interval=' + interval\n",
+					"\n",
+					"    response = requests.get(url, headers=headers)\n",
+					"    json_result = json.dumps(response.json())\n",
+					"\n",
+					"    vm_perf = pd.concat([vm_perf, pd.json_normalize(response.json(), \n",
+					"                            record_path=['value', 'timeseries', 'data'],\n",
+					"                            meta=[['value','id'], ['value', 'name'], ['value','unit']])], ignore_index=True)\n",
+					"    print(f'Length is: {len(vm_perf)}')\n",
+					"    print(row['name'])\n",
+					"    print(vm_perf[['timeStamp', 'average']].tail(1))\n",
+					"\n",
+					"pd.set_option('display.max_columns', None)  \n",
+					"print(vm_perf.columns)\n",
+					"print(vm_perf)\n",
+					"vm_perf['metric'] = vm_perf.apply(lambda x: (x['value.name'])['value'], axis = 1)\n",
+					"vm_perf.drop(['value.name'], axis=1, inplace=True)\n",
+					"vm_perf.rename(columns={\"value.id\": \"id\", \"value.unit\": \"unit\"}, errors=\"raise\", inplace=True)\n",
+					"vm_perf = vm_perf[['timeStamp', 'average', 'unit', 'metric', 'id']]\n",
+					"print(vm_perf)\n",
+					"print(f'Start Date: {start_date}')\n",
+					"print(f'End Date: {end_date}')\n",
+					"print(f'Number of VMs: {len(resource_list)}')\n",
+					"print('Writing performance data to file...')\n",
+					"vm_perf.to_parquet(performance_store + 'cpu_avg.parquet')\n",
+					"print('Done')\n",
+					"\n",
+					"\n",
+					""
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				]
+			}
+		]
+	}
+}

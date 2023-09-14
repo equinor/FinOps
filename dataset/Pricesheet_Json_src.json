@@ -1,0 +1,30 @@
+{
+	"name": "Pricesheet_Json_src",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ms_consumption_api_http",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"baseUrl": "https://consumption.azure.com"
+			}
+		},
+		"parameters": {
+			"Date_yyyyMM": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "HttpServerLocation",
+				"relativeUrl": {
+					"value": "@concat('v3/enrollments/57950773/billingPeriods/',dataset().Date_yyyyMM,'/pricesheet')",
+					"type": "Expression"
+				}
+			}
+		},
+		"schema": {}
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}

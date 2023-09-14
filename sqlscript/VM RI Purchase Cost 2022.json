@@ -1,0 +1,20 @@
+{
+	"name": "VM RI Purchase Cost 2022",
+	"properties": {
+		"folder": {
+			"name": "--RI & HUB Savings/New API/2022"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 \n    ReservationId\n    ,ReservationName\n    ,MeterSubCategory\n    ,Term\n    ,[Date]\n    ,Quantity\n    ,CostInBillingCurrency\n    \nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAc*/2022*/A*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nwhere ChargeType = 'Purchase' and PricingModel = 'Reservation' --and MeterCategory = 'Virtual Machines' and ChargeType = 'Usage'\n--group by ReservationName, format([Date],'yyyy-MM'), JSON_VALUE(AdditionalInfo, '$.ServiceType') \n--order by format([Date],'yyyy-MM'), ReservationName\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

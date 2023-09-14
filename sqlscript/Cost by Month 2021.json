@@ -1,0 +1,20 @@
+{
+	"name": "Cost by Month 2021",
+	"properties": {
+		"folder": {
+			"name": "Cost by Date"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    sum(Cost), substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8)\nFROM\n    OPENROWSET(\n        BULK 'https://omniaacdcdlsprod.dfs.core.windows.net/tempdata/monthly/2021/*/*_cleaned.csv',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW = TRUE\n    ) AS [result]\nGROUP BY substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8)\nORDER BY substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8)",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

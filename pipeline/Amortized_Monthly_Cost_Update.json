@@ -1,0 +1,97 @@
+{
+	"name": "Amortized_Monthly_Cost_Update",
+	"properties": {
+		"activities": [
+			{
+				"name": "Amortized_Monthly_Cost_OneYear",
+				"description": "This is dataset for one year period and contain granular information.",
+				"type": "SynapseNotebook",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "Prod_Extended_Amortized_Cost-Oneyear",
+						"type": "NotebookReference"
+					},
+					"snapshot": true
+				}
+			},
+			{
+				"name": "Amortized_Monthly_Cost_ThreeYears",
+				"description": "This is dataset that has three years period and contains aggregated information.",
+				"type": "SynapseNotebook",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "Prod_Extended_Amortized_Cost-Threeyears",
+						"type": "NotebookReference"
+					},
+					"snapshot": true
+				}
+			},
+			{
+				"name": "Subscription",
+				"description": "This data is collected from Solum team.",
+				"type": "SynapseNotebook",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "Prod_subscription_json",
+						"type": "NotebookReference"
+					},
+					"snapshot": true
+				}
+			},
+			{
+				"name": "ServiceNowApplication",
+				"description": "This data is collected from ServiceNow through API.",
+				"type": "SynapseNotebook",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "Prod_subscription_json",
+						"type": "NotebookReference"
+					},
+					"snapshot": true
+				}
+			}
+		],
+		"folder": {
+			"name": "tsc"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-07-20T08:46:18Z"
+	},
+	"type": "Microsoft.Synapse/workspaces/pipelines"
+}

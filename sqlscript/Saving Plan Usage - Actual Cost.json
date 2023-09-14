@@ -1,0 +1,20 @@
+{
+	"name": "Saving Plan Usage - Actual Cost",
+	"properties": {
+		"folder": {
+			"name": "Reservation - Saving Plan Queries"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    SubscriptionName\n    ,ResourceGroup\n    ,ResourceLocation\n    ,[Date]\n    ,MeterCategory\n    ,MeterSubCategory\n    ,MeterName\n    ,UnitOfMeasure\n    ,ChargeType\n    ,PricingModel\n    ,benefitName\n    ,Quantity\n    ,EffectivePrice\n    ,UnitPrice\n    ,CostInBillingCurrency\n    ,PayGPrice\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/daily/ACMDailyAmortizedCost/20221101-20221130/ACMDailyAmortizedCost_c2efb564-3599-4f9d-a5a8-800a769844e3.csv',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW=TRUE\n    ) AS [result]\nwhere ChargeType = 'Usage' and PricingModel = 'SavingsPlan'\norder by [Date] DESC",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

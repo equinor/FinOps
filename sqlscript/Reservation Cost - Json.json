@@ -1,0 +1,20 @@
+{
+	"name": "Reservation Cost - Json",
+	"properties": {
+		"folder": {
+			"name": "Reservation - Saving Plan Queries"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    jsonContent,\n    JSON_VALUE (jsonContent, '$.armSkuName') AS armSkuName,\n    JSON_VALUE (jsonContent, '$.term') AS term,\n    JSON_VALUE (jsonContent, '$.region') AS region,\n    JSON_VALUE (jsonContent, '$.eventDate') AS eventDate,\n    JSON_VALUE (jsonContent, '$.reservationOrderId') AS reservationOrderId,\n    JSON_VALUE (jsonContent, '$.description') AS [description],\n    JSON_VALUE (jsonContent, '$.quantity') AS quantity,\n    JSON_VALUE (jsonContent, '$.amount') AS amount,\n    JSON_VALUE (jsonContent, '$.reservationOrderName') AS reservationOrderName,\n    JSON_VALUE (jsonContent, '$.billingFrequency') AS billingFrequency\nFROM\n    OPENROWSET(\n        BULK 'https://omniaacdcdlsprod.dfs.core.windows.net/tempdata/monthly/2022/*/costreport_reservations_monthly_*.json',\n        FORMAT = 'CSV',\n        FIELDQUOTE = '`',\n        FIELDTERMINATOR ='0x0b',\n        ROWTERMINATOR = '},'\n    )\n    WITH (\n        jsonContent nvarchar(MAX),\n        armSkuName varchar(MAX),\n        term varchar(MAX),\n        region varchar(MAX),\n        eventDate varchar(MAX),\n        reservationOrderId nvarchar(MAX),\n        [description] varchar(MAX),\n        quantity varchar(MAX),\n        amount varchar(MAX),\n        reservationOrderName varchar(MAX),\n        billingFrequency varchar(MAX)\n    )\n    AS [result]\n    --where armSkuName NOT LIKE 'SQL%'\n    --where reservationOrderId = '7334aae9-5adc-4e4c-a58b-801d095a14df'\n    order by eventDate\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "master",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

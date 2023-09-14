@@ -1,0 +1,244 @@
+{
+	"name": "Azure AD Users_v1",
+	"properties": {
+		"activities": [
+			{
+				"name": "Azure AD Users",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "RestSource",
+						"httpRequestTimeout": "00:01:40",
+						"requestInterval": "00.00:00:00.010",
+						"requestMethod": "GET",
+						"paginationRules": {
+							"supportRFC5988": "true",
+							"AbsoluteUrl": "$['@odata.nextLink']"
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"path": "['employeeId']"
+								},
+								"sink": {
+									"name": "employeeId",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['displayName']"
+								},
+								"sink": {
+									"name": "displayName",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['userPrincipalName']"
+								},
+								"sink": {
+									"name": "userPrincipalName",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['accountEnabled']"
+								},
+								"sink": {
+									"name": "accountEnabled",
+									"type": "Boolean"
+								}
+							},
+							{
+								"source": {
+									"path": "['department']"
+								},
+								"sink": {
+									"name": "department",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['officeLocation']"
+								},
+								"sink": {
+									"name": "officeLocation",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['country']"
+								},
+								"sink": {
+									"name": "country",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['city']"
+								},
+								"sink": {
+									"name": "city",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['manager']['employeeId']"
+								},
+								"sink": {
+									"name": "manager_employeeId",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['manager']['displayName']"
+								},
+								"sink": {
+									"name": "manager_displayName",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['manager']['userPrincipalName']"
+								},
+								"sink": {
+									"name": "manager_userPrincipalName",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['manager']['department']"
+								},
+								"sink": {
+									"name": "manager_department",
+									"type": "String"
+								}
+							}
+						],
+						"collectionReference": "$['value']"
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "AzureAD_Users",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "Parquet_File",
+						"type": "DatasetReference",
+						"parameters": {
+							"fileName": "AzureAD_EmployeesManagersSnapshot",
+							"path": "AzureAD_BusinessAreaLevel/bronze/"
+						}
+					}
+				]
+			},
+			{
+				"name": "usersWithManagerSnapshot_1",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "Azure AD Users",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 2,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "usersWithManagerSnapshot_v1",
+						"type": "NotebookReference"
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": "sparkpool32",
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Small",
+					"driverSize": "Small"
+				}
+			},
+			{
+				"name": "usersWithBusinessAreaSnapshot_v1",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "usersWithManagerSnapshot_1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 2,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "usersWithBusinessAreaSnapshot_v1",
+						"type": "NotebookReference"
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": "sparkpool32",
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Small",
+					"driverSize": "Small"
+				}
+			}
+		],
+		"folder": {
+			"name": "Microsoft Graph API"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-09-07T09:35:20Z"
+	},
+	"type": "Microsoft.Synapse/workspaces/pipelines"
+}

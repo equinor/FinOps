@@ -1,0 +1,20 @@
+{
+	"name": "Combined_Actual_Savings",
+	"properties": {
+		"folder": {
+			"name": "Management API"
+		},
+		"content": {
+			"query": "declare @last_month varchar(6) = FORMAT(EOMONTH(CURRENT_TIMESTAMP, -1), 'yyyyMM'),\n        @sql varchar(max) = ''\n\nset @sql = '\nSELECT\n    SubscriptionId, \n    SubscriptionName,\n    [Date],\n    ResourceGroup, \n    ResourceName, \n    ResourceId, \n    MeterCategory, \n    MeterSubCategory, \n    MeterName,\n    UnitOfMeasure,\n    Quantity,\n    UnitPrice,\n    EffectivePrice,\n    CostInBillingCurrency,\n    ServiceInfo2, \n    PartNumber,\n    AdditionalInfo\nFROM\n    OPENROWSET(\n        BULK ''https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/' + @last_month + '*/ACMMonthlyActualCost_*.parquet'',\n        FORMAT = ''PARQUET''\n    ) AS [result]\nWHERE ([Date] >= ''2023-01-30'' and [Date] <= ''2023-02-01'') \n    and (ResourceId like ''%/virtualMachines/%'' or ResourceId like ''%/virtualMachineScaleSets/%'')\n    and (MeterSubCategory like ''%Windows%'' or ServiceInfo2 = ''Windows Server BYOL'')\n\nUNION --ALL\n\nSELECT\n    SubscriptionId, \n    SubscriptionName,\n    [Date],\n    ResourceGroup, \n    ResourceName, \n    ResourceId, \n    MeterCategory, \n    MeterSubCategory, \n    MeterName,\n    UnitOfMeasure,\n    Quantity,\n    UnitPrice,\n    EffectivePrice,\n    CostInBillingCurrency,\n    ServiceInfo2, \n    PartNumber,\n    AdditionalInfo\nFROM\n    OPENROWSET(\n        BULK ''https://s037costmgmt.dfs.core.windows.net/usage/exports/daily/ACMDailyActualCost/ACMDailyActualCost.parquet'',\n        FORMAT = ''PARQUET''\n    ) AS [result]\nWHERE ([Date] >= ''2023-01-30'' and [Date] <= ''2023-02-01'') \n    and (ResourceId like ''%/virtualMachines/%'' or ResourceId like ''%/virtualMachineScaleSets/%'')\n    and (MeterSubCategory like ''%Windows%'' or ServiceInfo2 = ''Windows Server BYOL'')\n'\n\nEXECUTE(@sql)",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

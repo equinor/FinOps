@@ -1,0 +1,110 @@
+{
+	"name": "ds_json_file_blank_destination",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "s037-cost-management-WorkspaceDefaultStorage",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"file_system": {
+				"type": "string"
+			},
+			"directory": {
+				"type": "string"
+			},
+			"filename": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().filename",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().directory",
+					"type": "Expression"
+				},
+				"fileSystem": {
+					"value": "@dataset().file_system",
+					"type": "Expression"
+				}
+			}
+		},
+		"schema": {
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string"
+				},
+				"id": {
+					"type": "string"
+				},
+				"name": {
+					"type": "string"
+				},
+				"type": {
+					"type": "string"
+				},
+				"location": {
+					"type": "string"
+				},
+				"sku": {
+					"type": "string"
+				},
+				"properties": {
+					"type": "object",
+					"properties": {
+						"meterId": {
+							"type": "string"
+						},
+						"term": {
+							"type": "string"
+						},
+						"costWithNoReservedInstances": {
+							"type": "number"
+						},
+						"recommendedQuantity": {
+							"type": "integer"
+						},
+						"totalCostWithReservedInstances": {
+							"type": "number"
+						},
+						"netSavings": {
+							"type": "number"
+						},
+						"firstUsageDate": {
+							"type": "string"
+						},
+						"scope": {
+							"type": "string"
+						},
+						"lookBackPeriod": {
+							"type": "string"
+						},
+						"resourceType": {
+							"type": "null"
+						},
+						"instanceFlexibilityRatio": {
+							"type": "number"
+						},
+						"instanceFlexibilityGroup": {
+							"type": "string"
+						},
+						"normalizedSize": {
+							"type": "string"
+						},
+						"recommendedQuantityNormalized": {
+							"type": "number"
+						}
+					}
+				}
+			}
+		}
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}

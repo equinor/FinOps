@@ -1,0 +1,20 @@
+{
+	"name": "SQL RI Purchases MArch 2023",
+	"properties": {
+		"folder": {
+			"name": "--RI & HUB Savings/New API/Morten P Query"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 *\n    ReservationId\n    ,ReservationName\n    ,SubscriptionName\n    ,format([Date], 'yyyy-MM') as [Date]\n    ,MeterSubCategory\n    ,Term\n    ,ChargeType\n    ,Quantity\n    ,UnitPrice\n    ,CostInBillingCurrency\n    \nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAc*/2022*/A*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nwhere ChargeType = 'Purchase' and PricingModel = 'Reservation' and MeterCategory like 'SQL%' --and MeterCategory = 'Virtual Machines' and ChargeType = 'Usage'\n--group by ReservationName, format([Date],'yyyy-MM'), JSON_VALUE(AdditionalInfo, '$.ServiceType') \norder by format([Date],'yyyy-MM'), ReservationName\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

@@ -1,0 +1,20 @@
+{
+	"name": "Benchmark Cost by Resource Location Amortized",
+	"properties": {
+		"folder": {
+			"name": "OGBG Benchmark 2022"
+		},
+		"content": {
+			"query": "--\n--   Cost by Resource Location\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    --CostAllocationType,\n    --CostAllocationCode\n    ActiveWBS\n    ,ResourceLocation\n    --,MeterCategory\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,sum(CostInBillingCurrency) as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/benchmark/AmortizedCost/CostTagsExtended_ACMMonthlyAmortizedCost_2022*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by ActiveWBS, ResourceLocation --format([Date], 'yyyy-MM'), CostAllocationType,\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

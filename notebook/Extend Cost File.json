@@ -1,0 +1,321 @@
+{
+	"name": "Extend Cost File",
+	"properties": {
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sprkpool33large",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "112g",
+			"driverCores": 16,
+			"executorMemory": "112g",
+			"executorCores": 16,
+			"numExecutors": 1,
+			"runAsWorkspaceSystemIdentity": false,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "true",
+				"spark.dynamicAllocation.minExecutors": "1",
+				"spark.dynamicAllocation.maxExecutors": "4",
+				"spark.autotune.trackingId": "509487d1-cdf4-4d24-98a6-a6b72704448d"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"synapse_widget": {
+				"version": "0.1"
+			},
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
+				"name": "sprkpool33large",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net",
+					"authHeader": null
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 16,
+				"memory": 112,
+				"extraHeader": null
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "code",
+				"metadata": {
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"amortizedCostPath = 'exports/monthly/ACMMonthlyAmortizedCost/'\n",
+					"actualCostPath = 'exports/monthly/ACMMonthlyActualCost/'\n",
+					"toDate = '20230131'\n",
+					"fromDate = '20230101'\n",
+					"container = 'usage'\n",
+					"    "
+				],
+				"execution_count": 1
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"import pandas as pd\n",
+					"import json\n",
+					"import numpy as np\n",
+					"from datetime import datetime\n",
+					"import calendar\n",
+					"#import pyarrow.parquet as pq\n",
+					"#import pyarrow as pa\n",
+					"#import fastparquet import warnings\n",
+					"import warnings"
+				],
+				"execution_count": 2
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def load_source(actualCostSourcefilename):\n",
+					"\n",
+					"    print('Loading Actual Cost df...')\n",
+					"    print(actualCostSourcefilename)\n",
+					"    actualCost_df = pd.read_parquet(actualCostSourcefilename)\n",
+					"    #actualCost_df = pd.read_parquet(actualCostSourcefilename, engine='fastparquet')\n",
+					"    #actualCost_df = pq.read_table(source=actualCostSourcefilename).to_pandas()\n",
+					"    print(f'Source file contains {len(actualCost_df):,} rows')\n",
+					"\n",
+					"    return actualCost_df"
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def populate_columns(actualCost_df):\n",
+					"\n",
+					"    # Populating the Azure Hynbrid Benefit Column\n",
+					"    actualCost_df['Azure Hybrid Benefit'] = np.where(actualCost_df['MeterSubCategory'].str.contains(\"Windows\"), \"Not enabled\", np.where(actualCost_df['ServiceInfo2'] == \"Windows Server BYOL\", \"Enabled\", \"Not supported\"))\n",
+					"\n",
+					"    # Populating the isRIUsage Column\n",
+					"    actualCost_df['IsRIUsage'] = np.where(actualCost_df['ReservationId'].isna(), \"On Demand Usage\", \"RI Usage\")\n",
+					"\n",
+					"    # Extend AdditionalInfo Column\n",
+					"    print('Calculating Mask....')\n",
+					"    mask = actualCost_df['AdditionalInfo'].notna()\n",
+					"    actualCost_df.loc[mask, 'AdditionalInfo'] = actualCost_df.loc[mask, 'AdditionalInfo'].apply(json.loads)\n",
+					"    \n",
+					"\n",
+					"    return actualCost_df"
+				],
+				"execution_count": 4
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def extend_additional_info(actualCost_df):\n",
+					"    \n",
+					"    print('Expanding the AdditionalInfo column...')\n",
+					"    #actualCost_df = pd.concat([actualCost_df, actualCost_df.pop('AdditionalInfo').apply(pd.Series).add_prefix('ai_')], axis=1)\n",
+					"    AddiationalInfo_df = actualCost_df.pop('AdditionalInfo').apply(pd.Series).add_prefix('ai_')\n",
+					"    #AddiationalInfo_df = AddiationalInfo_df[[\"ai_UsageType\", \"ai_ImageType\", \"ai_ServiceType\", \"ai_VMName\", \"ai_VMProperties\", \"ai_VCPUs\", \"ai_AHB\", \"ai_vCores\", \"ai_RINormalizationRatio\", \"ai_ConsumedQuantity\", \"ai_DatabaseName\"]]\n",
+					"    columns_to_keep = [\"ai_UsageType\", \"ai_ImageType\", \"ai_ServiceType\", \"ai_VMName\", \"ai_VMProperties\", \"ai_VCPUs\", \"ai_AHB\", \"ai_vCores\", \"ai_RINormalizationRatio\", \"ai_ConsumedQuantity\", \"ai_DatabaseName\"]\n",
+					"    AddiationalInfo_df.drop(AddiationalInfo_df.columns.difference(columns_to_keep), axis=1, inplace=True)\n",
+					"\n",
+					"    # Concatenating AdditionalInfo Column with the rest of the DataFrame\n",
+					"    print('Concatenating AdditionalInfo Column with the rest of the DataFrame....')\n",
+					"    actualCost_df = pd.concat([actualCost_df, AddiationalInfo_df], axis=1)\n",
+					"\n",
+					"    return actualCost_df"
+				],
+				"execution_count": 5
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def AHB_column(actualCost_df):\n",
+					"    \n",
+					"    print('Populating the AHB vCPUs column...')\n",
+					"    actualCost_df['ai_VCPUs'] = actualCost_df['ai_VCPUs'].fillna(0)\n",
+					"    actualCost_df['ai_VCPUs'] = actualCost_df['ai_VCPUs'].astype(int)\n",
+					"    actualCost_df['AHB vCPUs'] = np.where(actualCost_df['ai_VCPUs'] == 0, 0, \n",
+					"        np.where(actualCost_df['ai_VCPUs'] < 8, 8, \n",
+					"        np.where(actualCost_df['ai_VCPUs'] <= 16, 16,\n",
+					"        np.where(actualCost_df['ai_VCPUs'] == 20, 24,\n",
+					"        np.where(actualCost_df['ai_VCPUs'] > 20, actualCost_df['ai_VCPUs'], 0)))))\n",
+					"\n",
+					"    return actualCost_df"
+				],
+				"execution_count": 6
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def instance_name(actualCost_df):    \n",
+					"    \n",
+					"    print('Populating the Instance Name column...')\n",
+					"    actualCost_df.rename({'ai_VmName':'ai_Container_VmName'}, axis=1, inplace=True)\n",
+					"    actualCost_df['Instance Name'] = np.where(actualCost_df['ai_VMName'].isna(), actualCost_df['ResourceName'],\n",
+					"        np.where(actualCost_df['ai_VMName'].notna(), actualCost_df['ai_VMName'], pd.NA))\n",
+					"\n",
+					"    actualCost_df['Date'] = actualCost_df['Date'].dt.date\n",
+					"    \n",
+					"    return actualCost_df"
+				],
+				"execution_count": 7
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def write_output(actualCost_df, actualCostDestinationfilename):\n",
+					"\n",
+					"    print('Writing Extended file...')\n",
+					"    actualCost_df.to_parquet(actualCostDestinationfilename)\n",
+					"    #actualCost_df.to_parquet(actualCostDestinationfilename, engine='fastparquet')\n",
+					"    '''table = pa.Table.from_pandas(actualCost_df, preserve_index=True)\n",
+					"    print(table)\n",
+					"    pq.write_table(table, actualCostDestinationfilename)'''\n",
+					"    del actualCost_df\n",
+					"    print('Extended file write complete!')\n",
+					""
+				],
+				"execution_count": 8
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"warnings.simplefilter(action='ignore', category=FutureWarning)\n",
+					"\n",
+					"#years = ['2020']\n",
+					"#months = ['12', '11', '10', '09', '08', '07', '06', '05', '04', '03', '02', '01']\n",
+					"#months = ['05', '04', '03', '02', '01', '06']\n",
+					"\n",
+					"#for year in years:\n",
+					"#    for month in months:\n",
+					"#fromDate = year + month + '01'    \n",
+					"#inputDate = datetime(int(year), int(month), 1)\n",
+					"#res = calendar.monthrange(int(year), int(month))\n",
+					"#lastDay = res[1]\n",
+					"#toDate = year + month + str(lastDay)\n",
+					"#print(toDate)\n",
+					"\n",
+					"dateRange = fromDate + '-' + toDate\n",
+					"\n",
+					"actualCostSourcefilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + actualCostPath + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
+					"actualCostDestinationfilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + actualCostPath + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
+					"#amortizedCostSourcefilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
+					"#amortizedCostDestinationfilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
+					"\n",
+					"actualCost_df = load_source(actualCostSourcefilename)\n",
+					"actualCost_df = populate_columns(actualCost_df)\n",
+					"actualCost_df = extend_additional_info(actualCost_df)\n",
+					"actualCost_df = AHB_column(actualCost_df)\n",
+					"actualCost_df = instance_name(actualCost_df)\n",
+					"write_output(actualCost_df,actualCostDestinationfilename)\n",
+					""
+				],
+				"execution_count": 9
+			}
+		]
+	}
+}

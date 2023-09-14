@@ -1,0 +1,20 @@
+{
+	"name": "Benchmark Cost by CostAllocationCode Amortized",
+	"properties": {
+		"folder": {
+			"name": "OGBG Benchmark 2022"
+		},
+		"content": {
+			"query": "--\n--   Cost by WBS to be charged (including CI and APPID WBS lookup)\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    --CostAllocationType,\n    ActiveWBS\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    --,format(sum(CostInBillingCurrency), 'N2') as Cost\n    ,sum(CostInBillingCurrency) as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/benchmark/AmortizedCost/CostTagsExtended_ACMMonthlyAmortizedCost_2022*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by ActiveWBS--, CostAllocationType\n    order by sum(CostInBillingCurrency) DESC--, CostAllocationCode, CostAllocationType DESC\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

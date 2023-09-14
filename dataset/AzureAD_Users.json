@@ -1,0 +1,16 @@
+{
+	"name": "AzureAD_Users",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "MicrosoftGraphRESTAPI",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "RestResource",
+		"typeProperties": {
+			"relativeUrl": "users?$expand=manager($levels=2;$select=employeeId,displayName,userPrincipalName,accountEnabled,department)&$select=employeeid,displayName,userPrincipalName,accountEnabled,department,officeLocation,country,city"
+		},
+		"schema": []
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}

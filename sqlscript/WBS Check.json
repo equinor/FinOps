@@ -1,0 +1,20 @@
+{
+	"name": "WBS Check",
+	"properties": {
+		"folder": {
+			"name": "Ad Hoc Cost Report Requests"
+		},
+		"content": {
+			"query": "SELECT\n    --top 10 *\n    distinct(SubscriptionName)\n    ,substring(LatestDate,1,7) as [Month]\nFROM\n    OPENROWSET(\n        BULK 'https://omniaacdcdlsprod.dfs.core.windows.net/tempdata/monthly/2022/12/filtered_parquet/*.snappy.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where   \n        upper(LatestCostAllocationCode) IN ('C.ITX.36.001', 'C.ITX.36.002', 'C.ITD.15.022', 'C.ITD.15.034', 'C.ITX.43.001', 'C.ITX.46.004', 'C.ITX.46.007', 'C.ITX.46.011', 'C.ITX.46.012')\n        or \n        upper(LatestCostCenter) IN ('C.ITX.36.001', 'C.ITX.36.002', 'C.ITD.15.022', 'C.ITD.15.034', 'C.ITX.43.001', 'C.ITX.46.004', 'C.ITX.46.007', 'C.ITX.46.011', 'C.ITX.46.012')\n    order by [Month], SubscriptionName\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "master",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

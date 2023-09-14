@@ -1,0 +1,595 @@
+{
+	"name": "usersWithBusinessAreaSnapshot_v1",
+	"properties": {
+		"folder": {
+			"name": "AzureAD"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sparkpool32",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"runAsWorkspaceSystemIdentity": false,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "eec86e27-c437-496a-9beb-d21361de8752"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"synapse_widget": {
+				"version": "0.1",
+				"state": {
+					"4b2ec9c8-bea6-41c5-bdd7-288b834c6748": {
+						"type": "Synapse.DataFrame",
+						"sync_state": {
+							"table": {
+								"rows": [
+									{
+										"0": "933452",
+										"1": "TCNY",
+										"2": "tcny@equinor.com",
+										"3": "TDI",
+										"4": "TDI EDT",
+										"5": "TDI EDT EIP"
+									},
+									{
+										"0": "921714",
+										"1": "TSC",
+										"2": "tsc@equinor.com",
+										"3": "TDI",
+										"4": "TDI EDT",
+										"5": "TDI EDT EIP"
+									},
+									{
+										"0": "104854",
+										"1": "JOMT",
+										"2": "jomt@equinor.com",
+										"3": "TDI",
+										"4": "TDI EDT",
+										"5": "TDI EDT EIP"
+									},
+									{
+										"0": "858262",
+										"1": "DFLOO",
+										"2": "dfloo@equinor.com",
+										"3": "TDI",
+										"4": "TDI EDT",
+										"5": "TDI EDT ES"
+									}
+								],
+								"schema": [
+									{
+										"key": "0",
+										"name": "employeeId",
+										"type": "string"
+									},
+									{
+										"key": "1",
+										"name": "userName",
+										"type": "string"
+									},
+									{
+										"key": "2",
+										"name": "email",
+										"type": "string"
+									},
+									{
+										"key": "3",
+										"name": "businessArea",
+										"type": "string"
+									},
+									{
+										"key": "4",
+										"name": "businessAreaLevel1",
+										"type": "string"
+									},
+									{
+										"key": "5",
+										"name": "businessAreaLevel2",
+										"type": "string"
+									}
+								],
+								"truncated": false
+							},
+							"isSummary": false,
+							"language": "scala"
+						},
+						"persist_state": {
+							"view": {
+								"type": "details",
+								"chartOptions": {
+									"chartType": "bar",
+									"aggregationType": "count",
+									"categoryFieldKeys": [
+										"0"
+									],
+									"seriesFieldKeys": [
+										"0"
+									],
+									"isStacked": false
+								}
+							}
+						}
+					}
+				}
+			},
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
+				"name": "sparkpool32",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net",
+					"authHeader": null
+				},
+				"sparkVersion": "3.2",
+				"nodeCount": 3,
+				"cores": 8,
+				"memory": 56,
+				"extraHeader": null
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"This notebook creates a dataset of employee ID, shortname, Business Area and sub-Business Area (e.g. BA: PDP, subBA: PDP PSR). The BA and subBA is found from the employee's manager at level 2 and 3. The employee hierarchy has been made in another notebook (usersWithManagerSnapshot_v1). Both notebooks use the same inital raw-dataset from ADLS from graphAPI (AzureADUsersWithManager_)."
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# %pip install -U pandas==1.5.3"
+				],
+				"execution_count": 118
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"import pandas as pd"
+				],
+				"execution_count": 119
+			},
+			{
+				"cell_type": "markdown",
+				"source": [
+					"## Load data\r\n",
+					"\r\n",
+					"#### Load Azure AD users, raw-data from ADLS"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"container = 'usage'\r\n",
+					"file_path = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + 'AzureAD_BusinessAreaLevel/bronze/AzureAD_EmployeesManagersSnapshot.parquet'\r\n",
+					"\r\n",
+					"df_users = spark.read.format('parquet').load(file_path).toPandas()\r\n",
+					"# df_users.head(10)"
+				],
+				"execution_count": 120
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"#### Load Hierarchy-dataframe from ADLS optimized"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# Get Hierarchy-dataframe from ADLS\n",
+					"file_path = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + 'AzureAD_BusinessAreaLevel/silver/usersWithManagerSnapshot_v1.parquet'\n",
+					"\n",
+					"employees = spark.read.format('parquet').load(file_path).toPandas()\n",
+					"# employees.head(10)"
+				],
+				"execution_count": 121
+			},
+			{
+				"cell_type": "markdown",
+				"source": [
+					"# Transforming Azure AD raw-data"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"print(f\"Old length of the dataset is: {df_users.shape[0]}\")\n",
+					"\n",
+					"# Filter out disabled accounts\n",
+					"df_users = df_users[df_users.accountEnabled == True]\n",
+					"\n",
+					"# Drop rows with no employee ID\n",
+					"df_users = df_users.dropna(subset=['employeeId'])\n",
+					"\n",
+					"print(f\"New length of the dataset is: {df_users.shape[0]}\")"
+				],
+				"execution_count": 122
+			},
+			{
+				"cell_type": "markdown",
+				"source": [
+					"## Split email and filter out equinor-domain\n",
+					"cannot call on NoneType, need to rename first:\n",
+					"df_users = df_users.fillna({'department': 'missing'})"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# Getting the username by splitting e-mail name before \"@\"-symbol\n",
+					"df_users['userName'] = [email[:email.find('@')] for email in df_users['userPrincipalName']]\n",
+					"\n",
+					"# Getting the domain name by splitting e-mail after \"@\"-symbol\n",
+					"df_users['domain'] = [email[email.find('@'):] for email in df_users['userPrincipalName']]"
+				],
+				"execution_count": 123
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"print(f\"Old length of the dataset is: {df_users.shape[0]}\")\n",
+					"\n",
+					"# Only include empoyees who has a email address with domain-name equinor.com\n",
+					"df_users = df_users[df_users.domain == '@equinor.com']\n",
+					"\n",
+					"# Delete non-valid employeeIDs\n",
+					"df_users = df_users[df_users['employeeId'] != 'FunctionKey']\n",
+					"\n",
+					"print(f\"New length of the dataset is: {df_users.shape[0]}\")"
+				],
+				"execution_count": 124
+			},
+			{
+				"cell_type": "markdown",
+				"source": [
+					"## Dropping and store duplicates"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# # Display the duplicates\n",
+					"# df_users[df_users['employeeId'].isin(df_users.employeeId.value_counts().loc[lambda x: x>1].index)].sort_values(by=['employeeId'])"
+				],
+				"execution_count": 125
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# First isolate all duplicates that we want to remove. In this instance there is one duplicate that contains employee information, and another that does not.\n",
+					"# All duplicates without information will be isolated in a variable and removed from the dataset\n",
+					"\n",
+					"# Where employeeId don't occur more than once \n",
+					"mask1 = df_users['employeeId'].isin(df_users.employeeId.value_counts().loc[lambda x: x>1].index)\n",
+					"\n",
+					"# Where users have empty values in the columns specified\n",
+					"mask2 = df_users['department'].isna()\n",
+					"mask3 = df_users['manager_employeeId'].isna()\n",
+					"mask4 = df_users['manager_displayName'].isna()\n",
+					"mask5 = df_users['manager_userPrincipalName'].isna()\n",
+					"mask6 = df_users['manager_department'].isna()\n",
+					"\n",
+					"# Where the username contains sub-string 'ja_'\n",
+					"mask7 = df_users['userName'].str.contains('ja_')\n",
+					"\n",
+					"duplicates = df_users[mask1 & mask2 & mask3 & mask4 & mask5 | mask6 & mask7]\n",
+					"\n",
+					"df_users = df_users.drop(duplicates.index)"
+				],
+				"execution_count": 126
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# some users are registrered with two different employeeId and corresponding department, manager etc. but the same displayName\n",
+					"# df_users[df_users['displayName'].isin(df_users.displayName.value_counts().loc[lambda x: x>1].index)].sort_values(by=['displayName'])"
+				],
+				"execution_count": 127
+			},
+			{
+				"cell_type": "markdown",
+				"source": [
+					"## Merge Hierarchy-dataframe from ADLS-opt to raw-data\n",
+					"Only looking at employeeID - managerID and find all corresponding departments (business area)"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# merge employeeId+department to the user hierarchy for employee and manager 2, 3, 4\n",
+					"employees = employees.merge(df_users[['employeeId', 'department']],\n",
+					"                            left_on='employeeId_0',\n",
+					"                            right_on='employeeId',\n",
+					"                            how='left').drop(columns={'employeeId'}).rename(columns={'department':'departmentEmployee'})\n",
+					"\n",
+					"employees = employees.merge(df_users[['employeeId', 'department']],\n",
+					"                            left_on='Manager2',\n",
+					"                            right_on='employeeId',\n",
+					"                            how='left').drop(columns={'employeeId'}).rename(columns={'department':'departmentManager2'})\n",
+					"\n",
+					"employees = employees.merge(df_users[['employeeId', 'department']],\n",
+					"                            left_on='Manager3', \n",
+					"                            right_on='employeeId',\n",
+					"                            how='left').drop(columns={'employeeId'}).rename(columns={'department':'departmentManager3'})\n",
+					"\n",
+					"employees = employees.merge(df_users[['employeeId', 'department']],\n",
+					"                            left_on='Manager4',\n",
+					"                            right_on='employeeId',\n",
+					"                            how='left').drop(columns={'employeeId'}).rename(columns={'department':'departmentManager4'})"
+				],
+				"execution_count": 128
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# Due to poor data quality, multiple employeers will have the wrong Manager1 for two reasons:\n",
+					"# employeeId has itself listed as manager OR two employees have each other listed as managers\n",
+					"# in these cases Manager1 has been sat to '0'\n",
+					"# Rename these instances to \"No data\"\n",
+					"employees['departmentManager2'] = employees.apply(lambda x: 'No data' if x['Manager1'] =='0' else x['departmentManager2'], axis=1)\n",
+					"employees['departmentManager3'] = employees.apply(lambda x: 'No data' if x['Manager1'] =='0' else x['departmentManager3'], axis=1)\n",
+					"employees['departmentManager4'] = employees.apply(lambda x: 'No data' if x['Manager1'] =='0' else x['departmentManager4'], axis=1)"
+				],
+				"execution_count": 129
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# # Azure AD users with no information about their department/business area due to data quality\n",
+					"# employees[employees.Manager1 == '0'].display()"
+				],
+				"execution_count": 130
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# # Count number of employees under each Business Area (on Manager level 2)\n",
+					"# df_grouped= employees.groupby(['departmentManager2'])['departmentManager2'].count()\n",
+					"# df_grouped_sorted = df_grouped.sort_values()\n",
+					"# print(df_grouped_sorted)"
+				],
+				"execution_count": 131
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Set Business Area, Business Area Level 1 and Business Area Level 2 "
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# Set BusinessArea equal to each employees level 2 managers department\n",
+					"employees['businessArea'] = employees['departmentManager2'].apply(lambda x: x)"
+				],
+				"execution_count": 132
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# Set BusinessArea Level 1 equal to each employees level 3 managers department\n",
+					"employees['businessAreaLevel1'] = employees['departmentManager3'].apply(lambda x: x)"
+				],
+				"execution_count": 133
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# Set BusinessArea Level 2 equal to each employees level 4 managers department\n",
+					"employees['businessAreaLevel2'] = employees['departmentManager4'].apply(lambda x: x)"
+				],
+				"execution_count": 134
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"### Special cases\n",
+					"Save for later just in case"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# # Set BusinessArea for FLX\n",
+					"# employees['businessArea']= employees.apply(lambda x: x['departmentManager3'] if x['departmentManager3'] =='FLX' else x['businessArea'], axis=1)\n",
+					"\n",
+					"# # Set subBusinessArea for FLX\n",
+					"# employees['subBusinessArea']= employees.apply(lambda x: x['departmentManager4'] if x['businessArea'] =='FLX' else x['subBusinessArea'], axis=1)"
+				],
+				"execution_count": 135
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# # Set BusinessArea for \"CFO FCoE\"\n",
+					"# employees['businessArea']= employees.apply(lambda x: 'CFO FCOE' if ('CFO FCOE' in str(x['departmentManager3'])) else x['businessArea'], axis=1)\n",
+					"\n",
+					"# # Set subBusinessArea for \"CFO FCoE\"\n",
+					"# employees['subBusinessArea']= employees.apply(lambda x: x['departmentManager4'] if ('CFO FCOE' in str(x['businessArea'])) else x['subBusinessArea'], axis=1)"
+				],
+				"execution_count": 136
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# # Set BusinessArea for \"PDP DW\"\n",
+					"# employees['BusinessArea']= employees.apply(lambda x: 'PDP DW' if ('PDP DW' in str(x['Manager3_department'])) else x['BusinessArea'], axis=1)\n",
+					"\n",
+					"# # Set BusinessArea for \"PDP PSR\"\n",
+					"# employees['BusinessArea']= employees.apply(lambda x: 'PDP PSR' if ('PDP PSR' in str(x['Manager3_department'])) else x['BusinessArea'], axis=1)\n",
+					"\n",
+					"# # Set BusinessArea for \"PDP PRD\"\n",
+					"# employees['BusinessArea']= employees.apply(lambda x: 'PDP PRD' if ('PDP PRD' in str(x['Manager3_department'])) else x['BusinessArea'], axis=1)"
+				],
+				"execution_count": 137
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Cleanup, add username/shortname"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# add username/shortname to dataframe\n",
+					"employees = employees.merge(df_users[['employeeId', 'userName', 'userPrincipalName']],\n",
+					"                            left_on='employeeId_0',\n",
+					"                            right_on='employeeId',\n",
+					"                            how='left')"
+				],
+				"execution_count": 138
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# only keep relevant columns\n",
+					"employees_short = employees[['employeeId',\n",
+					"                             'userName',\n",
+					"                             'userPrincipalName',\n",
+					"                             'businessArea',\n",
+					"                             'businessAreaLevel1',\n",
+					"                             'businessAreaLevel2']].copy()\n",
+					"\n",
+					"employees_short = employees_short.rename(columns={'userPrincipalName' : 'email'})\n",
+					"\n",
+					"employees_short['email'] = employees_short['email'].str.lower()\n",
+					"employees_short['userName'] = employees_short['userName'].str.upper()"
+				],
+				"execution_count": 139
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"collapsed": false
+				},
+				"source": [
+					"finops = ['TSC', 'DFLOO', 'TCNY', 'JOMT']\r\n",
+					"\r\n",
+					"display(employees_short[employees_short['userName'].isin(finops)])"
+				],
+				"execution_count": 142
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"print(f\" Duplicated usernames: {len(employees_short['userName'].value_counts().loc[lambda x: x>1])}\")\r\n",
+					"\r\n",
+					"print(f\" Duplicated employee IDs: {len(employees_short['employeeId'].value_counts().loc[lambda x: x>1])}\")\r\n",
+					"\r\n",
+					"print(f\" Duplicated e-mails: {len(employees_short['email'].value_counts().loc[lambda x: x>1])}\")"
+				],
+				"execution_count": 141
+			},
+			{
+				"cell_type": "markdown",
+				"source": [
+					"## Write to optimized"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"#Set optimized path\n",
+					"optimized_path = file_path = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + 'AzureAD_BusinessAreaLevel/gold/usersWithBusinessAreaSnapshot_v1.parquet'\n",
+					"\n",
+					"df_spark = spark.createDataFrame(employees_short)\n",
+					"\n",
+					"df_spark.write.format('parquet').mode('overwrite').save(optimized_path)\n",
+					"#df_spark.write.format('parquet').mode('overwrite').option('overwriteSchema', 'True').save(optimized_path)"
+				],
+				"execution_count": 108
+			}
+		]
+	}
+}

@@ -1,0 +1,20 @@
+{
+	"name": "Testing VM states for HUB",
+	"properties": {
+		"folder": {
+			"name": "Management API"
+		},
+		"content": {
+			"query": "SELECT\n    --top 1000\n    --JSON_VALUE(AdditionalInfo, '$.vCores') as vCores, \n    --avg(JSON_VALUE(AdditionalInfo, '$.VCPUs')) as VCPUs,\n    --MeterCategory, \n    --MeterSubCategory, \n    --ServiceInfo2, \n    --PartNumber,\n    --ReservationName,\n    --Quantity,\n    --UnitOfMeasure, \n    --MeterName,\n    --ProductName,\n    --[Date],\n    --ResourceGroup, \n    --ResourceName, \n    --ResourceId\n    max(MeterCategory), \n    max(MeterSubCategory), \n    ServiceInfo2, \n    max(PartNumber),\n    max(ReservationName),\n    sum(Quantity) as Quantity,\n    max(UnitOfMeasure), \n    max(MeterName),\n    max(ProductName),\n    [Date],\n    max(ResourceGroup), \n    max(ResourceName), \n    max(ResourceId)\n    --UnitPrice,\n    --EffectivePrice,\n    --CostInBillingCurrency,\n    --AdditionalInfo\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/202301*/A*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nWHERE (ResourceId like '%/virtualMachines/%' or ResourceId like '%/virtualMachineScaleSets/%') and MeterCategory = 'Virtual Machines'\n    --and MeterCategory = 'Virtual Machines'\n    --and MeterSubCategory = 'Dv3/DSv3 Series Windows'\n    --and ReservationName != '' \n    --and  ReservationName is not NULL\n    --and MeterSubCategory != 'Windows Server'\n    --and ServiceInfo2 = 'Windows Server BYOL'\n    --and ServiceInfo2 = ''\n    --and (MeterSubCategory like '%Windows%') \n    --and (MeterSubCategory != 'Windows Server') and (MeterSubCategory != 'Windows Server Burst')\n    --and JSON_VALUE(AdditionalInfo, '$.VCPUs') = 4\n    and (MeterSubCategory like '%Windows%' and ServiceInfo2 is NULL) or (ServiceInfo2 = 'Windows Server BYOL')\n    --and (MeterCategory = 'Virtual Machines Licenses' and MeterSubCategory = 'Windows Server')\n    --and ResourceId = '/subscriptions/fa020411-3a3b-443d-8b2f-ed3ac1a4029c/resourceGroups/S230-DC-FORECAST-CLIENT/providers/Microsoft.Compute/virtualMachineScaleSets/vmss-dc-forecast-client'\n    --and ResourceId = '/subscriptions/5f9dec8c-8bfd-40e1-b7c7-85fa538f77ed/resourceGroups/CITRIX-XD-DE028C6C-1A1E-4370-9244-39C08AA856CE-C5Q51/providers/Microsoft.Compute/virtualMachines/MMP-TS4212'\n    --and ResourceId = '/subscriptions/a6abe45d-e638-4325-a7e9-5559450aa434/resourceGroups/INFPROD-NOW/providers/Microsoft.Compute/virtualMachines/WS4253'\n    and [Date] = '2023-01-10'\n    group by ResourceId, [Date], ServiceInfo2\n    order by [Date]\n    --order by JSON_VALUE(AdditionalInfo, '$.VCPUs') DESC",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

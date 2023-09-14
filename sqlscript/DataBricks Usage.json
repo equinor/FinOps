@@ -1,0 +1,20 @@
+{
+	"name": "DataBricks Usage",
+	"properties": {
+		"folder": {
+			"name": "Ad Hoc Cost Report Requests"
+		},
+		"content": {
+			"query": "\nSELECT\n    format([Date],'yyyy-MM') as [Date]\n    ,MeterCategory\n    ,SubscriptionName\n    ,MeterName\n    ,sum(Quantity) as Quantity\n    ,sum(CostInBillingCurrency) as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/2023*/ACMMonthlyActualCost_*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where MeterCategory = 'Azure Databricks'\n    GROUP by format([Date],'yyyy-MM'), MeterName, MeterCategory, SubscriptionName --MeterName, \n    order by format([Date],'yyyy-MM'), sum(CostInBillingCurrency) DESC\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

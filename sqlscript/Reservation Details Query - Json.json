@@ -1,0 +1,20 @@
+{
+	"name": "Reservation Details Query - Json",
+	"properties": {
+		"folder": {
+			"name": "Reservation - Saving Plan Queries"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT TOP 100\n    jsonContent,\n    JSON_VALUE (jsonContent, '$.skuName') AS skuName,\n    JSON_VALUE (jsonContent, '$.reservationId') AS reservationId,\n    JSON_VALUE (jsonContent, '$.usageDate') AS usageDate,\n    JSON_VALUE (jsonContent, '$.totalReservedQuantity') AS totalReservedQuantity,\n    JSON_VALUE (jsonContent, '$.reservedHours') AS reservedHours,\n    JSON_VALUE (jsonContent, '$.usedHours') AS usedHours\nFROM\n    OPENROWSET(\n        BULK 'https://omniaacdcdlsprod.dfs.core.windows.net/tempdata/validation/2022/02/02/costreport_reservation_details_validation.json',\n        FORMAT = 'CSV',\n        FIELDQUOTE = '\\',\n        FIELDTERMINATOR ='0x0b',\n        ROWTERMINATOR = '},'\n    )\n    WITH (\n        jsonContent nvarchar(MAX)\n    ) AS [result]\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "master",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

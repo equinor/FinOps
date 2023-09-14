@@ -1,0 +1,20 @@
+{
+	"name": "RI Usage",
+	"properties": {
+		"folder": {
+			"name": "--RI & HUB Savings"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    format([Date], 'yyyy-MM') as [Date]\n    ,MeterCategory\n    --,MeterSubCategory\n    --,ResourceLocation\n    ,sum(CostInBillingCurrency) as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAm*/2023*/ACMMonthlyAm*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where PricingModel = 'Reservation' and ChargeType = 'Usage' and ReservationName like 'S037%'\n    and (format([Date], 'yyyy-MM') = '2023-04' or format([Date], 'yyyy-MM') = '2023-05' or format([Date], 'yyyy-MM') = '2023-06')\n    group by format([Date], 'yyyy-MM'), MeterCategory--, MeterSubCategory, ResourceLocation\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

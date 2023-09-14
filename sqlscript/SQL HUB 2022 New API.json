@@ -1,0 +1,20 @@
+{
+	"name": "SQL HUB 2022 New API",
+	"properties": {
+		"folder": {
+			"name": "--RI & HUB Savings/New API/2022"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    TOP 100 \n    JSON_VALUE(AdditionalInfo, '$.ServiceType') as ServiceType, \n    JSON_VALUE(AdditionalInfo, '$.AHB') as AHB, \n    JSON_VALUE(AdditionalInfo, '$.vCores') as vCores, \n    JSON_VALUE(AdditionalInfo, '$.VCPUs') as VCPUs, \n    MeterCategory,\n    MeterSubCategory,\n    format([Date], 'yyyy-MM') as [Date], \n    sum(Quantity) as Quantity,\n    --PartNumber,\n    ProductName\n    ,ResourceId\n    \nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAc*/2022*/A*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nWHERE (MeterCategory = 'SQL Managed Instance' and JSON_VALUE(AdditionalInfo, '$.AHB') = 'True') or (MeterCategory = 'Virtual Machines Licenses' and MeterSubCategory LIKE '%Hybrid%') \n--WHERE JSON_VALUE(AdditionalInfo, '$.AHB') = 'True' or MeterSubCategory LIKE '%Hybrid%'\n\n-----Below line extracts non HUB SQL entries for testing & investigation purposes\n--WHERE (MeterCategory = 'SQL Managed Instance' and JSON_VALUE(AdditionalInfo, '$.AHB') = 'False') or (MeterCategory = 'Virtual Machines Licenses' and MeterSubCategory NOT LIKE '%Hybrid%') and Product LIKE 'SQL Server%' and Product NOT LIKE 'SQL Server Express%'\n\nGROUP BY  JSON_VALUE(AdditionalInfo, '$.ServiceType'), JSON_VALUE(AdditionalInfo, '$.AHB'), JSON_VALUE(AdditionalInfo, '$.vCores'), JSON_VALUE(AdditionalInfo, '$.VCPUs'), MeterCategory, MeterSubCategory, format([Date], 'yyyy-MM'), ProductName, ResourceId\nORDER BY format([Date], 'yyyy-MM'), Quantity DESC\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

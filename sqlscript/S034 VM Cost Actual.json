@@ -1,0 +1,20 @@
+{
+	"name": "S034 VM Cost Actual",
+	"properties": {
+		"folder": {
+			"name": "S034 VM Cost Investigation"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    *\n    --count(SubscriptionName)\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/2022*/*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nwhere SubscriptionName = 'S034-Geology-Geophysics' and \n    MeterCategory = 'Virtual Machines' --and ServiceInfo2 LIKE '%BYOL' --and Product LIKE '%Spot%'\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "master",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

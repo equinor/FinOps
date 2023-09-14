@@ -1,0 +1,28 @@
+{
+	"name": "S037_Daily_Usage_DataSet",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "s037-cost-management-WorkspaceDefaultStorage",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"Date": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@concat(dataset().Date,'-raw.csv')",
+					"type": "Expression"
+				},
+				"folderPath": "daily",
+				"fileSystem": "usage"
+			}
+		}
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}

@@ -1,0 +1,63 @@
+{
+	"name": "ServiceNowApplicationData",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "s037-cost-management-WorkspaceDefaultStorage",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "ServiceNowApplication.parquet",
+				"folderPath": "applications",
+				"fileSystem": "usage"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": [
+			{
+				"name": "SubscriptionName",
+				"type": "UTF8"
+			},
+			{
+				"name": "CostCenter",
+				"type": "UTF8"
+			},
+			{
+				"name": "ResourceGroup",
+				"type": "UTF8"
+			},
+			{
+				"name": "ResourceLocation",
+				"type": "UTF8"
+			},
+			{
+				"name": "ResourceName",
+				"type": "UTF8"
+			},
+			{
+				"name": "MeterName",
+				"type": "UTF8"
+			},
+			{
+				"name": "MeterCategory",
+				"type": "UTF8"
+			},
+			{
+				"name": "MeterSubCategory",
+				"type": "UTF8"
+			},
+			{
+				"name": "Total quantity",
+				"type": "DOUBLE"
+			},
+			{
+				"name": "Cost in Kroner",
+				"type": "DOUBLE"
+			}
+		]
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}

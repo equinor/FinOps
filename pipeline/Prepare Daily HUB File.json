@@ -1,0 +1,80 @@
+{
+	"name": "Prepare Daily HUB File",
+	"properties": {
+		"activities": [
+			{
+				"name": "HUB Daily File",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "Set Todays Date",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "HUB_Daily_File",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"Today": {
+							"value": {
+								"value": "@variables('Today')",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": "sprkpool33large",
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Medium",
+					"conf": {
+						"spark.dynamicAllocation.enabled": true
+					},
+					"driverSize": "Medium"
+				}
+			},
+			{
+				"name": "Set Todays Date",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "Today",
+					"value": {
+						"value": "@concat(formatDateTime(utcnow(),'yyyy-MM-dd'))",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"variables": {
+			"Today": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "HUB"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-08-17T22:03:18Z"
+	},
+	"type": "Microsoft.Synapse/workspaces/pipelines"
+}

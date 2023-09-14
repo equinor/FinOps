@@ -1,0 +1,29 @@
+{
+	"name": "ms_billing_output_file",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ms_billing_cost_report_download",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"blobPath": {
+					"value": "@dataset().blobPath",
+					"type": "Expression"
+				}
+			}
+		},
+		"parameters": {
+			"blobPath": {
+				"type": "String",
+				"defaultValue": "TBC"
+			}
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "HttpServerLocation"
+			}
+		}
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}

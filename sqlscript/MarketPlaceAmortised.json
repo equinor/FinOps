@@ -1,0 +1,20 @@
+{
+	"name": "MarketPlaceAmortised",
+	"properties": {
+		"folder": {
+			"name": "MarketPlace"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/daily/ACMDailyAmortizedCost/20221101-20221130/ACMDailyAmortizedCost_c2efb564-3599-4f9d-a5a8-800a769844e3.csv',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW=TRUE\n    ) AS [result]\nwhere PublisherType = 'Marketplace'\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

@@ -1,0 +1,20 @@
+{
+	"name": "Storage_Account_from_Parquet",
+	"properties": {
+		"folder": {
+			"name": "Ad Hoc Cost Report Requests"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8) as [Date],\n    Redundancy,\n    sum(StorageInGb) as StorageInGb\nFROM\n    OPENROWSET(\n        BULK 'https://omniadlseun.dfs.core.windows.net/dls/enterprise/data/IT-Asset/InformationAssets/OmniaFacts/Dataset/AcdcDataset/AzureStorageAccountSizeByRedundancy/2022/03/AzureStorageSizeByRedundancy/part-00000-ecca91e8-c471-4ee4-ad71-8e0ba8d5c669-c000.snappy.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nwhere substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8) LIKE '2021%'\nGROUP by substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8), Redundancy\norder by substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8)\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "master",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

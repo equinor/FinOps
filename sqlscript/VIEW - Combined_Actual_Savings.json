@@ -1,0 +1,20 @@
+{
+	"name": "VIEW - Combined_Actual_Savings",
+	"properties": {
+		"folder": {
+			"name": "Views"
+		},
+		"content": {
+			"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW Combined_Actual_Savings\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/*/ACMMonthlyActualCost_*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where [Date] >= '2022-12-31'\n\nUNION --ALL\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/daily/ACMDailyActualCost/ACMDailyActualCost.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where [Date] <= '2022-12-31'\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

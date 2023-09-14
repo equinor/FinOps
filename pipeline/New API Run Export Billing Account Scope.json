@@ -1,0 +1,114 @@
+{
+	"name": "New API Run Export Billing Account Scope",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get token",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Get SP Secret",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": "https://login.microsoftonline.com/3aa4a235-b6e2-48d5-9195-7fcf05b459b0/oauth2/token",
+					"connectVia": {
+						"referenceName": "AutoResolveIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
+					},
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/x-www-form-urlencoded"
+					},
+					"body": {
+						"value": "@concat('client_id=1810d95a-5adb-4a43-b31f-44a7bdc0bbcd&client_secret=',activity('Get SP Secret').output.value,'&grant_type=client_credentials&resource=https://management.azure.com&scope=./default')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Get SP Secret",
+				"type": "WebActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": true,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": "https://acm-toolkit-kv.vault.azure.net/secrets/ACM-Billing-Reader-PW/bb760feaba3f4d5385a40b68541dafa5?api-version=7.0",
+					"connectVia": {
+						"referenceName": "AutoResolveIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
+					},
+					"method": "GET",
+					"authentication": {
+						"type": "MSI",
+						"resource": "https://vault.azure.net"
+					}
+				}
+			},
+			{
+				"name": "Run Export",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Get token",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "https://management.azure.com/providers/Microsoft.Billing/billingAccounts/57950773/providers/Microsoft.CostManagement/exports/ACMMonthlyActualCost/run?api-version=2021-10-01",
+						"type": "Expression"
+					},
+					"connectVia": {
+						"referenceName": "AutoResolveIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
+					},
+					"method": "POST",
+					"headers": {
+						"Authorization": {
+							"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+							"type": "Expression"
+						}
+					},
+					"body": {
+						"value": "{\n  \"properties\": {\n    \"definition\": {\n      \"dataset\": {\n        \"granularity\": \"Daily\",\n        \"grouping\": []\n      },\n      \"timePeriod\": {\n        \"from\": \"2022-01-01T00:00:00.000Z\",\n        \"to\": \"2022-01-02T00:00:00.000Z\"\n      },\n      \"timeframe\": \"Custom\",\n      \"type\": \"ActualCost\"\n    },\n    \"deliveryInfo\": {\n      \"destination\": {\n        \"container\": \"usage\",\n        \"rootFolderPath\": \"Test-Export\",\n        \"resourceId\": \"/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt\"\n      }\n    },\n    \"format\": \"Csv\",\n    \"partitionData\": false\n  }\n}",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"folder": {
+			"name": "Management API (New)"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-11-18T13:45:51Z"
+	},
+	"type": "Microsoft.Synapse/workspaces/pipelines"
+}

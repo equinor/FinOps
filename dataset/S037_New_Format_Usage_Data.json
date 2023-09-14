@@ -1,0 +1,38 @@
+{
+	"name": "S037_New_Format_Usage_Data",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "s037-cost-management-WorkspaceDefaultStorage",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"Path": {
+				"type": "string"
+			},
+			"dateRange": {
+				"type": "string"
+			},
+			"ReportType": {
+				"type": "string",
+				"defaultValue": "na"
+			}
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@if(contains(dataset().Path,'ActualCost'),concat('ACMMonthly',dataset().ReportType,'_',dataset().dateRange,'.csv'),if(contains(dataset().Path,'AmortizedCost'),concat('ACMMonthly',dataset().ReportType,'_',dataset().dateRange,'.csv'),concat('ACMMonthlyUsage_',dataset().dateRange,'.csv')))",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().Path",
+					"type": "Expression"
+				},
+				"fileSystem": "usage"
+			}
+		}
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}

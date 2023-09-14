@@ -1,0 +1,20 @@
+{
+	"name": "Benchmark Invalid CostAllocationTypes",
+	"properties": {
+		"folder": {
+			"name": "OGBG Benchmark 2022"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 \n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/benchmark/ActualCost/CostTagsExtended_ACMMonthlyActualCost_2022*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where upper(Tags) not like '%\"COSTALLOCATIONTYPE\": \"CI%' and \n          upper(Tags) not like '%\"COSTALLOCATIONTYPE\": \"WBS%' AND\n          upper(Tags) not like '%\"COSTALLOCATIONTYPE\": \"APPID%' AND\n          upper(Tags) not like '%\"COSTALLOCATIONTYPE\": \"TOBESPECIFIED%' AND\n          upper(Tags) not like '%\"COSTALLOCATIONTYPE\": \"\"%' AND\n          upper(Tags) not like '%\"COSTALLOCATIONTYPE\": \" \"%' AND\n          upper(Tags) like '%\"COSTALLOCATIONTYPE\"%'\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

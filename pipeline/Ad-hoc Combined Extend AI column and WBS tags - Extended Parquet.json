@@ -1,0 +1,53 @@
+{
+	"name": "Ad-hoc Combined Extend AI column and WBS tags - Extended Parquet",
+	"properties": {
+		"activities": [
+			{
+				"name": "Extend AI column and WBS tags",
+				"type": "SynapseNotebook",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "AdHoc Extend AI column and WBS tags",
+						"type": "NotebookReference"
+					},
+					"snapshot": true
+				}
+			}
+		],
+		"variables": {
+			"toDate": {
+				"type": "String"
+			},
+			"fromDate": {
+				"type": "String"
+			},
+			"AmortizedCost_Path": {
+				"type": "String",
+				"defaultValue": "exports/monthly/ACMMonthlyAmortizedCost/"
+			},
+			"Container": {
+				"type": "String",
+				"defaultValue": "usage"
+			},
+			"ActualCost_Path": {
+				"type": "String",
+				"defaultValue": "exports/monthly/ACMMonthlyActualCost/"
+			}
+		},
+		"folder": {
+			"name": "Management API (New)"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-07-05T08:10:16Z"
+	},
+	"type": "Microsoft.Synapse/workspaces/pipelines"
+}

@@ -1,0 +1,124 @@
+{
+	"name": "Monthly_Parquet",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "s037-cost-management-WorkspaceDefaultStorage",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"Path": {
+				"type": "string"
+			},
+			"Container": {
+				"type": "string"
+			},
+			"toDate_fromDate": {
+				"type": "string",
+				"defaultValue": "Dummy"
+			}
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@if(contains(dataset().Path,'Actual'),concat('ACMMonthlyActualCost_',dataset().toDate_fromDate,'.parquet'),concat('ACMMonthlyAmortizedCost_',dataset().toDate_fromDate,'.parquet'))",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().Path",
+					"type": "Expression"
+				},
+				"fileSystem": {
+					"value": "@dataset().Container",
+					"type": "Expression"
+				}
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": [
+			{
+				"name": "billingFrequency",
+				"type": "UTF8"
+			},
+			{
+				"name": "purchasingEnrollment",
+				"type": "UTF8"
+			},
+			{
+				"name": "armSkuName",
+				"type": "UTF8"
+			},
+			{
+				"name": "term",
+				"type": "UTF8"
+			},
+			{
+				"name": "region",
+				"type": "UTF8"
+			},
+			{
+				"name": "purchasingSubscriptionGuid",
+				"type": "UTF8"
+			},
+			{
+				"name": "purchasingSubscriptionName",
+				"type": "UTF8"
+			},
+			{
+				"name": "accountName",
+				"type": "UTF8"
+			},
+			{
+				"name": "accountOwnerEmail",
+				"type": "UTF8"
+			},
+			{
+				"name": "departmentName",
+				"type": "UTF8"
+			},
+			{
+				"name": "costCenter",
+				"type": "UTF8"
+			},
+			{
+				"name": "currentEnrollment",
+				"type": "UTF8"
+			},
+			{
+				"name": "eventDate",
+				"type": "UTF8"
+			},
+			{
+				"name": "reservationOrderId",
+				"type": "UTF8"
+			},
+			{
+				"name": "description",
+				"type": "UTF8"
+			},
+			{
+				"name": "eventType",
+				"type": "UTF8"
+			},
+			{
+				"name": "quantity",
+				"type": "DOUBLE"
+			},
+			{
+				"name": "amount",
+				"type": "DOUBLE"
+			},
+			{
+				"name": "currency",
+				"type": "UTF8"
+			},
+			{
+				"name": "reservationOrderName",
+				"type": "UTF8"
+			}
+		]
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}

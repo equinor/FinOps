@@ -1,0 +1,20 @@
+{
+	"name": "VM_RI_USE_2022_From_SQLDB",
+	"properties": {
+		"folder": {
+			"name": "--RI & HUB Savings/Old API"
+		},
+		"content": {
+			"query": "USE costmgmt;\nGO\n\nSELECT\n    JSON_VALUE(AdditionalInfo, '$.ServiceType') as ServiceType,\n    JSON_VALUE(AdditionalInfo, '$.ReservationOrderId') as ReservationOrderId, \n    substring([Date],0,8) as [Date], \n    sum(ConsumedQuantity) as ConsumedQuantity,\n    SubscriptionName\nFROM usage\nWHERE (MeterCategory = 'Virtual Machines' and MeterSubCategory = 'Reservation-Base VM') and ([Date] >= '2022-01-01' and [Date] < '2022-07-01')\n--and (MeterSubCategory NOT LIKE '%Windows%' and ServiceInfo2 Not Like '%Windows%')\nGROUP BY JSON_VALUE(AdditionalInfo, '$.ServiceType'), substring([Date],0,8), SubscriptionName, JSON_VALUE(AdditionalInfo, '$.ReservationOrderId')\nORDER BY substring([Date],0,8), sum(ConsumedQuantity) DESC",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

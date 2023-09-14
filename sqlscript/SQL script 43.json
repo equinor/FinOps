@@ -1,0 +1,21 @@
+{
+	"name": "SQL script 43",
+	"properties": {
+		"description": "VM's with a VM name starting with an A are excluded",
+		"folder": {
+			"name": "Ad Hoc Cost Report Requests"
+		},
+		"content": {
+			"query": "declare @thirtydaysago datetime\ndeclare @now datetime\nset @now = getdate()\nset @thirtydaysago = dateadd(day,-30,@now)\n\nSELECT\n    format([Date],'yyyy-MM-dd') as [Date]\n    ,JSON_VALUE(AdditionalInfo, '$.ServiceType') as ServiceType\n    ,JSON_VALUE(AdditionalInfo, '$.VCPUs') as vCPUs\n    --,AVG(cast(JSON_VALUE(AdditionalInfo, '$.VCPUs') as INT)) as vCPUs\n    ,ProductName\n    ,MeterCategory\n    ,MeterSubCategory\n    --,sum(Quantity) as Quantity\n    --,sum(Quantity) * AVG(cast(JSON_VALUE(AdditionalInfo, '$.VCPUs') as INT)) as [Normalised Quantity]\n    ,Quantity\n    ,benefitName\n    ,*\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/20230101-20230131/ACMMonthlyActualCost_20230101-20230131.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nwhere MeterCategory = 'Virtual Machines' and benefitName is null and [Date] >= @thirtydaysago and MeterName not like 'A%'\n--group by [Date], JSON_VALUE(AdditionalInfo, '$.ServiceType'), JSON_VALUE(AdditionalInfo, '$.VCPUs'), ProductName, benefitName\norder by format([Date],'yyyy-MM-dd')\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

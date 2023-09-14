@@ -1,0 +1,20 @@
+{
+	"name": "Project cost report NextGen ERP",
+	"properties": {
+		"folder": {
+			"name": "SAP Cost Report"
+		},
+		"content": {
+			"query": "SELECT\n[ResourceGroup]\n--,substring([Date],0,8) as [Date]\n--,sum([Cost]) as Cost\n,SUM(ConsumedQuantity) as Quantity\n,JSON_VALUE(AdditionalInfo, '$.ServiceType') as ServiceType\n,JSON_VALUE(AdditionalInfo, '$.ReservationId') as ReservationId\n,[MeterCategory]\n,[MeterSubCategory]\n,[SubscriptionName]\nFROM\n    OPENROWSET(\n        --BULK 'https://s037costmgmt.dfs.core.windows.net/usage/daily/*-cleaned.parquet',\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/monthly/2022/08/*-cleaned.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nwhere SubscriptionName = 'S138-SAP-Solution-Landscape' AND\n    UPPER(ResourceGroup) IN ('S138-WESB-RG-S02', 'S138-WEDV-RG-D02', 'S138-WEQA-RG-SOX-Q02', 'S138-WEPR-RG-SOX-P02', \n                            'S138-WESB-RG-S63', 'S138-WESB-RG-SB3', 'S138-WESB-RG-S83', 'S138-WESB-RG-S12')\n    --and (substring([Date],0,8) >= '2022-01' and substring([Date],0,8) <= '2022-06')\n    and MeterCategory = 'Virtual Machines' and MeterSubCategory = 'Reservation-Base VM'\nGROUP BY [MeterCategory], ResourceGroup, JSON_VALUE(AdditionalInfo, '$.ServiceType'), [SubscriptionName],[MeterSubCategory]--, UnitOfMeasure --,substring([Date],0,8)\nORDER BY sum(ConsumedQuantity) DESC --, substring([Date],0,8)\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

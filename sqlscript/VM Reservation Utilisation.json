@@ -1,0 +1,20 @@
+{
+	"name": "VM Reservation Utilisation",
+	"properties": {
+		"folder": {
+			"name": "Reservation - Saving Plan Queries"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    JSON_VALUE(AdditionalInfo, '$.ServiceType') as ServiceType,\n    substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8) as [Date],\n    sum(ConsumedQuantity) as ConsumedQuantity,\n    MeterSubCategory\n    --*\nFROM\n    OPENROWSET(\n        BULK 'https://omniaacdcdlsprod.dfs.core.windows.net/tempdata/monthly/2021/*/*_cleaned.csv',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW = TRUE\n    ) AS [result]\nWHERE MeterCategory = 'Virtual Machines' and MeterSubCategory = 'Reservation-Base VM' --and (MeterSubCategory LIKE '%Windows%')\nGROUP BY JSON_VALUE(AdditionalInfo, '$.ServiceType'), substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8), MeterSubCategory\nORDER BY substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8), ConsumedQuantity DESC\n\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

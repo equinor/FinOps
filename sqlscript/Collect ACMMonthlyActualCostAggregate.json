@@ -1,0 +1,20 @@
+{
+	"name": "Collect ACMMonthlyActualCostAggregate",
+	"properties": {
+		"folder": {
+			"name": "Views/tsc"
+		},
+		"content": {
+			"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW tsc_ACMMonthlyActualCost_Aggregated_overview\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/aggregate/parquet/ACMMonthlyActualCost_Aggregated_overview.parquet/*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

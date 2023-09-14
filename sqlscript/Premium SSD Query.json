@@ -1,0 +1,20 @@
+{
+	"name": "Premium SSD Query",
+	"properties": {
+		"folder": {
+			"name": "Ad Hoc Cost Report Requests"
+		},
+		"content": {
+			"query": "SELECT\n    --*\n    --SubscriptionName\n    --,ResourceGroup\n    --ProductName\n    MeterSubCategory\n    ,ResourceLocation\n    ,MeterName\n    ,UnitPrice\n    --,ProductName\n    --,ResourceName\n    ,sum(Quantity) as Quantity\n    ,sum(CostInBillingCurrency) as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/202304*/ACMMonthlyActualCost_*.parquet',\n        --BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/daily/ACMDailyActualCost/ACMDailyActualCost.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where \n        (SubscriptionName = 'S009-Desktop-Service TS1' \n        or SubscriptionName = 'S220-Desktop-Service TS2')\n        and ProductName like '%SSD Managed Disks%'\n    group by UnitPrice, MeterSubCategory, MeterName, ResourceLocation--, ResourceName, ResourceGroup, ProductName, ProductName, SubscriptionName\n    order by sum(CostInBillingCurrency) DESC\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

@@ -1,0 +1,20 @@
+{
+	"name": "Linux_Reservations_2022",
+	"properties": {
+		"folder": {
+			"name": "--RI & HUB Savings/Old API"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    JSON_VALUE(AdditionalInfo, '$.ServiceType') as ServiceType, \n    substring([Date],0,8) as [Date],\n    JSON_VALUE(AdditionalInfo, '$.ReservationOrderId') as ReservationOrderId, \n    sum(ConsumedQuantity) as ConsumedQuantity,\n    PartNumber,\n    Product\n    --TOP 1000 *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/monthly/2022/*/*-cleaned.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nWHERE MeterCategory = 'Virtual Machines Licenses' and JSON_VALUE(AdditionalInfo, '$.ReservationId') LIKE '%%' and Product Not like 'Windows%'\n--and MeterSubCategory = 'Reservation-Base VM' and ServiceInfo2 LIKE '%BYOL' and Product LIKE '%Spot%'\nGROUP BY substring([Date],0,8), JSON_VALUE(AdditionalInfo, '$.ServiceType'), PartNumber, Product, JSON_VALUE(AdditionalInfo, '$.ReservationOrderId')\nORDER BY substring([Date],0,8), sum(ConsumedQuantity) DESC",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

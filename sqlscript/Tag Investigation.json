@@ -1,0 +1,20 @@
+{
+	"name": "Tag Investigation",
+	"properties": {
+		"folder": {
+			"name": "Ad Hoc Cost Report Requests"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    COUNT(AccountId)\n    --JSON_VALUE(Tags, '$.CostAllocationType') as CostAllocationType\n    --Tags\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/2022/05/ca8464bb-18e5-42b1-a4e6-7b193ee4d366.csv',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW = TRUE\n    ) AS [result]\n--where UPPER(JSON_VALUE(Tags, '$.CostAllocationType')) = 'CI' \n--UPPER(JSON_VALUE(Tags, '$.CostAllocationType')) != '' AND\n--UPPER(JSON_VALUE(Tags, '$.CostAllocationType')) != 'WBS' AND\n--UPPER(JSON_VALUE(Tags, '$.CostAllocationType')) != 'APPID' AND\n--UPPER(JSON_VALUE(Tags, '$.CostAllocationType')) != 'TOBESPECIFIED' \n\n--where upper(Tags) LIKE '%COSTALLOCATIONTYPE%'\n\n--where JSON_VALUE(UPPER(Tags), '$.COSTALLOCATIONTYPE') = 'CI' \n--JSON_VALUE(UPPER(Tags), '$.COSTALLOCATIONTYPE') = ''\n--JSON_VALUE(UPPER(Tags), '$.COSTALLOCATIONTYPE') = 'WBS'\n--JSON_VALUE(UPPER(Tags), '$.COSTALLOCATIONTYPE') = 'APPID'\n--JSON_VALUE(UPPER(Tags), '$.COSTALLOCATIONTYPE') = 'TOBESPECIFIED' ",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

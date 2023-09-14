@@ -1,0 +1,20 @@
+{
+	"name": "VM HUB 2022",
+	"properties": {
+		"folder": {
+			"name": "--RI & HUB Savings/Old API"
+		},
+		"content": {
+			"query": "SELECT\n    JSON_VALUE(AdditionalInfo, '$.ServiceType') as ServiceType, \n    JSON_VALUE(AdditionalInfo, '$.VCPUs') as VCPUs, \n    substring([Date],0,8) as [Date], \n    sum(ConsumedQuantity) as ConsumedQuantity,\n    PartNumber,\n    Product,\n    ServiceInfo2\n    --,sum(Cost) as Cost\n    --TOP 1000 *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/monthly/2022/*/*-cleaned.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n--WHERE MeterCategory = 'Virtual Machines Licenses'\n----Filtering on only Windows Server HUB VM's, there is also Windows Client BYOL but this is not relecant for VM HUB savings calculations\n----I've removed \"Product LIKE '%Spot%'\" part is not required as spot machine still come under \"MeterCategory = 'Virtual Machines'\"\nWHERE MeterCategory = 'Virtual Machines' and ServiceInfo2 LIKE 'Windows Server BYOL'\nGROUP BY JSON_VALUE(AdditionalInfo, '$.ServiceType'), substring([Date],0,8), PartNumber, Product, ServiceInfo2, JSON_VALUE(AdditionalInfo, '$.VCPUs')\nORDER BY substring([Date],0,8), ConsumedQuantity DESC\n\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

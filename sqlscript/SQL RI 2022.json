@@ -1,0 +1,20 @@
+{
+	"name": "SQL RI 2022",
+	"properties": {
+		"folder": {
+			"name": "--RI & HUB Savings/Old API"
+		},
+		"content": {
+			"query": "SELECT\n    [Location] as [Location],\n    ResourceLocation,\n    JSON_VALUE(AdditionalInfo, '$.AHB') as AHB,\n    JSON_VALUE(AdditionalInfo, '$.vCores') as vCores, \n    MeterSubCategory,\n    substring([Date],0,8) as [Date], \n    sum(ConsumedQuantity) as ConsumedQuantity,\n    PartNumber,\n    Product,\n    InstanceId,\n    AdditionalInfo\n    --TOP 1000 *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/monthly/2022/*/*-cleaned.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n--WHERE ServiceInfo2 NOT LIKE 'Windows%' and ServiceInfo2 LIKE '%BYOL' and Product LIKE '%Spot%'\n--WHERE (MeterCategory = 'SQL Managed Instance' and JSON_VALUE(AdditionalInfo, '$.AHB') = 'True') or (MeterCategory = 'Virtual Machines Licenses' and MeterSubCategory LIKE '%Hybrid%')\n--WHERE InstanceId = '/subscriptions/f9892073-3b09-40b7-8f33-1e0320e683c8/resourceGroups/rg-echomodeldist-test/providers/Microsoft.Sql/servers/sql-echomodeldist-test/databases/sql-echomodeldist-test/sqldb-echomodeldist-test'\n--WHERE ResourceGroup = 'equr-ep-dev-cmn-01'\n--WHERE ResourceGroup = 'master-rg-tst'\nWHERE MeterSubCategory = 'Compute Reservation' --and ServiceTier = 'SQL RI'\nGROUP BY JSON_VALUE(AdditionalInfo, '$.ServiceType'), substring([Date],0,8), MeterSubCategory, PartNumber, Product, JSON_VALUE(AdditionalInfo, '$.AHB'), InstanceId, JSON_VALUE(AdditionalInfo, '$.vCores'), AdditionalInfo, [Location], ResourceLocation, ServiceTier\nORDER BY substring([Date],0,8), sum(ConsumedQuantity) DESC\n\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

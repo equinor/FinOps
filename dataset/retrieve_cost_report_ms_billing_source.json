@@ -1,0 +1,30 @@
+{
+	"name": "retrieve_cost_report_ms_billing_source",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ms_consumption_api_rest",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"baseUrl": "https://consumption.azure.com"
+			}
+		},
+		"parameters": {
+			"fromDate": {
+				"type": "string"
+			},
+			"toDate": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "RestResource",
+		"typeProperties": {
+			"relativeUrl": {
+				"value": "@concat('v4/enrollments/57950773/reservationcharges?startDate=',dataset().fromDate,'&endDate=',dataset().toDate)",
+				"type": "Expression"
+			}
+		},
+		"schema": []
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}

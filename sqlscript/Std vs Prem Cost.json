@@ -1,0 +1,20 @@
+{
+	"name": "Std vs Prem Cost",
+	"properties": {
+		"folder": {
+			"name": "Ad Hoc Cost Report Requests/Cloud Cost Facts"
+		},
+		"content": {
+			"query": "SELECT\n    --*\n    --SubscriptionName\n    --,ResourceGroup\n    --ProductName\n    MeterCategory\n    ,MeterSubCategory\n    --,ResourceLocation\n    --,MeterName\n    --,ProductName\n    --,UnitPrice\n    --,ProductName\n    --,ResourceName\n    --,UnitOfMeasure\n    --,format(sum(Quantity), 'N', 'en-us') as Quantity\n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAmortizedCost/2023*/ACMMonthlyAmortizedCost_2023*.parquet',\n        --BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/daily/ACMDailyActualCost/ACMDailyActualCost.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where \n        ProductName like '%SSD Managed Disks%'\n        and MeterName like '%Disk%'\n        and MeterName <> 'Disk Operations'\n    group by MeterCategory, MeterSubCategory--, UnitOfMeasure--, ProductName --MeterName --, ResourceLocation--, ResourceName, ResourceGroup, ProductName, ProductName, SubscriptionName, UnitPrice,\n    order by sum(CostInBillingCurrency) DESC\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

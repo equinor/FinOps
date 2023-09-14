@@ -1,0 +1,20 @@
+{
+	"name": "VM Reservation Cost - csv",
+	"properties": {
+		"folder": {
+			"name": "Reservation - Saving Plan Queries"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    reservationOrderId AS reservationOrderId,\n    reservationOrderName AS reservationOrderName,\n    armSkuName AS armSkuName,\n    term AS term,\n    substring(FORMAT (eventDate,'yyyy-MM-dd') ,0,11) AS eventDate,\n    quantity AS quantity,\n    amount AS amount,\n    currency,\n    billingFrequency AS billingFrequency\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/tempdata/annual/2021/costreport_reservations_monthly_2021.csv',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW = TRUE\n    ) AS [result]\n--where reservationOrderId = '7334aae9-5adc-4e4c-a58b-801d095a14df'\nwhere reservationOrderName NOT LIKE '%SQL%' and reservationOrderId != 'd5b99270-d26e-49b1-82dc-d7cb16a9181a' and reservationOrderName NOT LIKE '%SUSE%'\norder by substring(FORMAT (eventDate,'yyyy-MM-dd') ,0,11)",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "master",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

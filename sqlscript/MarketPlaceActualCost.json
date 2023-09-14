@@ -1,0 +1,20 @@
+{
+	"name": "MarketPlaceActualCost",
+	"properties": {
+		"folder": {
+			"name": "MarketPlace"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/daily/ACMDailyActualCost/20221101-20221130/ACMDailyActualCost_314263b6-3eec-48c4-a5b3-d251b0ff1036.csv',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW=TRUE\n    ) AS [result]\nwhere PublisherType = 'Marketplace'",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

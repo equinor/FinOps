@@ -1,0 +1,20 @@
+{
+	"name": "VM HUB 2022 New API",
+	"properties": {
+		"folder": {
+			"name": "--RI & HUB Savings/New API/2022"
+		},
+		"content": {
+			"query": "SELECT\n    --TOP 1000 *\n    JSON_VALUE(AdditionalInfo, '$.ServiceType') as ServiceType, \n    JSON_VALUE(AdditionalInfo, '$.VCPUs') as VCPUs, \n    format([Date], 'yyyy-MM') as [Date], \n    sum(Quantity) as Quantity,\n    PartNumber,\n    ProductName,\n    MeterCategory,\n    ServiceInfo2\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAc*/2022*/A*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nWHERE MeterCategory = 'Virtual Machines' and ServiceInfo2 = 'Windows Server BYOL' --and ReservationName != '' and Product LIKE '%Spot%'\nGROUP BY JSON_VALUE(AdditionalInfo, '$.ServiceType'), format([Date], 'yyyy-MM'), PartNumber, ProductName, MeterCategory, JSON_VALUE(AdditionalInfo, '$.VCPUs'), ServiceInfo2\nORDER BY format([Date], 'yyyy-MM'), sum(Quantity) DESC\n\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

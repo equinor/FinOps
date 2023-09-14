@@ -1,0 +1,63 @@
+{
+	"name": "Remove First Two Lines",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"linkedService": {
+						"referenceName": "s037-cost-management-WorkspaceDefaultStorage",
+						"type": "LinkedServiceReference"
+					},
+					"name": "S037RawCSV"
+				}
+			],
+			"sinks": [
+				{
+					"linkedService": {
+						"referenceName": "s037-cost-management-WorkspaceDefaultStorage",
+						"type": "LinkedServiceReference"
+					},
+					"name": "S037CleanedCSV"
+				}
+			],
+			"transformations": [],
+			"scriptLines": [
+				"parameters{",
+				"     Year as string,",
+				"     Month as string",
+				"}",
+				"source(useSchema: false,",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'delimited',",
+				"     fileSystem: 'usage',",
+				"     folderPath: (monthly/2022/08),",
+				"     fileName: (concat('2022-08-01','_2022-08-31-raw.csv')),",
+				"     columnDelimiter: ',',",
+				"     escapeChar: '\\\\',",
+				"     quoteChar: '\\\"',",
+				"     columnNamesAsHeader: false,",
+				"     skipLines: 2,",
+				"     partitionBy('hash', 1)) ~> S037RawCSV",
+				"S037RawCSV sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'delimited',",
+				"     fileSystem: 'usage',",
+				"     folderPath: (concat('monthly/',$Year,'/',$Month,'/')),",
+				"     columnDelimiter: ',',",
+				"     escapeChar: '\\\\',",
+				"     quoteChar: '\\\"',",
+				"     columnNamesAsHeader: true,",
+				"     partitionFileNames:[(concat($Year, '-',$Month,'-cleaned.csv'))],",
+				"     umask: 0666,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> S037CleanedCSV"
+			]
+		}
+	}
+}

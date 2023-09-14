@@ -1,0 +1,20 @@
+{
+	"name": "S162 Cost Investigation",
+	"properties": {
+		"folder": {
+			"name": "Ad Hoc Cost Report Requests"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    [Date],\n    PartNumber,\n    ResourceRate,\n    ConsumedQuantity,\n    Cost,\n    ServiceTier,\n    SubscriptionName,\n    ResourceGroup\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/2022/*/*.csv',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW=TRUE\n    ) AS [result]\nWHERE SubscriptionName = 'S162-EDM-DataCatalog' AND ResourceGroup = 'CoreResources' and [Date] > '2022-05-27T00:00:00.0000000'\norder by [Date]\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

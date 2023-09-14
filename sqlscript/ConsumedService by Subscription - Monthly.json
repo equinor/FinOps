@@ -1,0 +1,20 @@
+{
+	"name": "ConsumedService by Subscription - Monthly",
+	"properties": {
+		"folder": {
+			"name": "Ad Hoc Cost Report Requests"
+		},
+		"content": {
+			"query": "\nSELECT\n    SubscriptionName, sum(Cost) as Cost, ConsumedService --, substring([Date],0,8) as [Date]\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/monthly/2021/*/*-cleaned.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nwhere substring([Date],0,8) = '2021-01'\nGROUP BY SubscriptionName, ConsumedService, substring([Date],0,8)\nORDER BY SubscriptionName, ConsumedService, substring([Date],0,8)\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

@@ -1,0 +1,204 @@
+{
+	"name": "Spark Extend Cost File",
+	"properties": {
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sparkpool32",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "56g",
+			"driverCores": 8,
+			"executorMemory": "56g",
+			"executorCores": 8,
+			"numExecutors": 2,
+			"runAsWorkspaceSystemIdentity": false,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "eff505a1-c6d1-4051-84f7-de319c37c4c6"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"synapse_widget": {
+				"version": "0.1"
+			},
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
+				"name": "sparkpool32",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net",
+					"authHeader": null
+				},
+				"sparkVersion": "3.2",
+				"nodeCount": 3,
+				"cores": 8,
+				"memory": 56,
+				"extraHeader": null
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "code",
+				"metadata": {
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"    amortizedCostPath = 'temp'\n",
+					"    actualCostPath = 'temp'\n",
+					"    toDate = 'temp'\n",
+					"    fromDate = 'temp'\n",
+					"    container = 'temp'"
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"microsoft": {
+						"language": "python"
+					},
+					"collapsed": false
+				},
+				"source": [
+					"%%pyspark\n",
+					"from pyspark.sql.types import T\n",
+					"from pyspark.sql import Row\n",
+					"from pyspark.sql.functions import F\n",
+					"from pyspark.sql import SparkSession\n",
+					"\n",
+					"\n",
+					"#dateRange = fromDate + '-' + toDate\n",
+					"\n",
+					"#actualCostSourcefilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + actualCostPath + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
+					"#actualCostSourcefilename = 'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/daily/ACMDailyActualCost/*/ACMDailyActualCost_d8f0476a-59cd-4d9c-907d-3c08eef9a42a.parquet'\n",
+					"actualCostSourcefilename = 'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/202212*/ACMMonthlyActualCost_*.parquet'\n",
+					"actualCostDestfilename = 'abfss://test@s037costmgmt.dfs.core.windows.net/2012-12-single-nopartition.parquet'\n",
+					"#actualCostDestinationfilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + actualCostPath + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
+					"\n",
+					"# Create a SparkSession\n",
+					"spark = SparkSession.builder.appName(\"Read Parquet\").getOrCreate()\n",
+					"\n",
+					"print('Reading in file...')\n",
+					"# Read the parquet file\n",
+					"df = spark.read.parquet(actualCostSourcefilename)\n",
+					"\n",
+					"print('File read in...')\n",
+					"\n",
+					"#display(df.where(col(\"AdditionalInfo\").contains(\"AHB\")))\n",
+					"\n",
+					"# Show the DataFrame\n",
+					"#df.show()\n",
+					"#df.printSchema()\n",
+					"\n",
+					"#df.select('AdditionalInfo').where(df.AdditionalInfo.contains('VCPUs')).show(truncate=False)\n",
+					"\n",
+					"json_schema = T.StructType([T.StructField(\"VCPUs\", T.IntegerType()),\n",
+					"                            T.StructField(\"vCores\", T.IntegerType()),\n",
+					"                            T.StructField(\"ImageType\", T.StringType()),\n",
+					"                            T.StructField(\"ServiceType\", T.StringType()),\n",
+					"                            T.StructField(\"VMName\", T.StringType()),\n",
+					"                            T.StructField(\"VMProperties\", T.StringType()),\n",
+					"                            T.StructField(\"AHB\", T.StringType()),\n",
+					"                            T.StructField(\"ConsumedQuantity\", T.DecimalType()),\n",
+					"                            T.StructField(\"DatabaseName\", T.StringType())])\n",
+					"\n",
+					"print('Extracting AI columns from json column...')\n",
+					"df = df.withColumn(\"AdditionalInfo\", F.from_json(F.col(\"AdditionalInfo\"), json_schema))\n",
+					"#df.printSchema()\n",
+					"\n",
+					"df = df.withColumn(\"VCPUs\", F.coalesce(F.col(\"AdditionalInfo.VCPUs\"), F.lit(\"NA\")).cast(T.IntegerType()))\n",
+					"df = df.withColumn(\"vCores\", F.coalesce(F.col(\"AdditionalInfo.vCores\"), F.lit(\"NA\")).cast(T.IntegerType()))\n",
+					"df = df.withColumn(\"ImageType\", F.coalesce(F.col(\"AdditionalInfo.ImageType\"), F.lit(\"NA\")))\n",
+					"df = df.withColumn(\"ServiceType\", F.coalesce(F.col(\"AdditionalInfo.ServiceType\"), F.lit(\"NA\")))\n",
+					"df = df.withColumn(\"VMName\", F.coalesce(F.col(\"AdditionalInfo.VMName\"), F.lit(\"NA\")))\n",
+					"df = df.withColumn(\"VMProperties\", F.coalesce(F.col(\"AdditionalInfo.VMProperties\"), F.lit(\"NA\")))\n",
+					"df = df.withColumn(\"AHB\", F.coalesce(F.col(\"AdditionalInfo.AHB\"), F.lit(\"NA\")))\n",
+					"df = df.withColumn(\"ConsumedQuantity\", F.coalesce(F.col(\"AdditionalInfo.ConsumedQuantity\"), F.lit(\"NA\")).cast(T.DecimalType()))\n",
+					"df = df.withColumn(\"DatabaseName\", F.coalesce(F.col(\"AdditionalInfo.DatabaseName\"), F.lit(\"NA\")))\n",
+					"#df.printSchema()\n",
+					"\n",
+					"df = df.withColumnRenamed(\"VCPUs\", \"ai_VCPUs\")\n",
+					"df = df.withColumnRenamed(\"vCores\", \"ai_vCores\")\n",
+					"df = df.withColumnRenamed(\"ImageType\", \"ai_ImageType\")\n",
+					"df = df.withColumnRenamed(\"ServiceType\", \"ai_ServiceType\")\n",
+					"df = df.withColumnRenamed(\"VMName\", \"ai_VMName\")\n",
+					"df = df.withColumnRenamed(\"VMProperties\", \"ai_VMProperties\")\n",
+					"df = df.withColumnRenamed(\"AHB\", \"ai_AHB\")\n",
+					"df = df.withColumnRenamed(\"ConsumedQuantity\", \"ai_ConsumedQuantity\")\n",
+					"df = df.withColumnRenamed(\"DatabaseName\", \"ai_DatabaseName\")\n",
+					"\n",
+					"print('AI columns extractedffrom json column...')\n",
+					"#df.printSchema()\n",
+					"#display(df)\n",
+					"print(str(df.count()))\n",
+					"\n",
+					"print('Saving destination file...')\n",
+					"\n",
+					"#df.coalesce(1).write.mode(\"overwrite\").parquet(actualCostDestfilename)\n",
+					"#df.select(\"Date\", \"*\").write.partitionBy('Date').mode(\"overwrite\").parquet(actualCostDestfilename)\n",
+					"\n",
+					"\n",
+					"print('Destination file saved...')\n",
+					"\n",
+					"#df.createOrReplaceTempView(\"usage\")\n",
+					"\n",
+					"\n",
+					"#display(df)\n",
+					"#display(df.where(col(\"ai_AHB\")!='NA'))\n",
+					"#display(df.where(col(\"ai_AHB\").isNotNull()))\n",
+					"#display(df.where(col(\"ai_AHB\")==\"True\"))\n",
+					"#display(df.where(col(\"ai_DatabaseName\")!='NA'))\n",
+					"#display(df.where(col(\"ai_DatabaseName\").isNotNull()))\n",
+					"#display(df.filter(col(\"ai_VCPUs\").isNotNull()).show())\n",
+					"\n",
+					""
+				],
+				"execution_count": 5
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				]
+			}
+		]
+	}
+}

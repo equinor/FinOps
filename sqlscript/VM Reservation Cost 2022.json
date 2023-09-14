@@ -1,0 +1,20 @@
+{
+	"name": "VM Reservation Cost 2022",
+	"properties": {
+		"folder": {
+			"name": "--RI & HUB Savings/Old API"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    reservationOrderId AS reservationOrderId,\n    reservationOrderName AS reservationOrderName,\n    armSkuName AS armSkuName,\n    term AS term,\n    substring(eventDate,0,11) AS eventDate,\n    quantity AS quantity,\n    amount AS amount,\n    currency,\n    billingFrequency AS billingFrequency\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/reservations/2022/reservations_costreport.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n--where reservationOrderId = '7334aae9-5adc-4e4c-a58b-801d095a14df'\n--where reservationOrderName NOT LIKE '%SQL%' --and reservationOrderId != 'd5b99270-d26e-49b1-82dc-d7cb16a9181a'\nwhere armSkuName NOT LIKE 'SQL%' and eventDate Like '2022%'\norder by substring(eventDate,0,11)",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

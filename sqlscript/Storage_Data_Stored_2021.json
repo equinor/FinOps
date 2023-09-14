@@ -1,0 +1,20 @@
+{
+	"name": "Storage_Data_Stored_2021",
+	"properties": {
+		"folder": {
+			"name": "OGBG Benchmark 2022/2021"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8) AS [Date],\n    MeterName,\n    sum(ConsumedQuantity) AS ConsumedQuantity\n    --UnitOfMeasure\n    --*\nFROM\n    OPENROWSET(\n        BULK 'https://omniaacdcdlsprod.dfs.core.windows.net/tempdata/monthly/2021/*/*_cleaned.csv',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW = TRUE\n    ) AS [result]\n--WHERE MeterCategory = 'Storage' AND ServiceTier = 'Tables' and Product NOT LIKE '%Operations%'\nWHERE MeterCategory = 'Storage' AND (MeterName LIKE '%Data Stored' or MeterName LIKE '%Index')\n--WHERE MeterName LIKE 'Data Stored' \nGROUP BY substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8), MeterName\norder by substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8), MeterName\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

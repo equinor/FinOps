@@ -1,0 +1,20 @@
+{
+	"name": "tsc_CreateCalendarTable_v2",
+	"properties": {
+		"folder": {
+			"name": "Views/tsc"
+		},
+		"content": {
+			"query": "-- Create the Calendar table using CTAS\nCREATE TABLE Calendar\nWITH\n(\n    DISTRIBUTION = ROUND_ROBIN,\n    CLUSTERED COLUMNSTORE INDEX\n)\nAS\nSELECT\n    [Date],\n    YEAR([Date]) AS [Year],\n    MONTH([Date]) AS [Month],\n    DAY([Date]) AS [Day],\n    DATEPART(QUARTER, [Date]) AS [Quarter],\n    DATEPART(WEEKDAY, [Date]) AS [DayOfWeek],\n    CASE WHEN DATEPART(WEEKDAY, [Date]) IN (1, 7) THEN 0 ELSE 1 END AS [Weekday],\n    DATEPART(WEEK, [Date]) AS [WeekOfYear],\n    DATENAME(MONTH, [Date]) AS [MonthName],\n    DATENAME(WEEKDAY, [Date]) AS [DayName],\n    0 AS [IsHoliday] -- Set IsHoliday value based on your specific requirements\nFROM\n    (SELECT CAST('2000-01-01' AS DATE) AS [Date] UNION ALL SELECT DATEADD(DAY, 1, [Date]) FROM dbo.Calendar WHERE [Date] < '2030-12-31') AS c\nOPTION (LABEL = 'Create Calendar', SINGLE_BLOB);\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

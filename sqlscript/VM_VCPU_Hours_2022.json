@@ -1,0 +1,20 @@
+{
+	"name": "VM_VCPU_Hours_2022",
+	"properties": {
+		"folder": {
+			"name": "OGBG Benchmark 2022/2022"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    --top 100 *,\n    --JSON_VALUE(AdditionalInfo, '$.ServiceType') as ServiceType,\n    MeterName\n    --,FORMAT([Date],'yyyy') as [Date]\n    ,substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8) as [Date]\n    ,sum(Quantity) as Quantity\n    --,sum(CostInBillingCurrency) as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/2022*/ACMMonthlyActualCost_*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    WHERE MeterCategory = 'Virtual Machines' and ChargeType = 'Usage' --and benefitName is not NULL --and JSON_VALUE(AdditionalInfo, '$.ServiceType') is NULL --or MeterCategory = 'Cloud Services'\n    GROUP BY MeterName, substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8)\n    order by substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8), Quantity DESC\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

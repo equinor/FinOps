@@ -1,0 +1,20 @@
+{
+	"name": "Storage_Cost_by_MeterSubCategory_2021-04_2022-03",
+	"properties": {
+		"folder": {
+			"name": "OGBG Benchmark 2022/12 month period"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    sum(Cost), [MeterSubCategory]\nFROM\n    OPENROWSET(\n        BULK 'https://omniaacdcdlsprod.dfs.core.windows.net/tempdata/monthly/*/*/*_cleaned.csv',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n    HEADER_ROW = TRUE\n    ) AS [result]\nWHERE   \n    [result].[MeterCategory] = 'Storage' and \n    [result].[MeterSubCategory] NOT LIKE '%Bandwidth%' and \n    ([result].[Date] BETWEEN '2021-04-01' and '2022-03-31')\nGROUP by [MeterSubCategory]\nORDER by sum(Cost) DESC\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

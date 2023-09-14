@@ -1,0 +1,20 @@
+{
+	"name": "SQL RI Usage March 2023",
+	"properties": {
+		"folder": {
+			"name": "--RI & HUB Savings/New API/Morten P Query"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 \n    ReservationName\n    ,format([Date],'yyyy-MM') as [Date]\n    --,JSON_VALUE(AdditionalInfo, '$.ServiceType') as ServiceType\n    ,avg(UnitPrice) as UnitPrice\n    --,EffectivePrice as EffectivePrice\n    ,sum(Quantity) as Quantity\n    ,sum(UnitPrice * Quantity) as [PAYG Cost]\n    ,sum(EffectivePrice * Quantity) as [RI Cost]\n    ,sum((UnitPrice - EffectivePrice) * Quantity) as TotalUsedSavings\n    \nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAm*/2022*/A*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nwhere ChargeType = 'Usage' and PricingModel = 'Reservation' and ConsumedService = 'Microsoft.Sql'\ngroup by ReservationName, format([Date],'yyyy-MM')\norder by format([Date],'yyyy-MM'), ReservationName\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

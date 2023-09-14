@@ -1,0 +1,20 @@
+{
+	"name": "View - Actual Usage - Management API",
+	"properties": {
+		"folder": {
+			"name": "Views"
+		},
+		"content": {
+			"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW Actual_Usage_Management_API\nAS\n\nSELECT\n    *\n    ,JSON_VALUE(AdditionalInfo, '$.VCPUs') as VCPUs\n    ,Quantity * cast(JSON_VALUE(AdditionalInfo, '$.VCPUs') as int) as CPUHours\n    ,JSON_VALUE(AdditionalInfo, '$.UsageType') as UsageType\n    ,JSON_VALUE(AdditionalInfo, '$.ImageType') as ImageType\n    ,JSON_VALUE(AdditionalInfo, '$.ServiceType') as ServiceType\n    ,JSON_VALUE(AdditionalInfo, '$.VMName') as VMName\n    ,JSON_VALUE(AdditionalInfo, '$.VMProperties') as VMProperties\n    ,JSON_VALUE(AdditionalInfo, '$.CPUs') as CPUs\n    --,FORMAT ([Date],'yyyy') as [Date_yyyy]\n    --,FORMAT ([Date],'yyyy-MM') as [Date_yyyy-MM]\n    --[Date],\n    --FORMAT ([Date],'yyyy-MM-dd') as [Date],\n    --substring([Date],7,4) + '-' + substring([Date],1,2) + '-' + substring([Date],4,2)  as FormattedDate,\n    --substring([Date],7,4) + '-' + substring([Date],1,2) as [ShortDate],\n    --ResourceGroup,\n    --ResourceLocation,\n    --UnitOfMeasure,\n    --Quantity,\n    --EffectivePrice,\n    --CostInBillingCurrency,\n    --UnitPrice,\n    --PayGPrice,    \n    --ProductName,\n    --MeterCategory,\n    --MeterSubCategory,\n    --MeterName,   \n    --ServiceInfo1,\n    --ServiceInfo2,\n    --ReservationId,\n    --ReservationName,     \n    --PartNumber,\n    --PlanName,\n    --Term,\n    --CostCenter,\n    --ConsumedService,\n    --ResourceId,\n    --Tags,\n    --OfferId,\n    --AdditionalInfo,\n    --ResourceName,\n    --PublisherType,\n    --PublisherName,\n    --ChargeType,\n    --Frequency,\n    --PricingModel,\n    --ServiceFamily,\n    --benefitId,\n    --benefitName,\n    --SubscriptionId,\n    --SubscriptionName\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/*/ACMMonthlyActualCost_*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

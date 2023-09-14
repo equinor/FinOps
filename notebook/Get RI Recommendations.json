@@ -1,0 +1,173 @@
+{
+	"name": "Get RI Recommendations",
+	"properties": {
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sparkpool32",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "56g",
+			"driverCores": 8,
+			"executorMemory": "56g",
+			"executorCores": 8,
+			"numExecutors": 2,
+			"runAsWorkspaceSystemIdentity": true,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "16d6d527-ddf0-4b65-86e8-013df4b8b65c"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"synapse_widget": {
+				"version": "0.1"
+			},
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
+				"name": "sparkpool32",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net",
+					"authHeader": null
+				},
+				"sparkVersion": "3.2",
+				"nodeCount": 3,
+				"cores": 8,
+				"memory": 56,
+				"extraHeader": null
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "code",
+				"metadata": {
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"container = 'tbc'\n",
+					"folder = 'tbc'\n",
+					"filename = 'tbc'\n",
+					"scope = 'Shared'\n",
+					"billingAccount = 'tbc'\n",
+					"lookBackPeriod = 'Last30Days'\n",
+					"resourceType = 'tbc'\n",
+					"term = 'P3Y'"
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from azure.identity import DefaultAzureCredential\n",
+					"from azure.mgmt.consumption import ConsumptionManagementClient\n",
+					"from azure.keyvault.secrets import SecretClient\n",
+					"from azure.identity import DefaultAzureCredential, ClientSecretCredential, ManagedIdentityCredential\n",
+					"from notebookutils import mssparkutils\n",
+					"import json\n",
+					"import pandas as pd\n",
+					"\n",
+					"def get_ri_recommendations(scope, lookBackPeriod, term):\n",
+					"    keyVaultName = 'acm-toolkit-kv'\n",
+					"    KVUri = f\"https://{keyVaultName}.vault.azure.net\"\n",
+					"    \n",
+					"    tenantIdSecretName = 'tenantID'\n",
+					"    clientIdSecretName = 'sp-ClientID'\n",
+					"    secretName = 'sp-password'\n",
+					"    subscriptionId = '13d66f54-0a19-4912-b4f3-54d15897368d'\n",
+					"    \n",
+					"    secret = mssparkutils.credentials.getSecret(keyVaultName, secretName)\n",
+					"    ClientID = mssparkutils.credentials.getSecret(keyVaultName, clientIdSecretName)\n",
+					"    tenantID = mssparkutils.credentials.getSecret(keyVaultName, tenantIdSecretName)\n",
+					"\n",
+					"    resource_scope = \"subscriptions/\" + subscriptionId\n",
+					"    queryFilter = \"properties/scope eq '\" + scope + \"' and properties/lookBackPeriod eq '\" + lookBackPeriod + \"' AND properties/term eq '\" + term + \"'\"\n",
+					"    \n",
+					"    print(f\"Retrieving your secret from {keyVaultName}.\")\n",
+					"\n",
+					"    credential = ClientSecretCredential(tenant_id=tenantID, client_id=ClientID, client_secret=secret)\n",
+					"    client = ConsumptionManagementClient(\n",
+					"        credential=credential,\n",
+					"        subscription_id=subscriptionId,\n",
+					"    )\n",
+					"\n",
+					"    paged_recommendations = client.reservation_recommendations.list(\n",
+					"        #resource_scope=\"providers/Microsoft.Billing/billingAccounts/57950773\",\n",
+					"        resource_scope=resource_scope, filter=queryFilter\n",
+					"    )\n",
+					"\n",
+					"    # Finished with the consumption client so shutting it down    \n",
+					"    client.close()\n",
+					"\n",
+					"    # Creating blank array to hold the unpaged results\n",
+					"    recommendations = []\n",
+					"\n",
+					"    # for each paged recommendation store the unpaged data in the recommendations array\n",
+					"    for item in paged_recommendations:\n",
+					"        if item.term == term:\n",
+					"            recommendations.append(item.serialize(dict.items))\n",
+					"\n",
+					"    recommendations_df = pd.json_normalize(recommendations, max_level=1, sep='_')\n",
+					"\n",
+					"    #print(recommendations_df)\n",
+					"    return recommendations_df\n",
+					"\n",
+					"def save_df_to_csv(recommendations_df, container, folder, filename, scope, billingAccount, lookBackPeriod, resourceType):\n",
+					"    ri_recs_filename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + folder + '/' + filename\n",
+					"    print('Saving Recommendation DataFrame to csv file at: ', ri_recs_filename)\n",
+					"    recommendations_df.to_csv()\n",
+					"    print(recommendations_df)\n",
+					"\n",
+					"if __name__ == \"__main__\":\n",
+					"    recommendations_df = get_ri_recommendations(scope, lookBackPeriod, term)\n",
+					"    save_df_to_csv(recommendations_df, container, folder, filename, scope, billingAccount, lookBackPeriod, resourceType)"
+				],
+				"execution_count": 4
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				]
+			}
+		]
+	}
+}

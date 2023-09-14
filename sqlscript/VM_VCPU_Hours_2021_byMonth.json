@@ -1,0 +1,20 @@
+{
+	"name": "VM_VCPU_Hours_2021_byMonth",
+	"properties": {
+		"folder": {
+			"name": "OGBG Benchmark 2022/2021"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    sum(ConsumedQuantity), REPLACE(REPLACE(REPLACE(REPLACE(SUBSTRING(AdditionalInfo,CHARINDEX('VCPUs\":',AdditionalInfo)+8,3),'}',''),',',''),' ',''),'\"',''), substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8)\nFROM\n    OPENROWSET(\n        BULK 'https://omniaacdcdlsprod.dfs.core.windows.net/tempdata/monthly/2021/*/*_cleaned.csv',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW = TRUE\n    ) AS [result]\nWHERE MeterCategory = 'Virtual Machines' and ConsumedService != 'Microsoft.MachineLearningServices' and ConsumedService != 'Microsoft.ClassicCompute' \nGROUP BY REPLACE(REPLACE(REPLACE(REPLACE(SUBSTRING(AdditionalInfo,CHARINDEX('VCPUs\":',AdditionalInfo)+8,3),'}',''),',',''),' ',''),'\"',''), substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8)\nORDER BY substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8)",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

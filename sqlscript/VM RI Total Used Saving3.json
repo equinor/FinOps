@@ -1,0 +1,20 @@
+{
+	"name": "VM RI Total Used Saving3",
+	"properties": {
+		"folder": {
+			"name": "--RI & HUB Savings/New API/2022"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 *\n    --[Date]\n    sum([PAYG Cost]) as [PAYG Cost]\n    ,sum([RI Cost]) as [RI Cost]\n    ,sum(TotalUsedSavings) as TotalUsedSavings\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/test/RI_Savings_2022/VM_RI_Usage_2022.csv',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW=TRUE\n    ) AS [result]\n    --group by [Date]\n    --order by [Date]\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

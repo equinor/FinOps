@@ -1,0 +1,116 @@
+{
+	"name": "RI Recommendations",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get RI Recommendations",
+				"type": "SynapseNotebook",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "Get RI Recommendations",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"scope": {
+							"value": {
+								"value": "@pipeline().parameters.scope",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"resourceType": {
+							"value": {
+								"value": "@pipeline().parameters.resourceType",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"lookBackPeriod": {
+							"value": {
+								"value": "@pipeline().parameters.lookBackPeriod",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"billingAccount": {
+							"value": {
+								"value": "@pipeline().parameters.billingAccount",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"term": {
+							"value": {
+								"value": "@pipeline().parameters.term",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"filename": {
+							"value": {
+								"value": "@concat(\n    'abfss://', \n    pipeline().parameters.container,\n    's037costmgmt.dfs.core.windows.net/',\n    pipeline().parameters.folder,\n    '/',\n    if(equals(pipeline().parameters.resourceType,'VirtualMachines'),\n        'VM',\n        pipeline().parameters.resourceType),\n    '-RI-Recommendations-',\n    pipeline().parameters.scope,\n    '-Scope.csv')\n",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": "sparkpool32",
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Small",
+					"conf": {
+						"spark.dynamicAllocation.enabled": true
+					},
+					"driverSize": "Small"
+				}
+			}
+		],
+		"parameters": {
+			"scope": {
+				"type": "string",
+				"defaultValue": "Shared"
+			},
+			"lookBackPeriod": {
+				"type": "string",
+				"defaultValue": "Last30Days"
+			},
+			"resourceType": {
+				"type": "string",
+				"defaultValue": "VirtualMachines"
+			},
+			"billingAccount": {
+				"type": "string",
+				"defaultValue": "57950773"
+			},
+			"term": {
+				"type": "string",
+				"defaultValue": "P3Y"
+			},
+			"container": {
+				"type": "string",
+				"defaultValue": "reservations"
+			},
+			"folder": {
+				"type": "string",
+				"defaultValue": "recommendations"
+			}
+		},
+		"folder": {
+			"name": "Management API (New)"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-01-26T10:22:30Z"
+	},
+	"type": "Microsoft.Synapse/workspaces/pipelines"
+}

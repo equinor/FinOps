@@ -1,0 +1,95 @@
+{
+	"name": "Convert CSV to Parquet",
+	"properties": {
+		"activities": [
+			{
+				"name": "Convert CSV to Parquet",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFolderPath": {
+								"value": "@pipeline().parameters.Path",
+								"type": "Expression"
+							},
+							"wildcardFileName": "*.csv",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "Adhoc_CSV_Source",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "Monthly_Parquet",
+						"type": "DatasetReference",
+						"parameters": {
+							"Path": {
+								"value": "@pipeline().parameters.Path",
+								"type": "Expression"
+							},
+							"Container": {
+								"value": "@pipeline().parameters.Container",
+								"type": "Expression"
+							},
+							"toDate_fromDate": null
+						}
+					}
+				]
+			}
+		],
+		"parameters": {
+			"Path": {
+				"type": "string",
+				"defaultValue": "exports/monthly/ACMMonthlyAmortizedCost/2020*"
+			},
+			"Container": {
+				"type": "string",
+				"defaultValue": "usage"
+			}
+		},
+		"folder": {
+			"name": "Management API (New)"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-12-19T16:30:52Z"
+	},
+	"type": "Microsoft.Synapse/workspaces/pipelines"
+}

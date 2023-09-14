@@ -1,0 +1,33 @@
+{
+	"name": "CSVFromMicrosoft",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ms_consumption_api_http",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"baseUrl": "https://consumption.azure.com"
+			}
+		},
+		"parameters": {
+			"blobPath": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "HttpServerLocation",
+				"relativeUrl": {
+					"value": "@dataset().blobPath",
+					"type": "Expression"
+				}
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\"",
+			"quoteChar": "\""
+		},
+		"schema": []
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}

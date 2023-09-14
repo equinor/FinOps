@@ -1,0 +1,121 @@
+{
+	"name": "New API - Calculate Savings",
+	"properties": {
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sparkpool32",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "56g",
+			"driverCores": 8,
+			"executorMemory": "56g",
+			"executorCores": 8,
+			"numExecutors": 2,
+			"runAsWorkspaceSystemIdentity": false,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "2c1b7c15-c1cd-482b-8222-70c9ac0e0111"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"synapse_widget": {
+				"version": "0.1"
+			},
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
+				"name": "sparkpool32",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net",
+					"authHeader": null
+				},
+				"sparkVersion": "3.2",
+				"nodeCount": 3,
+				"cores": 8,
+				"memory": 56,
+				"extraHeader": null
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "code",
+				"metadata": {
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"year = '2022'\n",
+					"month = '01'\n",
+					"reportType = 'ActualCost'\n",
+					"dateRange = '20220101-20220131'\n",
+					"path = ''\n",
+					""
+				],
+				"execution_count": 27
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"import pandas as pd\n",
+					"\n",
+					"if reportType == 'ActualCost':\n",
+					"    source_filename = 'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/' + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
+					"elif reportType == 'AmortizedCost':\n",
+					"    source_filename = 'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/' + dateRange + '/ACMMonthlyAmortizedCost_' + dateRange + '.parquet'\n",
+					"\n",
+					"print(f'Loading source file... ',source_filename)\n",
+					"#usage = pd.read_csv(source_filename)\n",
+					"usage = pd.read_parquet(source_filename)\n",
+					"\n",
+					"columns_to_keep = ['UnitPrice','EffectivePrice','Quantity','TotalUsedSavings','ReservationName','ProductOrderName','Date','UnitOfMeasure','SubscriptionId','SubscriptionName','ResourceGroup','ProductName','MeterCategory','MeterName','CostInBillingCurrency','ResourceId','AdditionalInfo','ServiceInfo2','ReservationId','Term','ChargeType','PartNumber','PayGPrice','benefitId','benefitName']\n",
+					"\n",
+					"#usage = usage.loc[:, [columns_to_keep]]\n",
+					"usage.drop(usage.columns.difference(columns_to_keep), 1, inplace=True)\n",
+					"\n",
+					"usage = usage[usage['ReservationName'].notna()]\n",
+					"usage = usage[usage['ChargeType'] == 'Usage']\n",
+					"usage['TotalUsedSavings'] = (usage['UnitPrice'] - usage['EffectivePrice']) * usage['Quantity']\n",
+					"\n",
+					"if reportType == 'ActualCost':\n",
+					"    dest_filename = 'abfss://savings@s037costmgmt.dfs.core.windows.net/New-monthly/' + dateRange + '/' + dateRange + '-RI_Savings'\n",
+					"elif reportType == 'AmortizedCost':\n",
+					"    dest_filename = 'abfss://savings@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/' + dateRange + '/ACMMonthlyAmortizedCost_' + dateRange + '-RI_Savings'\n",
+					"\n",
+					"print(f'Writing csv savings file... ',dest_filename+'.csv')\n",
+					"usage.to_csv(dest_filename+'.csv')\n",
+					"print(f'Writing parquet savings file... ',dest_filename+'.parquet')\n",
+					"usage.to_parquet(dest_filename+'.parquet')"
+				],
+				"execution_count": 28
+			}
+		]
+	}
+}

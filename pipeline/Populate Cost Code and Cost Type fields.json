@@ -1,0 +1,67 @@
+{
+	"name": "Populate Cost Code and Cost Type fields",
+	"properties": {
+		"activities": [
+			{
+				"name": "Populate Cost Code and Cost Type fields",
+				"type": "SynapseNotebook",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "Populate Cost Code and Cost Type fields",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"year": {
+							"value": {
+								"value": "@pipeline().parameters.year",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"month": {
+							"value": {
+								"value": "@pipeline().parameters.month",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true
+				}
+			}
+		],
+		"parameters": {
+			"year": {
+				"type": "string",
+				"defaultValue": "2022"
+			},
+			"month": {
+				"type": "string",
+				"defaultValue": "01"
+			}
+		},
+		"variables": {
+			"fromDate": {
+				"type": "String"
+			},
+			"toDate": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "Management API (New)"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-05-01T09:40:53Z"
+	},
+	"type": "Microsoft.Synapse/workspaces/pipelines"
+}

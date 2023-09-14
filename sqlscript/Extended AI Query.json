@@ -1,0 +1,20 @@
+{
+	"name": "Extended AI Query",
+	"properties": {
+		"folder": {
+			"name": "Ad Hoc Cost Report Requests"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    TOP 100 *,\n    JSON_VALUE(AdditionalInfo, '$.VCPUs') as ai_VCPUs,\n    JSON_VALUE(AdditionalInfo, '$.vCores') as ai_vCores,\n    JSON_VALUE(AdditionalInfo, '$.UsageType') as ai_UsageType,\n    JSON_VALUE(AdditionalInfo, '$.ImageType') as ai_ImageType,\n    JSON_VALUE(AdditionalInfo, '$.ServiceType') as ai_ServiceType,\n    JSON_VALUE(AdditionalInfo, '$.VMName') as ai_VMName,\n    JSON_VALUE(AdditionalInfo, '$.VMProperties') as ai_VMProperties,\n    JSON_VALUE(AdditionalInfo, '$.AHB') as ai_AHB,\n    JSON_VALUE(AdditionalInfo, '$.ConsumedQuantity') as ai_ConsumedQuantity,\n    JSON_VALUE(AdditionalInfo, '$.DatabaseName') as ai_DatabaseName\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/20220201-20220228/ACMMonthlyActualCost_20220201-20220228.parquet',\n        FORMAT = 'PARQUET'\n    ) \n    AS [result]\n    where JSON_VALUE(AdditionalInfo, '$.vCores') != ''\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

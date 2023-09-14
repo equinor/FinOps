@@ -1,0 +1,20 @@
+{
+	"name": "VM RI Purchase Cost March 2023",
+	"properties": {
+		"folder": {
+			"name": "--RI & HUB Savings/New API/Morten P Query"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 \n    --ReservationId\n    --,ReservationName\n    --,MeterSubCategory\n    --,Term\n    --,[Date]\n    sum(Quantity) as Quantity\n    ,sum(CostInBillingCurrency) as Cost\n    \nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAc*/202303*/A*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nwhere \n    ChargeType = 'Purchase' \n    and PricingModel = 'Reservation' \n    and (ReservationName like 'S037_%' OR ReservationName like 'VM_RI_%')\n    --and MeterCategory = 'Virtual Machines' and ChargeType = 'Usage'\n--group by ReservationName, format([Date],'yyyy-MM'), JSON_VALUE(AdditionalInfo, '$.ServiceType') \n--order by format([Date],'yyyy-MM'), ReservationName\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

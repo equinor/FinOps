@@ -1,0 +1,20 @@
+{
+	"name": "Ronny CVD VM Cost Report",
+	"properties": {
+		"folder": {
+			"name": "Ad Hoc Cost Report Requests"
+		},
+		"content": {
+			"query": "SELECT \n[ResourceName]\n,[ServiceInfo2]\n,[Date]\n,[MeterCategory]\n,[MeterSubCategory]\n,[Quantity]\n,[EffectivePrice]\n,[CostInBillingCurrency]\n,[UnitPrice]\n,[SubscriptionId]\n,[SubscriptionName]\n,[ResourceGroup]\n,[PublisherType]\n,[PublisherName]\n,[ReservationId]\n,[ReservationName]\n,[ResourceId]\n,[AdditionalInfo]\n,[MeterName]\n,[MeterRegion]\n,[UnitOfMeasure]\n,[ResourceLocation]\n,[ProductName]\n,[MeterId]\n FROM [dbo].[Combined_Actual_Savings]\nwhere upper(ResourceName) in ('CVD-240002', 'CVD-240003', 'CVD-240007', 'CVD-240008', 'CVD-240013', \n                        'CVD-240022', 'CVD-240026', 'CVD-240029', 'CVD-240030', 'CVD-240032', \n                        'CVD-240033', 'CVD-240037', 'CVD-240039', 'CVD-240040', 'CVD-240042', \n                        'CVD-240043', 'CVD-240044', 'CVD-240045', 'CVD-240049', 'CVD-240050') \n        and [Date] >= '2023-01-28' and MeterCategory = 'Virtual Machines'",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

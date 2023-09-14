@@ -1,0 +1,20 @@
+{
+	"name": "Naz WBS Search",
+	"properties": {
+		"folder": {
+			"name": "Ad Hoc Cost Report Requests"
+		},
+		"content": {
+			"query": "SELECT\nSubscriptionName\n,[ResourceGroup]\n,format([Date], 'yyyy-MM')\n--,concat(substring([Date],7,4), '-', substring([Date],1,2)) as [Date]\n--,substring([Date],0,8) as [Date]\n--,sum([Cost]) as Cost\n--,SUM(Quantity) as Quantity\n,ai_ServiceType\n,[MeterCategory]\n,[MeterSubCategory]\n,Tags\nFROM\n    OPENROWSET(\n        --BULK 'https://s037costmgmt.dfs.core.windows.net/usage/daily/*-cleaned.parquet',\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/202212*/E*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nwhere \n    --UPPER(Tags) like '%C.ITX.036.001%' --OR\n    UPPER(Tags) like '%C.ITX.036.002%' --OR\n    --UPPER(Tags) like '%C.ITD.15.022%' OR\n    --UPPER(Tags) like '%C.ITD.15.034%' OR\n    --UPPER(Tags) like '%C.ITX.43.001%' OR\n    --UPPER(Tags) like '%C.ITX.46.004%' OR\n    --UPPER(Tags) like '%C.ITX.46.007%' OR\n    --UPPER(Tags) like '%C.ITX.46.011%' OR\n    --UPPER(Tags) like '%C.ITX.46.012%' OR\n    --UPPER(Tags) like '%C.ITX.036.002%'\n--GROUP BY [MeterCategory], ResourceGroup, JSON_VALUE(AdditionalInfo, '$.ServiceType'), SubscriptionName, MeterSubCategory, JSON_VALUE(AdditionalInfo, '$.ReservationId'), substring([Date],0,8)\n--ORDER BY substring([Date],0,8) DESC, sum(ConsumedQuantity) DESC",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "master",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

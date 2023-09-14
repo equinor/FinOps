@@ -1,0 +1,33 @@
+{
+	"name": "ms_consumption_api_rest",
+	"type": "Microsoft.Synapse/workspaces/linkedservices",
+	"properties": {
+		"parameters": {
+			"baseUrl": {
+				"type": "string",
+				"defaultValue": "https://consumption.azure.com"
+			}
+		},
+		"annotations": [],
+		"type": "RestService",
+		"typeProperties": {
+			"url": "@{linkedService().baseUrl}",
+			"enableServerCertificateValidation": true,
+			"authenticationType": "Anonymous",
+			"authHeaders": {
+				"Authorization": {
+					"type": "AzureKeyVaultSecret",
+					"store": {
+						"referenceName": "ACM_Toolkit_kv",
+						"type": "LinkedServiceReference"
+					},
+					"secretName": "Bearer-EA-API-PRI-KEY"
+				}
+			}
+		},
+		"connectVia": {
+			"referenceName": "AutoResolveIntegrationRuntime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

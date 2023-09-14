@@ -1,0 +1,508 @@
+{
+	"name": "Populate Cost Code and Cost Type fields",
+	"properties": {
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sparkpool32",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "56g",
+			"driverCores": 8,
+			"executorMemory": "56g",
+			"executorCores": 8,
+			"numExecutors": 4,
+			"runAsWorkspaceSystemIdentity": true,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "4",
+				"spark.dynamicAllocation.maxExecutors": "4",
+				"spark.autotune.trackingId": "bb80ea6f-513d-4291-a12d-574aaaedb445"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"synapse_widget": {
+				"version": "0.1"
+			},
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
+				"name": "sparkpool32",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net",
+					"authHeader": null
+				},
+				"sparkVersion": "3.2",
+				"nodeCount": 3,
+				"cores": 8,
+				"memory": 56,
+				"extraHeader": null
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "code",
+				"metadata": {
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"reportType = 'ActualCost'\n",
+					"#reportType = 'AmortizedCost'\n",
+					"sourceCostPath = 'exports/monthly/ACMMonthly' + reportType + '/'\n",
+					"destinationPath = 'benchmark'\n",
+					"container = 'usage'\n",
+					"year = '2023'\n",
+					"month = '05'\n",
+					""
+				],
+				"execution_count": 47
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"import pandas as pd\n",
+					"import numpy as np\n",
+					"import calendar\n",
+					"from datetime import datetime"
+				],
+				"execution_count": 48
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def load_source_files(path, subscription_path, appListPath):\n",
+					"    \n",
+					"    print(f'Loading Source Parquet file - {path}...')\n",
+					"    orig_df = pd.read_parquet(path)\n",
+					"    print(f'Loading Subscription list - {subscription_path}...')\n",
+					"    subscription_list = pd.read_json(subscription_path)\n",
+					"    print(f'Loading SNOW application list - {appListPath}...')\n",
+					"    appList = pd.read_parquet(appListPath)\n",
+					"\n",
+					"    return orig_df, subscription_list, appList\n",
+					"\n",
+					""
+				],
+				"execution_count": 49
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"\n",
+					"def shorten_df(orig_df, size):\n",
+					"\n",
+					"    if size > 0:\n",
+					"        orig_df = orig_df.head(size)\n",
+					"        return orig_df\n",
+					"    else:\n",
+					"        return orig_df\n",
+					""
+				],
+				"execution_count": 50
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def expand_subscription_tags(subscription_list):\n",
+					"\n",
+					"    print('Expanding the SubscriptionWBS and SubscriptionServiceNow-App fields from the subscription list Tags field into their own fields...')\n",
+					"\n",
+					"    try:\n",
+					"        print('Here3')\n",
+					"        subscription_tags_df = subscription_list.pop('tags').apply(pd.Series)\n",
+					"    except:\n",
+					"        print('Error processing the subscriptions json file!')\n",
+					"\n",
+					"    subscription_list['SubscriptionWBS'] = subscription_tags_df['WBS']\n",
+					"    subscription_list['SubscriptionServiceNow-App'] = subscription_tags_df['ServiceNow-App']\n",
+					"    \n",
+					"    subscription_list.rename(columns={\"id\": \"SubscriptionId\"}, inplace=True)\n",
+					"    columns_to_keep = ['SubscriptionId', 'SubscriptionWBS', 'SubscriptionServiceNow-App']\n",
+					"\n",
+					"    print(subscription_list.columns)\n",
+					"    subscription_list.drop(columns=subscription_list.columns.difference(columns_to_keep), inplace=True)\n",
+					"    print(subscription_list.columns)\n",
+					"    \n",
+					"    return subscription_list"
+				],
+				"execution_count": 51
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def merge_dataframes(df, subscription_list):\n",
+					"\n",
+					"    print('Merging the SubscriptionWBS and SubscriptionServiceNow-App fields from the subscription list into the cost dataframe...')\n",
+					"\n",
+					"    #df['SubscriptionWBS'] = subscription_list(subscription_list.index, df['SubscriptionId'])\n",
+					"    \n",
+					"    #print(subscription_list.columns)\n",
+					"    #print(subscription_list[list('SubscriptionId')])\n",
+					"    #df = pd.merge(left=df, right=subscription_list, left_on='SubscriptionId', right_on='id', how='left')\n",
+					"    print(len(df))\n",
+					"    print(f\"df Cost total is: {df['CostInBillingCurrency'].sum()}\")\n",
+					"    df = df.merge(subscription_list, how='left', on='SubscriptionId')\n",
+					"    print(f\"df Cost total is: {df['CostInBillingCurrency'].sum()}\")\n",
+					"    print(len(df))\n",
+					"    #print(df[df['ActiveWBS'].isnull()])\n",
+					"    \n",
+					"    return df, subscription_list\n",
+					""
+				],
+				"execution_count": 52
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"\n",
+					"def replace_empty_cost_fields_with_subscription_details(df, subscription_list, appList):\n",
+					"\n",
+					"    print(\"Creating ActiveWBS column, copying over CostAllocationCode, replacing 'TOBESPECIFIED' and empty values then filling gaps with SubscriptionWBS...\")\n",
+					"\n",
+					"    df['CostAllocationCode'].replace('', np.nan, inplace=True)\n",
+					"    df['CostAllocationType'].replace('', np.nan, inplace=True)\n",
+					"    df['ActiveWBS'] = df.loc[df['CostAllocationType'] == 'WBS', 'CostAllocationCode']\n",
+					"\n",
+					"    mask = (df['CostAllocationType'] != \"WBS\") & (df['CostAllocationType'] != \"APPID\") & (df['CostAllocationType'] != \"CI\") & (df['CostAllocationType'] != \"SubscriptionWBS\")\n",
+					"    df.loc[mask, ['ActiveWBSReason']] = 'Invalid CostAllocationType: not APPID, CI or WBS'\n",
+					"\n",
+					"    mask = (df['CostAllocationCode'].str.contains('^[a-zA-Z]\\.\\S*', regex=True) == False) & (df['CostAllocationType'] == 'WBS')\n",
+					"    df.loc[mask, 'ActiveWBS'] = df.loc[mask, 'SubscriptionWBS']\n",
+					"    df.loc[mask, 'CostAllocationType'] = 'SubscriptionWBS'\n",
+					"    df.loc[mask, 'ActiveWBSReason'] = 'Invalid CostAllocationCode WBS'\n",
+					"    \n",
+					"    df['ActiveWBS'] = df['ActiveWBS'].fillna(df['CostAllocationCode'].map(appList.set_index('u_number')['u_operational_wbs']))\n",
+					"    df['ActiveWBS'] = df['ActiveWBS'].fillna(df['CostAllocationCode'].map(appList.set_index('name')['u_operational_wbs']))\n",
+					"    df['ActiveWBS'].replace('TOBESPECIFIED', np.nan, inplace=True)  \n",
+					"    \n",
+					"    df.loc[df['CostAllocationType'].isnull(), 'CostAllocationCode'] = np.nan\n",
+					"    df.loc[df['CostAllocationType'].isnull(), 'CostAllocationType'] = 'SubscriptionWBS'\n",
+					"    df.loc[df['ActiveWBS'].isnull(), 'ActiveWBS'] = df['SubscriptionWBS']\n",
+					"    \n",
+					"    df.loc[df['CostAllocationType'].isnull(), 'CostAllocationType'] = 'SubscriptionWBS'\n",
+					"\n",
+					"    mask = (df['CostAllocationType'] == 'CI')\n",
+					"    df.loc[mask, 'ActiveWBSReason'] = 'CI WBS Lookup from SNOW'\n",
+					"\n",
+					"    mask = (df['CostAllocationType'] == 'APPID')\n",
+					"    df.loc[mask, 'ActiveWBSReason'] = 'APPID WBS Lookup from SNOW'\n",
+					"\n",
+					"    mask = (df['CostAllocationType'] == 'WBS')\n",
+					"    df.loc[mask, 'ActiveWBSReason'] = 'WBS Cost Tag used'\n",
+					"\n",
+					"    mask = (df['Tags'].str.contains('CostAllocationCode', case=False, na=False) == False) | (df['Tags'].str.contains('CostAllocationType', case=False, na=False) == False)\n",
+					"    df.loc[mask, 'ActiveWBSReason'] = 'CostAllocationType or CostAllocationCode not present in Tags'\n",
+					"\n",
+					"    return df, subscription_list"
+				],
+				"execution_count": 53
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def write_output_file(df, destinationFilename):\n",
+					"    \n",
+					"    print(f'Writing output file to: \"{destinationFilename}\"')\n",
+					"    df.to_parquet(destinationFilename)\n",
+					"    print('File write complete!')\n",
+					"    "
+				],
+				"execution_count": 54
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def return_costallocationcode_list(tag):\n",
+					"    \n",
+					"     if pd.isnull(tag):\n",
+					"          return np.nan\n",
+					"     else:\n",
+					"          try:\n",
+					"               tag_array = tag.split('\",\"')\n",
+					"               #print(f\"Tag array is: {tag_array}\")\n",
+					"               #print(type(tag_array))\n",
+					"               for pair in tag_array:\n",
+					"                    x,y = pair.split('\": \"')\n",
+					"                    #print(f'x is: {x}')\n",
+					"                    #print(f'y is: {y}')\n",
+					"                    temp =  x.replace('\"','').upper()\n",
+					"                    #print(f'if test: {temp}')\n",
+					"                    if x.replace(\"\\\"\",\"\").upper() == \"COSTALLOCATIONCODE\":\n",
+					"                         #print(\"here1\")\n",
+					"                         #print(y.replace(\"\\\"\",\"\").strip('\\n').strip().upper())\n",
+					"                         return y.replace(\"\\\"\",\"\").strip('\\n').strip().upper()\n",
+					"          except:\n",
+					"               return \"ERROR\"\n",
+					"               #print(f\"Isnull = false, Index is {index}, Tags is {df['Tags'][index]}\")"
+				],
+				"execution_count": 55
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def return_costallocationtype_list(tag):\n",
+					"\n",
+					"    \n",
+					"     if pd.isnull(tag):\n",
+					"          #print(\"Here2 - null\")\n",
+					"          return np.nan\n",
+					"     else:\n",
+					"          try:\n",
+					"               type_list = ['WBS', 'CI', 'APPID']\n",
+					"               tag_array = tag.split('\",\"')\n",
+					"               #print(f\"Tag array is: {tag_array}\")\n",
+					"               #print(type(tag_array))\n",
+					"               for pair in tag_array:\n",
+					"                    x,y = pair.split('\": \"')\n",
+					"                    #print(f'x is: {x}')\n",
+					"                    #print(f'y is: {y}')\n",
+					"                    #temp =  x.replace('\"','').upper()\n",
+					"                    #print(f'if test: {temp}')\n",
+					"                    #if temp == 'C.BAX.20.021':\n",
+					"                              #print(\"here1\")\n",
+					"                              #print(temp)\n",
+					"                              #print(tag_array)\n",
+					"                    if x.replace('\"','').upper() == \"COSTALLOCATIONTYPE\":\n",
+					"                         #temp2 = y.replace('\"','').strip('\\n').strip().upper()\n",
+					"                         #print(temp2)\n",
+					"                         if y.replace('\"','').strip('\\n').strip().upper() in type_list:\n",
+					"                              return y.replace('\"','').strip('\\n').strip().upper()\n",
+					"                         else:\n",
+					"                              #print(\"here2\")\n",
+					"                              #print(temp2)\n",
+					"                              #print(tag_array)\n",
+					"                              return np.nan\n",
+					"          except:\n",
+					"               return \"ERROR\"\n",
+					"               #print(f\"Isnull = false, Index is {index}, Tags is {df['Tags'][index]}\")"
+				],
+				"execution_count": 56
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def expand_cost_tags(df):\n",
+					"\n",
+					"    print(\"Extracting cost Type and Code and storing in dedicated columns...\")\n",
+					"\n",
+					"    df['CostAllocationType'] = df.apply(lambda x: return_costallocationtype_list(x['Tags']), axis = 1)\n",
+					"    df['CostAllocationCode'] = df.apply(lambda x: return_costallocationcode_list(x['Tags']), axis = 1)\n",
+					"\n",
+					"    return df"
+				],
+				"execution_count": 57
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"#months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']\n",
+					"months = ['01']\n",
+					"#years = ['2021', '2022']\n",
+					"years = ['2023']\n",
+					"#months = ['05']\n",
+					"#reportTypes = ['ActualCost', 'AmortizedCost']\n",
+					"reportTypes = ['ActualCost']\n",
+					"\n",
+					"for reportType in reportTypes:\n",
+					"\n",
+					"    print(f\"------ {reportType} -----------\")\n",
+					"\n",
+					"    for year in years:\n",
+					"\n",
+					"        print(f\"------ Year: {year} -----------\")\n",
+					"\n",
+					"        for month in months:\n",
+					"\n",
+					"            print(f\"------ Month: {month} -----------\")\n",
+					"\n",
+					"            fromDate = f'{year}{month}01'\n",
+					"\n",
+					"            sourceCostPath = 'exports/monthly/ACMMonthly' + reportType + '/'\n",
+					"\n",
+					"            month_range = calendar.monthrange(datetime(int(year), int(month), 1).year, datetime(int(year), int(month), 1).month)\n",
+					"            end_of_month_day = month_range[1]\n",
+					"            toDate = f'{year}{month}{end_of_month_day}'\n",
+					"            longToDate = f'{year}-{month}-{end_of_month_day}'\n",
+					"\n",
+					"            dateRange = fromDate + '-' + toDate\n",
+					"\n",
+					"            print(dateRange)\n",
+					"            #sourceFilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + sourceCostPath + dateRange + '/ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
+					"            sourceFilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + sourceCostPath + dateRange + '/Extended_ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
+					"            #destinationFilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + destinationPath + '/' + reportType + '/CostTagsExtended_ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
+					"            destinationFilename = sourceFilename\n",
+					"            #subscriptionListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + destinationPath + '/subscriptions.json'\n",
+					"            if str(longToDate) < '2021-11-30':\n",
+					"                print(longToDate)\n",
+					"                print('here1')\n",
+					"                subscriptionListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions_2021-11-30.json'\n",
+					"            else:\n",
+					"                print('here2')\n",
+					"                subscriptionListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions_' + longToDate + '.json'\n",
+					"            appListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + destinationPath + '/applicationList.parquet'\n",
+					"\n",
+					"            pd.set_option('max_colwidth', 50)\n",
+					"\n",
+					"            #cost_data_path = 'data/2022 Actual cost (10k rows).csv'\n",
+					"            #size = 100\n",
+					"            #subscription_path = 'data/subscriptions.json'\n",
+					"\n",
+					"            df, subscription_list, appList = load_source_files(sourceFilename, subscriptionListPath, appListPath)\n",
+					"            #orig_df = shorten_df(orig_df, size)\n",
+					"\n",
+					"\n",
+					"            #df = orig_df.copy()\n",
+					"            df = expand_cost_tags(df)\n",
+					"            #print(df[['Tags', 'CostAllocationType', 'CostAllocationCode']])\n",
+					"\n",
+					"\n",
+					"            subscription_list = expand_subscription_tags(subscription_list)\n",
+					"            #print(subscription_list)\n",
+					"            df, subscription_list = merge_dataframes(df, subscription_list)\n",
+					"            df, subscription_list = replace_empty_cost_fields_with_subscription_details(df, subscription_list, appList)\n",
+					"\n",
+					"            #print(df[['CostAllocationType', 'CostAllocationCode', 'SubscriptionWBS', 'SubscriptionServiceNow-App', 'Tags']])\n",
+					"            df.reset_index(drop=True, inplace=True)\n",
+					"            write_output_file(df, destinationFilename)"
+				],
+				"execution_count": 58
+			}
+		]
+	}
+}

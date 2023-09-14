@@ -1,0 +1,20 @@
+{
+	"name": "HUB_VMs_2022",
+	"properties": {
+		"folder": {
+			"name": "--RI & HUB Savings/Old API"
+		},
+		"content": {
+			"query": "SELECT\n    JSON_VALUE(AdditionalInfo, '$.ServiceType') as ServiceType, \n    substring([Date],0,8) as [Date], \n    sum(ConsumedQuantity) as ConsumedQuantity,\n    Product,\n    PartNumber,\n    MeterCategory\n    --TOP 1000 *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/monthly/2022/*/*-cleaned.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nWHERE MeterCategory = 'Virtual Machines' and ServiceInfo2 LIKE '%BYOL' --and Product LIKE '%Spot%'\nGROUP BY JSON_VALUE(AdditionalInfo, '$.ServiceType'), substring([Date],0,8), PartNumber, Product, MeterCategory\nORDER BY substring([Date],0,8), sum(ConsumedQuantity) DESC\n\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

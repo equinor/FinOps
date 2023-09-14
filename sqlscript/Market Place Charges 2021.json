@@ -1,0 +1,20 @@
+{
+	"name": "Market Place Charges 2021",
+	"properties": {
+		"folder": {
+			"name": "OGBG Benchmark 2022/2021"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    JSON_VALUE(additionalInfo, '$.UsageType') as UsageType,\n    JSON_VALUE(additionalInfo, '$.ServiceType') as ServiceType,\n    JSON_VALUE(additionalInfo, '$.VCPUs') as VCPUs,\n    substring(FORMAT (usageStartDate,'yyyy-MM-dd') ,0,8) AS [Date],\n    sum(consumedQuantity) as consumedQuantity,\n    sum(resourceRate) as resourceRate,\n    sum(extendedCost) as extendedCost,\n    isRecurringCharge\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/tempdata/annual/2021/Marketplace_Charges_2021.csv',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW = TRUE\n    ) AS [result]\n    GROUP BY JSON_VALUE(additionalInfo, '$.UsageType'),\n    JSON_VALUE(additionalInfo, '$.ServiceType'),\n    substring(FORMAT (usageStartDate,'yyyy-MM-dd') ,0,8),\n    JSON_VALUE(additionalInfo, '$.VCPUs'),\n    isRecurringCharge\n    order by extendedCost DESC\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

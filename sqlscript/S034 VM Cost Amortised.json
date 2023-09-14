@@ -1,0 +1,20 @@
+{
+	"name": "S034 VM Cost Amortised",
+	"properties": {
+		"folder": {
+			"name": "S034 VM Cost Investigation"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    --top 100 *\n        JSON_VALUE(AdditionalInfo, '$.ServiceType') as ServiceType,\n    JSON_VALUE(AdditionalInfo, '$.VCPUs') as VCPUs,\n    substring([Date],7,4) + '-' + substring([Date],1,2) + '-' + substring([Date],4,2) as [Date],\n    PartNumber,\n    UnitOfMeasure,\n    ProductName,\n    MeterCategory,\n    MeterSubCategory,\n    MeterName,\n    ServiceInfo2,\n    --sum(Quantity) as Quantity,\n    Quantity as Quantity,\n    --sum(EffectivePrice) as EffectivePrice,\n    EffectivePrice as EffectivePrice,\n    --sum(CostInBillingCurrency) as CostInBillingCurrency, \n    CostInBillingCurrency as CostInBillingCurrency, \n    UnitPrice,\n    --sum(PayGPrice) as PayGPrice,\n    PayGPrice as PayGPrice,\n    benefitName,\n    ResourceName,\n    ResourceLocation,\n    ResourceId\n    --count(SubscriptionName)\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAmortizedCost/2022*/ACMMonthlyAmortizedCost_2022*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nwhere SubscriptionName = 'S034-Geology-Geophysics' and MeterCategory = 'Virtual Machines' and ServiceInfo2 LIKE '%BYOL' --and Product LIKE '%Spot%'\n--group by JSON_VALUE(AdditionalInfo, '$.ServiceType'), JSON_VALUE(AdditionalInfo, '$.VCPUs'), \n--        substring([Date],7,4) + '-' + substring([Date],1,2), PartNumber, UnitOfMeasure, ProductName, MeterCategory, \n--        MeterSubCategory, MeterName, ServiceInfo2, UnitPrice, benefitName, ServiceInfo2\norder by substring([Date],7,4) + '-' + substring([Date],1,2)\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

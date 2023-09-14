@@ -1,0 +1,434 @@
+{
+	"name": "usersWithManagerSnapshot_v1",
+	"properties": {
+		"folder": {
+			"name": "AzureAD"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sparkpool32",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "56g",
+			"driverCores": 8,
+			"executorMemory": "56g",
+			"executorCores": 8,
+			"numExecutors": 2,
+			"runAsWorkspaceSystemIdentity": false,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "6903be78-b572-457b-905b-90d825ac65c2"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"synapse_widget": {
+				"version": "0.1"
+			},
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
+				"name": "sparkpool32",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net",
+					"authHeader": null
+				},
+				"sparkVersion": "3.2",
+				"nodeCount": 3,
+				"cores": 8,
+				"memory": 56,
+				"extraHeader": null
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"source": [
+					"# Transforming Azure AD user-hierarchy"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"import numpy as np\n",
+					"import pandas as pd"
+				],
+				"execution_count": 100
+			},
+			{
+				"cell_type": "markdown",
+				"source": [
+					"### Importing the raw data"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"container = 'usage'\n",
+					"file_path = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/AzureAD_BusinessAreaLevel/bronze/AzureAD_EmployeesManagersSnapshot.parquet'\n",
+					"\n",
+					"# Read in the dataframe using Spark and transform it into a Pandas-core DataFrame\n",
+					"df_users = spark.read.format('parquet').load(file_path).toPandas()\n",
+					"# df_users.head(10)"
+				],
+				"execution_count": 101
+			},
+			{
+				"cell_type": "markdown",
+				"source": [
+					"### Cleaning the data"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"print(f\"Old length of the dataset is: {df_users.shape[0]}\")\n",
+					"\n",
+					"# Filter out disabled accounts\n",
+					"df_users = df_users[df_users.accountEnabled == True]\n",
+					"\n",
+					"# Drop rows with no employee ID\n",
+					"df_users = df_users.dropna(subset=['employeeId'])\n",
+					"\n",
+					"print(f\"New length of the dataset is: {df_users.shape[0]}\")"
+				],
+				"execution_count": 102
+			},
+			{
+				"cell_type": "markdown",
+				"source": [
+					"#### Split email and filter out Equinor-domain\n",
+					"cannot call on NoneType, need to rename first: \n",
+					"df_users = df_users.fillna({'department': 'missing'})"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# Getting the username by splitting e-mail name before \"@\"-symbol\n",
+					"df_users['userName'] = [email[:email.find('@')] for email in df_users['userPrincipalName']]\n",
+					"\n",
+					"# Getting the domain name by splitting e-mail after \"@\"-symbol\n",
+					"df_users['domain'] = [email[email.find('@'):] for email in df_users['userPrincipalName']]"
+				],
+				"execution_count": 103
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"print(f\"Old length of the dataset is: {df_users.shape[0]}\")\n",
+					"\n",
+					"# Only include empoyees who has a email address with domain-name equinor.com\n",
+					"df_users = df_users[df_users.domain == '@equinor.com']\n",
+					"\n",
+					"# Delete non-valid employeeIDs\n",
+					"df_users = df_users[df_users['employeeId'] != 'FunctionKey']\n",
+					"\n",
+					"print(f\"New length of the dataset is: {df_users.shape[0]}\")"
+				],
+				"execution_count": 104
+			},
+			{
+				"cell_type": "markdown",
+				"source": [
+					"#### Dropping duplicates"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# # Display the duplicates\n",
+					"# display(df_users[df_users['employeeId'].isin(df_users.employeeId.value_counts().loc[lambda x: x>1].index)].sort_values(by=['employeeId']))"
+				],
+				"execution_count": 105
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# # some users are registrered with two different employeeId and corresponding department, manager etc. but the same displayName\n",
+					"# display(df_users[df_users['displayName'].isin(df_users.displayName.value_counts().loc[lambda x: x>1].index)].sort_values(by=['displayName']))"
+				],
+				"execution_count": 106
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"print(f\"Old length of the dataset is: {df_users.shape[0]}\")\n",
+					"\n",
+					"# First isolate all duplicates that we want to remove. In this instance there is one duplicate that contains employee information, and another that does not.\n",
+					"# All duplicates without information will be isolated in a variable and removed from the dataset\n",
+					"\n",
+					"duplicates = df_users[(df_users['employeeId'].isin(df_users.employeeId.value_counts().loc[lambda x: x>1].index)) & (df_users['department'].isna()) & (df_users['manager_employeeId'].isna()) & (df_users['manager_displayName'].isna()) & (df_users['manager_userPrincipalName'].isna()) | (df_users['userName'].str.contains('ja_')) & (df_users['manager_department'].isna())]\n",
+					"\n",
+					"df_users = df_users.drop(duplicates.index)\n",
+					"\n",
+					"print(f\"New length of the dataset is: {df_users.shape[0]}\")"
+				],
+				"execution_count": 107
+			},
+			{
+				"cell_type": "markdown",
+				"source": [
+					"## Hierarchy-table\n",
+					"The hierarchy-table will only connect employeeID to the managerIDs above"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# Make df of employeeId and managerId\n",
+					"df_id = df_users[['employeeId', 'manager_employeeId']].copy()\n",
+					"\n",
+					"# Store employeeID who has them self as manager\n",
+					"df_id_wrong_format = df_id[df_id['employeeId'] == df_id['manager_employeeId']]"
+				],
+				"execution_count": 108
+			},
+			{
+				"cell_type": "markdown",
+				"source": [
+					"#### Merge df\n",
+					"Create a total df that connect the employeeID to its closest manager. Merge df_id to itself untill only 1 unique employeeID is at the top.\n",
+					"\n",
+					"\n",
+					"**Note:** there are two possibilities of poor data quality that we need to address since they cause infinate loops or wrong information about level in hierarchy as well as connection to the correct top leader.\n",
+					"1. An employee has itself listed as a manger: employeeId: X, managerId: X\n",
+					"2. Two employees has each other listed as manager: employeeId: X, managerId: Y and employeeId: Y, managerId: X"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# Start with copy the first two columns of employeeId and managerId\n",
+					"df_total = df_id.copy()\n",
+					"\n",
+					"# Connect the manager to the next manager and drop the duplicate column\n",
+					"df_total = df_total.merge(df_id,\n",
+					"                          left_on='manager_employeeId',\n",
+					"                          right_on='employeeId',\n",
+					"                          how='left',\n",
+					"                          suffixes=['_0','_1'])\n",
+					"\n",
+					"df_total = df_total.drop(columns=['employeeId_1'])\n",
+					"\n",
+					"# if an employee has itself listed as the manager, replace manager_id to be '0' for tracking and further handling in the future\n",
+					"df_total['manager_employeeId_1'] = df_total.apply(lambda x: '0' \\\n",
+					"                                                    if (x['manager_employeeId_1'] == x['manager_employeeId_0']) \\\n",
+					"                                                    else x['manager_employeeId_1'], axis=1)"
+				],
+				"execution_count": 109
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"We're now moving up the hierarchy tree to find the managers of each employee. If we haven't hit the top of the tree within hitting the threshold, we can ignore those employees."
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# Set a threshold for how far up the tree we want to go.\n",
+					"thres = 10\n",
+					"\n",
+					"for n in range(1, thres):\n",
+					"    # Merge the employee with the n-th manager above the employee\n",
+					"    df_total = df_total.merge(df_id, left_on = f'manager_employeeId_{n}', right_on = 'employeeId', how = 'left')\n",
+					"    # Drop the employeeId-column so as not to create duplicated columns\n",
+					"    df_total = df_total.drop(columns = ['employeeId'])\n",
+					"    # Rename the merged manager_employeeId to the next level of manager (n + 1)\n",
+					"    df_total = df_total.rename(columns = {'manager_employeeId' : f'manager_employeeId_{n+1}'})\n",
+					"\n",
+					"    #To avoid loops caused by poor data quality:\n",
+					"    #If two employees have each other as their manager, this will cause a never ending loop.\n",
+					"    #This is the case if e.g. manager 3 = manager 1. In this case we set the manager_Id to be 0, so that it can be easily picked up and further handled in the future.\n",
+					"    df_total[f'manager_employeeId_{n+1}'] = df_total.apply(lambda x: '0' \\\n",
+					"                                                            if (x[f'manager_employeeId_{n+1}'] == x[f'manager_employeeId_{n}']) \\\n",
+					"                                                            or (x[f'manager_employeeId_{n+1}'] == x[f'manager_employeeId_{n-1}']) \\\n",
+					"                                                            else x[f'manager_employeeId_{n+1}'], axis=1)\n",
+					"\n",
+					"    # Iterate untill only 1 unique person at the top of hierarchy\n",
+					"    if df_total[f'manager_employeeId_{n+1}'].nunique() == 1:\n",
+					"        break"
+				],
+				"execution_count": 110
+			},
+			{
+				"cell_type": "markdown",
+				"source": [
+					"#### Add level-column\n",
+					"Define a level indicating how many managers is above. E.g. vp has normally 3 managers and will be at level 4"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# Count total number of columns in hierarchy and substract number of empty-cells\n",
+					"num_columns = df_total.shape[1]\n",
+					"df_total['level'] = df_total.apply(lambda x: num_columns - x.isnull().sum(), axis='columns')"
+				],
+				"execution_count": 111
+			},
+			{
+				"cell_type": "markdown",
+				"source": [
+					"#### Locate employeeID with missing information"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"print(f\"Old length of the dataset is: {df_total.shape[0]}\")\n",
+					"\n",
+					"# Extract employees with no department etc.\n",
+					"df_removeId = df_users[(df_users['department'].isna()) & (df_users['manager_employeeId'].isna()) & (df_users['manager_displayName'].isna()) & (df_users['manager_userPrincipalName'].isna()) & (df_users['manager_department'].isna())]\n",
+					"df_removeId = df_removeId[['employeeId', 'manager_employeeId']]\n",
+					"\n",
+					"# Store IDs in df for easy access if needed\n",
+					"df_id_wrong_format = df_id_wrong_format.append(df_removeId)\n",
+					"\n",
+					"# Remove from hierarchy-table\n",
+					"df_total = df_total[~df_total['employeeId_0'].isin(df_id_wrong_format['employeeId'])]\n",
+					"\n",
+					"print(f\"New length of the dataset is: {df_total.shape[0]}\")"
+				],
+				"execution_count": 112
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# Check that wrong ID is no longer in hierarchy\n",
+					"id_list = df_removeId['employeeId'].sort_values().unique()\n",
+					"\n",
+					"for id in id_list:\n",
+					"    print(id)\n",
+					"    if id in df_total.employeeId_0:\n",
+					"        print('Yes')\n",
+					"    else:\n",
+					"        print('No')"
+				],
+				"execution_count": 113
+			},
+			{
+				"cell_type": "markdown",
+				"source": [
+					"#### Final steps to hierarchy of employeeID and corresponding Managers for all levels"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# List of all levels in decreasing order\n",
+					"level_list = df_total.level.sort_values().unique()\n",
+					"\n",
+					"# Empty list to be filled by for-loop\n",
+					"df_list = []\n",
+					"\n",
+					"# Create df for each level and store in list df_list\n",
+					"for level in level_list:\n",
+					"    vars()[f'df_level{level}'] = df_total[df_total['level']== level].copy()\n",
+					"    df_list.append(vars()[f'df_level{level}'])\n",
+					"\n",
+					"# Tuple of level and corresponding df, i.e. ( (1, df_level1), (2, df_level2), ...)\n",
+					"combined_tuple = list(zip(level_list, df_list))"
+				],
+				"execution_count": 114
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# Apply Manager 1, 2, ... according to which level the employee is at\n",
+					"for level, df in combined_tuple:\n",
+					"    if level != 1:\n",
+					"        for i in range(level-1):\n",
+					"            df[f'Manager{level - i - 1}'] = df[[f'manager_employeeId_{i}']]"
+				],
+				"execution_count": 115
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"df_hierarchy = df_list[0].copy()\n",
+					"\n",
+					"# Append all df_levels 2-8\n",
+					"for df in df_list[1:]:\n",
+					"    df_hierarchy = df_hierarchy.append(df)\n",
+					"\n",
+					"# Remove redundant columns manager_employeeId 0-6\n",
+					"for level in level_list[:-1]:\n",
+					"    df_hierarchy = df_hierarchy.drop(columns = {f'manager_employeeId_{level-1}'})"
+				],
+				"execution_count": 116
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# print(df_hierarchy.shape)\r\n",
+					"# df_hierarchy.head(10)"
+				],
+				"execution_count": 118
+			},
+			{
+				"cell_type": "markdown",
+				"source": [
+					"### Dataframes in the notebook\n",
+					"1. df_hierarchy shows employeeID, level, Manager1, Manager2 etc. NB! Those employees which have Manager1=0 is not correctly linked to the top leader of the company due to poor data quality. They are included so that one can link to a person registrered in Azure AD, but information about level (or business area/department) will not be accurate.\n",
+					"2. df_users All info about employeeID, department, manager, etc\n",
+					"3. df_id_wrong_format employeeID with wrong info: missing info or them self as manager"
+				]
+			},
+			{
+				"cell_type": "markdown",
+				"source": [
+					"## Write to optimized"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"#Set optimized path\n",
+					"\n",
+					"optimized_path = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/AzureAD_BusinessAreaLevel/silver/usersWithManagerSnapshot_v1.parquet'\n",
+					"\n",
+					"df_spark = spark.createDataFrame(df_hierarchy)\n",
+					"\n",
+					"df_spark.write.format('parquet').mode('overwrite').save(optimized_path)\n",
+					"# df_spark.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
+				],
+				"execution_count": 96
+			}
+		]
+	}
+}

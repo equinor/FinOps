@@ -1,0 +1,33 @@
+{
+	"name": "ms_management_api_rest",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ms_management_api_rest",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"scope": {
+				"type": "string"
+			},
+			"lookBackPeriod": {
+				"type": "string"
+			},
+			"resourceType": {
+				"type": "string"
+			},
+			"billingAccount": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "RestResource",
+		"typeProperties": {
+			"relativeUrl": {
+				"value": "@concat('/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/providers/Microsoft.Consumption/reservationRecommendations?api-version=2021-10-01&$filter=properties/scope eq ''', \ndataset().scope, \n''' AND properties/lookBackPeriod eq ''', \ndataset().lookBackPeriod, \n''' AND properties/resourceType eq ''', \ndataset().resourceType,\n''' AND properties/term eq ''P3Y''') ",
+				"type": "Expression"
+			}
+		},
+		"schema": []
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}

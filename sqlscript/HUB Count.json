@@ -1,0 +1,20 @@
+{
+	"name": "HUB Count",
+	"properties": {
+		"folder": {
+			"name": "--RI & HUB Savings/New API"
+		},
+		"content": {
+			"query": "declare @HUB_Date as varchar(10)\nset @HUB_Date = '2023-01-21'\nSELECT\n    --TOP 10  *\n    count(ResourceName)\n    --ResourceName\n    --,substring(cast([Date] as varchar),1,10) as [Date]\n    --,MeterCategory\n    --,MeterName\n    --,AVG(cast(JSON_VALUE (AdditionalInfo, '$.VCPUs') as int)) as vCPUs\n    --,ResourceId\n    --sum(cast(JSON_VALUE (AdditionalInfo, '$.VCPUs') as int)) as vCPU\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/daily/ACMDailyActualCost/20230101-20230131/ACMDailyActualCost_653a874b-ede7-4670-abf7-fde225a5544f.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where ServiceInfo2 = 'Windows Server BYOL' and substring(cast([Date] as varchar),1,10) = @HUB_Date\n    group by ResourceId, ResourceName ,substring(cast([Date] as varchar),1,10) ,MeterCategory, MeterName\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

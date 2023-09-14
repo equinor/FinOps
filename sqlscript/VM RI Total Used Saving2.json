@@ -1,0 +1,20 @@
+{
+	"name": "VM RI Total Used Saving2",
+	"properties": {
+		"folder": {
+			"name": "--RI & HUB Savings/New API/2022"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    --TOP 10 *\n    ReservationName\n    ,format([Date],'yyyy-MM') as [Date]\n    ,JSON_VALUE(AdditionalInfo, '$.ServiceType') as ServiceType\n    ,avg(UnitPrice) as UnitPrice\n    ,avg(EffectivePrice) as EffectivePrice\n    ,sum(Quantity) as Quantity\n    ,sum(UnitPrice * Quantity) as [Equinor PAYG Cost]\n    ,sum(EffectivePrice * Quantity) as [RI Cost]\n    ,sum((UnitPrice - EffectivePrice) * Quantity) as TotalUsedSavings\n    ,ProductOrderName\n    ,PartNumber\n    ,ChargeType\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAm*/2022*/A*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nwhere ChargeType = 'Usage' and PricingModel = 'Reservation' and MeterCategory = 'Virtual Machines' --and format([Date],'yyyy-MM') = '2022-12'\ngroup by ReservationName, format([Date],'yyyy-MM'), JSON_VALUE(AdditionalInfo, '$.ServiceType'),ProductOrderName,PartNumber, ChargeType\norder by format([Date],'yyyy-MM'), ReservationName\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

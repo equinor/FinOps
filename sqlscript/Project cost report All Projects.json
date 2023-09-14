@@ -1,0 +1,20 @@
+{
+	"name": "Project cost report All Projects",
+	"properties": {
+		"folder": {
+			"name": "SAP Cost Report"
+		},
+		"content": {
+			"query": "SELECT\n[ResourceGroup]\n--,substring([Date],0,8) as [Date]\n--,sum([Cost]) as Cost\n,SUM(ConsumedQuantity) as Quantity\n,JSON_VALUE(AdditionalInfo, '$.ServiceType') as ServiceType\n,JSON_VALUE(AdditionalInfo, '$.ReservationId') as ReservationId\n,[MeterCategory]\n,[MeterSubCategory]\n,[SubscriptionName]\n,substring([Date],0,8) as [Date]\nFROM\n    OPENROWSET(\n        --BULK 'https://s037costmgmt.dfs.core.windows.net/usage/daily/*-cleaned.parquet',\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/monthly/2022/*/*-cleaned.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nwhere SubscriptionName = 'S138-SAP-Solution-Landscape' AND\n    UPPER(ResourceGroup) IN \n        ('S138-WESB-RG-S02', 'S138-WEDV-RG-D02', 'S138-WEQA-RG-SOX-Q02', 'S138-WEPR-RG-SOX-P02', \n        'S138-WESB-RG-S63', 'S138-WESB-RG-SB3', 'S138-WESB-RG-S83', 'S138-WESB-RG-S12', \n        'S138-WESB-RG-S73', 'S138-WESB-RG-Q73', 'S138-WESB-RG-T73', 'S138-WESB-RG-S43', 'S138-WESB-RG-SOX-S09',\n        'S138-WESB-RG-S08', 'S138-WEDV-RG-D08', 'S138-WEQA-RG-Q08', 'S138-WEPR-RG-P08', 'S138-WEDV-RG-D0T', 'S138-WEPR-RG-P0T',\n        'S138-WEQA-RG-SOX-Q33', 'S138-WESB-RG-SX3', 'S138-WEDV-RG-DX3', 'S138-WEQA-RG-QX3', 'S138-WEPR-RG-SOX-PX3')\n        --and (substring([Date],0,8) >= '2022-01' and substring([Date],0,8) <= '2022-06')\n        and MeterCategory = 'Virtual Machines' and MeterSubCategory = 'Reservation-Base VM'\nGROUP BY [MeterCategory], ResourceGroup, JSON_VALUE(AdditionalInfo, '$.ServiceType'), SubscriptionName, MeterSubCategory, JSON_VALUE(AdditionalInfo, '$.ReservationId'), substring([Date],0,8)\nORDER BY substring([Date],0,8) DESC, sum(ConsumedQuantity) DESC",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

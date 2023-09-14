@@ -1,0 +1,455 @@
+{
+	"name": "Omnia1 Create Export S037 Subscription Scope",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get token",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Get SP Secret",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": true,
+					"secureInput": true
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": "https://login.microsoftonline.com/3aa4a235-b6e2-48d5-9195-7fcf05b459b0/oauth2/token",
+					"connectVia": {
+						"referenceName": "AutoResolveIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
+					},
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/x-www-form-urlencoded"
+					},
+					"body": {
+						"value": "@concat('client_id=',pipeline().parameters.clientId,'&client_secret=',activity('Get SP Secret').output.value,'&grant_type=client_credentials&resource=https://management.azure.com&scope=./default')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Get SP Secret",
+				"type": "WebActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": true,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "@concat(pipeline().parameters.KV_Address,'?api-version=7.0')",
+						"type": "Expression"
+					},
+					"connectVia": {
+						"referenceName": "AutoResolveIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
+					},
+					"method": "GET",
+					"authentication": {
+						"type": "MSI",
+						"resource": "https://vault.azure.net"
+					}
+				}
+			},
+			{
+				"name": "Create Export - ActualCost",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Get token",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "@concat('https://management.azure.com/subscriptions/',pipeline().parameters.subscriptionId,'/providers/Microsoft.CostManagement/exports/ActualCost/?api-version=2021-10-01')",
+						"type": "Expression"
+					},
+					"connectVia": {
+						"referenceName": "AutoResolveIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
+					},
+					"method": "PUT",
+					"headers": {
+						"Authorization": {
+							"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+							"type": "Expression"
+						}
+					},
+					"body": {
+						"value": "@concat('{\n  \"properties\": {\n    \"definition\": {\n      \"dataset\": {\n        \"granularity\": \"Daily\",\n        \"grouping\": []\n      },\n      \"timePeriod\": {\n        \"from\": \"',pipeline().parameters.from_date,'T00:00:00.000Z\",\n        \"to\": \"',pipeline().parameters.to_date,'T00:00:00.000Z\"\n      },\n      \"timeframe\": \"Custom\",\n      \"type\": \"ActualCost\"\n    },\n    \"deliveryInfo\": {\n      \"destination\": {\n        \"container\": \"usage\",\n        \"rootFolderPath\": \"exports/S037-Test\",\n        \"resourceId\": \"/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt\"\n      }\n    },\n    \"format\": \"Csv\",\n    \"partitionData\": false\n  }\n}')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Run Export ActualCost",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Create Export - ActualCost",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "@concat('https://management.azure.com/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/providers/Microsoft.CostManagement/exports/ActualCost/run?api-version=2021-10-01')",
+						"type": "Expression"
+					},
+					"connectVia": {
+						"referenceName": "AutoResolveIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
+					},
+					"method": "POST",
+					"headers": {
+						"Authorization": {
+							"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+							"type": "Expression"
+						}
+					},
+					"body": {
+						"value": "@concat('{\n  \"properties\": {\n    \"definition\": {\n      \"dataset\": {\n        \"granularity\": \"Daily\",\n        \"grouping\": []\n      },\n      \"timePeriod\": {\n        \"from\": \"',pipeline().parameters.from_date,'T00:00:00.000Z\",\n        \"to\": \"',pipeline().parameters.to_date,'T00:00:00.000Z\"\n      },\n      \"timeframe\": \"Custom\",\n      \"type\": \"ActualCost\"\n    },\n    \"deliveryInfo\": {\n      \"destination\": {\n        \"container\": \"usage\",\n        \"rootFolderPath\": \"exports/S037-Test\",\n        \"resourceId\": \"/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt\"\n      }\n    },\n    \"format\": \"Csv\",\n    \"partitionData\": false\n  }\n}')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Delete Export - ActualCost",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Run Export ActualCost",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "@concat('https://management.azure.com/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/providers/Microsoft.CostManagement/exports/ActualCost/?api-version=2021-10-01')",
+						"type": "Expression"
+					},
+					"connectVia": {
+						"referenceName": "AutoResolveIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
+					},
+					"method": "DELETE",
+					"headers": {
+						"Authorization": {
+							"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Create Export - AmortisedCost",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Get token",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": true
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "@concat('https://management.azure.com/subscriptions/',pipeline().parameters.subscriptionId,'/providers/Microsoft.CostManagement/exports/AmortizedCost/?api-version=2021-10-01')",
+						"type": "Expression"
+					},
+					"connectVia": {
+						"referenceName": "AutoResolveIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
+					},
+					"method": "PUT",
+					"headers": {
+						"Authorization": {
+							"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+							"type": "Expression"
+						}
+					},
+					"body": {
+						"value": "@concat('{\n  \"properties\": {\n    \"definition\": {\n      \"dataset\": {\n        \"granularity\": \"Daily\",\n        \"grouping\": []\n      },\n      \"timePeriod\": {\n        \"from\": \"',pipeline().parameters.from_date,'T00:00:00.000Z\",\n        \"to\": \"',pipeline().parameters.to_date,'T00:00:00.000Z\"\n      },\n      \"timeframe\": \"Custom\",\n      \"type\": \"AmortizedCost\"\n    },\n    \"deliveryInfo\": {\n      \"destination\": {\n        \"container\": \"usage\",\n        \"rootFolderPath\": \"exports/S037-Test\",\n        \"resourceId\": \"/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt\"\n      }\n    },\n    \"format\": \"Csv\",\n    \"partitionData\": false\n  }\n}')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Run Export  - AmortisedCost",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Create Export - AmortisedCost",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "@concat('https://management.azure.com/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/providers/Microsoft.CostManagement/exports/AmortizedCost/run?api-version=2021-10-01')",
+						"type": "Expression"
+					},
+					"connectVia": {
+						"referenceName": "AutoResolveIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
+					},
+					"method": "POST",
+					"headers": {
+						"Authorization": {
+							"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+							"type": "Expression"
+						}
+					},
+					"body": {
+						"value": "@concat('{\n  \"properties\": {\n    \"definition\": {\n      \"dataset\": {\n        \"granularity\": \"Daily\",\n        \"grouping\": []\n      },\n      \"timePeriod\": {\n        \"from\": \"',pipeline().parameters.from_date,'T00:00:00.000Z\",\n        \"to\": \"',pipeline().parameters.to_date,'T00:00:00.000Z\"\n      },\n      \"timeframe\": \"Custom\",\n      \"type\": \"AmortizedCost\"\n    },\n    \"deliveryInfo\": {\n      \"destination\": {\n        \"container\": \"usage\",\n        \"rootFolderPath\": \"exports/S037-Test\",\n        \"resourceId\": \"/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt\"\n      }\n    },\n    \"format\": \"Csv\",\n    \"partitionData\": false\n  }\n}')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Delete Export - AmortizedCost",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Run Export  - AmortisedCost",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "@concat('https://management.azure.com/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/providers/Microsoft.CostManagement/exports/AmortizedCost/?api-version=2021-10-01')",
+						"type": "Expression"
+					},
+					"connectVia": {
+						"referenceName": "AutoResolveIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
+					},
+					"method": "DELETE",
+					"headers": {
+						"Authorization": {
+							"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Create Export - Usage",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Get token",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": true
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "@concat('https://management.azure.com/subscriptions/',pipeline().parameters.subscriptionId,'/providers/Microsoft.CostManagement/exports/Usage/?api-version=2021-10-01')",
+						"type": "Expression"
+					},
+					"connectVia": {
+						"referenceName": "AutoResolveIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
+					},
+					"method": "PUT",
+					"headers": {
+						"Authorization": {
+							"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+							"type": "Expression"
+						}
+					},
+					"body": {
+						"value": "@concat('{\n  \"properties\": {\n    \"definition\": {\n      \"dataset\": {\n        \"granularity\": \"Daily\",\n        \"grouping\": []\n      },\n      \"timePeriod\": {\n        \"from\": \"',pipeline().parameters.from_date,'T00:00:00.000Z\",\n        \"to\": \"',pipeline().parameters.to_date,'T00:00:00.000Z\"\n      },\n      \"timeframe\": \"Custom\",\n      \"type\": \"Usage\"\n    },\n    \"deliveryInfo\": {\n      \"destination\": {\n        \"container\": \"usage\",\n        \"rootFolderPath\": \"exports/S037-Test\",\n        \"resourceId\": \"/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt\"\n      }\n    },\n    \"format\": \"Csv\",\n    \"partitionData\": false\n  }\n}')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Run Export  - Usage",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Create Export - Usage",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "https://management.azure.com/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/providers/Microsoft.CostManagement/exports/Usage/run?api-version=2021-10-01",
+						"type": "Expression"
+					},
+					"connectVia": {
+						"referenceName": "AutoResolveIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
+					},
+					"method": "POST",
+					"headers": {
+						"Authorization": {
+							"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+							"type": "Expression"
+						}
+					},
+					"body": {
+						"value": "@concat('{\n  \"properties\": {\n    \"definition\": {\n      \"dataset\": {\n        \"granularity\": \"Daily\",\n        \"grouping\": []\n      },\n      \"timePeriod\": {\n        \"from\": \"',pipeline().parameters.from_date,'T00:00:00.000Z\",\n        \"to\": \"',pipeline().parameters.to_date,'T00:00:00.000Z\"\n      },\n      \"timeframe\": \"Custom\",\n      \"type\": \"Usage\"\n    },\n    \"deliveryInfo\": {\n      \"destination\": {\n        \"container\": \"usage\",\n        \"rootFolderPath\": \"exports/S037-Test\",\n        \"resourceId\": \"/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt\"\n      }\n    },\n    \"format\": \"Csv\",\n    \"partitionData\": false\n  }\n}')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Delete Export - Usage",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Run Export  - Usage",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "@concat('https://management.azure.com/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/providers/Microsoft.CostManagement/exports/Usage/?api-version=2021-10-01')",
+						"type": "Expression"
+					},
+					"connectVia": {
+						"referenceName": "AutoResolveIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
+					},
+					"method": "DELETE",
+					"headers": {
+						"Authorization": {
+							"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"parameters": {
+			"from_date": {
+				"type": "string",
+				"defaultValue": "2022-08-01"
+			},
+			"to_date": {
+				"type": "string",
+				"defaultValue": "2022-08-31"
+			},
+			"KV_Address": {
+				"type": "string",
+				"defaultValue": "https://acm-toolkit-kv.vault.azure.net/secrets/Omnia-Cost-Management-Reporting/b6c969f1651040e1a29288275394d776"
+			},
+			"clientId": {
+				"type": "string",
+				"defaultValue": "0dd0cea7-0ff9-4dd4-99aa-99d63d3afeec"
+			},
+			"subscriptionId": {
+				"type": "string",
+				"defaultValue": "13d66f54-0a19-4912-b4f3-54d15897368d"
+			}
+		},
+		"folder": {
+			"name": "Management API (New)"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-11-18T13:46:02Z"
+	},
+	"type": "Microsoft.Synapse/workspaces/pipelines"
+}

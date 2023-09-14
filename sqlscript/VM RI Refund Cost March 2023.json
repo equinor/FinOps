@@ -1,0 +1,20 @@
+{
+	"name": "VM RI Refund Cost March 2023",
+	"properties": {
+		"folder": {
+			"name": "--RI & HUB Savings/New API/Morten P Query"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 \n    --,format([Date],'yyyy-MM') as [Date]\n    --,JSON_VALUE(AdditionalInfo, '$.ServiceType') as ServiceType\n    --avg(UnitPrice) as UnitPrice\n    --,EffectivePrice as EffectivePrice\n    --,sum(UnitPrice * Quantity) as [PAYG Cost]\n    --,sum(EffectivePrice * Quantity) as [RI Cost]\n    --,sum((UnitPrice - EffectivePrice) * Quantity) as TotalUsedSavings\n    sum(CostInBillingCurrency) as Cost\n    ,sum(Quantity) as Quantity \n    ,[Date]\n    --,ReservationName\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAc*/202303*/A*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nwhere \n    ChargeType = 'Refund' \n    and PricingModel = 'Reservation' \n    and (ReservationName like 'S037_%' OR ReservationName like 'VM_RI_%')\n\n    --and MeterCategory = 'Virtual Machines' and ChargeType = 'Usage'\n--group by ReservationName, format([Date],'yyyy-MM'), JSON_VALUE(AdditionalInfo, '$.ServiceType') \n--order by format([Date],'yyyy-MM'), ReservationName\ngroup by [Date] --, ReservationName\norder by [Date]\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

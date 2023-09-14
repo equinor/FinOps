@@ -1,0 +1,20 @@
+{
+	"name": "SQL HUB 2022",
+	"properties": {
+		"folder": {
+			"name": "--RI & HUB Savings/Old API"
+		},
+		"content": {
+			"query": "SELECT\n    JSON_VALUE(AdditionalInfo, '$.ServiceType') as ServiceType, \n    JSON_VALUE(AdditionalInfo, '$.AHB') as AHB, \n    JSON_VALUE(AdditionalInfo, '$.vCores') as vCores, \n    JSON_VALUE(AdditionalInfo, '$.VCPUs') as VCPUs, \n    MeterCategory,\n    MeterSubCategory,\n    substring([Date],0,8) as [Date], \n    sum(ConsumedQuantity) as ConsumedQuantity,\n    --PartNumber,\n    Product,\n    InstanceId\n    --TOP 1000 *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/monthly/2022/*/*-cleaned.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n\n--WHERE MeterCategory LIKE 'SQL%'\n\n-----Due to MS bug where SQL DB's with HUB applied are identified as SQL MI DB's we are only querying for SQL MI and SQL VM below. If MS fix the bug the correct query for SQL DB with HUB will need to be identified and added to the where section of the query\n\nWHERE (MeterCategory = 'SQL Managed Instance' and JSON_VALUE(AdditionalInfo, '$.AHB') = 'True') or (MeterCategory = 'Virtual Machines Licenses' and MeterSubCategory LIKE '%Hybrid%') \n\n-----Below line extracts non HUB SQL entries for testing & investigation purposes\n--WHERE (MeterCategory = 'SQL Managed Instance' and JSON_VALUE(AdditionalInfo, '$.AHB') = 'False') or (MeterCategory = 'Virtual Machines Licenses' and MeterSubCategory NOT LIKE '%Hybrid%') and Product LIKE 'SQL Server%' and Product NOT LIKE 'SQL Server Express%'\n\nGROUP BY JSON_VALUE(AdditionalInfo, '$.ServiceType'), substring([Date],0,8), MeterSubCategory, PartNumber, Product, JSON_VALUE(AdditionalInfo, '$.AHB'), InstanceId, JSON_VALUE(AdditionalInfo, '$.vCores'), MeterCategory, JSON_VALUE(AdditionalInfo, '$.VCPUs')\nORDER BY substring([Date],0,8), ConsumedQuantity DESC\n--order by CAST(JSON_VALUE(AdditionalInfo, '$.VCPUs') as int) DESC\n\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

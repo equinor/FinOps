@@ -1,0 +1,20 @@
+{
+	"name": "Un Used RI March 2023",
+	"properties": {
+		"folder": {
+			"name": "--RI & HUB Savings/New API/Morten P Query"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    --TOP 10 *\n    --ReservationName\n    --,format([Date],'yyyy-MM') as [Date]\n    --,JSON_VALUE(AdditionalInfo, '$.ServiceType') as ServiceType\n    --,avg(UnitPrice) as UnitPrice\n    --,EffectivePrice\n    --,Quantity\n    --,sum(UnitPrice * Quantity) as [Equinor PAYG Cost]\n    --,EffectivePrice * Quantity as [RI Cost]\n    --,sum((UnitPrice - EffectivePrice) * Quantity) as TotalUsedSavings\n    --,ProductOrderName\n    --,PartNumber\n    --,ChargeType\n    --,PricingModel\n    sum(Quantity)as Quantity\n    ,sum(EffectivePrice * Quantity) as [RI Cost]\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAm*/202303*/A*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nwhere \n    ChargeType = 'UnusedReservation' \n    and (PricingModel = 'Reservation') \n    and (ReservationName like 'S037_%' OR ReservationName like 'VM_RI_%')\n    --and MeterCategory = 'Virtual Machines' --and format([Date],'yyyy-MM') = '2022-12'\n--group by ReservationName, format([Date],'yyyy-MM'), ProductOrderName,PartNumber, ChargeType, PricingModel --, JSON_VALUE(AdditionalInfo, '$.ServiceType')\n--order by format([Date],'yyyy-MM'), ReservationName\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

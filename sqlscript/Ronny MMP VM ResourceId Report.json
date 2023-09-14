@@ -1,0 +1,20 @@
+{
+	"name": "Ronny MMP VM ResourceId Report",
+	"properties": {
+		"folder": {
+			"name": "Ad Hoc Cost Report Requests"
+		},
+		"content": {
+			"query": "SELECT --DISTINCT\nResourceName\n,ResourceId\n,Tags\n,SubscriptionName\n,[Date]\nFROM [dbo].[Combined_Actual_Savings]\nwhere upper(ResourceName) in (--'MMP-TS4401', 'MMP-TS4402',\n                        'MMP-TS4302', 'MMP-TS4301') \n        --and [Date] >= '2023-01-01' \n        and MeterCategory = 'Virtual Machines'\n--group by ResourceName,ResourceId,Tags, SubscriptionName",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

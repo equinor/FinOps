@@ -1,0 +1,20 @@
+{
+	"name": "Reservation Costs 2021",
+	"properties": {
+		"folder": {
+			"name": "Reservation - Saving Plan Queries"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    armSkuName AS armSkuName,\n    term AS term,\n    region AS region,\n    substring(FORMAT (eventDate,'yyyy-MM-dd') ,0,11) AS eventDate,\n    reservationOrderId AS reservationOrderId,\n    description AS [description],\n    quantity AS quantity,\n    amount AS amount,\n    reservationOrderName AS reservationOrderName,\n    billingFrequency AS billingFrequency\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/tempdata/annual/2021/reservation_cost.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nwhere reservationOrderId = '7334aae9-5adc-4e4c-a58b-801d095a14df'\norder by substring(FORMAT (eventDate,'yyyy-MM-dd') ,0,11)\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "master",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

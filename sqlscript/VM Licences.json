@@ -1,0 +1,20 @@
+{
+	"name": "VM Licences",
+	"properties": {
+		"folder": {
+			"name": "OGBG Benchmark 2022/2021"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    JSON_VALUE(AdditionalInfo, '$.ServiceType') as ServiceType, \n    JSON_VALUE(AdditionalInfo, '$.ReservationOrderId') as ReservationOrderId, \n    sum(ConsumedQuantity) as ConsumedQuantity,\n    sum(Cost) as Cost,\n    Product\n    --TOP 1000 *\nFROM\n    OPENROWSET(\n        BULK 'https://omniaacdcdlsprod.dfs.core.windows.net/tempdata/monthly/2021/*/*_cleaned.csv',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW = TRUE\n    ) AS [result]\nWHERE MeterCategory = 'Virtual Machines Licenses' --and JSON_VALUE(AdditionalInfo, '$.ReservationId') LIKE '%%' --and Product Not like 'Windows%'\n--and MeterSubCategory = 'Reservation-Base VM' and ServiceInfo2 LIKE '%BYOL' and Product LIKE '%Spot%'\nGROUP BY JSON_VALUE(AdditionalInfo, '$.ServiceType'), JSON_VALUE(AdditionalInfo, '$.ReservationOrderId'), Product\nORDER BY ServiceType ",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

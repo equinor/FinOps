@@ -1,0 +1,1101 @@
+{
+	"name": "New API - ActualCost - Histrorical Pull",
+	"properties": {
+		"activities": [
+			{
+				"name": "Post Consumption Request",
+				"type": "WebActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": true
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "https://management.azure.com/providers/Microsoft.Billing/billingAccounts/57950773/providers/Microsoft.CostManagement/generateCostDetailsReport?api-version=2022-05-01",
+						"type": "Expression"
+					},
+					"connectVia": {
+						"referenceName": "AutoResolveIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
+					},
+					"method": "POST",
+					"headers": {
+						"Authorization": {
+							"value": "@concat('Bearer ',pipeline().parameters.Bearer)",
+							"type": "Expression"
+						},
+						"Content-type": "application/json"
+					},
+					"body": {
+						"value": "@concat('{\n  \"metric\": \"ActualCost\",\n  \"billingPeriod\": \"',pipeline().parameters.Year,pipeline().parameters.Month,'\"\n  }')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Set blobPath",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Post Consumption Request",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "blobPath",
+					"value": {
+						"value": "@activity('Post Consumption Request').output.manifest.blobs[0].blobLink",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Copy file from MS to Synapse datastore",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Set blobPath",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Set ActualUsage Path",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "BinarySource",
+						"storeSettings": {
+							"type": "HttpReadSettings",
+							"requestMethod": "GET"
+						},
+						"formatSettings": {
+							"type": "BinaryReadSettings"
+						}
+					},
+					"sink": {
+						"type": "BinarySink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "ms_billing_output_file",
+						"type": "DatasetReference",
+						"parameters": {
+							"blobPath": {
+								"value": "@variables('blobPath')",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "S037_New_Format_Usage_Data",
+						"type": "DatasetReference",
+						"parameters": {
+							"Path": {
+								"value": "@variables('Path')",
+								"type": "Expression"
+							},
+							"dateRange": {
+								"value": "@variables('dateRange')",
+								"type": "Expression"
+							},
+							"ReportType": "ActualCost"
+						}
+					}
+				]
+			},
+			{
+				"name": "CSV to Parquet",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Copy file from MS to Synapse datastore",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": false,
+							"wildcardFolderPath": {
+								"value": "@variables('Path')",
+								"type": "Expression"
+							},
+							"wildcardFileName": {
+								"value": "@concat('ACMMonthlyActualCost_',variables('dateRange'),'.csv')",
+								"type": "Expression"
+							},
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "InvoiceSectionName",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "InvoiceSectionName",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "AccountName",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "AccountName",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "AccountOwnerId",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "AccountOwnerId",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "SubscriptionId",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "SubscriptionId",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "SubscriptionName",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "SubscriptionName",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ResourceGroup",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "ResourceGroup",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ResourceLocation",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "ResourceLocation",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "Date",
+									"type": "DateTime",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "Date",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ProductName",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "ProductName",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "MeterCategory",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "MeterCategory",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "MeterSubCategory",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "MeterSubCategory",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "MeterId",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "MeterId",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "MeterName",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "MeterName",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "MeterRegion",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "MeterRegion",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "UnitOfMeasure",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "UnitOfMeasure",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "Quantity",
+									"type": "Double",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "Quantity",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "EffectivePrice",
+									"type": "Double",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "EffectivePrice",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "CostInBillingCurrency",
+									"type": "Double",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "CostInBillingCurrency",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "CostCenter",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "CostCenter",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ConsumedService",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "ConsumedService",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ResourceId",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "ResourceId",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "Tags",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "Tags",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "OfferId",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "OfferId",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "AdditionalInfo",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "AdditionalInfo",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ServiceInfo1",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "ServiceInfo1",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ServiceInfo2",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "ServiceInfo2",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ResourceName",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "ResourceName",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ReservationId",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "ReservationId",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ReservationName",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "ReservationName",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "UnitPrice",
+									"type": "Double",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "UnitPrice",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ProductOrderId",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "ProductOrderId",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ProductOrderName",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "ProductOrderName",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "Term",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "Term",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "PublisherType",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "PublisherType",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "PublisherName",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "PublisherName",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ChargeType",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "ChargeType",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "Frequency",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "Frequency",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "PricingModel",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "PricingModel",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "AvailabilityZone",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "AvailabilityZone",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "BillingAccountId",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "BillingAccountId",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "BillingAccountName",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "BillingAccountName",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "BillingCurrencyCode",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "BillingCurrencyCode",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "BillingPeriodStartDate",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "BillingPeriodStartDate",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "BillingPeriodEndDate",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "BillingPeriodEndDate",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "BillingProfileId",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "BillingProfileId",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "BillingProfileName",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "BillingProfileName",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "InvoiceSectionId",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "InvoiceSectionId",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "IsAzureCreditEligible",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "IsAzureCreditEligible",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "PartNumber",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "PartNumber",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "PayGPrice",
+									"type": "Double",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "PayGPrice",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "PlanName",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "PlanName",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ServiceFamily",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "ServiceFamily",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "CostAllocationRuleName",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "CostAllocationRuleName",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "benefitId",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "benefitId",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "benefitName",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "benefitName",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "S037CSVSourceDataset",
+						"type": "DatasetReference",
+						"parameters": {
+							"Year": {
+								"value": "@variables('Year')",
+								"type": "Expression"
+							},
+							"Month": {
+								"value": "@variables('Month')",
+								"type": "Expression"
+							},
+							"toDate": {
+								"value": "@variables('toDate')",
+								"type": "Expression"
+							},
+							"scope": {
+								"value": "@variables('Scope')",
+								"type": "Expression"
+							},
+							"fromDate": {
+								"value": "@variables('fromDate')",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "New_API_Format_Parquet",
+						"type": "DatasetReference",
+						"parameters": {
+							"Path": {
+								"value": "@variables('Path')",
+								"type": "Expression"
+							},
+							"dateRange": {
+								"value": "@variables('dateRange')",
+								"type": "Expression"
+							},
+							"ReportType": "ActualCost"
+						}
+					}
+				]
+			},
+			{
+				"name": "Set last day in Month",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Set first day of month",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "toDate",
+					"value": {
+						"value": "@replace(adddays(formatDateTime(adddays(formatDateTime(variables('fromDate'), 'yyyy-MM-28'),5), 'yyyy-MM-01'),-1),'T00:00:00.0000000','')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Set first day of month",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Set Year",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Set Month",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "fromDate",
+					"value": {
+						"value": "@concat(variables('Year'),'-',variables('Month'),'-01')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Set Month",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "Month",
+					"value": {
+						"value": "@pipeline().parameters.Month",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Set Year",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "Year",
+					"value": {
+						"value": "@pipeline().parameters.Year",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Set ActualUsage Path",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Set ActualUsage Date Range",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "Path",
+					"value": {
+						"value": "@concat('exports/monthly/ACMMonthlyActualCost/',variables('dateRange'))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Set ActualUsage Date Range",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Set last day in Month",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "dateRange",
+					"value": {
+						"value": "@concat(replace(variables('fromDate'),'-',''),'-',replace(variables('toDate'),'-',''))",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"Year": {
+				"type": "string",
+				"defaultValue": "2022"
+			},
+			"Month": {
+				"type": "string",
+				"defaultValue": "0"
+			},
+			"Bearer": {
+				"type": "string",
+				"defaultValue": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6Ii1LSTNROW5OUjdiUm9meG1lWm9YcWJIWkdldyIsImtpZCI6Ii1LSTNROW5OUjdiUm9meG1lWm9YcWJIWkdldyJ9.eyJhdWQiOiJodHRwczovL21hbmFnZW1lbnQuY29yZS53aW5kb3dzLm5ldCIsImlzcyI6Imh0dHBzOi8vc3RzLndpbmRvd3MubmV0LzNhYTRhMjM1LWI2ZTItNDhkNS05MTk1LTdmY2YwNWI0NTliMC8iLCJpYXQiOjE2NzM0NDY0MjAsIm5iZiI6MTY3MzQ0NjQyMCwiZXhwIjoxNjczNDUxNjY0LCJhY3IiOiIxIiwiYWlvIjoiQVZRQXEvOFRBQUFBZXQxV1RSSXlIV3FOUjN4R2kzWEwwMytWcjU3cjFCdGhGOFIyOGlyZkRTdFV4TUZBcnZLOCt4blpBVitSYnZYbHk4Z0t4RXE4Wm1sYUE5MzJGSnB4cEJIdE9icTU0MWl4ZTk4NjhuWHExWWM9IiwiYW1yIjpbInB3ZCIsIm1mYSJdLCJhcHBpZCI6IjE4ZmJjYTE2LTIyMjQtNDVmNi04NWIwLWY3YmYyYjM5YjNmMyIsImFwcGlkYWNyIjoiMCIsImZhbWlseV9uYW1lIjoiRmxvb2QiLCJnaXZlbl9uYW1lIjoiRGF2aWQiLCJncm91cHMiOlsiNmEwZjczMDEtMDM4ZS00MjMxLWFkNTYtNmQwMWFkY2I4NGVmIiwiZDg2MmNhMDItOWQ5OC00NzNkLTk3NjAtNTFjOGVmNjliZWZmIiwiZmZhZWE2MDMtNzU5YS00NDkwLTkzN2MtODc1MjZmNDJkMzFlIiwiZmFjYjA0MDYtYTk5ZS00YjFjLTliZDEtYjU4OTAzYWQ2MGM5IiwiY2JiOWZjMDYtYzVkNi00ODcyLThjODUtNDgwMjRlODljNjQ5IiwiOWViMjYzMDktMzVlMC00YTgwLTk2YWQtZTRjOWVjNTcxMWJlIiwiOTYyOWEyMGEtZWFlYy00OWIzLTk3ODQtMGFlOWE2NTcwZmM5IiwiMWRiNmJhMGMtMWQyZi00ZDc2LTlkYWUtMDg4MWU1OTEzYzVjIiwiY2IzOGMyMGQtZjRhMy00ZWMzLWIyNTgtZWQwMmM5MzY4NGYwIiwiMTkzY2YxMGQtN2RkMC00NmQ3LWExMDEtNDU1ODIwMjM0YTU2IiwiZjYzODQ4MGYtYjI5NS00NzdmLWJkZWEtYjk5ZWQ0MjFkYmEyIiwiMzE5ODllMGYtZDZlNS00OGU3LTk5NTItMTBhN2ZmYWUzYmI4IiwiMDc3ZTM4MTEtNzgzYS00YjlhLTlhNGItNWI5OWU3ZTY3MWMwIiwiMzEwMDQ3MTItZDkwZS00OWY2LTllNzktMmU5N2Y2OGY2ZDUwIiwiMDQ3ZmIwMTItNjk0Yy00NGMzLThkNDgtOTI3Y2IzNDk3ODhjIiwiYjcyYjY4MTQtZDE3Mi00ZTM2LWJiOTAtMGIzZjE1YTkxOTc3IiwiZjJjOTg4MTUtZTE2Ni00ZjkwLWE1ZjQtMWY1MzVmNWVkY2M4IiwiMDViOTZkMTYtYjY0NC00ZmNmLThhZTUtZmYwYzBmODI1YjVmIiwiYmMzOWYyMTctNDQxOS00MjkxLTk1MjctMzU2MTQ3N2EyZmI3IiwiMDAwMzExMWItMGMyZS00MDQxLWIxZGQtMGIyZWQxZWY2Zjc4IiwiMzA3MjhlMWUtNDZmMC00YjYxLWEwYmMtNmJjM2Y3MzYwYjhhIiwiYzY4ZTUwMWYtNmQxZi00YjRiLThmMzctMGM0NjgxNTZkZGYyIiwiNWFmMDk5MjEtZmQ2YS00NjExLTllYTktYTNiZmIxZjM1YmJlIiwiN2VmMzZjMjMtM2Y2Yi00MzIxLWIwMjgtYjgxYTliNDU5OTkxIiwiZGY2NWVhMjMtODhjMy00MzFhLWE4N2YtNjA1NWNmOWJkNTQ5IiwiM2I5NWRhMjctMzM3YS00NGMxLWI2OWQtNTY0NGI1MWE0ODM2IiwiOGZhM2JiMjgtODRmOS00YjA2LWE0ZDUtMDg5MDdlOGRkNmZhIiwiZTA0MGM0MjgtYWM1Ny00NTQyLWEzMjgtMmY2NzJhMzRjY2I4IiwiZTFjYWE0MmEtYmY2OS00MzkxLTlhNWUtYzhjZmRhZTFiNDE3IiwiOWZlNmU2MmEtMzExOC00NzA0LWFmYmUtODM0ODIyY2IwZDQzIiwiMGIxMDJiMmMtM2M5Ny00Yjc2LWI0ZGYtZTAzOTg2ODZhZjU2IiwiNzQ4YTAyMmUtOTY4ZS00YTk0LWFkZTMtOTI0ZTI2YmFkYWE4IiwiZGE1YTMzMmUtMTQ3MC00MGYzLTk4MDMtNDk3NWU1Njk0ZTViIiwiNGY2ZjRlMmYtYjIyMy00ZTczLWIzMzMtNWJiMWY3NjAxNGY0IiwiMjllMDM1MzAtZjgxOC00MDM2LWIyOGItOTdiOGI5NGYyNjUwIiwiYWQ1Nzc4MzItYTBlMS00YTA4LWJiZjQtMTI3MjQzYzZhNzUyIiwiMWRmZWJkMzUtN2U0ZC00ZjM5LTkyMjUtMDExZGFkZGRkZWIwIiwiMzA0OTRlMzYtMjA0MS00MDk2LWFjZjgtYjM2ODRhNjMwOWU0IiwiNWRkNTVjMzctMGI4NC00MGI0LTg3NjEtNTNiYjlhOTNhYzhmIiwiMzkyNzA5M2EtOGQ1OS00MTE5LTgzM2UtZTdhMDJmYjg4NzhjIiwiNjEyYWNiM2YtZTJkOC00YjU2LWI1NTAtMGZlNTU2ODk0Mjg0IiwiYjQwNzRmNDItNDAxYi00YzVlLTgxN2UtNmVmODMzNTliN2JmIiwiODQ5Y2Y0NDMtOWM1Yy00ZTMyLWEyZWEtNTVlYWVkZDllNmE2IiwiMjYxNTQwNDQtMmE3OC00YzgyLTk5OTMtMTZlMDg0NWM1NTgyIiwiYjM2YjI5NDUtMWQyNC00YzgzLTliYTUtMjUxNGE1NmY0OWEzIiwiNmM0YTI1NDktODBlYi00NmE5LTk5NzItOTI3MTc4ZjRjNGZmIiwiYzVkMjYyNGItNjVmOC00M2Q0LWExYTgtNTI4ZjFjNTI5N2QzIiwiMjQxZjFjNGMtNjIxMS00OGFjLWEwODgtYjYyZTFjMGIzM2FjIiwiNDUyMmE0NGQtNjYwZC00NGVjLTgwNzMtYWZkYzE2ZTRhZDdiIiwiNTMwMWI0NGQtZjUwNS00NDA3LTg3NmQtZWZhZTViN2JlOTgwIiwiNGM3MGZjNGYtYWI5NS00NzE0LThmMTctZGZkNzUwNmNmYjIwIiwiZTcxNjc3NTAtNWM1Yi00Yjc2LTg4YjItNjU4ZWJmMjEzZjFlIiwiOTFhNGFiNTAtYzQ0MS00YTlkLWJlNDMtYTAyYzQ4NWY5NWYzIiwiMWFiMzE4NTEtYzM2Yy00OTZmLThkNGMtM2E3YWE0NTkzNGM4IiwiMzJkYWQ4NTEtMGI2YS00NTMxLWI4MzUtMzA3MGNiZTkwYzUwIiwiNjQ4MGM0NTQtNWY2YS00ZDE5LWFkNGYtNWQwNGM4NjViYTg1IiwiYjFjMjYyNTYtOTZkZi00MzdmLWEzYWItOGUxNjYzZTY2YWIxIiwiZGRmYzI2NWEtMGJiZi00OWNlLWJiMDItNjdkNTEzYjc3YzJiIiwiZWFiNzdjNWItMGU2ZC00NWRmLTgzZjgtYTY1ZDk3MDcyMTVkIiwiZTJjZTkzNjAtZGJkNi00ZGQ0LTg1NTItODA2MmE1MTdiNWRkIiwiNzMyOTliNjAtNjAyMy00Y2ZkLTk4YzEtNWQ2NWUyZmNiNDdmIiwiMGZlMWVlNjAtNjMwNS00ZDBhLTliMTAtMzFiNTAyNmYyNWM3IiwiOTAwNzBmNjEtNjU3Mi00ZDRmLThkMDQtMjVhNGFlYjViMzc5IiwiM2UxMzY5NjMtMWYzOS00OGI4LWI1ZjItMjY0ZGEwMWE3YWE1IiwiYjAzMTU5NjQtOGNiMy00ZDEyLThhZDctOTRlODhjYTZiNzA3IiwiMTJlZWI5NjUtYzU1Zi00YmI0LThkYmItZjRlNmUwOGNjMzBhIiwiYjdiZTdjNjYtMDA2Yi00Njc4LWE1ZmQtMjNiNzI0NjBkOTE4IiwiOTM0NWU4NjYtZmFmZi00ZTdlLWI5YzAtNmRiMmQ2NThmNzkzIiwiNjhiNmQ0NmEtOTY5Mi00OWUxLWExYTYtYjA3NWY2YTJlOWQ5IiwiOWY2MmVjNmMtZWU0MS00NGU5LTkxMzEtOTliNzkyNTQxMzgyIiwiMWFjMTM3NmUtZjA0YS00NGI2LWJlNTgtYWExNjAwM2VhOTZlIiwiOWMzOGZhNmYtNGE4Zi00MjVkLWFiNDgtYjc3OTdhY2NmOGRlIiwiZmVjZTRhNzAtYTk2OC00YjdkLTk4YmEtOWFlMTMwOTc4YzljIiwiNmFjZDcxNzItNjA2Ni00NGFjLWIxOTAtOWNjZGE3YWI3YjY0IiwiMzc3NjYxNzMtY2Q4NS00NDc1LWExMWMtZWY2MWZjYTNhZmRjIiwiMGRmNTI5NzUtZGIxOS00ZmEzLWJjZDgtNjFkOGIyZTI4MmQ4IiwiZGFlZjA0NzctMzQxYi00ZGRlLTkzZmMtNGI4MTkwMTFiMjk0IiwiODk0OWEyNzctZGEzNC00YmIwLWFmMDEtYmRiZGZmNjVlYjZhIiwiYzQwZGUwNzktMmE1Ni00OTMyLThmMzUtMDUyOTc5YmRjMGZjIiwiMWI0YzhlN2ItYWMwYy00MTlhLWI4NzEtNzg5ZWZhNjFhNjdlIiwiMGRiNmJmN2ItNGIxYy00ZTljLWE1YjEtOTI4Yjk0MTI5YTZkIiwiZmI3YjY1N2UtYmE1OS00OGMzLTg2NTYtMjI0NGY3NzAzM2NkIiwiOGE4NTczN2YtMWYyZi00NjljLWFkZTUtNGQ5MDlhMjYzMjYxIiwiMzAwMTYwODAtMjg1Yy00N2M3LTg4ZDAtMjBmMmFiNThiNzMwIiwiNDczMTNmODEtMDZjZC00OTc5LTgwMDgtNDFjYTZhOTA3YWU3IiwiNDEyMTdhODYtZTU1ZS00ZDg4LWJjN2MtYTFlMTAxMWY3NjRiIiwiNzk4ZjljODgtMGUxYS00Mjg4LWI3MDQtMGQ2ODM0NTA3MGU0IiwiNTQyMGEyODgtYTNkZC00ZDgxLWE5MjctN2I2ZDk3NWFlZTE2IiwiYmYzYzBmOGEtYjQ5YS00M2M0LWI4N2EtOGQ4MmU0OGRkYThiIiwiZjJjOGNiOGItMjc2OS00YjQ2LWE5NjYtNjc4YTI1YTkxZDNjIiwiNmM1OGVmOGItYzRiMi00MzhmLTk0NzUtYjlkZjFjYWI4YzBmIiwiM2VhYjk5OGMtODI0ZC00YWI5LTg1YTUtZTQyNGEwYTIxMWMxIiwiZTQxMWMwOGQtNzA0My00ZDFiLWJiYzEtMTE2NTBlYzJlMmFlIiwiN2Q2M2RhOGQtNDczMC00YmEwLTk2YmUtYWVlYWJlNjZlZjgxIiwiMWFiY2IzOTAtODAxMi00NTBmLTg5ZGUtYjlmMGZkN2YyMDMyIiwiY2NjM2Y3OTAtMjZjMi00MjA4LWJjNWYtOTczZjZlY2NiZTQ3IiwiNmUzN2FhOTItNTlhZS00ZGMxLWFiZGYtOGFhMjkxODM5ZTQzIiwiMDAwNWQzOTItNzU3ZC00YWM1LTkzYzItZmE0MTU4NmJiM2JmIiwiYmIyM2ZhOTYtZTg1OS00MGZlLTllNWMtMzk1ZmM2MGZhYmFkIiwiMDA5YjUzOWMtZGNlMy00NzNhLTg2NDMtN2RiOTRkMTYyODQ0IiwiMzdiNDgzOWUtNWIwYy00MjkzLWFmODgtMWEyNWFhODAwZjY3IiwiYTYzNjI2OWYtYTk2Ny00NWIyLWJiNGUtM2UwMmRiYjYyNGEyIiwiZGY0MWU1YTUtOTc0OS00MzBmLWE0MDktMmI2MzUzNDMzMDNhIiwiZDYxMzA0YTYtMjQzNi00ODZlLThiNDAtZDUzNTEyZjNhNWJmIiwiMWMxNzQzYTgtODk3MS00NTJiLWIzZmQtNjlhZWEzYTk3NTIzIiwiZWQ4OTgzYTgtYWY3NC00MzQ2LTg1NmYtYjYzMThmMjViNjI4IiwiYjYyNzUxYWEtYjkwMy00ODE1LWJmNGEtNmNhMWZkNjQzZWU3IiwiZTUyNmVlYWMtYTQ0MC00MzY0LTkxNGQtMTA5Y2ZlMzc5NDFlIiwiYWZmNGIwYWQtN2MzYy00ZDk1LTgzZGYtYmI1NjE4ZjYxZDBiIiwiM2VkYjY4YWUtZmFkNC00NjZmLWExMmQtYTY3NTM0ODBmODdiIiwiMjhlNDYxYjEtMGRjZC00ZTZkLWIzNmYtNGY0NzQ3ZjcyOWFiIiwiNTI5MDM0YjMtYzQ1MC00MGE4LWJjYzUtYzQyMzgzMmY0NTYyIiwiMWJhZjY4YjQtMjVjOC00OTk4LWIxNTktY2FlOWQ0ODkzNzdlIiwiZmE0MTcxYjQtMjc0MC00YjM2LWEwMjYtODBkZWNjZWM1NTQwIiwiMjkzOTg0YjQtZTUxOS00Njc2LTlkMmEtNmZhM2Y2NzJiZDFjIiwiY2I0MjI1YjctMzVhZi00NTMzLTg4OWYtNzI0MWM5OWYxNTFjIiwiMGQ3YWRhYjktZjE5ZC00YWY5LTllNmItN2RkNWEzZDdkOTlmIiwiM2VhODM2YmMtNGEyNS00ZmRiLTllMTgtNDY1NDc1NDkzZDZmIiwiOGY5NGY5YmMtMmE0My00NzAxLWExMmQtYzkzZTgwZGJkMjQyIiwiMTZmODEwYmUtZTI3OS00ZTIyLTgxYzEtNjJmNDk0NmNhNTA2IiwiYTUxMGNlYmYtMWU3OS00YzliLWIyMWUtNjk5ZjlkNzUxOWY5IiwiYmQ2M2Y2YzAtY2M2MS00NWViLWJiMGEtOTc1MTg1ZmM2MDFmIiwiNWYwNmRjYzEtMzI2My00MWY2LTliZmEtZmE2ZjBjZWI4NmQ5IiwiNGY2MDgwYzktY2UzOC00ZDVlLWIxNjctZWM1Mzc3YmRkZjg5IiwiYjQ5YjE0Y2EtMDNjNi00ZWMzLWJjYTUtMGQ0MzY5MzUwNmFiIiwiZGEzMzcxY2EtODA2Mi00NjcxLWIwYzgtNTM4YTljNmYyYWRkIiwiZTg5MTQ4Y2ItNGExZC00MzY3LThhYTQtYzdhYTY0NDJmNDcxIiwiYjRjNDcxY2ItZjI2My00ZTIyLWEwMzYtMTZkOGQxNjQ0NmZlIiwiYTg2YjgxY2MtYTBmYS00ZGNkLWE0NzAtYzlkNGZmYjRkMzQ3IiwiNzEzMzdhZDMtMWY2Yi00OTdlLTlhNDUtZmM2ZTk3ODIzNzhiIiwiYTkzYTEzZDktNjMxMS00MWUxLWIzYjYtZjk5ZDRmYjAyZWFkIiwiZjE2Nzk2ZGEtMzRmMy00ZjZhLWFjNDMtYzZhMTY5MWZiYjNjIiwiZmEyMDYyZGMtNjA2OC00NjFjLTkyYWQtYmJmZjYwMTI2ZDE5IiwiYmQyNWM0ZGQtNzFiOC00NWQzLTg3MDItOThjNDdmZTAwMTlkIiwiMDk0NWM0ZGYtMDFmMS00ZDFjLTkxOTctNmFhN2FmNGNlNzM3IiwiNjFjOTczZTAtYTAzMy00YmJhLTlhMzktNGRmZmE4YTMxMmQyIiwiYjhhM2IzZTMtZDlkZi00OTU2LTlmYTctNmRhYTY1MDYyNTc4IiwiMWFiM2M5ZTctZGRlMC00YWYxLWFkODktZTdmZGViN2JiOGQ4IiwiMmVmMzJhZWQtMGY4Yy00MTQzLThlMjItYzUxZjg2MWIzNTc3IiwiMjZiM2JkZWUtMWM4Zi00NGVjLTg5YmQtMDZmODAzYjE3Nzg3IiwiZDk5Y2VkZWYtYmM4Ny00MWNhLWJhYWQtNTczZmMzZWYyMGVkIiwiODJmOGYzZWYtOTA2MC00YTJmLWE1ODctNWY0N2NhMjM4YWI3IiwiY2E0NWY5ZWYtYTE3OS00OGY4LTgzMWQtOTQxYzRlYzIyMTEzIiwiYjBhY2I3ZjAtNGJkZC00ZDgzLWFjYjAtMjRkZDg2Y2FkOTA0IiwiMjExNTQyZjMtY2NiZC00ZDlhLTkzYTYtYzVmYmJkOTIxOWEzIiwiY2I1N2YwZjctZGYyYy00ZmFlLWE2YTAtNzMwNGJiMzcyN2JiIiwiOWU1OWY4ZjctY2Q2Ni00YTYzLWExMWUtYTI4NTVmZTJiOTg2IiwiNTY3ZmI2ZjgtNzA1OC00OTk2LWE1M2ItMmYyYzFiZDIxODRkIiwiMmY0YWIzZjktNjgyZC00NmQ2LTkyMDQtN2ViZGE3YmJkNDFjIiwiOTYwMTg4ZmEtNDA4ZS00OTAxLTk1MGUtZDZlMTlmZWQ1NGVmIiwiOTBiNmQ3ZmEtZmEyNi00YTg1LTkyZTMtOWRhMjA1ZWQ0NmM1IiwiYWFjMzdiZmItN2U4MS00MzFjLWJiNzAtNWNlNGU4MGJjYmRkIiwiOTllNjJhZmYtNGY3Ni00NjBhLWE2MTEtZjhhNDhlOThmNzQxIl0sImlwYWRkciI6IjkwLjI1MC45LjQ4IiwibmFtZSI6IkRhdmlkIEZsb29kIiwib2lkIjoiZDU0ZWE4OWUtN2UyZC00M2E0LWJlNDUtNTZjMzUwOWVkM2E2Iiwib25wcmVtX3NpZCI6IlMtMS01LTIxLTIyMDUyMzM4OC0xMDg1MDMxMjE0LTcyNTM0NTU0My0yMjIyMjgxIiwicHVpZCI6IjEwMDMzRkZGOERCQzVFMDciLCJyaCI6IjAuQVFJQU5hS2tPdUsyMVVpUmxYX1BCYlJac0VaSWYza0F1dGRQdWtQYXdmajJNQk1DQUowLiIsInNjcCI6InVzZXJfaW1wZXJzb25hdGlvbiIsInN1YiI6IndvbE1sYkFpa0QtTG4td0FINHQ1d2dxMGo0Ql96VG9mbXhhZGlZdEstS0EiLCJ0aWQiOiIzYWE0YTIzNS1iNmUyLTQ4ZDUtOTE5NS03ZmNmMDViNDU5YjAiLCJ1bmlxdWVfbmFtZSI6IkRGTE9PQGVxdWlub3IuY29tIiwidXBuIjoiREZMT09AZXF1aW5vci5jb20iLCJ1dGkiOiJUQVh4Z3JwZ3kwcWZwQ1dBSzJmdkFRIiwidmVyIjoiMS4wIiwid2lkcyI6WyJiNzlmYmY0ZC0zZWY5LTQ2ODktODE0My03NmIxOTRlODU1MDkiXSwieG1zX3RjZHQiOjEzNDQ1ODM2MDJ9.fjM8U0Sj4r7vr6o4NyIyHbfJEyYokFsgbrdfy9xeUrk8k6V7ns7JVUrmaxRyuLna4iEvnd6zRBswFEWiW2FaSdzHkesAjtKiBgchivZBrR9nk9raq_uEL8S3zlhoesagOYSRhmDBp8PrUh7BU6jzXAZOGrbLEPD0QKTBoc-ZMhf2RzIiFpdurV0pR7jWaTXJHyrzs780Wv5j0gNbs4ihuj38CEQWil5A7mF80uCJ5kfK15p0y2FY-O38wwuF6IBbZdDEN6KI0Vay_qhW61seHC59FftdrBn1kdP8yemGQ0-P9FaMNdgr7KcKpgIRo9_inTegYDIp9nsoIJJFsh6YAw"
+			}
+		},
+		"variables": {
+			"Loop-Count": {
+				"type": "String"
+			},
+			"Bearer": {
+				"type": "String"
+			},
+			"blobPath": {
+				"type": "String"
+			},
+			"daily": {
+				"type": "String"
+			},
+			"Scope": {
+				"type": "String",
+				"defaultValue": "monthly"
+			},
+			"Year": {
+				"type": "String"
+			},
+			"Month": {
+				"type": "String"
+			},
+			"fromDate": {
+				"type": "String"
+			},
+			"toDate": {
+				"type": "String"
+			},
+			"Path": {
+				"type": "String"
+			},
+			"dateRange": {
+				"type": "String"
+			},
+			"Months": {
+				"type": "Array"
+			}
+		},
+		"folder": {
+			"name": "Management API (New)"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-01-11T14:32:28Z"
+	},
+	"type": "Microsoft.Synapse/workspaces/pipelines"
+}

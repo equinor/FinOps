@@ -1,0 +1,182 @@
+{
+	"name": "RI VM Savings",
+	"properties": {
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sparkpool32",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "56g",
+			"driverCores": 8,
+			"executorMemory": "56g",
+			"executorCores": 8,
+			"numExecutors": 2,
+			"runAsWorkspaceSystemIdentity": false,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "d27c5d5d-20de-45ed-9453-d904b327395f"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"synapse_widget": {
+				"version": "0.1"
+			},
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
+				"name": "sparkpool32",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net",
+					"authHeader": null
+				},
+				"sparkVersion": "3.2",
+				"nodeCount": 3,
+				"cores": 8,
+				"memory": 56,
+				"extraHeader": null
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "code",
+				"metadata": {
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"start_date = '2022-06-01'\n",
+					"end_date = '2022-06-30'\n",
+					"Year = '2022'\n",
+					"Month = '06'\n",
+					"\n",
+					""
+				],
+				"execution_count": 20
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"import pandas as pd\n",
+					"import numpy as np\n",
+					"import pyarrow as pa\n",
+					"import json\n",
+					"\n",
+					"source_usage_filename = 'abfss://usage@s037costmgmt.dfs.core.windows.net/monthly/' + Year + '/' + Month + '/' + start_date + '_' + end_date + '-cleaned.parquet'\n",
+					"\n",
+					"reservation_charges_source_file = 'abfss://reservations@s037costmgmt.dfs.core.windows.net/' + Year + '/' + Month + '/reservation-charges.parquet'\n",
+					"\n",
+					"pricelist_file = 'abfss://usage@s037costmgmt.dfs.core.windows.net/pricesheet/pricesheet-LATEST.parquet'\n",
+					"\n",
+					"saving_file_parquet = 'abfss://savings@s037costmgmt.dfs.core.windows.net/monthly/' + Year + '/' + Month + '/' + start_date + '_' + end_date + '-RI-VM.parquet'\n",
+					"saving_file_csv = 'abfss://savings@s037costmgmt.dfs.core.windows.net/monthly/' + Year + '/' + Month + '/' + start_date + '_' + end_date + '-RI-VM.csv'\n",
+					"\n",
+					"print(source_usage_filename)\n",
+					"\n",
+					"#Read in the source Parquet file\n",
+					"ri_saving = pd.read_parquet(source_usage_filename)\n",
+					"\n",
+					"#Drop all entries where ServiceInfo2 does not contain 'Windows Server BYOL' i.e. remove all entries that are not Windows Server HUB\n",
+					"#ri_saving = ri_saving.drop(ri_saving.loc[~(ri_saving['MeterCategory'] == 'Virtual Machines') & ~(ri_saving['MeterSubCategory'] == 'Reservation-Base VM')].index).reset_index()\n",
+					"ri_saving = ri_saving[(ri_saving['MeterCategory'] == 'Virtual Machines') & (ri_saving['MeterSubCategory'] == 'Reservation-Base VM')].reset_index(drop=True)\n",
+					"\n",
+					"#Removing all columns not required, need to do this before the flattening and merge of the AdditionalInfo as the AccountName \n",
+					"#column exists in the ri_saving as well as within the AdditionalInfo column\n",
+					"print('Removing unused columns')\n",
+					"columns_to_keep = ['AdditionalInfo', 'Date', 'ConsumedQuantity','SubscriptionName','ServiceInfo2','Location']\n",
+					"ri_saving = ri_saving[columns_to_keep]\n",
+					"\n",
+					"#ri_saving.reset_index(drop=True)\n",
+					"print('Flattening and merging the AdditionalInfo column with the rest of the DataFrame')\n",
+					"# Expand the json in the AdditionalInfo column into its own columns in a pd.Series then join it with the source dataframe\n",
+					"ser = ri_saving['AdditionalInfo'].apply(lambda s: pd.json_normalize(json.loads(s)))\n",
+					"ser2 = pd.concat(list(ser), ignore_index=True)\n",
+					"ri_saving = ri_saving.join(ser2,)\n",
+					"\n",
+					"#Repeating the column removal so only the columns we need (the ones specified below) are left\n",
+					"print('Removing unused columns')\n",
+					"columns_to_keep = ['ServiceType', 'ReservationOrderId', 'Date', 'ConsumedQuantity','SubscriptionName','ServiceInfo2','Location']\n",
+					"ri_saving = ri_saving[columns_to_keep]\n",
+					"\n",
+					"ri_saving['VMType'] = ri_saving['ServiceType'].str.replace('Standard_','')\n",
+					"ri_saving['VMType'] = ri_saving['VMType'].str.replace('_',' ')\n",
+					"\n",
+					"print('Reading in the latest Pricelist file...')\n",
+					"pricelist = pd.read_parquet(pricelist_file)\n",
+					"pricelist.drop(pricelist[pricelist['offerId'] != 'MS-AZR-0017P'].index, inplace=True)\n",
+					"columns_to_keep = ['meterName','unitOfMeasure',\t'includedQuantity', 'partNumber', 'unitPrice']\n",
+					"pricelist = pricelist[columns_to_keep]\n",
+					"\n",
+					"#As we are only interested in 'Virtual Machine' Picelist meterNames removing all others from the ri_saving\n",
+					"pricelist = pricelist[pricelist['meterName'].str.startswith('Virtual Machines')]\n",
+					"pricelist = pricelist[~pricelist['meterName'].str.contains('Windows')]\n",
+					"\n",
+					"ri_saving['search_string'] = ri_saving['VMType'] + ' - ' + ri_saving['Location']\n",
+					"\n",
+					"df2 = pricelist['meterName'].str.split(pat='-', n=1).str[-1]\n",
+					"df3 = df2.str.rsplit(pat='/', n=1, expand=True)\n",
+					"df3[1] = df3[1].fillna(np.nan)\n",
+					"df3.rename(columns={1:'short_meterName'}, inplace=True)\n",
+					"df3.rename(columns={0:'0'}, inplace=True)\n",
+					"df3[['short_meterName','0']] = df3[['short_meterName','0']].bfill(axis='columns')\n",
+					"df3['short_meterName'] = df3['short_meterName'].str.lstrip()\n",
+					"pricelist = pricelist.join(df3)\n",
+					"pricelist.rename(columns={1:'short_meterName'}, inplace=True)\n",
+					"pricelist.drop(columns='0', axis=1, inplace=True)\n",
+					"print('Merging Usage with pricelist file...')\n",
+					"ri_saving = ri_saving.merge(pricelist, left_on='search_string', right_on='short_meterName',)\n",
+					"ri_saving['unitOfMeasure'] = ri_saving['unitOfMeasure'].str.replace(\"s\",\"\").str.replace(\"Hour\", \"\").astype('int32')\n",
+					"ri_saving['PAYG_Rate_PH'] = ri_saving['unitPrice'] / ri_saving['unitOfMeasure']\n",
+					"ri_saving['Cost_Avoided'] = ri_saving['ConsumedQuantity'] * ri_saving['PAYG_Rate_PH']\n",
+					"\n",
+					"print('Reading in Reservation Charges file...')\n",
+					"reservation_charges = pd.read_parquet(reservation_charges_source_file)\n",
+					"reservation_charges = reservation_charges[~reservation_charges['description'].str.startswith('SQL')]\n",
+					"grouped_ri_saving = ri_saving.groupby('ReservationOrderId', as_index=False).aggregate({'ConsumedQuantity':np.sum, 'Cost_Avoided':np.sum})\n",
+					"reservation_charges.rename(columns={'amount':'RI_Cost'}, inplace=True)\n",
+					"reservation_charges.rename(columns={'reservationOrderId':'ReservationOrderId'}, inplace=True)\n",
+					"grouped_ri_saving = grouped_ri_saving.merge(reservation_charges, how='left', on='ReservationOrderId')\n",
+					"grouped_ri_saving['Saving_%'] = grouped_ri_saving['RI_Cost'] / grouped_ri_saving['Cost_Avoided']\n",
+					"grouped_ri_saving['Saving'] = grouped_ri_saving['Cost_Avoided'] - grouped_ri_saving['RI_Cost']\n",
+					"grouped_ri_saving['shortDate'] = grouped_ri_saving['eventDate'].str[:7]\n",
+					"\n",
+					"print('Writing Saving Parquet & CSV files....')\n",
+					"grouped_ri_saving.to_parquet(saving_file_parquet)\n",
+					"grouped_ri_saving.to_csv(saving_file_csv)\n",
+					"\n",
+					"\n",
+					"\n",
+					""
+				],
+				"execution_count": 21
+			}
+		]
+	}
+}

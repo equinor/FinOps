@@ -1,0 +1,20 @@
+{
+	"name": "PAYG VM Usage last 30 days",
+	"properties": {
+		"folder": {
+			"name": "Ad Hoc Cost Report Requests"
+		},
+		"content": {
+			"query": "declare @thirtydaysago datetime\ndeclare @now datetime\nset @now = getdate()\nset @thirtydaysago = dateadd(day,-30,@now)\n\n    SELECT\n        format([Date],'yyyy-MM-dd') as [Date]\n        ,JSON_VALUE(AdditionalInfo, '$.ServiceType') as ServiceType\n        ,JSON_VALUE(AdditionalInfo, '$.VCPUs') as vCPUs\n        --,AVG(cast(JSON_VALUE(AdditionalInfo, '$.VCPUs') as INT)) as vCPUs\n        ,ProductName\n        ,ResourceLocation\n        ,sum(Quantity) as Quantity\n        ,sum(CostInBillingCurrency) as [PAYG Cost]\n        --,Quantity\n        ,benefitName\n        --,*\n    FROM\n        OPENROWSET(\n            BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/20230101-20230131/ACMMonthlyActualCost_20230101-20230131.parquet',\n            FORMAT = 'PARQUET'\n        ) AS [result]\n    where MeterCategory = 'Virtual Machines' and benefitName is null and [Date] >= @thirtydaysago and MeterName not like 'A%'\n    group by [Date], JSON_VALUE(AdditionalInfo, '$.ServiceType'), JSON_VALUE(AdditionalInfo, '$.VCPUs'), ProductName, ResourceLocation, benefitName\n\n    UNION\n\n    SELECT\n        format([Date],'yyyy-MM-dd') as [Date]\n        ,JSON_VALUE(AdditionalInfo, '$.ServiceType') as ServiceType\n        ,JSON_VALUE(AdditionalInfo, '$.VCPUs') as vCPUs\n        --,AVG(cast(JSON_VALUE(AdditionalInfo, '$.VCPUs') as INT)) as vCPUs\n        ,ProductName\n        ,ResourceLocation\n        ,sum(Quantity) as Quantity\n        ,sum(CostInBillingCurrency) as [PAYG Cost]\n        --,Quantity\n        ,benefitName\n        --,*\n    FROM\n        OPENROWSET(\n            BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/daily/ACMDailyActualCost/ACMDailyActualCost.parquet',\n            FORMAT = 'PARQUET'\n        ) AS [result2]   \n    where MeterCategory = 'Virtual Machines' and benefitName is null and [Date] >= @thirtydaysago and MeterName not like 'A%'\n    group by [Date], JSON_VALUE(AdditionalInfo, '$.ServiceType'), JSON_VALUE(AdditionalInfo, '$.VCPUs'), ProductName, ResourceLocation, benefitName\norder by [Date]\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

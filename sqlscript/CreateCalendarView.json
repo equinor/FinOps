@@ -1,0 +1,20 @@
+{
+	"name": "CreateCalendarView",
+	"properties": {
+		"folder": {
+			"name": "Views/tsc"
+		},
+		"content": {
+			"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW Calendar_New\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/Calendar/delta/Calendar.delta/',\n        FORMAT = 'DELTA'\n    ) AS [result]\n\nGO\nSELECT TOP 10 * FROM Calendar_New",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

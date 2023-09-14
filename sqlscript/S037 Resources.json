@@ -1,0 +1,20 @@
+{
+	"name": "S037 Resources",
+	"properties": {
+		"folder": {
+			"name": "SQL HUB Issue"
+		},
+		"content": {
+			"query": "SELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/daily/*-cleaned.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nWHERE SubscriptionGuid = '13d66f54-0a19-4912-b4f3-54d15897368d' and \n(ResourceGroup = 'Hub-Investigation-SQLDB-NoHUB' or \nResourceGroup = 'HUB-Investigation-MI' or \nResourceGroup = 'Hub-Investigation2')\norder by [Date] DESC\n\n--/subscriptions/A6ABE45D-E638-4325-A7E9-5559450AA434/resourceGroups/SQL-MI-NE/providers/Microsoft.Sql/managedInstances/sql-mi01\n\n\n--WHERE MeterCategory = 'Virtual Machines' and ServiceInfo2 LIKE '%BYOL' --and Product LIKE '%Spot%'\n--GROUP BY JSON_VALUE(AdditionalInfo, '$.ServiceType'), substring([Date],0,8), PartNumber, Product\n--ORDER BY substring([Date],0,8), sum(ConsumedQuantity) DESC\n\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "master",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}
