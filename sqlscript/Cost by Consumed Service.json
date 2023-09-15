@@ -5,7 +5,7 @@
 			"name": "Ad Hoc Cost Report Requests/Cloud Cost Facts"
 		},
 		"content": {
-			"query": "-- This is auto-generated code\nSELECT\n    --top 100 *\n    format([Date], 'yyyy-MM') as [Date]\n    ,upper(ConsumedService)\n    ,FORMAT(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAmortizedCost/2023*/ACMMonthlyAmortizedCost_2023*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    --where ConsumedService <> 'RoundingAdjustment'\n    group BY upper(ConsumedService), format([Date], 'yyyy-MM')\n    order by format([Date], 'yyyy-MM'), sum(CostInBillingCurrency) DESC\n",
+			"query": "-- This is auto-generated code\nSELECT\n    --top 100 * \n    format([Date], 'yyyy-MM') as [Date]\n    ,upper(ConsumedService)\n    ,FORMAT(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAmortizedCost/2023*/ACMMonthlyAmortizedCost_2023*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    --where ConsumedService <> 'RoundingAdjustment'\n    group BY upper(ConsumedService), format([Date], 'yyyy-MM')\n    order by format([Date], 'yyyy-MM'), sum(CostInBillingCurrency) DESC\n",
 			"metadata": {
 				"language": "sql"
 			},
