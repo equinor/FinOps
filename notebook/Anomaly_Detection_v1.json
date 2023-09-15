@@ -18,7 +18,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "85f7c5bb-dcc5-4655-be00-f2573bd75794"
+				"spark.autotune.trackingId": "e7cde188-25a6-4563-bc3d-be97b0d363ff"
 			}
 		},
 		"metadata": {
@@ -86,6 +86,7 @@
 					"    # Setting a partition window to divide the dataset in the filter options and order it by the Date\r\n",
 					"    windowSpec = Window.partitionBy(filter_column_1, filter_column_2).orderBy('Date').rowsBetween(-window_size, 0)\r\n",
 					"\r\n",
+					"    # Define column-names\r\n",
 					"    ma_col_name = f'MovingAverage_{filter_tag}'\r\n",
 					"    std_col_name = f'MovingStdDev_{filter_tag}'\r\n",
 					"\r\n",
@@ -95,6 +96,7 @@
 					"    # Set a moving standard deviation of the same period\r\n",
 					"    costs_by_dates = costs_by_dates.withColumn(std_col_name, F.stddev(F.col(cost_column)).over(windowSpec))\r\n",
 					"\r\n",
+					"    # Define column-names\r\n",
 					"    std1 = f'1StdDev_{filter_tag}'\r\n",
 					"    std2 = f'2StdDev_{filter_tag}'\r\n",
 					"    std3 = f'3StdDev_{filter_tag}'\r\n",
