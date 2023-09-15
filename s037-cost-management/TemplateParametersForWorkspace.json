@@ -1,0 +1,75 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"workspaceName": {
+			"value": "s037-cost-management"
+		},
+		"AzureDataLakeStorage1_accountKey": {
+			"value": ""
+		},
+		"s037-cost-management-WorkspaceDefaultSqlServer_connectionString": {
+			"value": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:s037-cost-management.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
+		},
+		"ACM_Toolkit_kv_properties_typeProperties_baseUrl": {
+			"value": "https://ACM-Toolkit-kv.vault.azure.net/"
+		},
+		"AzureBlobStorage1_sasUri": {
+			"value": ""
+		},
+		"AzureDataLakeStorage1_properties_typeProperties_url": {
+			"value": "https://s037costmgmt.dfs.core.windows.net/"
+		},
+		"HUB Storage Account_properties_typeProperties_url": {
+			"value": "https://hubautomation.dfs.core.windows.net/"
+		},
+		"MicrosoftGraphRESTAPI_properties_typeProperties_url": {
+			"value": "https://graph.microsoft.com/v1.0/"
+		},
+		"MicrosoftGraphRESTAPI_properties_typeProperties_clientId": {
+			"value": "4c1cded2-f7a7-4c00-8d65-0a3287cbd682"
+		},
+		"Pricesheet API_properties_typeProperties_url": {
+			"value": "@{concat('https://consumption.azure.com/v3/enrollments/57950773/billingPeriods/',formatDateTime(utcNow(),'yyyyMM'),'/pricesheet')}"
+		},
+		"ServiceNow_properties_typeProperties_url": {
+			"value": "https://api.gateway.equinor.com/api/x_stasa_serv_mgnt/v1/"
+		},
+		"ServiceNowLinkedService_properties_typeProperties_url": {
+			"value": "https://api.gateway.equinor.com/api/x_stasa_serv_mgnt/v1/"
+		},
+		"ServiceNowLinkedService_properties_typeProperties_clientId": {
+			"value": "5eb7f785-f27d-44d9-a53d-b19478160c4a"
+		},
+		"ms_billing_cost_report_download_properties_typeProperties_url": {
+			"value": "@{linkedService().blobPath}"
+		},
+		"ms_consumption_api_http_properties_typeProperties_url": {
+			"value": "@{linkedService().baseUrl}"
+		},
+		"ms_consumption_api_rest_properties_typeProperties_url": {
+			"value": "@{linkedService().baseUrl}"
+		},
+		"ms_management_api_rest_properties_typeProperties_url": {
+			"value": "https://management.azure.com"
+		},
+		"ms_management_api_rest_properties_typeProperties_servicePrincipalId": {
+			"value": "4c1cded2-f7a7-4c00-8d65-0a3287cbd682"
+		},
+		"ms_management_api_rest_properties_typeProperties_tenant": {
+			"value": "3aa4a235-b6e2-48d5-9195-7fcf05b459b0"
+		},
+		"ms_management_api_rest_properties_typeProperties_aadResourceId": {
+			"value": "https://management.azure.com"
+		},
+		"omniaacdcdlsprod_properties_typeProperties_url": {
+			"value": "https://omniaacdcdlsprod.dfs.core.windows.net"
+		},
+		"s037-cost-management-WorkspaceDefaultStorage_properties_typeProperties_url": {
+			"value": "https://s037costmgmt.dfs.core.windows.net"
+		},
+		"Detect file change_properties_typeProperties_scope": {
+			"value": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt"
+		}
+	}
+}
