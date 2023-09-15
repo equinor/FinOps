@@ -18,14 +18,11 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "7a4758d5-6172-4e75-a5e6-218d549cd24e"
+				"spark.autotune.trackingId": "9f1ed08f-1223-4781-a0a9-2c9399bd2875"
 			}
 		},
 		"metadata": {
 			"saveOutput": true,
-			"synapse_widget": {
-				"version": "0.1"
-			},
 			"enableDebugMode": false,
 			"kernelspec": {
 				"name": "synapse_pyspark",
@@ -41,14 +38,13 @@
 				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
 				"auth": {
 					"type": "AAD",
-					"authResource": "https://dev.azuresynapse.net",
-					"authHeader": null
+					"authResource": "https://dev.azuresynapse.net"
 				},
 				"sparkVersion": "3.2",
 				"nodeCount": 3,
 				"cores": 8,
 				"memory": 56,
-				"extraHeader": null
+				"automaticScaleJobs": false
 			},
 			"sessionKeepAliveTimeout": 30
 		},
@@ -492,7 +488,8 @@
 					"    cost_df = cost_df.withColumn('ApplicationName', F.upper(F.col('ApplicationName')))\r\n",
 					"\r\n",
 					"    return cost_df"
-				]
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -662,7 +659,7 @@
 					"        subscriptionListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions_' + previousMonthDate + '.json'\n",
 					"        print(f\"Subscription path: {subscriptionListPath}\")\n",
 					"\n",
-					"    appListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/applications/applicationList.parquet'\n",
+					"    appListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/applications/ServiceNowApplication.parquet'\n",
 					"    print(f\"App-list path: {appListPath}\")\n",
 					"    cost_df, subscription_list, appList = load_source_files(costSourcefilename, subscriptionListPath, appListPath)\n",
 					"    cost_df = expand_ai_column(cost_df)\n",
