@@ -15,6 +15,674 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 's037-cost-management-WorkspaceDefaultSqlServer'",
 			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:s037-cost-management.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
+		},
+		"ACM_Toolkit_kv_linkedServiceName": {
+			"type": "string",
+			"defaultValue": "[concat(parameters('workspaceName'), '/ACM_Toolkit_kv')]"
+		},
+		"AzureBlobStorage1_linkedServiceName": {
+			"type": "string",
+			"defaultValue": "[concat(parameters('workspaceName'), '/AzureBlobStorage1')]"
+		},
+		"AzureDataLakeStorage1_linkedServiceName": {
+			"type": "string",
+			"defaultValue": "[concat(parameters('workspaceName'), '/AzureDataLakeStorage1')]"
+		},
+		"AzureDataLakeStorage1_linkedServiceUrl": {
+			"type": "string",
+			"defaultValue": "https://s037costmgmt.dfs.core.windows.net/"
+		},
+		"HUB Storage Account_linkedServiceName": {
+			"type": "string",
+			"defaultValue": "[concat(parameters('workspaceName'), '/HUB Storage Account')]"
+		},
+		"HUB Storage Account_linkedServiceUrl": {
+			"type": "string",
+			"defaultValue": "https://hubautomation.dfs.core.windows.net/"
+		},
+		"MicrosoftGraphRESTAPI_linkedServiceName": {
+			"type": "string",
+			"defaultValue": "[concat(parameters('workspaceName'), '/MicrosoftGraphRESTAPI')]"
+		},
+		"MicrosoftGraphRESTAPI_linkedServiceUrl": {
+			"type": "string",
+			"defaultValue": "https://graph.microsoft.com/v1.0/"
+		},
+		"PowerBIWorkspace1_linkedServiceName": {
+			"type": "string",
+			"defaultValue": "[concat(parameters('workspaceName'), '/PowerBIWorkspace1')]"
+		},
+		"Pricesheet API_linkedServiceName": {
+			"type": "string",
+			"defaultValue": "[concat(parameters('workspaceName'), '/Pricesheet API')]"
+		},
+		"Pricesheet API_linkedServiceUrl": {
+			"type": "string",
+			"defaultValue": "@{concat('https://consumption.azure.com/v3/enrollments/57950773/billingPeriods/',formatDateTime(utcNow(),'yyyyMM'),'/pricesheet')}"
+		},
+		"ServiceNow_linkedServiceName": {
+			"type": "string",
+			"defaultValue": "[concat(parameters('workspaceName'), '/ServiceNow')]"
+		},
+		"ServiceNow_linkedServiceUrl": {
+			"type": "string",
+			"defaultValue": "https://api.gateway.equinor.com/api/x_stasa_serv_mgnt/v1/"
+		},
+		"ServiceNowLinkedService_linkedServiceName": {
+			"type": "string",
+			"defaultValue": "[concat(parameters('workspaceName'), '/ServiceNowLinkedService')]"
+		},
+		"ServiceNowLinkedService_linkedServiceUrl": {
+			"type": "string",
+			"defaultValue": "https://api.gateway.equinor.com/api/x_stasa_serv_mgnt/v1/"
+		},
+		"ms_billing_cost_report_download_linkedServiceName": {
+			"type": "string",
+			"defaultValue": "[concat(parameters('workspaceName'), '/ms_billing_cost_report_download')]"
+		},
+		"ms_billing_cost_report_download_linkedServiceUrl": {
+			"type": "string",
+			"defaultValue": "@{linkedService().blobPath}"
+		},
+		"ms_consumption_api_http_linkedServiceName": {
+			"type": "string",
+			"defaultValue": "[concat(parameters('workspaceName'), '/ms_consumption_api_http')]"
+		},
+		"ms_consumption_api_http_linkedServiceUrl": {
+			"type": "string",
+			"defaultValue": "@{linkedService().baseUrl}"
+		},
+		"ms_consumption_api_rest_linkedServiceName": {
+			"type": "string",
+			"defaultValue": "[concat(parameters('workspaceName'), '/ms_consumption_api_rest')]"
+		},
+		"ms_consumption_api_rest_linkedServiceUrl": {
+			"type": "string",
+			"defaultValue": "@{linkedService().baseUrl}"
+		},
+		"ms_management_api_rest_linkedServiceName": {
+			"type": "string",
+			"defaultValue": "[concat(parameters('workspaceName'), '/ms_management_api_rest')]"
+		},
+		"ms_management_api_rest_linkedServiceUrl": {
+			"type": "string",
+			"defaultValue": "https://management.azure.com"
+		},
+		"omniaacdcdlsprod_linkedServiceName": {
+			"type": "string",
+			"defaultValue": "[concat(parameters('workspaceName'), '/omniaacdcdlsprod')]"
+		},
+		"omniaacdcdlsprod_linkedServiceUrl": {
+			"type": "string",
+			"defaultValue": "https://omniaacdcdlsprod.dfs.core.windows.net"
+		},
+		"s037-cost-management-WorkspaceDefaultSqlServer_linkedServiceName": {
+			"type": "string",
+			"defaultValue": "[concat(parameters('workspaceName'), '/s037-cost-management-WorkspaceDefaultSqlServer')]"
+		},
+		"s037-cost-management-WorkspaceDefaultSqlServer_linkedServiceConnectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'linkedServiceConnectionString' of 's037-cost-management-WorkspaceDefaultSqlServer'"
+		},
+		"s037-cost-management-WorkspaceDefaultStorage_linkedServiceName": {
+			"type": "string",
+			"defaultValue": "[concat(parameters('workspaceName'), '/s037-cost-management-WorkspaceDefaultStorage')]"
+		},
+		"s037-cost-management-WorkspaceDefaultStorage_linkedServiceUrl": {
+			"type": "string",
+			"defaultValue": "https://s037costmgmt.dfs.core.windows.net"
+		},
+		"AdHoc Extend AI column and WBS tags_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"AdHoc Extend AI column and WBS tags_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"AdHoc Extend AI column and WBS tags_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"AmortizedCostWithBusinessAreaLevel_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"AmortizedCostWithBusinessAreaLevel_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"AmortizedCostWithBusinessAreaLevel_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"Anomaly_Detection_v1_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sparkpool32"
+		},
+		"Anomaly_Detection_v1_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32"
+		},
+		"Anomaly_Detection_v1_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
+		},
+		"Convert File_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sparkpool32"
+		},
+		"Convert File_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32"
+		},
+		"Convert File_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
+		},
+		"CostTagExpansion_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"CostTagExpansion_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"CostTagExpansion_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"Daily Extend AI column and WBS tags_v1_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sparkpool32"
+		},
+		"Daily Extend AI column and WBS tags_v1_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32"
+		},
+		"Daily Extend AI column and WBS tags_v1_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
+		},
+		"Daily Extend AI column and WBS tags_v1_Copy1_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"Daily Extend AI column and WBS tags_v1_Copy1_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"Daily Extend AI column and WBS tags_v1_Copy1_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"Dev_Amortized_Cost_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sparkpool32"
+		},
+		"Dev_Amortized_Cost_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32"
+		},
+		"Dev_Amortized_Cost_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
+		},
+		"Dev_a singular monthly parquet file vs the same month represented by partitioned parquet files_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"Dev_a singular monthly parquet file vs the same month represented by partitioned parquet files_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"Dev_a singular monthly parquet file vs the same month represented by partitioned parquet files_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"Dev_actual_usage_management_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"Dev_actual_usage_management_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"Dev_actual_usage_management_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"Extend Cost File_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"Extend Cost File_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"Extend Cost File_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"Extend Cost File_v2_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"Extend Cost File_v2_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"Extend Cost File_v2_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"Get RI Recommendations_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sparkpool32"
+		},
+		"Get RI Recommendations_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32"
+		},
+		"Get RI Recommendations_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
+		},
+		"Get_Daily_Usage_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sparkpool32"
+		},
+		"Get_Daily_Usage_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32"
+		},
+		"Get_Daily_Usage_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
+		},
+		"HUB Savings_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sparkpool32"
+		},
+		"HUB Savings_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32"
+		},
+		"HUB Savings_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
+		},
+		"HUB_Daily_File_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"HUB_Daily_File_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"HUB_Daily_File_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"Monthly Extend AI column and WBS tags_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"Monthly Extend AI column and WBS tags_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"Monthly Extend AI column and WBS tags_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"Monthly Extend AI column and WBS tags_test_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"Monthly Extend AI column and WBS tags_test_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"Monthly Extend AI column and WBS tags_test_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"Monthly Extend AI column and WBS tags_v2_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sparkpool32"
+		},
+		"Monthly Extend AI column and WBS tags_v2_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32"
+		},
+		"Monthly Extend AI column and WBS tags_v2_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
+		},
+		"New API - Calculate Savings_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sparkpool32"
+		},
+		"New API - Calculate Savings_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32"
+		},
+		"New API - Calculate Savings_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
+		},
+		"Notebook 1_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sparkpool32"
+		},
+		"Notebook 1_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32"
+		},
+		"Notebook 1_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
+		},
+		"Populate Cost Code and Cost Type fields_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sparkpool32"
+		},
+		"Populate Cost Code and Cost Type fields_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32"
+		},
+		"Populate Cost Code and Cost Type fields_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
+		},
+		"Prod_Amortized_Cost_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"Prod_Amortized_Cost_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"Prod_Amortized_Cost_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"Prod_AzureAD_BusinessAreaLevel_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"Prod_AzureAD_BusinessAreaLevel_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"Prod_AzureAD_BusinessAreaLevel_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"Prod_Calendar_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sparkpool32"
+		},
+		"Prod_Calendar_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32"
+		},
+		"Prod_Calendar_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
+		},
+		"Prod_Extended_Amortized_Cost-Oneyear_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"Prod_Extended_Amortized_Cost-Oneyear_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"Prod_Extended_Amortized_Cost-Oneyear_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"Prod_Extended_Amortized_Cost-Threeyears_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"Prod_Extended_Amortized_Cost-Threeyears_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"Prod_Extended_Amortized_Cost-Threeyears_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"Prod_Extended_Amortized_Cost_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sparkpool32"
+		},
+		"Prod_Extended_Amortized_Cost_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32"
+		},
+		"Prod_Extended_Amortized_Cost_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
+		},
+		"Prod_Extended_actual_usage_management_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"Prod_Extended_actual_usage_management_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"Prod_Extended_actual_usage_management_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"Prod_ServiceNowApplication_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"Prod_ServiceNowApplication_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"Prod_ServiceNowApplication_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"Prod_actual_usage_management_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"Prod_actual_usage_management_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"Prod_actual_usage_management_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"Prod_import_most_recent_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sparkpool32"
+		},
+		"Prod_import_most_recent_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32"
+		},
+		"Prod_import_most_recent_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
+		},
+		"Prod_subscription_json_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"Prod_subscription_json_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"Prod_subscription_json_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"RI VM Savings_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sparkpool32"
+		},
+		"RI VM Savings_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32"
+		},
+		"RI VM Savings_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
+		},
+		"Run Monthly_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sparkpool32"
+		},
+		"Run Monthly_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32"
+		},
+		"Run Monthly_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
+		},
+		"Run Notebook on Previous Dates_v1_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sparkpool32"
+		},
+		"Run Notebook on Previous Dates_v1_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32"
+		},
+		"Run Notebook on Previous Dates_v1_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
+		},
+		"Spark Extend Cost File_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sparkpool32"
+		},
+		"Spark Extend Cost File_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32"
+		},
+		"Spark Extend Cost File_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
+		},
+		"TimeSeriesML_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"TimeSeriesML_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"TimeSeriesML_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"VM-Performance_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sparkpool32"
+		},
+		"VM-Performance_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32"
+		},
+		"VM-Performance_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
+		},
+		"dfloo_test_Daily Extend AI column and WBS tags_v1_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sparkpool32"
+		},
+		"dfloo_test_Daily Extend AI column and WBS tags_v1_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32"
+		},
+		"dfloo_test_Daily Extend AI column and WBS tags_v1_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
+		},
+		"usersWithBusinessAreaSnapshot_v1_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sparkpool32"
+		},
+		"usersWithBusinessAreaSnapshot_v1_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32"
+		},
+		"usersWithBusinessAreaSnapshot_v1_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
+		},
+		"usersWithManagerSnapshot_v1_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "sparkpool32"
+		},
+		"usersWithManagerSnapshot_v1_sparkPoolId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32"
+		},
+		"usersWithManagerSnapshot_v1_sparkPoolEndpoint": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
+		},
+		"sparkpool32_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "[concat(parameters('workspaceName'), '/sparkpool32')]"
+		},
+		"sparkpool32_delayInMinutes": {
+			"type": "int",
+			"defaultValue": 15
+		},
+		"sparkpool32_maxNodeCount": {
+			"type": "int",
+			"defaultValue": 5
+		},
+		"sparkpool32_minNodeCount": {
+			"type": "int",
+			"defaultValue": 3
+		},
+		"sparkpool32_nodeCount": {
+			"type": "int",
+			"defaultValue": 0
+		},
+		"sparkpool32_nodeSize": {
+			"type": "string",
+			"defaultValue": "Medium"
+		},
+		"sprkpool33large_sparkPoolName": {
+			"type": "string",
+			"defaultValue": "[concat(parameters('workspaceName'), '/sprkpool33large')]"
+		},
+		"sprkpool33large_delayInMinutes": {
+			"type": "int",
+			"defaultValue": 10
+		},
+		"sprkpool33large_maxNodeCount": {
+			"type": "int",
+			"defaultValue": 10
+		},
+		"sprkpool33large_minNodeCount": {
+			"type": "int",
+			"defaultValue": 3
+		},
+		"sprkpool33large_nodeCount": {
+			"type": "int",
+			"defaultValue": 3
+		},
+		"sprkpool33large_nodeSize": {
+			"type": "string",
+			"defaultValue": "Large"
 		}
 	},
 	"variables": {
@@ -33844,7 +34512,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/ACM_Toolkit_kv')]",
+			"name": "[parameters('ACM_Toolkit_kv_linkedServiceName')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -33857,7 +34525,7 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/AzureBlobStorage1')]",
+			"name": "[parameters('AzureBlobStorage1_linkedServiceName')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -33876,14 +34544,14 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/AzureDataLakeStorage1')]",
+			"name": "[parameters('AzureDataLakeStorage1_linkedServiceName')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"annotations": [],
 				"type": "AzureBlobFS",
 				"typeProperties": {
-					"url": "https://s037costmgmt.dfs.core.windows.net/",
+					"url": "[parameters('AzureDataLakeStorage1_linkedServiceUrl')]",
 					"accountKey": {
 						"type": "SecureString",
 						"value": "[parameters('AzureDataLakeStorage1_accountKey')]"
@@ -33899,14 +34567,14 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/HUB Storage Account')]",
+			"name": "[parameters('HUB Storage Account_linkedServiceName')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"annotations": [],
 				"type": "AzureBlobFS",
 				"typeProperties": {
-					"url": "https://hubautomation.dfs.core.windows.net/"
+					"url": "[parameters('HUB Storage Account_linkedServiceUrl')]"
 				},
 				"connectVia": {
 					"referenceName": "AutoResolveIntegrationRuntime",
@@ -33918,14 +34586,14 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/MicrosoftGraphRESTAPI')]",
+			"name": "[parameters('MicrosoftGraphRESTAPI_linkedServiceName')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"annotations": [],
 				"type": "RestService",
 				"typeProperties": {
-					"url": "https://graph.microsoft.com/v1.0/",
+					"url": "[parameters('MicrosoftGraphRESTAPI_linkedServiceUrl')]",
 					"enableServerCertificateValidation": true,
 					"authenticationType": "OAuth2ClientCredential",
 					"clientId": "4c1cded2-f7a7-4c00-8d65-0a3287cbd682",
@@ -33951,7 +34619,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/PowerBIWorkspace1')]",
+			"name": "[parameters('PowerBIWorkspace1_linkedServiceName')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -33965,14 +34633,14 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/Pricesheet API')]",
+			"name": "[parameters('Pricesheet API_linkedServiceName')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"annotations": [],
 				"type": "HttpServer",
 				"typeProperties": {
-					"url": "@{concat('https://consumption.azure.com/v3/enrollments/57950773/billingPeriods/',formatDateTime(utcNow(),'yyyyMM'),'/pricesheet')}",
+					"url": "[parameters('Pricesheet API_linkedServiceUrl')]",
 					"enableServerCertificateValidation": true,
 					"authenticationType": "Anonymous",
 					"authHeaders": {
@@ -33997,14 +34665,14 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/ServiceNow')]",
+			"name": "[parameters('ServiceNow_linkedServiceName')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"annotations": [],
 				"type": "RestService",
 				"typeProperties": {
-					"url": "https://api.gateway.equinor.com/api/x_stasa_serv_mgnt/v1/",
+					"url": "[parameters('ServiceNow_linkedServiceUrl')]",
 					"enableServerCertificateValidation": true,
 					"authenticationType": "Anonymous"
 				},
@@ -34018,14 +34686,14 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/ServiceNowLinkedService')]",
+			"name": "[parameters('ServiceNowLinkedService_linkedServiceName')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"annotations": [],
 				"type": "RestService",
 				"typeProperties": {
-					"url": "https://api.gateway.equinor.com/api/x_stasa_serv_mgnt/v1/",
+					"url": "[parameters('ServiceNowLinkedService_linkedServiceUrl')]",
 					"enableServerCertificateValidation": true,
 					"authenticationType": "OAuth2ClientCredential",
 					"clientId": "5eb7f785-f27d-44d9-a53d-b19478160c4a",
@@ -34061,7 +34729,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/ms_billing_cost_report_download')]",
+			"name": "[parameters('ms_billing_cost_report_download_linkedServiceName')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -34073,7 +34741,7 @@
 				"annotations": [],
 				"type": "HttpServer",
 				"typeProperties": {
-					"url": "@{linkedService().blobPath}",
+					"url": "[parameters('ms_billing_cost_report_download_linkedServiceUrl')]",
 					"enableServerCertificateValidation": true,
 					"authenticationType": "Anonymous"
 				},
@@ -34087,7 +34755,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/ms_consumption_api_http')]",
+			"name": "[parameters('ms_consumption_api_http_linkedServiceName')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -34100,7 +34768,7 @@
 				"annotations": [],
 				"type": "HttpServer",
 				"typeProperties": {
-					"url": "@{linkedService().baseUrl}",
+					"url": "[parameters('ms_consumption_api_http_linkedServiceUrl')]",
 					"enableServerCertificateValidation": true,
 					"authenticationType": "Anonymous",
 					"authHeaders": {
@@ -34125,7 +34793,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/ms_consumption_api_rest')]",
+			"name": "[parameters('ms_consumption_api_rest_linkedServiceName')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -34138,7 +34806,7 @@
 				"annotations": [],
 				"type": "RestService",
 				"typeProperties": {
-					"url": "@{linkedService().baseUrl}",
+					"url": "[parameters('ms_consumption_api_rest_linkedServiceUrl')]",
 					"enableServerCertificateValidation": true,
 					"authenticationType": "Anonymous",
 					"authHeaders": {
@@ -34163,14 +34831,14 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/ms_management_api_rest')]",
+			"name": "[parameters('ms_management_api_rest_linkedServiceName')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"annotations": [],
 				"type": "RestService",
 				"typeProperties": {
-					"url": "https://management.azure.com",
+					"url": "[parameters('ms_management_api_rest_linkedServiceUrl')]",
 					"enableServerCertificateValidation": true,
 					"authenticationType": "AadServicePrincipal",
 					"servicePrincipalId": "4c1cded2-f7a7-4c00-8d65-0a3287cbd682",
@@ -34196,14 +34864,14 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/omniaacdcdlsprod')]",
+			"name": "[parameters('omniaacdcdlsprod_linkedServiceName')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"annotations": [],
 				"type": "AzureBlobFS",
 				"typeProperties": {
-					"url": "https://omniaacdcdlsprod.dfs.core.windows.net"
+					"url": "[parameters('omniaacdcdlsprod_linkedServiceUrl')]"
 				},
 				"connectVia": {
 					"referenceName": "AutoResolveIntegrationRuntime",
@@ -34215,7 +34883,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/s037-cost-management-WorkspaceDefaultSqlServer')]",
+			"name": "[parameters('s037-cost-management-WorkspaceDefaultSqlServer_linkedServiceName')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -34229,7 +34897,7 @@
 				"typeProperties": {
 					"connectionString": {
 						"type": "SecureString",
-						"value": "[parameters('s037-cost-management-WorkspaceDefaultSqlServer_connectionString')]"
+						"value": "[parameters('s037-cost-management-WorkspaceDefaultSqlServer_linkedServiceConnectionString')]"
 					}
 				},
 				"connectVia": {
@@ -34242,14 +34910,14 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/s037-cost-management-WorkspaceDefaultStorage')]",
+			"name": "[parameters('s037-cost-management-WorkspaceDefaultStorage_linkedServiceName')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"annotations": [],
 				"type": "AzureBlobFS",
 				"typeProperties": {
-					"url": "https://s037costmgmt.dfs.core.windows.net"
+					"url": "[parameters('s037-cost-management-WorkspaceDefaultStorage_linkedServiceUrl')]"
 				},
 				"connectVia": {
 					"referenceName": "AutoResolveIntegrationRuntime",
@@ -38841,7 +39509,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sprkpool33large",
+					"referenceName": "[parameters('AdHoc Extend AI column and WBS tags_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -38872,10 +39540,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
-						"name": "sprkpool33large",
+						"id": "[parameters('AdHoc Extend AI column and WBS tags_sparkPoolId')]",
+						"name": "[parameters('AdHoc Extend AI column and WBS tags_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+						"endpoint": "[parameters('AdHoc Extend AI column and WBS tags_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net",
@@ -39497,7 +40165,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sprkpool33large",
+					"referenceName": "[parameters('AmortizedCostWithBusinessAreaLevel_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -39528,10 +40196,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
-						"name": "sprkpool33large",
+						"id": "[parameters('AmortizedCostWithBusinessAreaLevel_sparkPoolId')]",
+						"name": "[parameters('AmortizedCostWithBusinessAreaLevel_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+						"endpoint": "[parameters('AmortizedCostWithBusinessAreaLevel_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net",
@@ -39704,7 +40372,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sparkpool32",
+					"referenceName": "[parameters('Anomaly_Detection_v1_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -39732,10 +40400,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
-						"name": "sparkpool32",
+						"id": "[parameters('Anomaly_Detection_v1_sparkPoolId')]",
+						"name": "[parameters('Anomaly_Detection_v1_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+						"endpoint": "[parameters('Anomaly_Detection_v1_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net"
@@ -39882,7 +40550,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sparkpool32",
+					"referenceName": "[parameters('Convert File_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -39913,10 +40581,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
-						"name": "sparkpool32",
+						"id": "[parameters('Convert File_sparkPoolId')]",
+						"name": "[parameters('Convert File_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+						"endpoint": "[parameters('Convert File_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net",
@@ -40007,7 +40675,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sprkpool33large",
+					"referenceName": "[parameters('CostTagExpansion_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -40038,10 +40706,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
-						"name": "sprkpool33large",
+						"id": "[parameters('CostTagExpansion_sparkPoolId')]",
+						"name": "[parameters('CostTagExpansion_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+						"endpoint": "[parameters('CostTagExpansion_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net",
@@ -40499,7 +41167,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sparkpool32",
+					"referenceName": "[parameters('Daily Extend AI column and WBS tags_v1_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -40527,10 +41195,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
-						"name": "sparkpool32",
+						"id": "[parameters('Daily Extend AI column and WBS tags_v1_sparkPoolId')]",
+						"name": "[parameters('Daily Extend AI column and WBS tags_v1_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+						"endpoint": "[parameters('Daily Extend AI column and WBS tags_v1_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net"
@@ -41194,7 +41862,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sprkpool33large",
+					"referenceName": "[parameters('Daily Extend AI column and WBS tags_v1_Copy1_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -41222,10 +41890,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
-						"name": "sprkpool33large",
+						"id": "[parameters('Daily Extend AI column and WBS tags_v1_Copy1_sparkPoolId')]",
+						"name": "[parameters('Daily Extend AI column and WBS tags_v1_Copy1_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+						"endpoint": "[parameters('Daily Extend AI column and WBS tags_v1_Copy1_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net"
@@ -42077,7 +42745,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sparkpool32",
+					"referenceName": "[parameters('Dev_Amortized_Cost_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -42105,10 +42773,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
-						"name": "sparkpool32",
+						"id": "[parameters('Dev_Amortized_Cost_sparkPoolId')]",
+						"name": "[parameters('Dev_Amortized_Cost_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+						"endpoint": "[parameters('Dev_Amortized_Cost_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net"
@@ -42576,7 +43244,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sprkpool33large",
+					"referenceName": "[parameters('Dev_a singular monthly parquet file vs the same month represented by partitioned parquet files_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -42604,10 +43272,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
-						"name": "sprkpool33large",
+						"id": "[parameters('Dev_a singular monthly parquet file vs the same month represented by partitioned parquet files_sparkPoolId')]",
+						"name": "[parameters('Dev_a singular monthly parquet file vs the same month represented by partitioned parquet files_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+						"endpoint": "[parameters('Dev_a singular monthly parquet file vs the same month represented by partitioned parquet files_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net"
@@ -42989,7 +43657,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sprkpool33large",
+					"referenceName": "[parameters('Dev_actual_usage_management_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -43017,10 +43685,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
-						"name": "sprkpool33large",
+						"id": "[parameters('Dev_actual_usage_management_sparkPoolId')]",
+						"name": "[parameters('Dev_actual_usage_management_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+						"endpoint": "[parameters('Dev_actual_usage_management_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net"
@@ -43480,7 +44148,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sprkpool33large",
+					"referenceName": "[parameters('Extend Cost File_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -43511,10 +44179,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
-						"name": "sprkpool33large",
+						"id": "[parameters('Extend Cost File_sparkPoolId')]",
+						"name": "[parameters('Extend Cost File_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+						"endpoint": "[parameters('Extend Cost File_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net",
@@ -43813,7 +44481,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sprkpool33large",
+					"referenceName": "[parameters('Extend Cost File_v2_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -43844,10 +44512,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
-						"name": "sprkpool33large",
+						"id": "[parameters('Extend Cost File_v2_sparkPoolId')]",
+						"name": "[parameters('Extend Cost File_v2_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+						"endpoint": "[parameters('Extend Cost File_v2_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net",
@@ -44161,7 +44829,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sparkpool32",
+					"referenceName": "[parameters('Get RI Recommendations_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -44192,10 +44860,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
-						"name": "sparkpool32",
+						"id": "[parameters('Get RI Recommendations_sparkPoolId')]",
+						"name": "[parameters('Get RI Recommendations_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+						"endpoint": "[parameters('Get RI Recommendations_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net",
@@ -44340,7 +45008,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sparkpool32",
+					"referenceName": "[parameters('Get_Daily_Usage_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -44371,10 +45039,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
-						"name": "sparkpool32",
+						"id": "[parameters('Get_Daily_Usage_sparkPoolId')]",
+						"name": "[parameters('Get_Daily_Usage_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+						"endpoint": "[parameters('Get_Daily_Usage_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net",
@@ -44418,7 +45086,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sparkpool32",
+					"referenceName": "[parameters('HUB Savings_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -44449,10 +45117,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
-						"name": "sparkpool32",
+						"id": "[parameters('HUB Savings_sparkPoolId')]",
+						"name": "[parameters('HUB Savings_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+						"endpoint": "[parameters('HUB Savings_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net",
@@ -44618,7 +45286,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sprkpool33large",
+					"referenceName": "[parameters('HUB_Daily_File_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -44649,10 +45317,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
-						"name": "sprkpool33large",
+						"id": "[parameters('HUB_Daily_File_sparkPoolId')]",
+						"name": "[parameters('HUB_Daily_File_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+						"endpoint": "[parameters('HUB_Daily_File_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net",
@@ -44901,7 +45569,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sprkpool33large",
+					"referenceName": "[parameters('Monthly Extend AI column and WBS tags_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -44932,10 +45600,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
-						"name": "sprkpool33large",
+						"id": "[parameters('Monthly Extend AI column and WBS tags_sparkPoolId')]",
+						"name": "[parameters('Monthly Extend AI column and WBS tags_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+						"endpoint": "[parameters('Monthly Extend AI column and WBS tags_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net",
@@ -45549,7 +46217,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sprkpool33large",
+					"referenceName": "[parameters('Monthly Extend AI column and WBS tags_test_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -45580,10 +46248,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
-						"name": "sprkpool33large",
+						"id": "[parameters('Monthly Extend AI column and WBS tags_test_sparkPoolId')]",
+						"name": "[parameters('Monthly Extend AI column and WBS tags_test_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+						"endpoint": "[parameters('Monthly Extend AI column and WBS tags_test_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net",
@@ -46209,7 +46877,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sparkpool32",
+					"referenceName": "[parameters('Monthly Extend AI column and WBS tags_v2_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -46237,10 +46905,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
-						"name": "sparkpool32",
+						"id": "[parameters('Monthly Extend AI column and WBS tags_v2_sparkPoolId')]",
+						"name": "[parameters('Monthly Extend AI column and WBS tags_v2_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+						"endpoint": "[parameters('Monthly Extend AI column and WBS tags_v2_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net"
@@ -46882,7 +47550,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sparkpool32",
+					"referenceName": "[parameters('New API - Calculate Savings_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -46913,10 +47581,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
-						"name": "sparkpool32",
+						"id": "[parameters('New API - Calculate Savings_sparkPoolId')]",
+						"name": "[parameters('New API - Calculate Savings_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+						"endpoint": "[parameters('New API - Calculate Savings_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net",
@@ -47008,7 +47676,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sparkpool32",
+					"referenceName": "[parameters('Notebook 1_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -47022,7 +47690,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "08dbdad6-bfc8-44ad-9b09-d2a7b11190e1"
+						"spark.autotune.trackingId": "cbae5c9e-b150-4c01-87a4-c8477cfa4d78"
 					}
 				},
 				"metadata": {
@@ -47036,10 +47704,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
-						"name": "sparkpool32",
+						"id": "[parameters('Notebook 1_sparkPoolId')]",
+						"name": "[parameters('Notebook 1_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+						"endpoint": "[parameters('Notebook 1_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net"
@@ -47117,7 +47785,7 @@
 							"remove_first_two_lines_from_file(path)    \n",
 							"\n",
 							"print(f'Unmounting /usage mount')\n",
-							"mssparkutils.fs.unmount(\"/usage\") "
+							"mssparkutils.fs.unmount(\"/usage\")"
 						],
 						"outputs": [],
 						"execution_count": 139
@@ -47134,7 +47802,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sparkpool32",
+					"referenceName": "[parameters('Populate Cost Code and Cost Type fields_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -47165,10 +47833,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
-						"name": "sparkpool32",
+						"id": "[parameters('Populate Cost Code and Cost Type fields_sparkPoolId')]",
+						"name": "[parameters('Populate Cost Code and Cost Type fields_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+						"endpoint": "[parameters('Populate Cost Code and Cost Type fields_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net",
@@ -47661,7 +48329,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sprkpool33large",
+					"referenceName": "[parameters('Prod_Amortized_Cost_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -47689,10 +48357,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
-						"name": "sprkpool33large",
+						"id": "[parameters('Prod_Amortized_Cost_sparkPoolId')]",
+						"name": "[parameters('Prod_Amortized_Cost_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+						"endpoint": "[parameters('Prod_Amortized_Cost_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net"
@@ -48081,7 +48749,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sprkpool33large",
+					"referenceName": "[parameters('Prod_AzureAD_BusinessAreaLevel_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -48109,10 +48777,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
-						"name": "sprkpool33large",
+						"id": "[parameters('Prod_AzureAD_BusinessAreaLevel_sparkPoolId')]",
+						"name": "[parameters('Prod_AzureAD_BusinessAreaLevel_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+						"endpoint": "[parameters('Prod_AzureAD_BusinessAreaLevel_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net"
@@ -48265,7 +48933,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sparkpool32",
+					"referenceName": "[parameters('Prod_Calendar_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -48296,10 +48964,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
-						"name": "sparkpool32",
+						"id": "[parameters('Prod_Calendar_sparkPoolId')]",
+						"name": "[parameters('Prod_Calendar_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+						"endpoint": "[parameters('Prod_Calendar_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net",
@@ -48441,7 +49109,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sprkpool33large",
+					"referenceName": "[parameters('Prod_Extended_Amortized_Cost-Oneyear_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -48469,10 +49137,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
-						"name": "sprkpool33large",
+						"id": "[parameters('Prod_Extended_Amortized_Cost-Oneyear_sparkPoolId')]",
+						"name": "[parameters('Prod_Extended_Amortized_Cost-Oneyear_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+						"endpoint": "[parameters('Prod_Extended_Amortized_Cost-Oneyear_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net"
@@ -48970,7 +49638,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sprkpool33large",
+					"referenceName": "[parameters('Prod_Extended_Amortized_Cost-Threeyears_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -48998,10 +49666,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
-						"name": "sprkpool33large",
+						"id": "[parameters('Prod_Extended_Amortized_Cost-Threeyears_sparkPoolId')]",
+						"name": "[parameters('Prod_Extended_Amortized_Cost-Threeyears_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+						"endpoint": "[parameters('Prod_Extended_Amortized_Cost-Threeyears_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net"
@@ -49696,7 +50364,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sparkpool32",
+					"referenceName": "[parameters('Prod_Extended_Amortized_Cost_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -49724,10 +50392,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
-						"name": "sparkpool32",
+						"id": "[parameters('Prod_Extended_Amortized_Cost_sparkPoolId')]",
+						"name": "[parameters('Prod_Extended_Amortized_Cost_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+						"endpoint": "[parameters('Prod_Extended_Amortized_Cost_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net"
@@ -50119,7 +50787,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sprkpool33large",
+					"referenceName": "[parameters('Prod_Extended_actual_usage_management_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -50147,10 +50815,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
-						"name": "sprkpool33large",
+						"id": "[parameters('Prod_Extended_actual_usage_management_sparkPoolId')]",
+						"name": "[parameters('Prod_Extended_actual_usage_management_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+						"endpoint": "[parameters('Prod_Extended_actual_usage_management_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net"
@@ -50617,7 +51285,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sprkpool33large",
+					"referenceName": "[parameters('Prod_ServiceNowApplication_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -50648,10 +51316,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
-						"name": "sprkpool33large",
+						"id": "[parameters('Prod_ServiceNowApplication_sparkPoolId')]",
+						"name": "[parameters('Prod_ServiceNowApplication_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+						"endpoint": "[parameters('Prod_ServiceNowApplication_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net",
@@ -50826,7 +51494,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sprkpool33large",
+					"referenceName": "[parameters('Prod_actual_usage_management_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -50854,10 +51522,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
-						"name": "sprkpool33large",
+						"id": "[parameters('Prod_actual_usage_management_sparkPoolId')]",
+						"name": "[parameters('Prod_actual_usage_management_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+						"endpoint": "[parameters('Prod_actual_usage_management_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net"
@@ -51269,7 +51937,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sparkpool32",
+					"referenceName": "[parameters('Prod_import_most_recent_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -51300,10 +51968,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
-						"name": "sparkpool32",
+						"id": "[parameters('Prod_import_most_recent_sparkPoolId')]",
+						"name": "[parameters('Prod_import_most_recent_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+						"endpoint": "[parameters('Prod_import_most_recent_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net",
@@ -51401,7 +52069,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sprkpool33large",
+					"referenceName": "[parameters('Prod_subscription_json_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -51429,10 +52097,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
-						"name": "sprkpool33large",
+						"id": "[parameters('Prod_subscription_json_sparkPoolId')]",
+						"name": "[parameters('Prod_subscription_json_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+						"endpoint": "[parameters('Prod_subscription_json_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net"
@@ -51955,7 +52623,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sparkpool32",
+					"referenceName": "[parameters('RI VM Savings_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -51986,10 +52654,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
-						"name": "sparkpool32",
+						"id": "[parameters('RI VM Savings_sparkPoolId')]",
+						"name": "[parameters('RI VM Savings_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+						"endpoint": "[parameters('RI VM Savings_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net",
@@ -52142,7 +52810,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sparkpool32",
+					"referenceName": "[parameters('Run Monthly_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -52173,10 +52841,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
-						"name": "sparkpool32",
+						"id": "[parameters('Run Monthly_sparkPoolId')]",
+						"name": "[parameters('Run Monthly_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+						"endpoint": "[parameters('Run Monthly_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net",
@@ -52216,7 +52884,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sparkpool32",
+					"referenceName": "[parameters('Run Notebook on Previous Dates_v1_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -52247,10 +52915,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
-						"name": "sparkpool32",
+						"id": "[parameters('Run Notebook on Previous Dates_v1_sparkPoolId')]",
+						"name": "[parameters('Run Notebook on Previous Dates_v1_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+						"endpoint": "[parameters('Run Notebook on Previous Dates_v1_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net",
@@ -52378,7 +53046,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sparkpool32",
+					"referenceName": "[parameters('Spark Extend Cost File_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -52409,10 +53077,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
-						"name": "sparkpool32",
+						"id": "[parameters('Spark Extend Cost File_sparkPoolId')]",
+						"name": "[parameters('Spark Extend Cost File_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+						"endpoint": "[parameters('Spark Extend Cost File_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net",
@@ -52591,7 +53259,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sprkpool33large",
+					"referenceName": "[parameters('TimeSeriesML_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -52622,10 +53290,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
-						"name": "sprkpool33large",
+						"id": "[parameters('TimeSeriesML_sparkPoolId')]",
+						"name": "[parameters('TimeSeriesML_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+						"endpoint": "[parameters('TimeSeriesML_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net",
@@ -52784,7 +53452,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sparkpool32",
+					"referenceName": "[parameters('VM-Performance_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -52815,10 +53483,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
-						"name": "sparkpool32",
+						"id": "[parameters('VM-Performance_sparkPoolId')]",
+						"name": "[parameters('VM-Performance_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+						"endpoint": "[parameters('VM-Performance_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net",
@@ -53045,7 +53713,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sparkpool32",
+					"referenceName": "[parameters('dfloo_test_Daily Extend AI column and WBS tags_v1_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -53076,10 +53744,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
-						"name": "sparkpool32",
+						"id": "[parameters('dfloo_test_Daily Extend AI column and WBS tags_v1_sparkPoolId')]",
+						"name": "[parameters('dfloo_test_Daily Extend AI column and WBS tags_v1_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+						"endpoint": "[parameters('dfloo_test_Daily Extend AI column and WBS tags_v1_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net",
@@ -53906,7 +54574,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sparkpool32",
+					"referenceName": "[parameters('usersWithBusinessAreaSnapshot_v1_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -53934,10 +54602,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
-						"name": "sparkpool32",
+						"id": "[parameters('usersWithBusinessAreaSnapshot_v1_sparkPoolId')]",
+						"name": "[parameters('usersWithBusinessAreaSnapshot_v1_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+						"endpoint": "[parameters('usersWithBusinessAreaSnapshot_v1_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net"
@@ -54456,7 +55124,7 @@
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "sparkpool32",
+					"referenceName": "[parameters('usersWithManagerSnapshot_v1_sparkPoolName')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -54487,10 +55155,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
-						"name": "sparkpool32",
+						"id": "[parameters('usersWithManagerSnapshot_v1_sparkPoolId')]",
+						"name": "[parameters('usersWithManagerSnapshot_v1_sparkPoolName')]",
 						"type": "Spark",
-						"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+						"endpoint": "[parameters('usersWithManagerSnapshot_v1_sparkPoolEndpoint')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net",
@@ -54902,21 +55570,21 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/sparkpool32')]",
+			"name": "[parameters('sparkpool32_sparkPoolName')]",
 			"type": "Microsoft.Synapse/workspaces/bigDataPools",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"autoPause": {
 					"enabled": true,
-					"delayInMinutes": 15
+					"delayInMinutes": "[parameters('sparkpool32_delayInMinutes')]"
 				},
 				"autoScale": {
 					"enabled": true,
-					"maxNodeCount": 5,
-					"minNodeCount": 3
+					"maxNodeCount": "[parameters('sparkpool32_maxNodeCount')]",
+					"minNodeCount": "[parameters('sparkpool32_minNodeCount')]"
 				},
-				"nodeCount": 0,
-				"nodeSize": "Medium",
+				"nodeCount": "[parameters('sparkpool32_nodeCount')]",
+				"nodeSize": "[parameters('sparkpool32_nodeSize')]",
 				"nodeSizeFamily": "MemoryOptimized",
 				"sparkVersion": "3.2",
 				"libraryRequirements": {
@@ -54932,21 +55600,21 @@
 			"location": "northeurope"
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
+			"name": "[parameters('sprkpool33large_sparkPoolName')]",
 			"type": "Microsoft.Synapse/workspaces/bigDataPools",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"autoPause": {
 					"enabled": true,
-					"delayInMinutes": 10
+					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
 				},
 				"autoScale": {
 					"enabled": true,
-					"maxNodeCount": 10,
-					"minNodeCount": 3
+					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
+					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
 				},
-				"nodeCount": 3,
-				"nodeSize": "Large",
+				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
+				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
 				"nodeSizeFamily": "MemoryOptimized",
 				"sparkVersion": "3.3",
 				"isComputeIsolationEnabled": false,
