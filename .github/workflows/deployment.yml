@@ -1,0 +1,99 @@
+name: FinOps environment deployment
+
+on:
+    workflow_dispatch:
+#   push:
+#     branches: [ workspace_publish ]
+
+permissions:
+      contents: read
+      id-token: write
+    
+jobs:
+  deploy-dev:
+    name: Deploy Dev Environment
+    runs-on: ubuntu-latest
+    environment: test
+    env:
+      RESOURCE_GROUP: finops-rg-dev
+      SYNAPSE_WORKSPACE_NAME: finops-synapse-dev
+      PARAMETER_FILE_PATH: azuredeploy.parameters.dev.json
+    
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: 'Service Principal Authentication'
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.S926_AZURE_CREDENTIALS }}
+          enable-AzPSSession: true
+
+    #   - name: Update Bicep parameters
+    #     uses: Azure/CLI@v1
+    #     with: 
+    #       inlineScript: |
+    #         result=$(az synapse workspace show --name ${{ env.SYNAPSE_WORKSPACE_NAME }} --resource-group ${{ env.RESOURCE_GROUP }} 2>/dev/null || echo "")
+    #         exists=$(if [ -z "$result" ]; then echo false; else echo true; fi)
+    #         echo "`jq --argjson new "$exists" '.parameters.workspaceExists.value = $new' ${{ env.PARAMETER_FILE_PATH }}`" > ${{ env.PARAMETER_FILE_PATH }}
+
+    #   - name: Deploy Azure Resources
+    #     uses: Azure/CLI@v1
+    #     with:
+    #       inlineScript: |
+    #         az deployment group create \
+    #           --template-file azuredeploy.bicep \
+    #           --resource-group ${{ env.RESOURCE_GROUP }} \
+    #           --parameters ${{ env.PARAMETER_FILE_PATH }}
+
+#   deploy-prod:
+#     needs: deploy-test
+#     name: Deploy Prod Environment
+#     runs-on: ubuntu-latest
+#     environment: prod
+#     env:
+#       RESOURCE_GROUP: finops-cicd-test
+#       SYNAPSE_WORKSPACE_NAME: finops-synapse-prod
+#       PARAMETER_FILE_PATH: azuredeploy.parameters.prod.json
+
+#     steps:
+#       - uses: actions/checkout@v2
+
+#       - name: 'Service Principal Authentication'
+#         uses: azure/login@v1
+#         with:
+#           creds: ${{secrets.AZURE_CREDENTIALS}}
+#           enable-AzPSSession: true
+
+#       - name: Update Bicep parameters
+#         uses: Azure/CLI@v1
+#         with: 
+#           inlineScript: |
+
+#             result=$(az synapse workspace show --name ${{ env.SYNAPSE_WORKSPACE_NAME }} --resource-group ${{ env.RESOURCE_GROUP }} 2>/dev/null || echo "")
+#             echo "$result"
+#             exists=$(if [ -z "$result" ]; then echo false; else echo true; fi)
+#             echo "$exists"
+#             echo "`jq --argjson new "$exists" '.parameters.workspaceExists.value = $new' ${{ env.PARAMETER_FILE_PATH }}`" > ${{ env.PARAMETER_FILE_PATH }}
+
+#       - name: Deploy Azure Resources
+#         uses: Azure/CLI@v1
+#         with:
+#           inlineScript: |
+#             az deployment group create \
+#               --template-file azuredeploy.bicep \
+#               --resource-group ${{ env.RESOURCE_GROUP }} \
+#               --parameters ${{ env.PARAMETER_FILE_PATH }}
+
+#       - name: Synapse workspace deployment
+#         uses: Azure/synapse-workspace-deployment@V1.8.0
+#         with:
+#           TargetWorkspaceName: ${{ env.SYNAPSE_WORKSPACE_NAME }}
+#           TemplateFile: './finops-synapse-test/TemplateForWorkspace.json'
+#           ParametersFile: './synapse.parameters.prod.json'
+#           environment: 'Azure Public'
+#           resourceGroup: ${{ env.RESOURCE_GROUP }}
+#           clientId: ${{ secrets.CLIENTID }}
+#           clientSecret: ${{ secrets.CLIENTSECRET }}
+#           subscriptionId: ${{ secrets.SUBID }}
+#           tenantId: ${{ secrets.TENANTID }}
+#           operation: 'deploy'
