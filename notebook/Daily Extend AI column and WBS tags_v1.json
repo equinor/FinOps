@@ -18,7 +18,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "9f1ed08f-1223-4781-a0a9-2c9399bd2875"
+				"spark.autotune.trackingId": "12354d53-2f71-4f2a-b2d2-ae5741dc2c48"
 			}
 		},
 		"metadata": {
@@ -477,11 +477,11 @@
 					"    # Merge the two lists together with a left-join\r\n",
 					"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.u_number, how='left')\r\n",
 					"    # Select the application name from AppList when AppID is present in the CostAllocationType, then drop the columns from AppList\r\n",
-					"    cost_df = joined_df.withColumn('ApplicationName', F.when(appid_mask, F.col('name'))).drop('u_number', 'name')\r\n",
+					"    cost_df = joined_df.withColumn('ApplicationName', F.when(appid_mask, F.col('name'))).drop('u_number')\r\n",
 					"\r\n",
 					"    # When Cost AllocationType is CI, we apply the CostAllocationCode as Application Name\r\n",
 					"    # When neither CI or AppID is present in CostAllocationType, we use the Application Name from the subscription list\r\n",
-					"    cost_df = cost_df.withColumn('ApplicationName', F.when(ci_mask, F.col('CostAllocationCode'))\\\r\n",
+					"    cost_df = cost_df.withColumn('ApplicationName', F.when(ci_mask, F.col('name'))\\\r\n",
 					"                                                     .when(~ci_mask & ~appid_mask, F.col('SubscriptionServiceNow-App'))\\\r\n",
 					"                                                     .otherwise(F.col('ApplicationName')))\r\n",
 					"\r\n",
