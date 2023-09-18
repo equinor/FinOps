@@ -1,9 +1,6 @@
 {
 	"name": "Anomaly_Detection_v1",
 	"properties": {
-		"folder": {
-			"name": "jomt"
-		},
 		"nbformat": 4,
 		"nbformat_minor": 2,
 		"bigDataPool": {
@@ -21,7 +18,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "b1719f87-475c-4d52-8424-fa57947669d9"
+				"spark.autotune.trackingId": "aec9cb4f-07f1-446b-be8c-bcbbf010e658"
 			}
 		},
 		"metadata": {
@@ -59,56 +56,7 @@
 					"import pyspark.sql.types as T\r\n",
 					"from pyspark.sql.window import Window"
 				],
-				"execution_count": 149
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"def subscription_filter_data(df):\r\n",
-					"    \r\n",
-					"    # Dropping costs that isn't attached to a subscription and is older than a year\r\n",
-					"    drop_value = '00000000-0000-0000-0000-000000000000'\r\n",
-					"    one_year_ago = F.date_sub(F.current_date(), 365)\r\n",
-					"    filtered_df = df.filter((F.col('SubscriptionId') != drop_value) & (F.col('Date') >= one_year_ago))\r\n",
-					"    \r\n",
-					"    return filtered_df"
-				],
-				"execution_count": 158
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"def wbs_filter_data(df):\r\n",
-					"\r\n",
-					"    # Filter away Null-values\r\n",
-					"    one_year_ago = F.date_sub(F.current_date(), 365)\r\n",
-					"    filtered_df = df.filter(F.col('ActiveWBS').isNotNull() & (F.col('Date') >= one_year_ago))\r\n",
-					"\r\n",
-					"    return filtered_df"
-				],
-				"execution_count": 160
+				"execution_count": 21
 			},
 			{
 				"cell_type": "code",
@@ -127,105 +75,52 @@
 					"def anomaly_detection_classifier(df,\r\n",
 					"                                 filter_column_1, \r\n",
 					"                                 filter_column_2, \r\n",
-					"                                 cost_column, \r\n",
+					"                                 cost_column,\r\n",
+					"                                 filter_tag,\r\n",
 					"                                 window_size=30):\r\n",
 					"\r\n",
 					"    \r\n",
-					"    # Selecting the filter-categories (Subscription and Meter Category), the time-stamp and the cost data\r\n",
-					"    subscription_costs_by_dates = df.select(filter_column_1, filter_column_2, 'Date', cost_column)\r\n",
+					"    # # Selecting the filter-categories (Subscription and Meter Category), the time-stamp and the cost data\r\n",
+					"    # costs_by_dates = df.select(filter_column_1, filter_column_2, 'Date', cost_column)\r\n",
 					"\r\n",
 					"    # Setting a partition window to divide the dataset in the filter options and order it by the Date\r\n",
 					"    windowSpec = Window.partitionBy(filter_column_1, filter_column_2).orderBy('Date').rowsBetween(-window_size, 0)\r\n",
 					"\r\n",
+					"    # Define column-names\r\n",
+					"    ma_col_name = f'MovingAverage_{filter_tag}'\r\n",
+					"    std_col_name = f'MovingStdDev_{filter_tag}'\r\n",
+					"\r\n",
 					"    # Set a moving average that is set by the n previous days\r\n",
-					"    subscription_costs_by_dates = subscription_costs_by_dates.withColumn('MovingAverage', F.avg(F.col(cost_column)).over(windowSpec))\r\n",
+					"    costs_by_dates = df.withColumn(ma_col_name, F.avg(F.col(cost_column)).over(windowSpec))\r\n",
 					"\r\n",
 					"    # Set a moving standard deviation of the same period\r\n",
-					"    subscription_costs_by_dates = subscription_costs_by_dates.withColumn('MovingStdDev', F.stddev(F.col(cost_column)).over(windowSpec))\r\n",
+					"    costs_by_dates = costs_by_dates.withColumn(std_col_name, F.stddev(F.col(cost_column)).over(windowSpec))\r\n",
+					"\r\n",
+					"    # Define column-names\r\n",
+					"    std1 = f'1StdDev_{filter_tag}'\r\n",
+					"    std2 = f'2StdDev_{filter_tag}'\r\n",
+					"    std3 = f'3StdDev_{filter_tag}'\r\n",
 					"\r\n",
 					"    # Set upper thresholds with a standard deviation multiplied by 'n' higher than the moving average\r\n",
-					"    subscription_costs_by_dates = subscription_costs_by_dates.withColumn('1StdDev', F.col('MovingAverage') + F.col('MovingStdDev'))\r\n",
-					"    subscription_costs_by_dates = subscription_costs_by_dates.withColumn('2StdDev', F.col('MovingAverage') + (F.col('MovingStdDev') * 2))\r\n",
-					"    subscription_costs_by_dates = subscription_costs_by_dates.withColumn('3StdDev', F.col('MovingAverage') + (F.col('MovingStdDev') * 3))\r\n",
+					"    costs_by_dates = costs_by_dates.withColumn(std1, F.col(ma_col_name) + F.col(std_col_name))\r\n",
+					"    costs_by_dates = costs_by_dates.withColumn(std2, F.col(ma_col_name) + (F.col(std_col_name) * 2))\r\n",
+					"    costs_by_dates = costs_by_dates.withColumn(std3, F.col(ma_col_name) + (F.col(std_col_name) * 3))\r\n",
 					"\r\n",
 					"    # If the cost is more than the threshold set, then set the datapoint to be 1, otherwise 0\r\n",
-					"    subscription_costs_by_dates = subscription_costs_by_dates.withColumn('Above_1std', F.when(F.col(cost_column) > F.col('1StdDev'), F.lit(1))\\\r\n",
-					"                                                                                        .otherwise(F.lit(0)))\r\n",
+					"    costs_by_dates = costs_by_dates.withColumn(f'Above_1std_{filter_tag}', F.when(F.col(cost_column) > F.col(std1), F.lit(1))\\\r\n",
+					"                                                                            .otherwise(F.lit(0)))\r\n",
 					"\r\n",
 					"    # If the cost is more than the threshold set, then set the datapoint to be 1, otherwise 0\r\n",
-					"    subscription_costs_by_dates = subscription_costs_by_dates.withColumn('Above_2std', F.when(F.col(cost_column) > F.col('2StdDev'), F.lit(1))\\\r\n",
-					"                                                                                        .otherwise(F.lit(0)))\r\n",
+					"    costs_by_dates = costs_by_dates.withColumn(f'Above_2std_{filter_tag}', F.when(F.col(cost_column) > F.col(std2), F.lit(1))\\\r\n",
+					"                                                                            .otherwise(F.lit(0)))\r\n",
 					"\r\n",
 					"    # If the cost is more than the threshold set, then set the datapoint to be 1, otherwise 0\r\n",
-					"    subscription_costs_by_dates = subscription_costs_by_dates.withColumn('Above_3std', F.when(F.col(cost_column) > F.col('3StdDev'), F.lit(1))\\\r\n",
-					"                                                                                        .otherwise(F.lit(0)))\r\n",
+					"    costs_by_dates = costs_by_dates.withColumn(f'Above_3std_{filter_tag}', F.when(F.col(cost_column) > F.col(std3), F.lit(1))\\\r\n",
+					"                                                                            .otherwise(F.lit(0)))\r\n",
 					"\r\n",
-					"    return subscription_costs_by_dates"
+					"    return costs_by_dates"
 				],
-				"execution_count": 161
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"file_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v2_ACMMonthlyAmortizedCost_*.parquet\"\r\n",
-					"\r\n",
-					"df = spark.read.format('parquet').load(file_path).select('SubscriptionId',\r\n",
-					"                                                         'MeterCategory',\r\n",
-					"                                                         'ActiveWBS',\r\n",
-					"                                                         'Date',\r\n",
-					"                                                         'EffectivePrice',\r\n",
-					"                                                         'CostInBillingCurrency')\r\n",
-					"\r\n",
-					"filtered_subs_df = subscription_filter_data(df)\r\n",
-					"\r\n",
-					"subscription_costs_by_dates = anomaly_detection_classifier(df=filtered_subs_df,\r\n",
-					"                                                           filter_column_1='SubscriptionId',\r\n",
-					"                                                           filter_column_2='MeterCategory',\r\n",
-					"                                                           cost_column='CostInBillingCurrency',\r\n",
-					"                                                           window_size=30)\r\n",
-					"\r\n",
-					"display(subscription_costs_by_dates)"
-				],
-				"execution_count": 162
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"filtered_wbs_df = wbs_filter_data(df)\r\n",
-					"\r\n",
-					"wbs_costs_by_dates =  anomaly_detection_classifier(df=filtered_wbs_df,\r\n",
-					"                                                   filter_column_1='ActiveWBS',\r\n",
-					"                                                   filter_column_2='MeterCategory',\r\n",
-					"                                                   cost_column='CostInBillingCurrency',\r\n",
-					"                                                   window_size=30)\r\n",
-					"\r\n",
-					"display(wbs_costs_by_dates)"
-				],
-				"execution_count": 163
+				"execution_count": 22
 			},
 			{
 				"cell_type": "code",
@@ -241,50 +136,37 @@
 					}
 				},
 				"source": [
-					"calculation_type = ['ACMMonthlyAmortizedCost', 'ACMMonthlyActualCost']\r\n",
+					"source_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear.parquet\"\r\n",
 					"\r\n",
-					"for calc in calculation_type:\r\n",
-					"    source_path = f\"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/{calc}/*/Extended_v2_{calc}_*.parquet\"\r\n",
-					"\r\n",
-					"    print(f\"Reading data from: {source_path}\")\r\n",
-					"    df = spark.read.format('parquet').load(source_path)\r\n",
-					"    \r\n",
-					"    print(\"Filtering raw data by subscription\")\r\n",
-					"    filtered_df = subscription_filter_data(df)\r\n",
-					"\r\n",
-					"    print(\"Running the Anomaly Detection Classifier for Subscription-partitioned data\")\r\n",
-					"    subscription_costs_by_dates =  anomaly_detection_classifier(df=filtered_df,\r\n",
-					"                                                                filter_column_1='SubscriptionId',\r\n",
-					"                                                                filter_column_2='MeterCategory',\r\n",
-					"                                                                cost_column='CostInBillingCurrency',\r\n",
-					"                                                                window_size=30)\r\n",
-					"\r\n",
-					"    print('Filtering raw data by WBS')\r\n",
-					"    filtered_wbs_df = wbs_filter_data(df)\r\n",
-					"\r\n",
-					"    print(\"Running the Anomaly Detection Classifier for WBS-partitioned data\")\r\n",
-					"    wbs_costs_by_dates =  anomaly_detection_classifier(df=filtered_wbs_df,\r\n",
-					"                                                       filter_column_1='ActiveWBS',\r\n",
-					"                                                       filter_column_2='MeterCategory',\r\n",
-					"                                                       cost_column='CostInBillingCurrency',\r\n",
-					"                                                       window_size=30)\r\n",
+					"print(f\"Reading data from: {source_path}\")\r\n",
+					"df = spark.read.format('parquet').load(source_path)\r\n",
 					"\r\n",
 					"\r\n",
-					"    subscription_destination_path = f\"abfss://usage@s037costmgmt.dfs.core.windows.net/anomaly_detection/{calc}_AnomalyDetection_Subscriptions.parquet\"\r\n",
-					"    wbs_destination_path = f\"abfss://usage@s037costmgmt.dfs.core.windows.net/anomaly_detection/{calc}_AnomalyDetection_WBS.parquet\"\r\n",
-					"    \r\n",
-					"    print(f\"Writing Subscription-partitioned classification data to this path: {subscription_destination_path}\")\r\n",
-					"    subscription_costs_by_dates.write.format('parquet').mode('overwrite').save(subscription_destination_path)\r\n",
-					"    print('Write Complete!')\r\n",
+					"print(\"Running the Anomaly Detection Classifier for Subscription-partitioned data\")\r\n",
+					"costs_by_dates =  anomaly_detection_classifier(df=df,\r\n",
+					"                                               filter_column_1='SubscriptionId',\r\n",
+					"                                               filter_column_2='MeterCategory',\r\n",
+					"                                               cost_column='CostInBillingCurrency',\r\n",
+					"                                               filter_tag='Subscription',\r\n",
+					"                                               window_size=30)\r\n",
 					"\r\n",
-					"    print(f\"Writing WBS-partitioned classification data to this path: {subscription_destination_path}\")\r\n",
-					"    wbs_costs_by_dates.write.format('parquet').mode('overwrite').save(wbs_destination_path)\r\n",
-					"    print('Write Complete!')\r\n",
-					"    print(\"-------------------------------------------------------------------------------------------------------------------\")\r\n",
-					"    print(' ')\r\n",
-					""
+					"print(\"Running the Anomaly Detection Classifier for WBS-partitioned data\")\r\n",
+					"costs_by_dates =  anomaly_detection_classifier(df=costs_by_dates,\r\n",
+					"                                               filter_column_1='ActiveWBS',\r\n",
+					"                                               filter_column_2='MeterCategory',\r\n",
+					"                                               cost_column='CostInBillingCurrency',\r\n",
+					"                                               filter_tag='WBS',\r\n",
+					"                                               window_size=30)\r\n",
+					"\r\n",
+					"\r\n",
+					"destination_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear_with_AnomalyDetection.parquet\"\r\n",
+					"\r\n",
+					"\r\n",
+					"print(f\"Writing classification data to this path: {destination_path}\")\r\n",
+					"costs_by_dates.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
+					"print('Write Complete!')"
 				],
-				"execution_count": 155
+				"execution_count": 24
 			}
 		]
 	}
