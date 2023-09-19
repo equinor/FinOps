@@ -18,7 +18,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "aec9cb4f-07f1-446b-be8c-bcbbf010e658"
+				"spark.autotune.trackingId": "f9ea8a11-767f-49c3-a50c-aff0185bd32c"
 			}
 		},
 		"metadata": {
@@ -56,7 +56,7 @@
 					"import pyspark.sql.types as T\r\n",
 					"from pyspark.sql.window import Window"
 				],
-				"execution_count": 21
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -120,7 +120,7 @@
 					"\r\n",
 					"    return costs_by_dates"
 				],
-				"execution_count": 22
+				"execution_count": 15
 			},
 			{
 				"cell_type": "code",
@@ -159,14 +159,14 @@
 					"                                               window_size=30)\r\n",
 					"\r\n",
 					"\r\n",
-					"destination_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear_with_AnomalyDetection.parquet\"\r\n",
-					"\r\n",
+					"#destination_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear_with_AnomalyDetection.parquet\"\r\n",
+					"destination_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear.parquet\"\r\n",
 					"\r\n",
 					"print(f\"Writing classification data to this path: {destination_path}\")\r\n",
-					"costs_by_dates.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
+					"# costs_by_dates.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
 					"print('Write Complete!')"
 				],
-				"execution_count": 24
+				"execution_count": 16
 			}
 		]
 	}

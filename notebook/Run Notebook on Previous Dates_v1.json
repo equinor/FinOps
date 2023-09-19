@@ -18,14 +18,11 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "7c0f6b8c-cbbc-47d5-a42b-6b800041d122"
+				"spark.autotune.trackingId": "b143b5e0-abb0-4f6d-9a3f-a3fe3e82f29d"
 			}
 		},
 		"metadata": {
 			"saveOutput": true,
-			"synapse_widget": {
-				"version": "0.1"
-			},
 			"enableDebugMode": false,
 			"kernelspec": {
 				"name": "synapse_pyspark",
@@ -41,14 +38,13 @@
 				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
 				"auth": {
 					"type": "AAD",
-					"authResource": "https://dev.azuresynapse.net",
-					"authHeader": null
+					"authResource": "https://dev.azuresynapse.net"
 				},
 				"sparkVersion": "3.2",
 				"nodeCount": 3,
 				"cores": 8,
 				"memory": 56,
-				"extraHeader": null
+				"automaticScaleJobs": false
 			},
 			"sessionKeepAliveTimeout": 30
 		},
@@ -94,7 +90,8 @@
 					"date_paths = mssparkutils.fs.ls(root_dir)\r\n",
 					"dates = [files.name for files in date_paths]\r\n",
 					"dates = [date_string.split('-') for date_string in dates]"
-				]
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -111,8 +108,9 @@
 				},
 				"source": [
 					"# # For Testing Purposes\r\n",
-					"# dates = [[toDate, fromDate] for (toDate, fromDate) in dates if toDate >= '20230801']"
-				]
+					"#dates = [[toDate, fromDate] for (toDate, fromDate) in dates if toDate >= '20230101']"
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -148,7 +146,8 @@
 					"    # n += 1\r\n",
 					"    # if n == 2:\r\n",
 					"    #     break"
-				]
+				],
+				"execution_count": null
 			}
 		]
 	}
