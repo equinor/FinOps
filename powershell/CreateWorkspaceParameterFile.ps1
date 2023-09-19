@@ -12,6 +12,7 @@ param (
 $synapseParams = Get-Content -Path $ParameterPath -Raw | ConvertFrom-Json
 $workspaceTemplateParams = Get-Content -Path $WorkspaceTemplateParamaterPath -Raw | ConvertFrom-Json
 
-foreach ($parameter in $workspaceTemplateParams.parameters) {
-    Write-Host $parameter
+foreach ($parameter in $workspaceTemplateParams.parameters.PSObject.Properties) {
+    Write-Host $parameter.Name
+    Write-Host $parameter.Value.value
 }
