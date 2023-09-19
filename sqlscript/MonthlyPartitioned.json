@@ -2,7 +2,7 @@
 	"name": "MonthlyPartitioned",
 	"properties": {
 		"folder": {
-			"name": "Views/tsc"
+			"name": "SQLScriptsNotInUse"
 		},
 		"content": {
 			"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW tsc_MonthlyPartitioned\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/aggregate/parquet/MonthlyPartitioned.parquet/*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n\n\n",
