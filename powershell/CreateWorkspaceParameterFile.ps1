@@ -10,7 +10,7 @@ $workspaceTemplateParams = Get-Content -Path $WorkspaceTemplateParamaterPath -Ra
 
 # Set workspace name
 $workspaceKey = "workspaceName"
-$workspaceTemplateParams.parameters.$WorkspaceKey.value = $WorkspaceName
+$workspaceTemplateParams.parameters["workspaceName"].value = $WorkspaceName
 
 foreach ($parameter in $workspaceTemplateParams.parameters.PSObject.Properties) {
     $parameterKey = $parameter.Name
@@ -21,7 +21,7 @@ foreach ($parameter in $workspaceTemplateParams.parameters.PSObject.Properties) 
     }
 
     if ($parameterKey -like "*sparkPoolName") {
-        
+
     }
 }
 
