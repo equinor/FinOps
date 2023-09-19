@@ -27,15 +27,15 @@ foreach ($parameter in $workspaceTemplateParams.parameters.PSObject.Properties) 
     }
 
     if ($parameterKey -like "*sparkPoolName") {
-        $workspaceTemplateParams.parameters.$parameterKey.value = @bicepParams.parameters.$sparkPoolNameKey.value
+        $workspaceTemplateParams.parameters.$parameterKey.value = $bicepParams.parameters.$sparkPoolNameKey.value
     }
 
     if ($parameterKey -like "*sparkPoolId") {
-        $workspaceTemplateParams.parameters.$parameterKey.value = @bicepParams.parameters.$sparkPoolIdKey.value
+        $workspaceTemplateParams.parameters.$parameterKey.value = $bicepParams.parameters.$sparkPoolIdKey.value
     }
 
     if ($parameterKey -like "*sparkPoolEndpoint") {
-        $workspaceTemplateParams.parameters.$parameterKey.value = @bicepParams.parameters.$sparkPoolEndpointKey.value
+        $workspaceTemplateParams.parameters.$parameterKey.value = $bicepParams.parameters.$sparkPoolEndpointKey.value
     }
 }
 
