@@ -18,7 +18,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "e5f87eb4-5235-4c49-bd3b-1765667d726a"
+				"spark.autotune.trackingId": "13b6f318-5c8c-471c-95d0-a91810bc7e30"
 			}
 		},
 		"metadata": {
@@ -120,7 +120,7 @@
 					"\r\n",
 					"    return costs_by_dates"
 				],
-				"execution_count": 26
+				"execution_count": 36
 			},
 			{
 				"cell_type": "code",
@@ -136,7 +136,7 @@
 					}
 				},
 				"source": [
-					"source_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear.parquet\"\r\n",
+					"source_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear_with_AnomalyDetection.parquet\"\r\n",
 					"\r\n",
 					"print(f\"Reading data from: {source_path}\")\r\n",
 					"df = spark.read.format('parquet').load(source_path)\r\n",
@@ -167,7 +167,7 @@
 					"#costs_by_dates.write.format('parquet').mode('overwrite').partitionBy('Report_Date_Partition').option('overwriteSchema', 'true').save(destination_path)\r\n",
 					"print('Write Complete!')"
 				],
-				"execution_count": 27
+				"execution_count": 37
 			},
 			{
 				"cell_type": "code",
@@ -186,7 +186,7 @@
 				"source": [
 					"display(df)"
 				],
-				"execution_count": 28
+				"execution_count": 35
 			},
 			{
 				"cell_type": "code",
@@ -221,9 +221,27 @@
 					}
 				},
 				"source": [
-					"costs_by_dates.copy()"
+					"display(costs_by_dates)"
 				],
-				"execution_count": null
+				"execution_count": 34
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"df_test = costs_by_dates"
+				],
+				"execution_count": 31
 			},
 			{
 				"cell_type": "code",
@@ -241,7 +259,7 @@
 				"source": [
 					"costs_by_dates.write.format('parquet').mode('overwrite').partitionBy('Report_Date_Partition').option('overwriteSchema', 'true').save(destination_path)"
 				],
-				"execution_count": null
+				"execution_count": 38
 			}
 		]
 	}
