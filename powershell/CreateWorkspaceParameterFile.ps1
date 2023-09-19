@@ -16,7 +16,6 @@ $workspaceTemplateParams = Get-Content -Path $WorkspaceTemplateParamaterPath -Ra
 foreach ($parameter in $workspaceTemplateParams.parameters.PSObject.Properties) {
     $parameterKey = $parameter.Name
     $parameterValue = $parameter.Value.value
-    Write-Host $parameterKey
     if ($parameterKey -like "s037-cost-management*") {
         Write-Host $parameterKey -ForegroundColor green
     }
