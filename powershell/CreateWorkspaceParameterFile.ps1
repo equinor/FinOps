@@ -30,15 +30,15 @@ foreach ($parameter in $workspaceTemplateParams.parameters.PSObject.Properties) 
 
     # Override spark pool references in notebook artifacts
 
-    if ($parameterKey -like "*sparkPoolName") {
+    if ($parameterKey -like "*notebookSparkPoolNameRef") {
         $workspaceTemplateParams.parameters.$parameterKey.value = $bicepParams.parameters.$sparkPoolNameKey.value
     }
 
-    if ($parameterKey -like "*sparkPoolId") {
+    if ($parameterKey -like "*notebookSparkPoolIdRef") {
         $workspaceTemplateParams.parameters.$parameterKey.value = $bicepParams.parameters.$sparkPoolIdKey.value
     }
 
-    if ($parameterKey -like "*sparkPoolEndpoint") {
+    if ($parameterKey -like "*notebookSparkPoolEndpointRef") {
         $workspaceTemplateParams.parameters.$parameterKey.value = $bicepParams.parameters.$sparkPoolEndpointKey.value
     }
 }
