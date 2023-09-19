@@ -2,7 +2,7 @@
 	"name": "tsc_CreateCalendarTable",
 	"properties": {
 		"folder": {
-			"name": "SQLScriptsProduction"
+			"name": "SQLScriptsInProduction"
 		},
 		"content": {
 			"query": "-- Create the Calendar table\nCREATE TABLE Calendar\n(\n    [Date] DATE,\n    [Year] INT,\n    [Month] INT,\n    [Day] INT,\n    [Quarter] INT,\n    [DayOfWeek] INT,\n    [Weekday] INT,\n    [WeekOfYear] INT,\n    [MonthName] NVARCHAR(20),\n    [DayName] NVARCHAR(20),\n    [IsHoliday] INT\n)\nWITH\n(\n    DISTRIBUTION = ROUND_ROBIN\n);\n\n-- Create the clustered columnstore index\nCREATE CLUSTERED COLUMNSTORE INDEX idx_Columnstore ON Calendar;\n\n-- Optional: Create additional indexes or constraints if needed\n-- CREATE INDEX idx_Date ON dbo.Calendar([Date]);\n-- ALTER TABLE dbo.Calendar ADD CONSTRAINT pk_Calendar PRIMARY KEY ([Date]);\n",
