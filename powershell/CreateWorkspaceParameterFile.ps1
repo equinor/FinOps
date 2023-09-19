@@ -10,7 +10,7 @@ $workspaceTemplateParams = Get-Content -Path $WorkspaceTemplateParamaterPath -Ra
 
 # Set workspace name
 $workspaceKey = "workspaceName"
-$workspaceTemplateParams.parameters["workspaceName"].value = $WorkspaceName
+$workspaceTemplateParams.parameters.PSObject.Properties["workspaceName"].value = $WorkspaceName
 
 foreach ($parameter in $workspaceTemplateParams.parameters.PSObject.Properties) {
     $parameterKey = $parameter.Name
