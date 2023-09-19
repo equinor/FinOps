@@ -5,7 +5,13 @@ param (
     [string]$WorkspaceTemplateParamaterPath
 )
 
+# Retrieve bicep parameters
 $bicepParams = Get-Content -Path $BicepParameterPath -Raw | ConvertFrom-Json
+$sparkPoolNameKey = "sparkPoolName"
+$sparkPoolIdKey = "sparkPoolId"
+$sparkPoolEndpointKey = "sparkPoolEndpoint"
+
+# Retrieve Synapse workspace template parameters
 $workspaceTemplateParams = Get-Content -Path $WorkspaceTemplateParamaterPath -Raw | ConvertFrom-Json
 
 # Set workspace name
@@ -21,7 +27,15 @@ foreach ($parameter in $workspaceTemplateParams.parameters.PSObject.Properties) 
     }
 
     if ($parameterKey -like "*sparkPoolName") {
+        $workspaceTemplateParams.parameters.$parameterKey.value = @bicepParams.parameters.$sparkPoolNameKey.value
+    }
 
+    if ($parameterKey -like "*sparkPoolId") {
+        $workspaceTemplateParams.parameters.$parameterKey.value = @bicepParams.parameters.$sparkPoolIdKey.value
+    }
+
+    if ($parameterKey -like "*sparkPoolEndpoint") {
+        $workspaceTemplateParams.parameters.$parameterKey.value = @bicepParams.parameters.$sparkPoolEndpointKey.value
     }
 }
 
