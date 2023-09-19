@@ -1,9 +1,9 @@
 name: FinOps environment deployment
 
 on:
-    # workflow_dispatch:
-  push:
-    branches: [ workspace_publish ]
+    workflow_dispatch:
+  # push:
+  #   branches: [ workspace_publish ]
 
 permissions:
       contents: read
@@ -28,22 +28,36 @@ jobs:
           creds: ${{ secrets.S926_AZURE_CREDENTIALS }}
           enable-AzPSSession: true
 
-    #   - name: Update Bicep parameters
-    #     uses: Azure/CLI@v1
-    #     with: 
-    #       inlineScript: |
-    #         result=$(az synapse workspace show --name ${{ env.SYNAPSE_WORKSPACE_NAME }} --resource-group ${{ env.RESOURCE_GROUP }} 2>/dev/null || echo "")
-    #         exists=$(if [ -z "$result" ]; then echo false; else echo true; fi)
-    #         echo "`jq --argjson new "$exists" '.parameters.workspaceExists.value = $new' ${{ env.PARAMETER_FILE_PATH }}`" > ${{ env.PARAMETER_FILE_PATH }}
+      - name: Update Bicep parameters
+        uses: Azure/CLI@v1
+        with: 
+          inlineScript: |
+            result=$(az synapse workspace show --name ${{ env.SYNAPSE_WORKSPACE_NAME }} --resource-group ${{ env.RESOURCE_GROUP }} 2>/dev/null || echo "")
+            exists=$(if [ -z "$result" ]; then echo false; else echo true; fi)
+            echo "`jq --argjson new "$exists" '.parameters.workspaceExists.value = $new' ${{ env.PARAMETER_FILE_PATH }}`" > ${{ env.PARAMETER_FILE_PATH }}
 
-    #   - name: Deploy Azure Resources
-    #     uses: Azure/CLI@v1
-    #     with:
-    #       inlineScript: |
-    #         az deployment group create \
-    #           --template-file azuredeploy.bicep \
-    #           --resource-group ${{ env.RESOURCE_GROUP }} \
-    #           --parameters ${{ env.PARAMETER_FILE_PATH }}
+      - name: Ensure Azure Infrastructure
+        uses: Azure/CLI@v1
+        with:
+          inlineScript: |
+            az deployment group create \
+              --template-file azuredeploy.bicep \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --parameters ${{ env.PARAMETER_FILE_PATH }}
+
+      - name: Synapse workspace deployment
+        uses: Azure/synapse-workspace-deployment@V1.8.0
+        with:
+          TargetWorkspaceName: ${{ env.SYNAPSE_WORKSPACE_NAME }}
+          TemplateFile: './s037-cost-management/TemplateForWorkspace.json'
+          ParametersFile: './synapse.parameters.dev.json'
+          environment: 'Azure Public'
+          resourceGroup: ${{ env.RESOURCE_GROUP }}
+          clientId: ${{ secrets.AZURE_SP_CLIENTID }}
+          clientSecret: ${{ secrets.AZURE_SP_CLIENTSECRET }}
+          subscriptionId: ${{ secrets.S926_AZURE_SUBSCRIPTION_ID }}
+          tenantId: ${{ secrets.AZURE_TENANT_ID }}
+          operation: 'deploy'
 
 #   deploy-prod:
 #     needs: deploy-test
