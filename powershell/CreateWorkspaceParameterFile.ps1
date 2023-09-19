@@ -17,7 +17,7 @@ foreach ($parameter in $workspaceTemplateParams.parameters.PSObject.Properties) 
     $parameterKey = $parameter.Name
     $parameterValue = $parameter.Value.value
     Write-Host $parameterKey
-    if ($parameterKey -contains "s037-cost-management") {
+    if ($parameterKey -like "s037-cost-management*") {
         Write-Host $parameterKey -ForegroundColor green
     }
 }
