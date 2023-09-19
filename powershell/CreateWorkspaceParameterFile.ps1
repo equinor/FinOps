@@ -22,9 +22,13 @@ foreach ($parameter in $workspaceTemplateParams.parameters.PSObject.Properties) 
     $parameterKey = $parameter.Name
     $parameterValue = $parameter.Value.value
 
+    # Override data lake references
+
     if ($parameterKey -like "s037-cost-management*") {
         $workspaceTemplateParams.parameters.$parameterKey.value = $parameterValue.replace("s037-cost-management", $WorkspaceName)
     }
+
+    # Override spark pool references in notebook artifacts
 
     if ($parameterKey -like "*sparkPoolName") {
         $workspaceTemplateParams.parameters.$parameterKey.value = $bicepParams.parameters.$sparkPoolNameKey.value
