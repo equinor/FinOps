@@ -43,6 +43,7 @@ foreach ($parameter in $workspaceTemplateParams.parameters.PSObject.Properties) 
     }
 }
 
+
 $updatedWorkspaceParams = $workspaceTemplateParams | ConvertTo-Json
 
 Write-Host $updatedWorkspaceParams
