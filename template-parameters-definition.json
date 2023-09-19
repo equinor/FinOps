@@ -1,7 +1,51 @@
 {
+    "Microsoft.Synapse/workspaces/datasets": {
+        "properties": {
+            "linkedServiceName": {
+                "referenceName": "=:-linkedServiceName:string"
+            }
+        }
+    },
+    "Microsoft.Synapse/workspaces/linkedServices": {
+        "*": {
+            "name": "=:-linkedServiceName:string",
+            "properties": {
+                "typeProperties": {
+                    "url": "=:-linkedServiceUrl:string",
+                    "connectionString": {
+                        "value": "|:-linkedServiceConnectionString:secureString"
+                    }
+                }
+            }            
+        }
+    },
     "Microsoft.Synapse/workspaces/notebooks": {
         "properties": {
-            "*": "="
+            "bigDataPool": {
+                "referenceName": "=:-sparkPoolName:string"
+            },
+             "metadata": {
+                "a365ComputeOptions": {
+                    "id": "=:-sparkPoolId:string",
+                    "name": "=:-sparkPoolName:string",
+                    "endpoint": "=:-sparkPoolEndpoint:string"
+                }
+            }
+        }
+    },
+    "Microsoft.Synapse/workspaces/bigDataPools": {
+        "name": "=:-sparkPoolName:string",
+        "properties": {
+            "autoPause": {
+                "delayInMinutes": "=:-delayInMinutes:int"
+            },
+            "autoScale": {
+                "maxNodeCount": "=:-maxNodeCount:int",
+                "minNodeCount": "=:-minNodeCount:int"
+            },
+            "nodeCount": "=:-nodeCount:int",
+            "nodeSize": "=:-nodeSize:string",
+            "sparkVersion": "=:-sparkVersion:string"
         }
     }
 }
