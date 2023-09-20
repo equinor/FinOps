@@ -18,7 +18,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "3453b823-fc08-40de-bd86-9a21c9da5feb"
+				"spark.autotune.trackingId": "ffbf6f4d-24e1-4e01-a184-b70525fc3e11"
 			}
 		},
 		"metadata": {
@@ -58,11 +58,11 @@
 				},
 				"source": [
 					"# # Input data\n",
-					"#toDate = '20230430'\n",
-					"#fromDate = '20230401'\n",
-					"#container = 'usage'"
+					"toDate = '20230430'\n",
+					"fromDate = '20230401'\n",
+					"container = 'usage'"
 				],
-				"execution_count": 79
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -89,7 +89,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 80
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -121,7 +121,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list, appList"
 				],
-				"execution_count": 81
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -151,7 +151,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 82
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -191,7 +191,7 @@
 					"        cost_df = cost_df.withColumn('ai_' + col, F.coalesce(F.col(f'AdditionalInfo.{col}'), F.lit(None)))\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 83
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -220,7 +220,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 84
+				"execution_count": 7
 			},
 			{
 				"cell_type": "code",
@@ -255,7 +255,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 85
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -292,7 +292,7 @@
 					"\r\n",
 					"    return subscription_list"
 				],
-				"execution_count": 86
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -315,7 +315,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list"
 				],
-				"execution_count": 87
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -349,7 +349,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 88
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -440,7 +440,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 89
+				"execution_count": 12
 			},
 			{
 				"cell_type": "code",
@@ -478,14 +478,11 @@
 					"                                                     .otherwise(F.col('ApplicationName'))).drop('name')\r\n",
 					"\r\n",
 					"\r\n",
-					"cost_df.withColumn('ApplicationName', F.when(ci_mask & F.col('CostAllocationCode').cast('int').isNull(), F.col('CostAllocationCode')).when(ci_mask & F.col('CostAllocationCode').cast('int').isNotNull(), F.col('name'))\r\n",
-					"\r\n",
-					"\r\n",
 					"    cost_df = cost_df.withColumn('ApplicationName', F.upper(F.col('ApplicationName')))\r\n",
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 90
+				"execution_count": 16
 			},
 			{
 				"cell_type": "code",
@@ -519,7 +516,7 @@
 					"    \r\n",
 					"    return cost_df"
 				],
-				"execution_count": 91
+				"execution_count": 17
 			},
 			{
 				"cell_type": "code",
@@ -550,7 +547,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 92
+				"execution_count": 18
 			},
 			{
 				"cell_type": "code",
@@ -579,7 +576,7 @@
 					"\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": 93
+				"execution_count": 19
 			},
 			{
 				"cell_type": "code",
@@ -626,7 +623,7 @@
 					"    else:\n",
 					"        print(f'Using {longToDate} subscription json file')\n",
 					"        subscriptionListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions_' + longToDate + '.json'\n",
-					"    appListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/applications/ServiceNowApplication.parquet'\n",
+					"    appListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\n",
 					"\n",
 					"    cost_df, subscription_list, appList = load_source_files(costSourcefilename, subscriptionListPath, appListPath)\n",
 					"    cost_df = expand_ai_column(cost_df)\n",
@@ -634,7 +631,26 @@
 					"    write_output_file(cost_df, costDestinationfilename)\n",
 					"    print(' ')"
 				],
-				"execution_count": 94
+				"execution_count": 20
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(appList)"
+				],
+				"execution_count": 21
 			}
 		]
 	}
