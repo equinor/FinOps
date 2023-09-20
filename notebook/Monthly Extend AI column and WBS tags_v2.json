@@ -18,7 +18,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "ffbf6f4d-24e1-4e01-a184-b70525fc3e11"
+				"spark.autotune.trackingId": "eddd63e0-d3cb-4f83-8a58-52c5c7446413"
 			}
 		},
 		"metadata": {
@@ -62,7 +62,7 @@
 					"fromDate = '20230401'\n",
 					"container = 'usage'"
 				],
-				"execution_count": 2
+				"execution_count": 55
 			},
 			{
 				"cell_type": "code",
@@ -89,7 +89,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 3
+				"execution_count": 56
 			},
 			{
 				"cell_type": "code",
@@ -121,7 +121,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list, appList"
 				],
-				"execution_count": 4
+				"execution_count": 57
 			},
 			{
 				"cell_type": "code",
@@ -151,7 +151,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 5
+				"execution_count": 58
 			},
 			{
 				"cell_type": "code",
@@ -178,7 +178,7 @@
 					"    cols_to_keep = [\"UsageType\", \r\n",
 					"                    \"ImageType\",\r\n",
 					"                    \"ServiceType\",\r\n",
-					"                    \"VMName\",\r\n",
+					"                    \"VMApplicationName\",\r\n",
 					"                    \"VMProperties\",\r\n",
 					"                    \"VCPUs\",\r\n",
 					"                    \"AHB\",\r\n",
@@ -191,7 +191,7 @@
 					"        cost_df = cost_df.withColumn('ai_' + col, F.coalesce(F.col(f'AdditionalInfo.{col}'), F.lit(None)))\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 6
+				"execution_count": 59
 			},
 			{
 				"cell_type": "code",
@@ -220,7 +220,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 7
+				"execution_count": 60
 			},
 			{
 				"cell_type": "code",
@@ -255,14 +255,14 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 8
+				"execution_count": 61
 			},
 			{
 				"cell_type": "code",
 				"metadata": {
 					"jupyter": {
 						"source_hidden": false,
-						"outputs_hidden": false
+						"outputs_hidden": true
 					},
 					"nteract": {
 						"transient": {
@@ -292,7 +292,7 @@
 					"\r\n",
 					"    return subscription_list"
 				],
-				"execution_count": 9
+				"execution_count": 62
 			},
 			{
 				"cell_type": "code",
@@ -315,7 +315,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list"
 				],
-				"execution_count": 10
+				"execution_count": 63
 			},
 			{
 				"cell_type": "code",
@@ -349,7 +349,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 11
+				"execution_count": 64
 			},
 			{
 				"cell_type": "code",
@@ -396,17 +396,17 @@
 					"\r\n",
 					"    # Applying valid AppIDs as Active WBS'\r\n",
 					"    # If the CostAllocationCode is empty, we fill/replace the column ActiveWBS with Operational WBS in the AppList\r\n",
-					"    map_app = appList.withColumn('u_number', F.col('u_number').cast(T.StringType())).select('u_number', 'u_operational_wbs')\r\n",
-					"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.u_number, how='left')\r\n",
+					"    map_app = appList.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('AppID', 'u_operational_wbs')\r\n",
+					"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.AppID, how='left')\r\n",
 					"    cost_df = joined_df.withColumn('ActiveWBS', F.when(F.col('ActiveWBS').isNull(), F.col('u_operational_wbs')).otherwise(F.col('ActiveWBS')))\r\n",
 					"    cost_df = cost_df.drop('u_operational_wbs')\r\n",
 					"\r\n",
 					"    # Applying valid CIs as Active WBS'\r\n",
-					"    # Same here as above, but we merge the dataframes on names rather than u_number\r\n",
-					"    map_app = appList.withColumn('u_number', F.col('u_number').cast(T.StringType())).select('name', 'u_operational_wbs')\r\n",
+					"    # Same here as above, but we merge the dataframes on ApplicationNames rather than AppID\r\n",
+					"    map_app = appList.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('ApplicationName', 'u_operational_wbs')\r\n",
 					"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.name, how='left')\r\n",
 					"    cost_df = joined_df.withColumn('ActiveWBS', F.when(F.col('ActiveWBS').isNull(), F.col('u_operational_wbs')).otherwise(F.col('ActiveWBS')))\r\n",
-					"    cost_df = cost_df.drop('name', 'u_operational_wbs', 'u_number')\r\n",
+					"    cost_df = cost_df.drop('ApplicationName', 'u_operational_wbs', 'AppID')\r\n",
 					"    \r\n",
 					"    # When ActiveWBS value is string 'TOBESPECIFIED', we replace the value with None\r\n",
 					"    cost_df = cost_df.withColumn('ActiveWBS', F.when(F.upper(F.col('ActiveWBS')) == 'TOBESPECIFIED', F.lit(None)).otherwise(F.col('ActiveWBS')))\r\n",
@@ -440,7 +440,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 12
+				"execution_count": 65
 			},
 			{
 				"cell_type": "code",
@@ -463,26 +463,27 @@
 					"    appid_mask = F.col('CostAllocationType') == 'APPID'\r\n",
 					"\r\n",
 					"    # When AppID is present, we use the application name from the Service-Now Application list\r\n",
-					"    # First convert u_number to a string, then select the desired columns\r\n",
-					"    map_app = appList.withColumn('u_number', F.col('u_number').cast(T.StringType())).select('u_number', 'name')\r\n",
+					"    # First convert AppID to a string, then select the desired columns\r\n",
+					"    #OperationalUnit #AppID # ApplicationName\r\n",
+					"    map_app = appList.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('AppID', 'ApplicationName')\r\n",
 					"    # Merge the two lists together with a left-join\r\n",
-					"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.u_number, how='left')\r\n",
+					"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.AppID, how='left')\r\n",
 					"    # Select the application name from AppList when AppID is present in the CostAllocationType, then drop the columns from AppList\r\n",
-					"    cost_df = joined_df.withColumn('ApplicationName', F.when(appid_mask, F.col('name'))).drop('u_number')\r\n",
+					"    cost_df = joined_df.withColumn('Application_Name', F.when(appid_mask, F.col('ApplicationName'))).drop('AppID')\r\n",
 					"\r\n",
 					"    # When Cost AllocationType is CI, we apply the A as Application Name\r\n",
 					"    # When neither CI or AppID is present in CostAllocationType, we use the Application Name from the subscription list\r\n",
-					"    cost_df = cost_df.withColumn('ApplicationName', F.when(ci_mask & F.col('CostAllocationCode').cast('int').isNull(), F.col('CostAllocationCode'))\\\r\n",
-					"                                                     .when(ci_mask & F.col('CostAllocationCode').cast('int').isNotNull(), F.col('name'))\\\r\n",
+					"    cost_df = cost_df.withColumn('Application_Name', F.when(ci_mask & F.col('CostAllocationCode').cast('int').isNull(), F.col('CostAllocationCode'))\\\r\n",
+					"                                                     .when(ci_mask & F.col('CostAllocationCode').cast('int').isNotNull(), F.col('Applicationname'))\\\r\n",
 					"                                                     .when(~ci_mask & ~appid_mask, F.col('SubscriptionServiceNow-App'))\\\r\n",
-					"                                                     .otherwise(F.col('ApplicationName'))).drop('name')\r\n",
+					"                                                     .otherwise(F.col('Application_Name'))).drop('ApplicationName')\r\n",
 					"\r\n",
 					"\r\n",
-					"    cost_df = cost_df.withColumn('ApplicationName', F.upper(F.col('ApplicationName')))\r\n",
+					"    cost_df = cost_df.withColumn('Application_Name', F.upper(F.col('Application_Name')))\r\n",
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 16
+				"execution_count": 66
 			},
 			{
 				"cell_type": "code",
@@ -516,7 +517,7 @@
 					"    \r\n",
 					"    return cost_df"
 				],
-				"execution_count": 17
+				"execution_count": 67
 			},
 			{
 				"cell_type": "code",
@@ -547,7 +548,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 18
+				"execution_count": 68
 			},
 			{
 				"cell_type": "code",
@@ -576,7 +577,7 @@
 					"\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": 19
+				"execution_count": 69
 			},
 			{
 				"cell_type": "code",
@@ -631,7 +632,7 @@
 					"    write_output_file(cost_df, costDestinationfilename)\n",
 					"    print(' ')"
 				],
-				"execution_count": 20
+				"execution_count": 70
 			},
 			{
 				"cell_type": "code",
@@ -648,9 +649,9 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(appList)"
+					"display(appList) #OperationalUnit #AppID # ApplicationName"
 				],
-				"execution_count": 21
+				"execution_count": null
 			}
 		]
 	}
