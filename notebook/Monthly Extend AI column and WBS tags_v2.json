@@ -18,7 +18,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "eddd63e0-d3cb-4f83-8a58-52c5c7446413"
+				"spark.autotune.trackingId": "7e93655e-9f93-4183-8870-f6c05dc4d5f7"
 			}
 		},
 		"metadata": {
@@ -62,7 +62,7 @@
 					"fromDate = '20230401'\n",
 					"container = 'usage'"
 				],
-				"execution_count": 55
+				"execution_count": 176
 			},
 			{
 				"cell_type": "code",
@@ -89,7 +89,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 56
+				"execution_count": 177
 			},
 			{
 				"cell_type": "code",
@@ -117,11 +117,13 @@
 					"\r\n",
 					"    print(f'Loading SNOW application list - {appListPath}...')\r\n",
 					"    appList = spark.read.format('parquet').load(appListPath)\r\n",
+					"    appList = appList.withColumn('AppID', F.col('AppID').cast(\"int\"))\r\n",
+					"\r\n",
 					"    print(f'App list contains: {appList.count()}')\r\n",
 					"\r\n",
 					"    return cost_df, subscription_list, appList"
 				],
-				"execution_count": 57
+				"execution_count": 178
 			},
 			{
 				"cell_type": "code",
@@ -151,7 +153,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 58
+				"execution_count": 179
 			},
 			{
 				"cell_type": "code",
@@ -178,6 +180,7 @@
 					"    cols_to_keep = [\"UsageType\", \r\n",
 					"                    \"ImageType\",\r\n",
 					"                    \"ServiceType\",\r\n",
+					"                    \"VMName\",\r\n",
 					"                    \"VMApplicationName\",\r\n",
 					"                    \"VMProperties\",\r\n",
 					"                    \"VCPUs\",\r\n",
@@ -189,9 +192,10 @@
 					"\r\n",
 					"    for col in cols_to_keep:\r\n",
 					"        cost_df = cost_df.withColumn('ai_' + col, F.coalesce(F.col(f'AdditionalInfo.{col}'), F.lit(None)))\r\n",
+					"    print(cost_df.columns)\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 59
+				"execution_count": 180
 			},
 			{
 				"cell_type": "code",
@@ -220,7 +224,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 60
+				"execution_count": 181
 			},
 			{
 				"cell_type": "code",
@@ -255,7 +259,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 61
+				"execution_count": 182
 			},
 			{
 				"cell_type": "code",
@@ -292,7 +296,7 @@
 					"\r\n",
 					"    return subscription_list"
 				],
-				"execution_count": 62
+				"execution_count": 183
 			},
 			{
 				"cell_type": "code",
@@ -315,7 +319,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list"
 				],
-				"execution_count": 63
+				"execution_count": 184
 			},
 			{
 				"cell_type": "code",
@@ -349,7 +353,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 64
+				"execution_count": 185
 			},
 			{
 				"cell_type": "code",
@@ -396,17 +400,17 @@
 					"\r\n",
 					"    # Applying valid AppIDs as Active WBS'\r\n",
 					"    # If the CostAllocationCode is empty, we fill/replace the column ActiveWBS with Operational WBS in the AppList\r\n",
-					"    map_app = appList.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('AppID', 'u_operational_wbs')\r\n",
+					"    map_app = appList.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('AppID', 'OperationalWBS')\r\n",
 					"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.AppID, how='left')\r\n",
-					"    cost_df = joined_df.withColumn('ActiveWBS', F.when(F.col('ActiveWBS').isNull(), F.col('u_operational_wbs')).otherwise(F.col('ActiveWBS')))\r\n",
-					"    cost_df = cost_df.drop('u_operational_wbs')\r\n",
+					"    cost_df = joined_df.withColumn('ActiveWBS', F.when(F.col('ActiveWBS').isNull(), F.col('OperationalWBS')).otherwise(F.col('ActiveWBS')))\r\n",
+					"    cost_df = cost_df.drop('OperationalWBS')\r\n",
 					"\r\n",
 					"    # Applying valid CIs as Active WBS'\r\n",
 					"    # Same here as above, but we merge the dataframes on ApplicationNames rather than AppID\r\n",
-					"    map_app = appList.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('ApplicationName', 'u_operational_wbs')\r\n",
-					"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.name, how='left')\r\n",
-					"    cost_df = joined_df.withColumn('ActiveWBS', F.when(F.col('ActiveWBS').isNull(), F.col('u_operational_wbs')).otherwise(F.col('ActiveWBS')))\r\n",
-					"    cost_df = cost_df.drop('ApplicationName', 'u_operational_wbs', 'AppID')\r\n",
+					"    map_app = appList.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('ApplicationName', 'OperationalWBS')\r\n",
+					"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.ApplicationName, how='left')\r\n",
+					"    cost_df = joined_df.withColumn('ActiveWBS', F.when(F.col('ActiveWBS').isNull(), F.col('OperationalWBS')).otherwise(F.col('ActiveWBS')))\r\n",
+					"    cost_df = cost_df.drop('ApplicationName', 'OperationalWBS', 'AppID')\r\n",
 					"    \r\n",
 					"    # When ActiveWBS value is string 'TOBESPECIFIED', we replace the value with None\r\n",
 					"    cost_df = cost_df.withColumn('ActiveWBS', F.when(F.upper(F.col('ActiveWBS')) == 'TOBESPECIFIED', F.lit(None)).otherwise(F.col('ActiveWBS')))\r\n",
@@ -440,7 +444,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 65
+				"execution_count": 186
 			},
 			{
 				"cell_type": "code",
@@ -483,7 +487,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 66
+				"execution_count": 187
 			},
 			{
 				"cell_type": "code",
@@ -517,7 +521,7 @@
 					"    \r\n",
 					"    return cost_df"
 				],
-				"execution_count": 67
+				"execution_count": 188
 			},
 			{
 				"cell_type": "code",
@@ -548,7 +552,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 68
+				"execution_count": 189
 			},
 			{
 				"cell_type": "code",
@@ -577,7 +581,7 @@
 					"\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": 69
+				"execution_count": 190
 			},
 			{
 				"cell_type": "code",
@@ -629,10 +633,10 @@
 					"    cost_df, subscription_list, appList = load_source_files(costSourcefilename, subscriptionListPath, appListPath)\n",
 					"    cost_df = expand_ai_column(cost_df)\n",
 					"    cost_df = populate_wbs_columns(cost_df, subscription_list, appList)\n",
-					"    write_output_file(cost_df, costDestinationfilename)\n",
+					"    #write_output_file(cost_df, costDestinationfilename)\n",
 					"    print(' ')"
 				],
-				"execution_count": 70
+				"execution_count": 191
 			},
 			{
 				"cell_type": "code",
@@ -649,7 +653,87 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(appList) #OperationalUnit #AppID # ApplicationName"
+					"## Load the original DF\r\n",
+					"costSourcefilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + sourceCostPath + dateRange + '/ACMMonthly' + reportType + '_' + dateRange + '.parquet'\r\n",
+					"\r\n",
+					"df = spark.read.format('parquet').load(costSourcefilename)\r\n",
+					"\r\n",
+					"display(df)"
+				],
+				"execution_count": 192
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cost_df.columns"
+				],
+				"execution_count": 193
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# cost_df.AdditionalInfo\r\n",
+					"#cost_df.filter(F.col('AdditionalInfo').contains(\"VMName\")).count()"
+				],
+				"execution_count": 194
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"# Check ServiceNow data quality\r\n",
+					"display(appList) #OperationalUnit #AppID # ApplicationName # OperationalWBS"
+				],
+				"execution_count": 195
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
 				],
 				"execution_count": null
 			}
