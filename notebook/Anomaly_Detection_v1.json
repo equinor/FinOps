@@ -18,7 +18,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "7d1c825b-ca2b-4464-abe4-00d8b63bb25a"
+				"spark.autotune.trackingId": "00822b6b-94de-4923-a497-bfad3a103f04"
 			}
 		},
 		"metadata": {
@@ -56,7 +56,7 @@
 					"import pyspark.sql.types as T\r\n",
 					"from pyspark.sql.window import Window"
 				],
-				"execution_count": 11
+				"execution_count": 293
 			},
 			{
 				"cell_type": "code",
@@ -78,15 +78,91 @@
 					"    new_df = df.select('ActiveWBS', 'SubscriptionName', 'MeterCategory', 'Date', 'CostInBillingCurrency')\r\n",
 					"\r\n",
 					"    # Filtering out data older than 180 days to get only the latest historical data\r\n",
-					"    threshold = F.date_sub(F.current_date(), 200)\r\n",
+					"    threshold = F.date_sub(F.current_date(), 365)\r\n",
 					"    filtered_df = new_df.filter(F.col('Date') >= threshold)\r\n",
 					"\r\n",
 					"    # Grouping the data by each filtering level and getting the sum of all costs related to the filtering columns\r\n",
-					"    grouped_df = filtered_df.groupBy('ActiveWBS', 'SubscriptionName', 'MeterCategory', 'Date').agg(F.sum(F.col('CostInBillingCurrency')).alias('TotalCost'))\r\n",
+					"    grouped_df = filtered_df.groupBy('ActiveWBS', \r\n",
+					"                                     'SubscriptionName', \r\n",
+					"                                     'MeterCategory', \r\n",
+					"                                     'Date').agg(F.round(\r\n",
+					"                                                  F.sum(\r\n",
+					"                                                   F.col('CostInBillingCurrency')), 1).alias('TotalCost'))\r\n",
 					"\r\n",
 					"    return grouped_df"
 				],
-				"execution_count": 25
+				"execution_count": 294
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# def anomaly_detection_classifier(df,\r\n",
+					"#                                  filter_column_1, \r\n",
+					"#                                  filter_column_2,\r\n",
+					"#                                  # cost_column,\r\n",
+					"#                                  filter_tag,\r\n",
+					"#                                  window_size=30):\r\n",
+					"\r\n",
+					"    \r\n",
+					"#     # # Selecting the filter-categories (Subscription and Meter Category), the time-stamp and the cost data\r\n",
+					"#     # costs_by_dates = df.select(filter_column_1, filter_column_2, 'Date', cost_column)\r\n",
+					"\r\n",
+					"#     # Setting a partition window to divide the dataset in the filter options and order it by the Date\r\n",
+					"#     windowSpec = Window.partitionBy(filter_column_1, filter_column_2).orderBy('Date').rowsBetween(-window_size, 0)\r\n",
+					"\r\n",
+					"\r\n",
+					"#     # Define column-names\r\n",
+					"#     ma_col_name = f'MovingAverage_{filter_tag}'\r\n",
+					"#     std_col_name = f'MovingStdDev_{filter_tag}'\r\n",
+					"\r\n",
+					"#     # Set a moving average that is set by the n previous days\r\n",
+					"#     costs_by_dates = df.withColumn(ma_col_name, F.round(F.avg(F.col('TotalCost')).over(windowSpec), 1))\r\n",
+					"\r\n",
+					"#     # Set a moving standard deviation of the same period\r\n",
+					"#     costs_by_dates = costs_by_dates.withColumn(std_col_name, F.round(F.stddev(F.col('TotalCost')).over(windowSpec), 1))\r\n",
+					"    \r\n",
+					"#     # Define column-names\r\n",
+					"#     std1 = f'1StdDev_{filter_tag}'\r\n",
+					"#     std2 = f'2StdDev_{filter_tag}'\r\n",
+					"#     std3 = f'3StdDev_{filter_tag}'\r\n",
+					"#     std4 = f'4StdDev_{filter_tag}'\r\n",
+					"\r\n",
+					"#     # Set upper thresholds with a standard deviation multiplied by 'n' higher than the moving average\r\n",
+					"#     costs_by_dates = costs_by_dates.withColumn(std1, F.col(ma_col_name) + (F.col(std_col_name) * 1))\r\n",
+					"#     costs_by_dates = costs_by_dates.withColumn(std2, F.col(ma_col_name) + (F.col(std_col_name) * 2))\r\n",
+					"#     costs_by_dates = costs_by_dates.withColumn(std3, F.col(ma_col_name) + (F.col(std_col_name) * 3))\r\n",
+					"#     costs_by_dates = costs_by_dates.withColumn(std4, F.col(ma_col_name) + (F.col(std_col_name) * 4))\r\n",
+					"\r\n",
+					"#         # If the cost is more than the stddev threshold (+ some noise cancellation), then set the datapoint to be 1, otherwise 0\r\n",
+					"#     costs_by_dates = costs_by_dates.withColumn(f'Above_1std_{filter_tag}', F.when(F.col(cost_column) > (F.col(std1) + 1), F.lit(1))\\\r\n",
+					"#                                                                             .otherwise(F.lit(0)))\r\n",
+					"\r\n",
+					"#     # If the cost is more than the stddev threshold (+ some noise cancellation), then set the datapoint to be 1, otherwise 0\r\n",
+					"#     costs_by_dates = costs_by_dates.withColumn(f'Above_2std_{filter_tag}', F.when(F.col(cost_column) > (F.col(std2) + 1), F.lit(1))\\\r\n",
+					"#                                                                             .otherwise(F.lit(0)))\r\n",
+					"\r\n",
+					"#     # If the cost is more than the stddev threshold (+ some noise cancellation), then set the datapoint to be 1, otherwise 0\r\n",
+					"#     costs_by_dates = costs_by_dates.withColumn(f'Above_3std_{filter_tag}', F.when(F.col(cost_column) > (F.col(std3) + 1), F.lit(1))\\\r\n",
+					"#                                                                             .otherwise(F.lit(0)))\r\n",
+					"\r\n",
+					"#     # If the cost is more than the stddev threshold (+ some noise cancellation), then set the datapoint to be 1, otherwise 0\r\n",
+					"#     costs_by_dates = costs_by_dates.withColumn(f'Above_4std_{filter_tag}', F.when(F.col(cost_column) > (F.col(std4) + 1), F.lit(1))\\\r\n",
+					"#                                                                             .otherwise(F.lit(0)))\r\n",
+					"\r\n",
+					"#     return costs_by_dates"
+				],
+				"execution_count": 311
 			},
 			{
 				"cell_type": "code",
@@ -104,8 +180,8 @@
 				"source": [
 					"def anomaly_detection_classifier(df,\r\n",
 					"                                 filter_column_1, \r\n",
-					"                                 filter_column_2, \r\n",
-					"                                 cost_column,\r\n",
+					"                                 filter_column_2,\r\n",
+					"                                 # cost_column,\r\n",
 					"                                 filter_tag,\r\n",
 					"                                 window_size=30):\r\n",
 					"\r\n",
@@ -116,44 +192,36 @@
 					"    # Setting a partition window to divide the dataset in the filter options and order it by the Date\r\n",
 					"    windowSpec = Window.partitionBy(filter_column_1, filter_column_2).orderBy('Date').rowsBetween(-window_size, 0)\r\n",
 					"\r\n",
+					"\r\n",
 					"    # Define column-names\r\n",
 					"    ma_col_name = f'MovingAverage_{filter_tag}'\r\n",
 					"    std_col_name = f'MovingStdDev_{filter_tag}'\r\n",
 					"\r\n",
 					"    # Set a moving average that is set by the n previous days\r\n",
-					"    costs_by_dates = df.withColumn(ma_col_name, F.avg(F.col(cost_column)).over(windowSpec))\r\n",
+					"    costs_by_dates = df.withColumn(ma_col_name, F.round(F.avg(F.col('TotalCost')).over(windowSpec), 1))\r\n",
 					"\r\n",
 					"    # Set a moving standard deviation of the same period\r\n",
-					"    costs_by_dates = costs_by_dates.withColumn(std_col_name, F.stddev(F.col(cost_column)).over(windowSpec))\r\n",
+					"    costs_by_dates = costs_by_dates.withColumn(std_col_name, F.round(F.stddev(F.col('TotalCost')).over(windowSpec), 1))\r\n",
 					"\r\n",
-					"    # Define column-names\r\n",
-					"    std3 = f'3StdDev_{filter_tag}'\r\n",
-					"    std4 = f'4StdDev_{filter_tag}'\r\n",
+					"    # Setting a scaling mechanism on the threshold in order to reduce the threshold when the costs are very high\r\n",
+					"    am_curve = lambda x: 13.6 * x ** -0.22\r\n",
 					"\r\n",
-					"    # Set upper thresholds with a standard deviation multiplied by 'n' higher than the moving average\r\n",
-					"    costs_by_dates = costs_by_dates.withColumn(std3, F.col(ma_col_name) + (F.col(std_col_name) * 3))\r\n",
-					"    costs_by_dates = costs_by_dates.withColumn(std4, F.col(ma_col_name) + (F.col(std_col_name) * 4))\r\n",
+					"    costs_by_dates = costs_by_dates.withColumn(f'Scaler_{filter_tag}', F.when(F.col(std_col_name) > 0.1, am_curve(F.col(std_col_name))).otherwise(F.lit(0.1)))\r\n",
+					"    costs_by_dates = costs_by_dates.withColumn(f'Scaler_{filter_tag}', F.when(F.col(f'Scaler_{filter_tag}') > 3, F.lit(3)).otherwise(F.col(f'Scaler_{filter_tag}')))\r\n",
 					"\r\n",
+					"    costs_by_dates = costs_by_dates.withColumn(f'Threshold_{filter_tag}', F.col(ma_col_name) + (F.col(std_col_name) * F.col(f'Scaler_{filter_tag}')))\r\n",
 					"\r\n",
-					"    # If the cost is more than the threshold set, then set the datapoint to be 1, otherwise 0\r\n",
-					"    costs_by_dates = costs_by_dates.withColumn(f'Above_3std_{filter_tag}', F.when(F.col(cost_column) > F.col(std3), F.lit(1))\\\r\n",
-					"                                                                            .otherwise(F.lit(0)))\r\n",
-					"\r\n",
-					"    # If the cost is more than the threshold set, then set the datapoint to be 1, otherwise 0\r\n",
-					"    costs_by_dates = costs_by_dates.withColumn(f'Above_4std_{filter_tag}', F.when(F.col(cost_column) > F.col(std4), F.lit(1))\\\r\n",
-					"                                                                            .otherwise(F.lit(0)))\r\n",
+					"     # If the cost is more than the stddev threshold (+ some noise cancellation), then set the datapoint to be 1, otherwise 0\r\n",
+					"    costs_by_dates = costs_by_dates.withColumn(f'Above_Threshold_{filter_tag}', F.when(F.col('TotalCost') > (F.col(f'Threshold_{filter_tag}') + 1), F.lit(1))\\\r\n",
+					"                                                                                 .otherwise(F.lit(0)))\r\n",
 					"\r\n",
 					"    return costs_by_dates"
 				],
-				"execution_count": 26
+				"execution_count": 321
 			},
 			{
-				"cell_type": "code",
+				"cell_type": "markdown",
 				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
 					"nteract": {
 						"transient": {
 							"deleting": false
@@ -161,37 +229,8 @@
 					}
 				},
 				"source": [
-					"source_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear.parquet\"\r\n",
-					"\r\n",
-					"print(f\"Reading data from: {source_path}\")\r\n",
-					"df = spark.read.format('parquet').load(source_path)\r\n",
-					"\r\n",
-					"preproc_data = preprocessing_anomaly_detection(df)\r\n",
-					"\r\n",
-					"print(\"Running the Anomaly Detection Classifier for Subscription-partitioned data\")\r\n",
-					"costs_by_dates =  anomaly_detection_classifier(df=preproc_data,\r\n",
-					"                                               filter_column_1='SubscriptionName',\r\n",
-					"                                               filter_column_2='MeterCategory',\r\n",
-					"                                               cost_column='TotalCost',\r\n",
-					"                                               filter_tag='Subscription',\r\n",
-					"                                               window_size=30)\r\n",
-					"\r\n",
-					"print(\"Running the Anomaly Detection Classifier for WBS-partitioned data\")\r\n",
-					"costs_by_dates =  anomaly_detection_classifier(df=costs_by_dates,\r\n",
-					"                                               filter_column_1='ActiveWBS',\r\n",
-					"                                               filter_column_2='MeterCategory',\r\n",
-					"                                               cost_column='TotalCost',\r\n",
-					"                                               filter_tag='WBS',\r\n",
-					"                                               window_size=30)\r\n",
-					"\r\n",
-					"\r\n",
-					"destination_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_AnomalyDetection_6mths.parquet\"\r\n",
-					"\r\n",
-					"# print(f\"Writing classification data to this path: {destination_path}\")\r\n",
-					"# costs_by_dates.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
-					"# print('Write Complete!')"
-				],
-				"execution_count": 27
+					"# S383-Observability"
+				]
 			},
 			{
 				"cell_type": "code",
@@ -208,10 +247,554 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(costs_by_dates.filter(F.col('SubscriptionName') == 'S383-Observability'))\r\n",
+					"source_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear.parquet\"\r\n",
+					"\r\n",
+					"print(f\"Reading data from: {source_path}\")\r\n",
+					"df = spark.read.format('parquet').load(source_path)\r\n",
+					"\r\n",
+					"preproc_data = preprocessing_anomaly_detection(df)\r\n",
+					"\r\n",
+					"print(\"Running the Anomaly Detection Classifier for Subscription-partitioned data\")\r\n",
+					"costs_by_dates =  anomaly_detection_classifier(df=preproc_data,\r\n",
+					"                                               filter_column_1='SubscriptionName',\r\n",
+					"                                               filter_column_2='MeterCategory',\r\n",
+					"                                               # cost_column='TotalCost',\r\n",
+					"                                               filter_tag='Subscription',\r\n",
+					"                                               window_size=30)\r\n",
+					"\r\n",
+					"# print(\"Running the Anomaly Detection Classifier for WBS-partitioned data\")\r\n",
+					"# costs_by_dates =  anomaly_detection_classifier(df=costs_by_dates,\r\n",
+					"#                                                filter_column_1='ActiveWBS',\r\n",
+					"#                                                filter_column_2='MeterCategory',\r\n",
+					"#                                                # cost_column='TotalCost',\r\n",
+					"#                                                filter_tag='WBS',\r\n",
+					"#                                                window_size=30)\r\n",
+					"\r\n",
+					"\r\n",
+					"destination_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_AnomalyDetection_6mths.parquet\"\r\n",
+					"\r\n",
+					"# print(f\"Writing classification data to this path: {destination_path}\")\r\n",
+					"# costs_by_dates.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
+					"# print('Write Complete!')\r\n",
+					"\r\n",
+					"subName = 'S383-Observability'\r\n",
+					"display(costs_by_dates.filter(F.col('SubscriptionName') == subName))"
+				],
+				"execution_count": 322
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"df = spark.read.format('parquet').load(source_path)\r\n",
+					"\r\n",
+					"preproc_data = preprocessing_anomaly_detection(df)\r\n",
+					"\r\n",
+					"print(\"Running the Anomaly Detection Classifier for Subscription-partitioned data\")\r\n",
+					"costs_by_dates =  anomaly_detection_classifier(df=preproc_data,\r\n",
+					"                                               filter_column_1='SubscriptionName',\r\n",
+					"                                               filter_column_2='MeterCategory',\r\n",
+					"                                               # cost_column='TotalCost',\r\n",
+					"                                               filter_tag='Subscription',\r\n",
+					"                                               window_size=60)\r\n",
+					"\r\n",
+					"# print(\"Running the Anomaly Detection Classifier for WBS-partitioned data\")\r\n",
+					"# costs_by_dates =  anomaly_detection_classifier(df=costs_by_dates,\r\n",
+					"#                                                filter_column_1='ActiveWBS',\r\n",
+					"#                                                filter_column_2='MeterCategory',\r\n",
+					"#                                                # cost_column='TotalCost',\r\n",
+					"#                                                filter_tag='WBS',\r\n",
+					"#                                                window_size=60)\r\n",
+					"\r\n",
+					"subName = 'S383-Observability'\r\n",
+					"\r\n",
+					"display(costs_by_dates.filter(F.col('SubscriptionName') == subName))"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(costs_by_dates.filter((F.col('Date') >= '2023-01-16') & (F.col('Date') <= '2023-01-18') & (F.col('SubscriptionName') == subName)))"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# S254-Backup"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"subName = 'S254-Backup'\r\n",
+					"\r\n",
+					"display(costs_by_dates.filter(F.col('SubscriptionName') == subName))"
+				],
+				"execution_count": 323
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"subName = 'S254-Backup'\r\n",
+					"\r\n",
+					"display(costs_by_dates.filter((F.col('SubscriptionName') == subName) & (F.col('MeterCategory') == 'Virtual Machines')))"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"subName = 'S254-Backup'\r\n",
+					"\r\n",
+					"display(costs_by_dates.filter((F.col('SubscriptionName') == subName) & (F.col('MeterCategory') == 'Virtual Machines') & (F.col('Date') >= '2023-06-01') & (F.col('Date') <= '2023-06-05')))"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"subName = 'S254-Backup'\r\n",
+					"\r\n",
+					"display(costs_by_dates.filter((F.col('SubscriptionName') == subName) & (F.col('MeterCategory') == 'Storage')))"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"subName = 'S254-Backup'\r\n",
+					"\r\n",
+					"display(costs_by_dates.filter((F.col('SubscriptionName') == subName) & (F.col('MeterCategory') == 'Storage') & (F.col('Date') >= '2023-06-01') & (F.col('Date') <= '2023-06-05')))"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"subName = 'S254-Backup'\r\n",
+					"\r\n",
+					"costs_by_dates.filter(F.col('SubscriptionName') == subName).groupBy('MeterCategory').agg(F.sum(F.col('TotalCost'))).orderBy(F.col('sum(TotalCost)').desc()).show(5, truncate=False)"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# S034-Geology-Geophysics"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"subName = 'S034-Geology-Geophysics'\r\n",
+					"\r\n",
+					"display(costs_by_dates.filter(F.col('SubscriptionName') == subName))"
+				],
+				"execution_count": 324
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"subName = 'S034-Geology-Geophysics'\r\n",
+					"\r\n",
+					"costs_by_dates.filter(F.col('SubscriptionName') == subName).groupBy('MeterCategory').agg(F.sum(F.col('TotalCost'))).orderBy(F.col('sum(TotalCost)').desc()).show(5, truncate=False)"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"subName = 'S034-Geology-Geophysics'\r\n",
+					"\r\n",
+					"display(costs_by_dates.filter((F.col('SubscriptionName') == subName) & (F.col('MeterCategory') == 'Azure NetApp Files')))"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# S037-Cost-Management-reservations"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"subName = 'S037-Cost-Management-reservations'\r\n",
+					"\r\n",
+					"display(costs_by_dates.filter(F.col('SubscriptionName') == subName))"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"subName = 'S037-Cost-Management-reservations'\r\n",
+					"\r\n",
+					"costs_by_dates.filter(F.col('SubscriptionName') == subName).groupBy('MeterCategory').agg(F.sum(F.col('TotalCost'))).orderBy(F.col('sum(TotalCost)').desc()).show(5, truncate=False)"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# S187-SCS"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"subName = 'S187-SCS'\r\n",
+					"\r\n",
+					"display(costs_by_dates.filter(F.col('SubscriptionName') == subName))"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"subName = 'S187-SCS'\r\n",
+					"\r\n",
+					"costs_by_dates.filter(F.col('SubscriptionName') == subName).groupBy('MeterCategory').agg(F.sum(F.col('TotalCost'))).orderBy(F.col('sum(TotalCost)').desc()).show(5, truncate=False)"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"subName = 'S187-SCS'\r\n",
+					"\r\n",
+					"display(costs_by_dates.filter((F.col('SubscriptionName') == subName) & (F.col('MeterCategory') == 'Azure Cognitive Search')))"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# S067-OneSeismic"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"subName = 'S067-OneSeismic'\r\n",
+					"\r\n",
+					"display(costs_by_dates.filter(F.col('SubscriptionName') == subName))"
+				],
+				"execution_count": 269
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"subName = 'S067-OneSeismic'\r\n",
+					"\r\n",
+					"costs_by_dates.filter(F.col('SubscriptionName') == subName).groupBy('MeterCategory').agg(F.sum(F.col('TotalCost'))).orderBy(F.col('sum(TotalCost)').desc()).show(5, truncate=False)"
+				],
+				"execution_count": 270
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"subName = 'S067-OneSeismic'\r\n",
+					"\r\n",
+					"display(costs_by_dates.filter(F.col('SubscriptionName') == subName))"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"costs_by_dates.printSchema()"
+				],
+				"execution_count": 271
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
 					""
 				],
-				"execution_count": 28
+				"execution_count": null
 			}
 		]
 	}
