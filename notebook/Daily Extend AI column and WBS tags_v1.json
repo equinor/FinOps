@@ -18,7 +18,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "9dbb3325-1de2-4c6b-9360-f06cd52929bb"
+				"spark.autotune.trackingId": "83c033b5-c605-4053-9346-0871994dc6d4"
 			}
 		},
 		"metadata": {
@@ -126,6 +126,7 @@
 					"\r\n",
 					"    print(f'Loading SNOW application list - {appListPath}...')\r\n",
 					"    appList = spark.read.format('parquet').load(appListPath)\r\n",
+					"    appList = appList.withColumn('AppID', F.col('AppID').cast(\"int\"))\r\n",
 					"    print(f'App list contains: {appList.count()}')\r\n",
 					"\r\n",
 					"    return cost_df, subscription_list, appList"
@@ -661,12 +662,12 @@
 					"        subscriptionListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions_' + previousMonthDate + '.json'\n",
 					"        print(f\"Subscription path: {subscriptionListPath}\")\n",
 					"\n",
-					"    appListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/applications/ServiceNowApplication.parquet'\n",
+					"    appListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/ServiceNow-Application-List-Extended.parquet'\n",
 					"    print(f\"App-list path: {appListPath}\")\n",
 					"    cost_df, subscription_list, appList = load_source_files(costSourcefilename, subscriptionListPath, appListPath)\n",
 					"    cost_df = expand_ai_column(cost_df)\n",
 					"    cost_df = populate_wbs_columns(cost_df, subscription_list, appList)\n",
-					"    write_output_file(cost_df, costDestinationfilename)\n",
+					"    #write_output_file(cost_df, costDestinationfilename)\n",
 					"    print(' ')"
 				],
 				"execution_count": 30
