@@ -18,7 +18,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "00822b6b-94de-4923-a497-bfad3a103f04"
+				"spark.autotune.trackingId": "5729ab1e-2405-4965-a761-a1613f55f624"
 			}
 		},
 		"metadata": {
@@ -114,10 +114,6 @@
 					"#                                  filter_tag,\r\n",
 					"#                                  window_size=30):\r\n",
 					"\r\n",
-					"    \r\n",
-					"#     # # Selecting the filter-categories (Subscription and Meter Category), the time-stamp and the cost data\r\n",
-					"#     # costs_by_dates = df.select(filter_column_1, filter_column_2, 'Date', cost_column)\r\n",
-					"\r\n",
 					"#     # Setting a partition window to divide the dataset in the filter options and order it by the Date\r\n",
 					"#     windowSpec = Window.partitionBy(filter_column_1, filter_column_2).orderBy('Date').rowsBetween(-window_size, 0)\r\n",
 					"\r\n",
@@ -178,46 +174,85 @@
 					}
 				},
 				"source": [
+					"# def anomaly_detection_classifier(df,\r\n",
+					"#                                  filter_column_1, \r\n",
+					"#                                  filter_column_2,\r\n",
+					"#                                  # cost_column,\r\n",
+					"#                                  filter_tag,\r\n",
+					"#                                  window_size=30):\r\n",
+					"\r\n",
+					"#     # Setting a partition window to divide the dataset in the filter options and order it by the Date\r\n",
+					"#     windowSpec = Window.partitionBy(filter_column_1, filter_column_2).orderBy('Date').rowsBetween(-window_size, 0)\r\n",
+					"\r\n",
+					"\r\n",
+					"#     # Define column-names\r\n",
+					"#     ma_col_name = f'MovingAverage_{filter_tag}'\r\n",
+					"#     std_col_name = f'MovingStdDev_{filter_tag}'\r\n",
+					"\r\n",
+					"#     # Set a moving average that is set by the n previous days\r\n",
+					"#     costs_by_dates = df.withColumn(ma_col_name, F.round(F.avg(F.col('TotalCost')).over(windowSpec), 1))\r\n",
+					"\r\n",
+					"#     # Set a moving standard deviation of the same period\r\n",
+					"#     costs_by_dates = costs_by_dates.withColumn(std_col_name, F.round(F.stddev(F.col('TotalCost')).over(windowSpec), 1))\r\n",
+					"\r\n",
+					"#     # Setting a scaling mechanism on the threshold in order to reduce the threshold when the costs are very high\r\n",
+					"#     am_curve = lambda x: 13.6 * x ** -0.22\r\n",
+					"\r\n",
+					"#     costs_by_dates = costs_by_dates.withColumn(f'Scaler_{filter_tag}', F.when(F.col(std_col_name) > 0.1, am_curve(F.col(std_col_name))).otherwise(F.lit(0.1)))\r\n",
+					"#     costs_by_dates = costs_by_dates.withColumn(f'Scaler_{filter_tag}', F.when(F.col(f'Scaler_{filter_tag}') > 3.5, F.lit(3)).otherwise(F.col(f'Scaler_{filter_tag}')))\r\n",
+					"\r\n",
+					"#     costs_by_dates = costs_by_dates.withColumn(f'Threshold_{filter_tag}', F.col(ma_col_name) + (F.col(std_col_name) * F.col(f'Scaler_{filter_tag}')))\r\n",
+					"\r\n",
+					"#      # If the cost is more than the stddev threshold (+ some noise cancellation), then set the datapoint to be 1, otherwise 0\r\n",
+					"#     costs_by_dates = costs_by_dates.withColumn(f'Above_Threshold_{filter_tag}', F.when(F.col('TotalCost') > (F.col(f'Threshold_{filter_tag}') + 1), F.lit(1))\\\r\n",
+					"#                                                                                  .otherwise(F.lit(0)))\r\n",
+					"\r\n",
+					"#     return costs_by_dates"
+				],
+				"execution_count": 321
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
 					"def anomaly_detection_classifier(df,\r\n",
 					"                                 filter_column_1, \r\n",
 					"                                 filter_column_2,\r\n",
-					"                                 # cost_column,\r\n",
-					"                                 filter_tag,\r\n",
 					"                                 window_size=30):\r\n",
-					"\r\n",
-					"    \r\n",
-					"    # # Selecting the filter-categories (Subscription and Meter Category), the time-stamp and the cost data\r\n",
-					"    # costs_by_dates = df.select(filter_column_1, filter_column_2, 'Date', cost_column)\r\n",
 					"\r\n",
 					"    # Setting a partition window to divide the dataset in the filter options and order it by the Date\r\n",
 					"    windowSpec = Window.partitionBy(filter_column_1, filter_column_2).orderBy('Date').rowsBetween(-window_size, 0)\r\n",
 					"\r\n",
-					"\r\n",
-					"    # Define column-names\r\n",
-					"    ma_col_name = f'MovingAverage_{filter_tag}'\r\n",
-					"    std_col_name = f'MovingStdDev_{filter_tag}'\r\n",
-					"\r\n",
 					"    # Set a moving average that is set by the n previous days\r\n",
-					"    costs_by_dates = df.withColumn(ma_col_name, F.round(F.avg(F.col('TotalCost')).over(windowSpec), 1))\r\n",
+					"    costs_by_dates = df.withColumn('MovingAverage', F.round(F.avg(F.col('TotalCost')).over(windowSpec), 1))\r\n",
 					"\r\n",
 					"    # Set a moving standard deviation of the same period\r\n",
-					"    costs_by_dates = costs_by_dates.withColumn(std_col_name, F.round(F.stddev(F.col('TotalCost')).over(windowSpec), 1))\r\n",
+					"    costs_by_dates = costs_by_dates.withColumn('MovingStdDev', F.round(F.stddev(F.col('TotalCost')).over(windowSpec), 1))\r\n",
 					"\r\n",
 					"    # Setting a scaling mechanism on the threshold in order to reduce the threshold when the costs are very high\r\n",
 					"    am_curve = lambda x: 13.6 * x ** -0.22\r\n",
+					"    costs_by_dates = costs_by_dates.withColumn('Scaler', F.when(F.col('MovingStdDev') > 0.1, am_curve(F.col('MovingStdDev'))).otherwise(F.lit(0.1)))\r\n",
+					"    costs_by_dates = costs_by_dates.withColumn('Scaler', F.when(F.col('Scaler') > 3.5, F.lit(3.5)).otherwise(F.col('Scaler')))\r\n",
 					"\r\n",
-					"    costs_by_dates = costs_by_dates.withColumn(f'Scaler_{filter_tag}', F.when(F.col(std_col_name) > 0.1, am_curve(F.col(std_col_name))).otherwise(F.lit(0.1)))\r\n",
-					"    costs_by_dates = costs_by_dates.withColumn(f'Scaler_{filter_tag}', F.when(F.col(f'Scaler_{filter_tag}') > 3, F.lit(3)).otherwise(F.col(f'Scaler_{filter_tag}')))\r\n",
-					"\r\n",
-					"    costs_by_dates = costs_by_dates.withColumn(f'Threshold_{filter_tag}', F.col(ma_col_name) + (F.col(std_col_name) * F.col(f'Scaler_{filter_tag}')))\r\n",
+					"    costs_by_dates = costs_by_dates.withColumn('Threshold', F.col('MovingAverage') + (F.col('MovingStdDev') * F.col('Scaler')))\r\n",
 					"\r\n",
 					"     # If the cost is more than the stddev threshold (+ some noise cancellation), then set the datapoint to be 1, otherwise 0\r\n",
-					"    costs_by_dates = costs_by_dates.withColumn(f'Above_Threshold_{filter_tag}', F.when(F.col('TotalCost') > (F.col(f'Threshold_{filter_tag}') + 1), F.lit(1))\\\r\n",
+					"    costs_by_dates = costs_by_dates.withColumn('Above_Threshold', F.when(F.col('TotalCost') > (F.col('Threshold') + 1), F.lit(1))\\\r\n",
 					"                                                                                 .otherwise(F.lit(0)))\r\n",
 					"\r\n",
 					"    return costs_by_dates"
 				],
-				"execution_count": 321
+				"execution_count": 330
 			},
 			{
 				"cell_type": "markdown",
@@ -259,7 +294,7 @@
 					"                                               filter_column_1='SubscriptionName',\r\n",
 					"                                               filter_column_2='MeterCategory',\r\n",
 					"                                               # cost_column='TotalCost',\r\n",
-					"                                               filter_tag='Subscription',\r\n",
+					"                                               # filter_tag='Subscription',\r\n",
 					"                                               window_size=30)\r\n",
 					"\r\n",
 					"# print(\"Running the Anomaly Detection Classifier for WBS-partitioned data\")\r\n",
@@ -280,7 +315,7 @@
 					"subName = 'S383-Observability'\r\n",
 					"display(costs_by_dates.filter(F.col('SubscriptionName') == subName))"
 				],
-				"execution_count": 322
+				"execution_count": 331
 			},
 			{
 				"cell_type": "code",
@@ -374,7 +409,7 @@
 					"\r\n",
 					"display(costs_by_dates.filter(F.col('SubscriptionName') == subName))"
 				],
-				"execution_count": 323
+				"execution_count": 332
 			},
 			{
 				"cell_type": "code",
@@ -395,7 +430,7 @@
 					"\r\n",
 					"display(costs_by_dates.filter((F.col('SubscriptionName') == subName) & (F.col('MeterCategory') == 'Virtual Machines')))"
 				],
-				"execution_count": null
+				"execution_count": 333
 			},
 			{
 				"cell_type": "code",
@@ -588,7 +623,7 @@
 					"\r\n",
 					"display(costs_by_dates.filter(F.col('SubscriptionName') == subName))"
 				],
-				"execution_count": null
+				"execution_count": 325
 			},
 			{
 				"cell_type": "code",
@@ -608,7 +643,7 @@
 					"\r\n",
 					"costs_by_dates.filter(F.col('SubscriptionName') == subName).groupBy('MeterCategory').agg(F.sum(F.col('TotalCost'))).orderBy(F.col('sum(TotalCost)').desc()).show(5, truncate=False)"
 				],
-				"execution_count": null
+				"execution_count": 326
 			},
 			{
 				"cell_type": "markdown",
@@ -642,7 +677,7 @@
 					"\r\n",
 					"display(costs_by_dates.filter(F.col('SubscriptionName') == subName))"
 				],
-				"execution_count": null
+				"execution_count": 327
 			},
 			{
 				"cell_type": "code",
@@ -662,7 +697,7 @@
 					"\r\n",
 					"costs_by_dates.filter(F.col('SubscriptionName') == subName).groupBy('MeterCategory').agg(F.sum(F.col('TotalCost'))).orderBy(F.col('sum(TotalCost)').desc()).show(5, truncate=False)"
 				],
-				"execution_count": null
+				"execution_count": 328
 			},
 			{
 				"cell_type": "code",
@@ -683,7 +718,7 @@
 					"\r\n",
 					"display(costs_by_dates.filter((F.col('SubscriptionName') == subName) & (F.col('MeterCategory') == 'Azure Cognitive Search')))"
 				],
-				"execution_count": null
+				"execution_count": 329
 			},
 			{
 				"cell_type": "markdown",
