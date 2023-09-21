@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "f4c912d6-b7a0-49d0-8aca-e6768f5cd7ed"
+				"spark.autotune.trackingId": "e3bbe52c-8a12-49a9-98b7-6fee52f2d7e2"
 			}
 		},
 		"metadata": {
@@ -78,9 +78,10 @@
 					"path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet\"\r\n",
 					"\r\n",
 					"# Load the data\r\n",
-					"df_application = spark.read.format(\"parquet\").load(path).toPandas().rename(columns={'u_number':'APPID'})"
+					"df_application = spark.read.format(\"parquet\").load(path).toPandas().rename(columns={'u_number':'APPID'})\r\n",
+					"df_application = df_application.withColumn('AppID', F.col('AppID').cast(\"int\"))"
 				],
-				"execution_count": null
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -98,7 +99,7 @@
 				"source": [
 					"df_application.describe(include='all')"
 				],
-				"execution_count": null
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
