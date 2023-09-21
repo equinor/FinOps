@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "9e5237ef-6df3-49ca-9574-7040e11490fb"
+				"spark.autotune.trackingId": "408ca40d-8975-4954-ac53-be93dc045da3"
 			}
 		},
 		"metadata": {
@@ -80,6 +80,7 @@
 					"# Load the data\r\n",
 					"df_application = spark.read.format(\"parquet\").load(path).toPandas()\r\n",
 					"df_application['AppID'] = df_application['AppID'].astype('Int64')\r\n",
+					"df_application['IsOmniaSubscription'] = df_application['IsOmniaSubscription'].astype('Int64')\r\n",
 					"#df_application.loc[df_application['AppID'].notnull(),'AppID'] = df_application[df_application['AppID'].notnull()].AppID.astype('int64')"
 				],
 				"execution_count": 23
