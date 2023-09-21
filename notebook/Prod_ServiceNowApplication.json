@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "e3bbe52c-8a12-49a9-98b7-6fee52f2d7e2"
+				"spark.autotune.trackingId": "ecab41ea-8aeb-4c37-b6c5-ea5e274f2fa4"
 			}
 		},
 		"metadata": {
@@ -190,7 +190,8 @@
 					"from pyspark.sql import SparkSession\r\n",
 					"spark = SparkSession.builder.getOrCreate()\r\n",
 					"# Define optimized path to save the data\r\n",
-					"optimized_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/parquet/Extended_ACMMonthlyActualCost_Aggregated_overview.parquet\" \r\n",
+					"optimized_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/parquet/ServiceNowApplication.parquet\"\r\n",
+					"\r\n",
 					"#Save the data with partitioned by time\r\n",
 					"spark.createDataFrame(df_application ).write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
 				],
