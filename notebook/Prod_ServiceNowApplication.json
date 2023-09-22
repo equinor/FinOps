@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "80bc7659-43c2-416c-b749-20fdb40be682"
+				"spark.autotune.trackingId": "dcdbc937-a880-4e69-b669-ade195d38833"
 			}
 		},
 		"metadata": {
@@ -84,7 +84,7 @@
 					"df_application[['AppID', 'IsOmniaSubscription','ProductOwnerNo','OperationalUnitManagerNo']] = df_application[['AppID', 'IsOmniaSubscription','ProductOwnerNo','OperationalUnitManagerNo']].fillna(0).astype('int64')\r\n",
 					""
 				],
-				"execution_count": 172
+				"execution_count": 183
 			},
 			{
 				"cell_type": "code",
@@ -101,14 +101,14 @@
 					"collapsed": false
 				},
 				"source": [
-					"\r\n",
+					"from datetime import datetime as dt\r\n",
 					"#df_application[['LifeCycleState', 'EndOfLifeDate','Created', 'Updated']]= pd.to_datetime(df_application[['LifeCycleState','Created', 'Updated']]).dt.date\r\n",
-					"df_application.loc['Created',:] = pd.to_datetime(df_application['Created']).dt.date\r\n",
-					"df_application['Updated'] = pd.to_datetime(df_application['Updated'])\r\n",
+					"df_application['Create'] = pd.to_datetime(df_application['Created']).dt.date\r\n",
+					"df_application['Updated'] = pd.to_datetime(df_application['Updated']).dt.date\r\n",
 					"#df_application[['Created', 'Updated']] = pd.to_datetime(df_application[['Created', 'Updated']]).dt.date\r\n",
 					"display(df_application)"
 				],
-				"execution_count": 173
+				"execution_count": 184
 			},
 			{
 				"cell_type": "code",
@@ -277,7 +277,7 @@
 				"source": [
 					"df_application.info()"
 				],
-				"execution_count": 177
+				"execution_count": 185
 			},
 			{
 				"cell_type": "code",
