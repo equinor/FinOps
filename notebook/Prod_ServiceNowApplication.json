@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "3cea2086-752e-4fcc-ad8f-4b01145c0ad1"
+				"spark.autotune.trackingId": "a75570f0-78b7-4e43-9ca7-d77c733eb665"
 			}
 		},
 		"metadata": {
@@ -58,7 +58,7 @@
 					"import pandas as pd \r\n",
 					"import pyspark.pandas as ps"
 				],
-				"execution_count": 15
+				"execution_count": 48
 			},
 			{
 				"cell_type": "code",
@@ -75,18 +75,16 @@
 				},
 				"source": [
 					"# Define path\r\n",
-					"path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet\"\r\n",
+					"path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.csv\"\r\n",
 					"\r\n",
 					"# Load the data\r\n",
-					"df_application = spark.read.format(\"parquet\").load(path).toPandas()\r\n",
-					"#df_application['AppID'] = df_application['AppID'].astype('Int64')\r\n",
-					"#df_application['IsOmniaSubscription'] = df_application['IsOmniaSubscription'].astype('Int64')\r\n",
+					"df_application = pd.read_csv(path)\r\n",
+					"\r\n",
 					"# 'AppID', 'IsOmniaSubscription','ProductOwnerNo','OperationalUnitManagerNo' has null value and will be assigned 0 for those null values.\r\n",
 					"df_application[['AppID', 'IsOmniaSubscription','ProductOwnerNo','OperationalUnitManagerNo']] = df_application[['AppID', 'IsOmniaSubscription','ProductOwnerNo','OperationalUnitManagerNo']].fillna(0).astype('int64')\r\n",
-					"#df_application.loc[df_application['AppID'].notnull(),'AppID'] = df_application[df_application['AppID'].notnull()].AppID.astype('int64')\r\n",
 					""
 				],
-				"execution_count": 16
+				"execution_count": 76
 			},
 			{
 				"cell_type": "code",
@@ -105,9 +103,11 @@
 					"#df_application[['LifeCycleState', 'EndOfLifeDate','Created', 'Updated']] = df_application[['LifeCycleState', 'EndOfLifeDate','Created', 'Updated']].apply(pd.to_datetime)\r\n",
 					"#df_application['Created'] = pd.to_datetime(df['Created'], format='%Y-%m-%d')\r\n",
 					"#pd.to_datetime(df_application['Created'], format='%Y-%m-%d')\r\n",
-					""
+					"#df_application[['LifeCycleState', 'EndOfLifeDate','Created', 'Updated']]= pd.to_datetime(df_application[['LifeCycleState', 'EndOfLifeDate','Created', 'Updated']]).dt.date\r\n",
+					"df_application['Created'] = pd.datetime(df_application['Created'], format='%d-%m-%Y')\r\n",
+					"display(df_application)"
 				],
-				"execution_count": 30
+				"execution_count": 78
 			},
 			{
 				"cell_type": "code",
@@ -125,7 +125,7 @@
 				"source": [
 					"df_application.describe(include='all')"
 				],
-				"execution_count": 17
+				"execution_count": 51
 			},
 			{
 				"cell_type": "code",
@@ -143,7 +143,7 @@
 				"source": [
 					"df_application.info()"
 				],
-				"execution_count": 18
+				"execution_count": 64
 			},
 			{
 				"cell_type": "code",
@@ -162,7 +162,7 @@
 				"source": [
 					"display(df_application[df_application['ApplicationName']=='APPTIO'])"
 				],
-				"execution_count": 41
+				"execution_count": 66
 			},
 			{
 				"cell_type": "code",
@@ -182,7 +182,7 @@
 					"#display(df_application[df_application['ApplicationName']=='APPTIO'])\r\n",
 					"display(df_application[df_application['ApplicationName']=='BUSINESS DEVELOPMENT PORTFOLIO SOLUTIONS (PPM)'])"
 				],
-				"execution_count": 40
+				"execution_count": 54
 			},
 			{
 				"cell_type": "code",
@@ -202,7 +202,7 @@
 					"#display(df_application[df_application['ApplicationName']=='APPTIO'])\r\n",
 					"display(df_application[df_application['AppID']=='1009936'])"
 				],
-				"execution_count": 44
+				"execution_count": 55
 			},
 			{
 				"cell_type": "code",
@@ -221,7 +221,7 @@
 				"source": [
 					"display(df_application[(df_application.OperationalStatus=='Retired')])"
 				],
-				"execution_count": 36
+				"execution_count": 65
 			},
 			{
 				"cell_type": "code",
@@ -239,7 +239,7 @@
 				"source": [
 					"df_application[~(df_application.OperationalStatus=='Retired')].ApplicationName.value_counts()"
 				],
-				"execution_count": 38
+				"execution_count": 57
 			},
 			{
 				"cell_type": "code",
@@ -258,7 +258,7 @@
 				"source": [
 					"display(df_application)"
 				],
-				"execution_count": 19
+				"execution_count": 58
 			},
 			{
 				"cell_type": "code",
@@ -280,7 +280,7 @@
 					"# Load the data\r\n",
 					"#df_operational_unit = spark.read.format(\"parquet\").load(path).toPandas().rename(columns={'u_number':'APPID'})"
 				],
-				"execution_count": 20
+				"execution_count": 59
 			},
 			{
 				"cell_type": "code",
@@ -298,7 +298,7 @@
 				"source": [
 					"#df_application = df_application.merge(how='left',left_on='u_operational_unit',right_on=\"name\")"
 				],
-				"execution_count": 21
+				"execution_count": 60
 			},
 			{
 				"cell_type": "markdown",
@@ -330,7 +330,7 @@
 					"# Drop the empty column\r\n",
 					"#df_application = df_application.drop(\"u_product_owner\",axis=1)"
 				],
-				"execution_count": 22
+				"execution_count": 61
 			},
 			{
 				"cell_type": "code",
@@ -352,9 +352,9 @@
 					"optimized_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/parquet/NewServiceNowApplication.parquet\"\r\n",
 					"\r\n",
 					"#Save the data with partitioned by time\r\n",
-					"#spark.createDataFrame(df_application ).write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
+					"spark.createDataFrame(df_application ).write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
 				],
-				"execution_count": 23
+				"execution_count": 62
 			}
 		]
 	}
