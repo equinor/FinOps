@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "a75570f0-78b7-4e43-9ca7-d77c733eb665"
+				"spark.autotune.trackingId": "80bc7659-43c2-416c-b749-20fdb40be682"
 			}
 		},
 		"metadata": {
@@ -58,7 +58,7 @@
 					"import pandas as pd \r\n",
 					"import pyspark.pandas as ps"
 				],
-				"execution_count": 48
+				"execution_count": 116
 			},
 			{
 				"cell_type": "code",
@@ -84,7 +84,31 @@
 					"df_application[['AppID', 'IsOmniaSubscription','ProductOwnerNo','OperationalUnitManagerNo']] = df_application[['AppID', 'IsOmniaSubscription','ProductOwnerNo','OperationalUnitManagerNo']].fillna(0).astype('int64')\r\n",
 					""
 				],
-				"execution_count": 76
+				"execution_count": 172
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"\r\n",
+					"#df_application[['LifeCycleState', 'EndOfLifeDate','Created', 'Updated']]= pd.to_datetime(df_application[['LifeCycleState','Created', 'Updated']]).dt.date\r\n",
+					"df_application.loc['Created',:] = pd.to_datetime(df_application['Created']).dt.date\r\n",
+					"df_application['Updated'] = pd.to_datetime(df_application['Updated'])\r\n",
+					"#df_application[['Created', 'Updated']] = pd.to_datetime(df_application[['Created', 'Updated']]).dt.date\r\n",
+					"display(df_application)"
+				],
+				"execution_count": 173
 			},
 			{
 				"cell_type": "code",
@@ -100,14 +124,124 @@
 					}
 				},
 				"source": [
-					"#df_application[['LifeCycleState', 'EndOfLifeDate','Created', 'Updated']] = df_application[['LifeCycleState', 'EndOfLifeDate','Created', 'Updated']].apply(pd.to_datetime)\r\n",
-					"#df_application['Created'] = pd.to_datetime(df['Created'], format='%Y-%m-%d')\r\n",
-					"#pd.to_datetime(df_application['Created'], format='%Y-%m-%d')\r\n",
-					"#df_application[['LifeCycleState', 'EndOfLifeDate','Created', 'Updated']]= pd.to_datetime(df_application[['LifeCycleState', 'EndOfLifeDate','Created', 'Updated']]).dt.date\r\n",
-					"df_application['Created'] = pd.datetime(df_application['Created'], format='%d-%m-%Y')\r\n",
-					"display(df_application)"
+					"import datetime as dt\r\n",
+					"df_application['Updated'] = df_application['Updated'].dt.date"
 				],
-				"execution_count": 78
+				"execution_count": 176
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"display(df_application['Updated'])"
+				],
+				"execution_count": 180
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"pd.to_datetime(df_application['Updated']).dt.date"
+				],
+				"execution_count": 160
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"type(df_application['Created'][0])\r\n",
+					"pd.to_datetime(df_application['Updated'][0:])"
+				],
+				"execution_count": 162
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"#print(df_application['Created'].unique())\r\n",
+					"#print(df_application['Created'].dtype)\r\n",
+					"#unexpected_characters = df_application[df_application['Created'].str.contains(r'\\D', na=True)]\r\n",
+					"#df_application = df_application[df_application['Created'].str.replace(r'\\d', '').str.strip() != '']\r\n",
+					"#display(df_application)"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"df_application['Created'].value_counts(dropna=False)"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"df_application[df_application['Created'].str.lower().str.contains('0')]"
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -125,7 +259,7 @@
 				"source": [
 					"df_application.describe(include='all')"
 				],
-				"execution_count": 51
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -143,7 +277,7 @@
 				"source": [
 					"df_application.info()"
 				],
-				"execution_count": 64
+				"execution_count": 177
 			},
 			{
 				"cell_type": "code",
@@ -162,7 +296,7 @@
 				"source": [
 					"display(df_application[df_application['ApplicationName']=='APPTIO'])"
 				],
-				"execution_count": 66
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -182,7 +316,7 @@
 					"#display(df_application[df_application['ApplicationName']=='APPTIO'])\r\n",
 					"display(df_application[df_application['ApplicationName']=='BUSINESS DEVELOPMENT PORTFOLIO SOLUTIONS (PPM)'])"
 				],
-				"execution_count": 54
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -202,7 +336,7 @@
 					"#display(df_application[df_application['ApplicationName']=='APPTIO'])\r\n",
 					"display(df_application[df_application['AppID']=='1009936'])"
 				],
-				"execution_count": 55
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -221,7 +355,7 @@
 				"source": [
 					"display(df_application[(df_application.OperationalStatus=='Retired')])"
 				],
-				"execution_count": 65
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -239,7 +373,7 @@
 				"source": [
 					"df_application[~(df_application.OperationalStatus=='Retired')].ApplicationName.value_counts()"
 				],
-				"execution_count": 57
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -258,7 +392,7 @@
 				"source": [
 					"display(df_application)"
 				],
-				"execution_count": 58
+				"execution_count": 181
 			},
 			{
 				"cell_type": "code",
@@ -280,7 +414,7 @@
 					"# Load the data\r\n",
 					"#df_operational_unit = spark.read.format(\"parquet\").load(path).toPandas().rename(columns={'u_number':'APPID'})"
 				],
-				"execution_count": 59
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -298,7 +432,7 @@
 				"source": [
 					"#df_application = df_application.merge(how='left',left_on='u_operational_unit',right_on=\"name\")"
 				],
-				"execution_count": 60
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",
@@ -330,7 +464,7 @@
 					"# Drop the empty column\r\n",
 					"#df_application = df_application.drop(\"u_product_owner\",axis=1)"
 				],
-				"execution_count": 61
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -354,7 +488,7 @@
 					"#Save the data with partitioned by time\r\n",
 					"spark.createDataFrame(df_application ).write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
 				],
-				"execution_count": 62
+				"execution_count": null
 			}
 		]
 	}
