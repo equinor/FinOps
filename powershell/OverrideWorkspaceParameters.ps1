@@ -2,7 +2,8 @@
 param (
     [string]$WorkspaceName,
     [string]$BicepParameterPath,
-    [string]$WorkspaceTemplateParamaterPath
+    [string]$WorkspaceTemplateParamaterPath,
+    [string]$UpdatedParameterPath
 )
 
 # Retrieve bicep parameters
@@ -84,11 +85,6 @@ foreach ($parameter in $workspaceTemplateParams.parameters.PSObject.Properties) 
     }
 }
 
-$updatedWorkspaceParams = $workspaceTemplateParams | ConvertTo-Json | Out-File "./test.json"
+$updatedWorkspaceParams = $workspaceTemplateParams | ConvertTo-Json | Out-File $UpdatedParameterPath
 
-#Write-Host $updatedWorkspaceParams
-
-$test = Get-Content -Path "./test.json" -Raw
-
-Write-Host "Test"
-Write-Host $test
+Write-Host $updatedWorkspaceParams

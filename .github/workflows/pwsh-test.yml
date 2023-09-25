@@ -14,7 +14,7 @@ jobs:
             - name: 'Run pwsh test'
               shell: pwsh
               run: |
-                ./powershell/OverrideWorkspaceParameters.ps1 -WorkspaceName "finops-synapse-dev"  -BicepParameterPath "./azuredeploy.parameters.dev.json" -WorkspaceTemplateParamaterPath "./s037-cost-management/TemplateParametersForWorkspace.json"
+                ./powershell/OverrideWorkspaceParameters.ps1 -WorkspaceName "finops-synapse-dev"  -BicepParameterPath "./azuredeploy.parameters.dev.json" -WorkspaceTemplateParamaterPath "./s037-cost-management/TemplateParametersForWorkspace.json" -UpdatedParameterPath "./updated-deployment-parameters.json"
             
             - name: 'List'
               run: |
@@ -24,9 +24,9 @@ jobs:
               shell: pwsh
               run: |
                 Write-Host "Hello test"
-                $file = Get-Content -Path "./test.json"
+                $file = Get-Content -Path "./updated-deployment-parameters.json"
                 Write-Host $file
-                $test = Get-Content -Path "./test.json" -Raw | ConvertFrom-Json
+                $test = Get-Content -Path "./updated-deployment-parameters.json" -Raw | ConvertFrom-Json
                 $test2 = $test | ConvertTo-Json
                 Write-Host $test2
 
