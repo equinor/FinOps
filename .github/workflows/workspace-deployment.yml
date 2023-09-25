@@ -1,16 +1,19 @@
 name: FinOps environment deployment
 
 on:
-  workflow_dispatch:
-  # push:
-  #   branches: [ workspace_publish ]
+  # workflow_dispatch:
+  push:
+    branches: [ workspace_publish ]
 
 permissions:
   contents: read
   id-token: write
 
 env:
-  UPDATED_PARAMETER_PATH: ./updated-deployment-parameters.json
+  WORKSPACE_TEMPLATE_PARAMETER_PATH: ./s037-cost-management/TemplateParametersForWorkspace.json
+  WORKSPACE_TEMPLATE_DEPLOYMENT_PATH: ./s037-cost-management/TemplateForWorkspace.json
+  UPDATED_PARAMETER_PATH: updated-deployment-parameters.json
+  UPDATED_DEPLOYMENT_PATH: updated-deployment-template.json
     
 jobs:
   deploy-dev:
@@ -51,13 +54,18 @@ jobs:
       - name: 'Override Synapse ARM Template parameters'
         shell: pwsh
         run: |
-          ./powershell/OverrideWorkspaceParameters.ps1 -WorkspaceName ${{ env.SYNAPSE_WORKSPACE_NAME }} -BicepParameterPath "./${{ env.PARAMETER_FILE_PATH }}" -WorkspaceTemplateParamaterPath "./s037-cost-management/TemplateParametersForWorkspace.json" -UpdatedParameterPath ${{ env.UPDATED_PARAMETER_PATH }}
+          ./powershell/OverrideWorkspaceParameters.ps1 -WorkspaceName ${{ env.SYNAPSE_WORKSPACE_NAME }} -BicepParameterPath ${{ env.PARAMETER_FILE_PATH }} -WorkspaceTemplateParamaterPath ${{ env.WORKSPACE_TEMPLATE_PARAMETER_PATH }} -UpdatedParameterPath ${{ env.UPDATED_PARAMETER_PATH }}
+      
+      - name: 'Disable excess spark pool deployments in ARM template'
+        shell: pwsh
+        run: |
+          ./powershell/DisableSparkPoolDeployments.ps1 -ARMTemplatePath ${{ env.WORKSPACE_TEMPLATE_DEPLOYMENT_PATH }} -UpdatedTemplatePath ${{ env.UPDATED_DEPLOYMENT_PATH }}
 
       - name: Synapse workspace deployment
         uses: Azure/synapse-workspace-deployment@V1.8.0
         with:
           TargetWorkspaceName: ${{ env.SYNAPSE_WORKSPACE_NAME }}
-          TemplateFile: './s037-cost-management/TemplateForWorkspace.json'
+          TemplateFile: ${{ env.UPDATED_DEPLOYMENT_PATH }}
           ParametersFile: ${{ env.UPDATED_PARAMETER_PATH }}
           environment: 'Azure Public'
           resourceGroup: ${{ env.RESOURCE_GROUP }}
