@@ -3,11 +3,12 @@ param location string = resourceGroup().location
 param sqlAdministratorLogin string = 'sqladminuser'
 param storageAccountName string
 param storageAccountType string
-param sparkPoolName string
+param sparkVersion string
 param nodeSize string
 param sparkPoolMinNodeCount int
 param sparkPoolMaxNodeCount int
 param sparkPoolDelayInMinutes int
+param sparkPoolVersion
 param defaultDataLakeStorageFilesystemName string  = 'tempdata'
 param startIpaddress string = '0.0.0.0'
 param endIpAddress string = '255.255.255.255'
@@ -100,7 +101,7 @@ resource sparkpool 'Microsoft.Synapse/workspaces/bigDataPools@2021-06-01' = {
       enabled: true
       delayInMinutes: sparkPoolDelayInMinutes
     }
-    sparkVersion: '3.3'
+    sparkVersion: sparkVersion
   }
 }
 

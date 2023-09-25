@@ -1,5 +1,7 @@
 
 param (
+    [string]$SubscriptionId,
+    [string]$ResourceGroupName,
     [string]$WorkspaceName,
     [string]$BicepParameterPath,
     [string]$WorkspaceTemplateParamaterPath,
@@ -11,6 +13,11 @@ $bicepParams = Get-Content -Path $BicepParameterPath -Raw | ConvertFrom-Json
 
 # Retrieve Synapse workspace template parameters
 $workspaceTemplateParams = Get-Content -Path $WorkspaceTemplateParamaterPath -Raw | ConvertFrom-Json
+
+# Set necessary variables
+$sparkPoolName = $bicepParams.parameters.sparkPoolName.value
+$sparkPoolId = "/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.Synapse/workspaces/$WorkspaceName/bigDataPools/$sparkPoolName"
+$sparkPoolEndpoint = "https://$WorkspaceName.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/$sparkPoolName"
 
 # Set workspace name
 $workspaceTemplateParams.parameters.workspaceName.value = $WorkspaceName
@@ -29,24 +36,24 @@ foreach ($parameter in $workspaceTemplateParams.parameters.PSObject.Properties) 
     # Override spark pool references in notebook artifacts
 
     if ($parameterKey -like "*notebookSparkPoolNameRef") {
-        $workspaceTemplateParams.parameters.$parameterKey.value = $bicepParams.parameters.sparkPoolName.value
+        $workspaceTemplateParams.parameters.$parameterKey.value = $sparkPoolName
         continue
     }
 
     if ($parameterKey -like "*notebookSparkPoolIdRef") {
-        $workspaceTemplateParams.parameters.$parameterKey.value = $bicepParams.parameters.sparkPoolId.value
+        $workspaceTemplateParams.parameters.$parameterKey.value = $sparkPoolId
         continue
     }
 
     if ($parameterKey -like "*notebookSparkPoolEndpointRef") {
-        $workspaceTemplateParams.parameters.$parameterKey.value = $bicepParams.parameters.sparkPoolEndpoint.value
+        $workspaceTemplateParams.parameters.$parameterKey.value = $sparkPoolEndpoint
         continue
     }
 
     # Override spark pool resource parameters
 
     if ($parameterKey -like "*sparkPoolResourceName") {
-        $workspaceTemplateParams.parameters.$parameterKey.value = "$WorkspaceName/$($bicepParams.parameters.sparkPoolName.value)"
+        $workspaceTemplateParams.parameters.$parameterKey.value = "$WorkspaceName/$sparkPoolName"
         continue
     }
 

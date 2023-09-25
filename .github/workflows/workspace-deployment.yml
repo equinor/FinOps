@@ -1,9 +1,9 @@
 name: FinOps environment deployment
 
 on:
-  # workflow_dispatch:
-  push:
-    branches: [ workspace_publish ]
+  workflow_dispatch:
+  # push:
+  #   branches: [ workspace_publish ]
 
 permissions:
   contents: read
@@ -54,7 +54,7 @@ jobs:
       - name: 'Override Synapse ARM Template parameters'
         shell: pwsh
         run: |
-          ./powershell/OverrideWorkspaceParameters.ps1 -WorkspaceName ${{ env.SYNAPSE_WORKSPACE_NAME }} -BicepParameterPath ${{ env.PARAMETER_FILE_PATH }} -WorkspaceTemplateParamaterPath ${{ env.WORKSPACE_TEMPLATE_PARAMETER_PATH }} -UpdatedParameterPath ${{ env.UPDATED_PARAMETER_PATH }}
+          ./powershell/OverrideWorkspaceParameters.ps1 -SubscriptionId ${{ secrets.S926_AZURE_SUBSCRIPTION_ID }} -ResourceGroupName ${{ env.RESOURCE_GROUP }} -WorkspaceName ${{ env.SYNAPSE_WORKSPACE_NAME }} -BicepParameterPath ${{ env.PARAMETER_FILE_PATH }} -WorkspaceTemplateParamaterPath ${{ env.WORKSPACE_TEMPLATE_PARAMETER_PATH }} -UpdatedParameterPath ${{ env.UPDATED_PARAMETER_PATH }}
       
       - name: 'Disable excess spark pool deployments in ARM template'
         shell: pwsh

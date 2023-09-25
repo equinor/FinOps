@@ -1,9 +1,9 @@
 name: pwsh test
 
 on:
-    workflow_dispatch:
-    # push:
-    #     branches: [ workspace_publish ]
+    # workflow_dispatch:
+    push:
+        branches: [ workspace_publish ]
 
 env:
     BICEP-PARAMETER-PATH: azuredeploy.parameters.dev.json
@@ -20,7 +20,7 @@ jobs:
             - name: 'Overwrite parameter file'
               shell: pwsh
               run: |
-                ./powershell/OverrideWorkspaceParameters.ps1 -WorkspaceName "finops-synapse-dev"  -BicepParameterPath ${{ env.BICEP-PARAMETER-PATH }} -WorkspaceTemplateParamaterPath "./s037-cost-management/TemplateParametersForWorkspace.json" -UpdatedParameterPath ${{ env.UPDATED-PARAMETER-PATH }}
+                ./powershell/OverrideWorkspaceParameters.ps1 -SubscriptionId ${{ secrets.S926_AZURE_SUBSCRIPTION_ID }} -ResourceGroupName "finops-rg-dev" -WorkspaceName "finops-synapse-dev"  -BicepParameterPath ${{ env.BICEP-PARAMETER-PATH }} -WorkspaceTemplateParamaterPath "./s037-cost-management/TemplateParametersForWorkspace.json" -UpdatedParameterPath ${{ env.UPDATED-PARAMETER-PATH }}
             
             - name: 'List'
               run: ls
