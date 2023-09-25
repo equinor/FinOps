@@ -4,21 +4,21 @@
 		"nbformat": 4,
 		"nbformat_minor": 2,
 		"bigDataPool": {
-			"referenceName": "sparkpool32",
+			"referenceName": "sprkpool33large",
 			"type": "BigDataPoolReference"
 		},
 		"sessionProperties": {
-			"driverMemory": "56g",
-			"driverCores": 8,
-			"executorMemory": "56g",
-			"executorCores": 8,
-			"numExecutors": 2,
+			"driverMemory": "112g",
+			"driverCores": 16,
+			"executorMemory": "112g",
+			"executorCores": 16,
+			"numExecutors": 1,
 			"runAsWorkspaceSystemIdentity": false,
 			"conf": {
-				"spark.dynamicAllocation.enabled": "false",
-				"spark.dynamicAllocation.minExecutors": "2",
-				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "26ab4951-cb52-414b-8803-49fca6438fa3"
+				"spark.dynamicAllocation.enabled": "true",
+				"spark.dynamicAllocation.minExecutors": "1",
+				"spark.dynamicAllocation.maxExecutors": "4",
+				"spark.autotune.trackingId": "33b2539e-f754-4448-a507-ddddbabb83db"
 			}
 		},
 		"metadata": {
@@ -32,19 +32,19 @@
 				"name": "python"
 			},
 			"a365ComputeOptions": {
-				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
-				"name": "sparkpool32",
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
+				"name": "sprkpool33large",
 				"type": "Spark",
-				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
 				"auth": {
 					"type": "AAD",
 					"authResource": "https://dev.azuresynapse.net"
 				},
-				"sparkVersion": "3.2",
+				"sparkVersion": "3.3",
 				"nodeCount": 3,
-				"cores": 8,
-				"memory": 56,
-				"automaticScaleJobs": false
+				"cores": 16,
+				"memory": 112,
+				"automaticScaleJobs": true
 			},
 			"sessionKeepAliveTimeout": 30
 		},
@@ -57,15 +57,15 @@
 					]
 				},
 				"source": [
-					" amortizedCostPath = 'exports/daily/ACMDailyAmortizedCost/'\n",
-					" amortizedCostPath = 'exports/monthly/ACMMonthlyAmortizedCost/'\n",
-					" actualCostPath = 'exports/monthly/ACMMonthlyActualCost/'\n",
-					" actualCostPath = 'exports/daily/ACMDailyActualCost/'\n",
-					" toDate = '20230831'\n",
-					" fromDate = '20230801'\n",
-					" container = 'usage'"
+					" #amortizedCostPath = 'exports/daily/ACMDailyAmortizedCost/'\n",
+					" #amortizedCostPath = 'exports/monthly/ACMMonthlyAmortizedCost/'\n",
+					" #actualCostPath = 'exports/monthly/ACMMonthlyActualCost/'\n",
+					" #actualCostPath = 'exports/daily/ACMDailyActualCost/'\n",
+					" #toDate = '20230930'\n",
+					" #fromDate = '20230901'\n",
+					" #container = 'usage'"
 				],
-				"execution_count": 1
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -92,7 +92,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 2
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -131,7 +131,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list, appList"
 				],
-				"execution_count": 3
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -161,7 +161,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 4
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -201,7 +201,7 @@
 					"        cost_df = cost_df.withColumn('ai_' + col, F.coalesce(F.col(f'AdditionalInfo.{col}'), F.lit(None)))\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 5
+				"execution_count": 7
 			},
 			{
 				"cell_type": "code",
@@ -230,7 +230,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 6
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -265,7 +265,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 7
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -302,7 +302,7 @@
 					"\r\n",
 					"    return subscription_list"
 				],
-				"execution_count": 8
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -325,7 +325,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list"
 				],
-				"execution_count": 9
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -359,7 +359,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 10
+				"execution_count": 12
 			},
 			{
 				"cell_type": "code",
@@ -450,7 +450,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 11
+				"execution_count": 13
 			},
 			{
 				"cell_type": "code",
@@ -492,7 +492,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 12
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -526,7 +526,7 @@
 					"    \r\n",
 					"    return cost_df"
 				],
-				"execution_count": 13
+				"execution_count": 15
 			},
 			{
 				"cell_type": "code",
@@ -557,7 +557,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 14
+				"execution_count": 16
 			},
 			{
 				"cell_type": "code",
@@ -586,7 +586,7 @@
 					"\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": 15
+				"execution_count": 17
 			},
 			{
 				"cell_type": "code",
@@ -662,7 +662,7 @@
 					"        subscriptionListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions_' + previousMonthDate + '.json'\n",
 					"        print(f\"Subscription path: {subscriptionListPath}\")\n",
 					"\n",
-					"    appListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/ServiceNow-Application-List-Extended.parquet'\n",
+					"    appListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\n",
 					"    print(f\"App-list path: {appListPath}\")\n",
 					"    cost_df, subscription_list, appList = load_source_files(costSourcefilename, subscriptionListPath, appListPath)\n",
 					"    cost_df = expand_ai_column(cost_df)\n",
@@ -670,7 +670,25 @@
 					"    #write_output_file(cost_df, costDestinationfilename)\n",
 					"    print(' ')"
 				],
-				"execution_count": 16
+				"execution_count": 19
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				],
+				"execution_count": null
 			}
 		]
 	}
