@@ -24,8 +24,6 @@ jobs:
               shell: pwsh
               run: |
                 Write-Host "Hello test"
-                $file = Get-Content -Path "./updated-deployment-parameters.json"
-                Write-Host $file
                 $test = Get-Content -Path "./updated-deployment-parameters.json" -Raw | ConvertFrom-Json
                 $test2 = $test | ConvertTo-Json
                 Write-Host $test2

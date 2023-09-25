@@ -8,7 +8,6 @@ param (
 
 # Retrieve bicep parameters
 $bicepParams = Get-Content -Path $BicepParameterPath -Raw | ConvertFrom-Json
-$sparkPoolNameKey = "sparkPoolName"
 $sparkPoolIdKey = "sparkPoolId"
 $sparkPoolEndpointKey = "sparkPoolEndpoint"
 $sparkPoolNodeSizeKey = "nodeSize"
@@ -38,7 +37,7 @@ foreach ($parameter in $workspaceTemplateParams.parameters.PSObject.Properties) 
     # Override spark pool references in notebook artifacts
 
     if ($parameterKey -like "*notebookSparkPoolNameRef") {
-        $workspaceTemplateParams.parameters.$parameterKey.value = $bicepParams.parameters.$sparkPoolNameKey.value
+        $workspaceTemplateParams.parameters.$parameterKey.value = $bicepParams.parameters.sparkPoolName.value
         continue
     }
 
@@ -85,6 +84,4 @@ foreach ($parameter in $workspaceTemplateParams.parameters.PSObject.Properties) 
     }
 }
 
-$updatedWorkspaceParams = $workspaceTemplateParams | ConvertTo-Json | Out-File $UpdatedParameterPath
-
-Write-Host $updatedWorkspaceParams
+$workspaceTemplateParams | ConvertTo-Json | Out-File $UpdatedParameterPath
