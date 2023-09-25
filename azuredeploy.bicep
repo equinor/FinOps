@@ -4,6 +4,7 @@ param sqlAdministratorLogin string = 'sqladminuser'
 param storageAccountName string
 param storageAccountType string
 param nodeSize string
+param sparkPoolName string
 param sparkPoolMinNodeCount int
 param sparkPoolMaxNodeCount int
 param sparkPoolDelayInMinutes int
