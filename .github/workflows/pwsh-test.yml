@@ -11,20 +11,34 @@ jobs:
         steps:
             - uses: actions/checkout@v2
     
-            - name: 'Run pwsh test'
+            - name: 'Overwrite parameter file'
               shell: pwsh
               run: |
                 ./powershell/OverrideWorkspaceParameters.ps1 -WorkspaceName "finops-synapse-dev"  -BicepParameterPath "./azuredeploy.parameters.dev.json" -WorkspaceTemplateParamaterPath "./s037-cost-management/TemplateParametersForWorkspace.json" -UpdatedParameterPath "./updated-deployment-parameters.json"
             
             - name: 'List'
-              run: |
-                ls
+              run: ls
 
             - name: 'Read overwritten file'
               shell: pwsh
               run: |
                 Write-Host "Hello test"
                 $test = Get-Content -Path "./updated-deployment-parameters.json" -Raw | ConvertFrom-Json
+                $test2 = $test | ConvertTo-Json
+                Write-Host $test2
+
+            - name: 'Update arm template'
+              shell: pwsh
+              run: |
+                ./powershell/DisableSparkPoolDeployments.ps1 -ARMTemplatePath "./s037-cost-management/TemplateForWorkspace.json" -UpdatedTemplatePath "./updated-deployment-template.json"
+            
+            - name: 'List'
+              run: ls
+
+            - name: 'Read updated template file'
+              shell: pwsh
+              run: |
+                $test = Get-Content -Path "./updated-deployment-template.json" -Raw | ConvertFrom-Json
                 $test2 = $test | ConvertTo-Json
                 Write-Host $test2
 
