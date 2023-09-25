@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "08403325-cbfd-40f0-96a2-b33000c8b3a1"
+				"spark.autotune.trackingId": "acd40473-3022-4b46-8530-8605fb3d3bf0"
 			}
 		},
 		"metadata": {
@@ -83,10 +83,10 @@
 					"df_application = pd.read_csv(path)\r\n",
 					"\r\n",
 					"# 'AppID', 'IsOmniaSubscription','ProductOwnerNo','OperationalUnitManagerNo' has null value and will be assigned 0 for those null values.\r\n",
-					"#df_application[['AppID', 'IsOmniaSubscription','ProductOwnerNo','OperationalUnitManagerNo']] = df_application[['AppID', 'IsOmniaSubscription','ProductOwnerNo','OperationalUnitManagerNo']].fillna(0).astype('int64')\r\n",
+					"df_application[['AppID', 'IsOmniaSubscription','ProductOwnerNo','OperationalUnitManagerNo']] = df_application[['AppID', 'IsOmniaSubscription','ProductOwnerNo','OperationalUnitManagerNo']].fillna(0).astype('int64')\r\n",
 					""
 				],
-				"execution_count": 2
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -105,29 +105,7 @@
 				"source": [
 					"display(df_application)"
 				],
-				"execution_count": 3
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# Define path\r\n",
-					"path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/ServiceNowApplication.parquet\"\r\n",
-					"\r\n",
-					"# Load the data\r\n",
-					"df_application = spark.read.format(\"parquet\").load(path).toPandas().rename(columns={'u_number':'APPID'})"
-				],
-				"execution_count": 72
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -145,7 +123,66 @@
 				"source": [
 					"df_application.describe(include='all')"
 				],
-				"execution_count": null
+				"execution_count": 6
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(df_application[df_application['ApplicationName']=='APPTIO'])"
+				],
+				"execution_count": 8
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"#display(df_application[df_application['ApplicationName']=='APPTIO'])\r\n",
+					"display(df_application[df_application['ApplicationName'].str.contains('BUSINESS DEVELOPMENT PORTFOLIO SOLUTION')])"
+				],
+				"execution_count": 10
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"#display(df_application[df_application['ApplicationName']=='APPTIO'])\r\n",
+					"display(df_application[df_application['AppID']==109936])"
+				],
+				"execution_count": 12
 			},
 			{
 				"cell_type": "code",
@@ -161,11 +198,7 @@
 					}
 				},
 				"source": [
-					"# Define path\r\n",
-					"#path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/....parquet\"\r\n",
-					"\r\n",
-					"# Load the data\r\n",
-					"#df_operational_unit = spark.read.format(\"parquet\").load(path).toPandas().rename(columns={'u_number':'APPID'})"
+					"display(df_application[(df_application.OperationalStatus=='Retired')])"
 				],
 				"execution_count": null
 			},
@@ -183,9 +216,27 @@
 					}
 				},
 				"source": [
-					"#df_application = df_application.merge(how='left',left_on='u_operational_unit',right_on=\"name\")"
+					"df_application[~(df_application.OperationalStatus=='Retired' | df_application.OperationalStatus=='Ignored')].ApplicationName.value_counts()"
 				],
 				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"df_application.info()"
+				],
+				"execution_count": 7
 			},
 			{
 				"cell_type": "markdown",
@@ -236,9 +287,10 @@
 					"from pyspark.sql import SparkSession\r\n",
 					"spark = SparkSession.builder.getOrCreate()\r\n",
 					"# Define optimized path to save the data\r\n",
-					"optimized_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/parquet/Extended_ACMMonthlyActualCost_Aggregated_overview.parquet\" \r\n",
+					"#optimized_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/parquet/Extended_ACMMonthlyActualCost_Aggregated_overview.parquet\" \r\n",
+					"optimized_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/parquet/NewServiceNowApplication.parquet\"\r\n",
 					"#Save the data with partitioned by time\r\n",
-					"spark.createDataFrame(df_application ).write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
+					"#spark.createDataFrame(df_application ).write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
 				],
 				"execution_count": null
 			}
