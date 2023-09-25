@@ -84,13 +84,11 @@ foreach ($parameter in $workspaceTemplateParams.parameters.PSObject.Properties) 
     }
 }
 
-$updatedWorkspaceParams | Set-Content -Path "./test.json"
-
-$updatedWorkspaceParams = $workspaceTemplateParams | ConvertTo-Json
+$updatedWorkspaceParams = $workspaceTemplateParams | ConvertTo-Json | Out-File "./test.json"
 
 #Write-Host $updatedWorkspaceParams
 
-$test = Get-Content -Path "./test.json" -Raw | ConvertTo-Json
+$test = Get-Content -Path "./test.json" -Raw
 
 Write-Host "Test"
 Write-Host $test
