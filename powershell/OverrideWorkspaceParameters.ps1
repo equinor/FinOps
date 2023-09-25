@@ -88,4 +88,9 @@ $updatedWorkspaceParams | Set-Content -Path "./test.json"
 
 $updatedWorkspaceParams = $workspaceTemplateParams | ConvertTo-Json
 
-Write-Host $updatedWorkspaceParams
+#Write-Host $updatedWorkspaceParams
+
+$test = Get-Content -Path "./test.json" -Raw | ConvertTo-Json
+
+Write-Host "Test"
+Write-Host $test
