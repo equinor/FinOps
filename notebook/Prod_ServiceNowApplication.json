@@ -21,14 +21,11 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "4ab8f03b-851a-48a9-9605-1ff4a9c19130"
+				"spark.autotune.trackingId": "f7560f32-b8bb-47a5-93a5-686d572ff341"
 			}
 		},
 		"metadata": {
 			"saveOutput": true,
-			"synapse_widget": {
-				"version": "0.1"
-			},
 			"enableDebugMode": false,
 			"kernelspec": {
 				"name": "synapse_pyspark",
@@ -44,14 +41,13 @@
 				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
 				"auth": {
 					"type": "AAD",
-					"authResource": "https://dev.azuresynapse.net",
-					"authHeader": null
+					"authResource": "https://dev.azuresynapse.net"
 				},
 				"sparkVersion": "3.3",
 				"nodeCount": 3,
 				"cores": 16,
 				"memory": 112,
-				"extraHeader": null
+				"automaticScaleJobs": true
 			},
 			"sessionKeepAliveTimeout": 30
 		},
@@ -62,7 +58,52 @@
 					"import pandas as pd \r\n",
 					"import pyspark.pandas as ps"
 				],
-				"execution_count": 1
+				"execution_count": 66
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"pd.read_csv(path)\r\n",
+					""
+				],
+				"execution_count": 68
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Define path\r\n",
+					"path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/NewServiceNowDataset.csv\"\r\n",
+					"\r\n",
+					"# Load the data\r\n",
+					"df_application = pd.read_csv(path)\r\n",
+					"\r\n",
+					"# 'AppID', 'IsOmniaSubscription','ProductOwnerNo','OperationalUnitManagerNo' has null value and will be assigned 0 for those null values.\r\n",
+					"#df_application[['AppID', 'IsOmniaSubscription','ProductOwnerNo','OperationalUnitManagerNo']] = df_application[['AppID', 'IsOmniaSubscription','ProductOwnerNo','OperationalUnitManagerNo']].fillna(0).astype('int64')\r\n",
+					""
+				],
+				"execution_count": 69
 			},
 			{
 				"cell_type": "code",
@@ -83,7 +124,8 @@
 					"\r\n",
 					"# Load the data\r\n",
 					"df_application = spark.read.format(\"parquet\").load(path).toPandas().rename(columns={'u_number':'APPID'})"
-				]
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -100,7 +142,8 @@
 				},
 				"source": [
 					"df_application.describe(include='all')"
-				]
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -121,7 +164,8 @@
 					"\r\n",
 					"# Load the data\r\n",
 					"#df_operational_unit = spark.read.format(\"parquet\").load(path).toPandas().rename(columns={'u_number':'APPID'})"
-				]
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -138,7 +182,8 @@
 				},
 				"source": [
 					"#df_application = df_application.merge(how='left',left_on='u_operational_unit',right_on=\"name\")"
-				]
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",
@@ -169,7 +214,8 @@
 				"source": [
 					"# Drop the empty column\r\n",
 					"df_application = df_application.drop(\"u_product_owner\",axis=1)"
-				]
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -191,7 +237,8 @@
 					"optimized_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/parquet/Extended_ACMMonthlyActualCost_Aggregated_overview.parquet\" \r\n",
 					"#Save the data with partitioned by time\r\n",
 					"spark.createDataFrame(df_application ).write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
-				]
+				],
+				"execution_count": null
 			}
 		]
 	}
