@@ -11,7 +11,8 @@ $initialPoolDeployed = $false
 
 foreach ($resource in $armTemplate.resources) {
     if ($resource.type -eq "Microsoft.Synapse/workspaces/bigDataPools") {
-        $resource["condition"] = -not $initialPoolDeployed
+        $conditionValue = -not $initialPoolDeployed
+        Add-Member -InputObject $resource -MemberType NoteProperty -Name "condition" -Value $conditionValue
         $initialPoolDeployed = $true
     }
 }
