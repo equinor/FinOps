@@ -84,7 +84,8 @@ foreach ($parameter in $workspaceTemplateParams.parameters.PSObject.Properties) 
     }
 }
 
-
 $updatedWorkspaceParams = $workspaceTemplateParams | ConvertTo-Json
 
 Write-Host $updatedWorkspaceParams
+
+$updatedWorkspaceParams | Set-Content -Path $WorkspaceTemplateParamaterPath

@@ -15,4 +15,10 @@ jobs:
               shell: pwsh
               run: |
                 ./powershell/OverrideWorkspaceParameters.ps1 -WorkspaceName "finops-synapse-dev"  -BicepParameterPath "./azuredeploy.parameters.dev.json" -WorkspaceTemplateParamaterPath "./s037-cost-management/TemplateParametersForWorkspace.json"
+            
+            - name: 'Read overwritten file'
+              shell: pwsh
+              run: |
+                $workspaceTemplateParams = Get-Content -Path "./s037-cost-management/TemplateParametersForWorkspace.json" -Raw | ConvertFrom-Json
+                Write-Host $workspaceTemplateParams
 
