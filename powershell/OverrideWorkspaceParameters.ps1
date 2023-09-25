@@ -8,20 +8,12 @@ param (
 
 # Retrieve bicep parameters
 $bicepParams = Get-Content -Path $BicepParameterPath -Raw | ConvertFrom-Json
-$sparkPoolIdKey = "sparkPoolId"
-$sparkPoolEndpointKey = "sparkPoolEndpoint"
-$sparkPoolNodeSizeKey = "nodeSize"
-$sparkPoolMinNodeCountKey = "sparkPoolMinNodeCount"
-$sparkPoolMaxNodeCountKey = "sparkPoolMaxNodeCount"
-$sparkPoolDelayInMinutesKey = "sparkPoolDelayInMinutes"
-$sparkVersionKey = "sparkVersion"
 
 # Retrieve Synapse workspace template parameters
 $workspaceTemplateParams = Get-Content -Path $WorkspaceTemplateParamaterPath -Raw | ConvertFrom-Json
 
 # Set workspace name
-$workspaceKey = "workspaceName"
-$workspaceTemplateParams.parameters.$workspaceKey.value = $WorkspaceName
+$workspaceTemplateParams.parameters.workspaceName.value = $WorkspaceName
 
 foreach ($parameter in $workspaceTemplateParams.parameters.PSObject.Properties) {
     $parameterKey = $parameter.Name
@@ -42,44 +34,44 @@ foreach ($parameter in $workspaceTemplateParams.parameters.PSObject.Properties) 
     }
 
     if ($parameterKey -like "*notebookSparkPoolIdRef") {
-        $workspaceTemplateParams.parameters.$parameterKey.value = $bicepParams.parameters.$sparkPoolIdKey.value
+        $workspaceTemplateParams.parameters.$parameterKey.value = $bicepParams.parameters.sparkPoolId.value
         continue
     }
 
     if ($parameterKey -like "*notebookSparkPoolEndpointRef") {
-        $workspaceTemplateParams.parameters.$parameterKey.value = $bicepParams.parameters.$sparkPoolEndpointKey.value
+        $workspaceTemplateParams.parameters.$parameterKey.value = $bicepParams.parameters.sparkPoolEndpoint.value
         continue
     }
 
     # Override spark pool resource parameters
 
     if ($parameterKey -like "*sparkPoolResourceName") {
-        $workspaceTemplateParams.parameters.$parameterKey.value = "$WorkspaceName/$($bicepParams.parameters.$sparkPoolNameKey.value)"
+        $workspaceTemplateParams.parameters.$parameterKey.value = "$WorkspaceName/$($bicepParams.parameters.sparkPoolName.value)"
         continue
     }
 
     if ($parameterKey -like "*_delayInMinutes") {
-        $workspaceTemplateParams.parameters.$parameterKey.value = $bicepParams.parameters.$sparkPoolDelayInMinutesKey.value
+        $workspaceTemplateParams.parameters.$parameterKey.value = $bicepParams.parameters.sparkPoolDelayInMinutes.value
         continue
     }
 
     if ($parameterKey -like "*_maxNodeCount") {
-        $workspaceTemplateParams.parameters.$parameterKey.value = $bicepParams.parameters.$sparkPoolMaxNodeCountKey.value
+        $workspaceTemplateParams.parameters.$parameterKey.value = $bicepParams.parameters.sparkPoolMaxNodeCount.value
         continue
     }
 
     if (($parameterKey -like "*_minNodeCount") -or ($parameterKey -like "*_nodeCount")) {
-        $workspaceTemplateParams.parameters.$parameterKey.value = $bicepParams.parameters.$sparkPoolMinNodeCountKey.value
+        $workspaceTemplateParams.parameters.$parameterKey.value = $bicepParams.parameters.sparkPoolMinNodeCount.value
         continue
     }
 
     if ($parameterKey -like "*_nodeSize") {
-        $workspaceTemplateParams.parameters.$parameterKey.value = $bicepParams.parameters.$sparkPoolNodeSizeKey.value
+        $workspaceTemplateParams.parameters.$parameterKey.value = $bicepParams.parameters.nodeSize.value
         continue
     }
 
     if ($parameterKey -like "*_sparkVersion") {
-        $workspaceTemplateParams.parameters.$parameterKey.value = $bicepParams.parameters.$sparkVersionKey.value
+        $workspaceTemplateParams.parameters.$parameterKey.value = $bicepParams.parameters.sparkVersion.value
         continue
     }
 }
