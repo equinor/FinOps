@@ -17,4 +17,4 @@ foreach ($resource in $armTemplate.resources) {
     }
 }
 
-$armTemplate | ConvertTo-Json | Out-File $UpdatedTemplatePath
+$armTemplate | ConvertTo-Json -Depth 20 | Out-File $UpdatedTemplatePath
