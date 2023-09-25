@@ -3,12 +3,11 @@ param location string = resourceGroup().location
 param sqlAdministratorLogin string = 'sqladminuser'
 param storageAccountName string
 param storageAccountType string
-param sparkVersion string
 param nodeSize string
 param sparkPoolMinNodeCount int
 param sparkPoolMaxNodeCount int
 param sparkPoolDelayInMinutes int
-param sparkPoolVersion
+param sparkVersion string
 param defaultDataLakeStorageFilesystemName string  = 'tempdata'
 param startIpaddress string = '0.0.0.0'
 param endIpAddress string = '255.255.255.255'
