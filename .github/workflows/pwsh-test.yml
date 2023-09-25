@@ -24,6 +24,8 @@ jobs:
               shell: pwsh
               run: |
                 Write-Host "Hello test"
+                $file = Get-Content -Path "./test.json"
+                Write-Host $file
                 $test = Get-Content -Path "./test.json" -Raw | ConvertFrom-Json
                 $test2 = $test | ConvertTo-Json
                 Write-Host $test2
