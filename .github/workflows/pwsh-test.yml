@@ -4,6 +4,11 @@ on:
     push:
         branches: [ workspace_publish ]
 
+env:
+    BICEP-PARAMETER-PATH: azuredeploy.parameters.dev.json
+    UPDATED-PARAMETER-PATH: updated-deployment-parameters.json
+    UPDATED-DEPLOYMENT-PATH: updated-deployment-template.json
+    
 jobs:
     test:
         name: Test
@@ -14,7 +19,7 @@ jobs:
             - name: 'Overwrite parameter file'
               shell: pwsh
               run: |
-                ./powershell/OverrideWorkspaceParameters.ps1 -WorkspaceName "finops-synapse-dev"  -BicepParameterPath "./azuredeploy.parameters.dev.json" -WorkspaceTemplateParamaterPath "./s037-cost-management/TemplateParametersForWorkspace.json" -UpdatedParameterPath "./updated-deployment-parameters.json"
+                ./powershell/OverrideWorkspaceParameters.ps1 -WorkspaceName "finops-synapse-dev"  -BicepParameterPath ${{ env.BICEP-PARAMETER-PATH }} -WorkspaceTemplateParamaterPath "./s037-cost-management/TemplateParametersForWorkspace.json" -UpdatedParameterPath ${{ env.UPDATED-PARAMETER-PATH }}
             
             - name: 'List'
               run: ls
@@ -23,14 +28,14 @@ jobs:
               shell: pwsh
               run: |
                 Write-Host "Hello test"
-                $test = Get-Content -Path "./updated-deployment-parameters.json" -Raw | ConvertFrom-Json
+                $test = Get-Content -Path ${{ env.UPDATED-PARAMETER-PATH }} -Raw | ConvertFrom-Json
                 $test2 = $test | ConvertTo-Json
                 Write-Host $test2
 
             - name: 'Update arm template'
               shell: pwsh
               run: |
-                ./powershell/DisableSparkPoolDeployments.ps1 -ARMTemplatePath "./s037-cost-management/TemplateForWorkspace.json" -UpdatedTemplatePath "./updated-deployment-template.json"
+                ./powershell/DisableSparkPoolDeployments.ps1 -ARMTemplatePath "./s037-cost-management/TemplateForWorkspace.json" -UpdatedTemplatePath ${{ env.UPDATED-DEPLOYMENT-PATH }}
             
             - name: 'List'
               run: ls
@@ -38,7 +43,7 @@ jobs:
             - name: 'Read updated template file'
               shell: pwsh
               run: |
-                $test = Get-Content -Path "./updated-deployment-template.json" -Raw | ConvertFrom-Json
-                $test2 = $test | ConvertTo-Json
+                $test = Get-Content -Path ${{ env.UPDATED-DEPLOYMENT-PATH }} -Raw | ConvertFrom-Json
+                $test2 = $test | ConvertTo-Json -Depth 20
                 Write-Host $test2
 
