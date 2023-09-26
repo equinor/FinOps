@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "db298b24-e3c8-4404-bccf-004cfddc88c2"
+				"spark.autotune.trackingId": "3095a584-7b1f-4279-baa8-560aac9a7a16"
 			}
 		},
 		"metadata": {
@@ -53,12 +53,38 @@
 		},
 		"cells": [
 			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Import Libraries"
+				]
+			},
+			{
 				"cell_type": "code",
 				"source": [
 					"import pandas as pd \r\n",
 					"import pyspark.pandas as ps"
 				],
 				"execution_count": 65
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Load the data"
+				]
 			},
 			{
 				"cell_type": "code",
@@ -78,10 +104,22 @@
 					"path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/NewServiceNowDataset.csv\"\r\n",
 					"\r\n",
 					"# Load the data\r\n",
-					"df_application = pd.read_csv(path)\r\n",
-					""
+					"df_application = pd.read_csv(path)"
 				],
 				"execution_count": 66
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Validate data quality"
+				]
 			},
 			{
 				"cell_type": "code",
@@ -135,28 +173,23 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(df[df.ApplicationName.duplicated(keep=False)])"
+					"display(df[df.ApplicationName.duplicated(keep=False)])\r\n",
+					"display(df[df.AppID==0])"
 				],
 				"execution_count": 69
 			},
 			{
-				"cell_type": "code",
+				"cell_type": "markdown",
 				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
 					"nteract": {
 						"transient": {
 							"deleting": false
 						}
-					},
-					"collapsed": false
+					}
 				},
 				"source": [
-					"display(df[df.AppID==0])"
-				],
-				"execution_count": 70
+					"# Transform the data"
+				]
 			},
 			{
 				"cell_type": "code",
@@ -172,6 +205,7 @@
 					}
 				},
 				"source": [
+					"\r\n",
 					"df[['AppID', 'IsOmniaSubscription','ProductOwnerNo','OperationalUnitManagerNo']] = df[['AppID', 'IsOmniaSubscription','ProductOwnerNo','OperationalUnitManagerNo']].fillna(0).astype('int64')\r\n",
 					"\r\n",
 					"df.Created = pd.to_datetime(df.Created)\r\n",
@@ -209,6 +243,7 @@
 				"source": [
 					"from pyspark.sql import SparkSession\r\n",
 					"spark = SparkSession.builder.getOrCreate()\r\n",
+					"\r\n",
 					"# Define optimized path to save the data\r\n",
 					"optimized_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet.parquet\"\r\n",
 					"\r\n",
