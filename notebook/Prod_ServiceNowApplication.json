@@ -21,14 +21,11 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "4ab8f03b-851a-48a9-9605-1ff4a9c19130"
+				"spark.autotune.trackingId": "231d5a0e-4231-4da1-9a6a-047c5de272f5"
 			}
 		},
 		"metadata": {
 			"saveOutput": true,
-			"synapse_widget": {
-				"version": "0.1"
-			},
 			"enableDebugMode": false,
 			"kernelspec": {
 				"name": "synapse_pyspark",
@@ -44,18 +41,30 @@
 				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
 				"auth": {
 					"type": "AAD",
-					"authResource": "https://dev.azuresynapse.net",
-					"authHeader": null
+					"authResource": "https://dev.azuresynapse.net"
 				},
 				"sparkVersion": "3.3",
 				"nodeCount": 3,
 				"cores": 16,
 				"memory": 112,
-				"extraHeader": null
+				"automaticScaleJobs": true
 			},
 			"sessionKeepAliveTimeout": 30
 		},
 		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Import Libraries"
+				]
+			},
 			{
 				"cell_type": "code",
 				"source": [
@@ -65,12 +74,8 @@
 				"execution_count": 1
 			},
 			{
-				"cell_type": "code",
+				"cell_type": "markdown",
 				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
 					"nteract": {
 						"transient": {
 							"deleting": false
@@ -78,28 +83,7 @@
 					}
 				},
 				"source": [
-					"# Define path\r\n",
-					"path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/ServiceNowApplication.parquet\"\r\n",
-					"\r\n",
-					"# Load the data\r\n",
-					"df_application = spark.read.format(\"parquet\").load(path).toPandas().rename(columns={'u_number':'APPID'})"
-				]
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"df_application.describe(include='all')"
+					"# Load the data"
 				]
 			},
 			{
@@ -117,10 +101,24 @@
 				},
 				"source": [
 					"# Define path\r\n",
-					"#path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/....parquet\"\r\n",
+					"path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/NewServiceNowDataset.csv\"\r\n",
 					"\r\n",
 					"# Load the data\r\n",
-					"#df_operational_unit = spark.read.format(\"parquet\").load(path).toPandas().rename(columns={'u_number':'APPID'})"
+					"df_application = pd.read_csv(path)"
+				],
+				"execution_count": 2
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Validate data quality"
 				]
 			},
 			{
@@ -137,8 +135,70 @@
 					}
 				},
 				"source": [
-					"#df_application = df_application.merge(how='left',left_on='u_operational_unit',right_on=\"name\")"
+					"# According to the feedback from BPA team (Daniel Lee), we have to filter out all those records that have \"Ignored\" in OperationalStatus field.\r\n",
+					"df = df_application[~(df_application.OperationalStatus=='Ignored')]\r\n",
+					"#df = df_application[(~(df_application.OperationalStatus=='Retired')) & (~(df_application.OperationalStatus=='Ignored'))]"
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"# The out commented lines of codes are used to bug-fix.\r\n",
+					"#df_application.describe(include='all')\r\n",
+					"#display(df[df.ApplicationName.duplicated(keep=False)])\r\n",
+					"#display(df[df.AppID==0])"
+				],
+				"execution_count": 4
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Transform the data"
 				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Transform string fields into integer format, and if there are empty entries, set them to 0\r\n",
+					"df[['AppID', 'IsOmniaSubscription','ProductOwnerNo','OperationalUnitManagerNo']] = df[['AppID', 'IsOmniaSubscription','ProductOwnerNo','OperationalUnitManagerNo']].fillna(0).astype('int64')\r\n",
+					"\r\n",
+					"# Transform string fields into date format\r\n",
+					"df.Created = pd.to_datetime(df.Created)\r\n",
+					"df.Updated = pd.to_datetime(df.Updated)\r\n",
+					"df.EndOfLifeDate = pd.to_datetime(df.EndOfLifeDate)"
+				],
+				"execution_count": 5
 			},
 			{
 				"cell_type": "markdown",
@@ -167,31 +227,16 @@
 					}
 				},
 				"source": [
-					"# Drop the empty column\r\n",
-					"df_application = df_application.drop(\"u_product_owner\",axis=1)"
-				]
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
 					"from pyspark.sql import SparkSession\r\n",
 					"spark = SparkSession.builder.getOrCreate()\r\n",
+					"\r\n",
 					"# Define optimized path to save the data\r\n",
-					"optimized_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/parquet/Extended_ACMMonthlyActualCost_Aggregated_overview.parquet\" \r\n",
+					"optimized_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet.parquet\"\r\n",
+					"\r\n",
 					"#Save the data with partitioned by time\r\n",
-					"spark.createDataFrame(df_application ).write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
-				]
+					"spark.createDataFrame(df).write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
+				],
+				"execution_count": 6
 			}
 		]
 	}
