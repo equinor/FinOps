@@ -36,7 +36,7 @@ jobs:
             - name: 'Update arm template'
               shell: pwsh
               run: |
-                ./powershell/CleanArmTemplate.ps1 -ARMTemplatePath "./s037-cost-management/TemplateForWorkspace.json" -UpdatedTemplatePath ${{ env.UPDATED-DEPLOYMENT-PATH }}
+                ./powershell/CleanArmTemplate.ps1 -ARMTemplatePath "./s037-cost-management/TemplateForWorkspace.json" -UpdatedTemplatePath ${{ env.UPDATED-DEPLOYMENT-PATH }} -WorkspaceName "finops-synapse-dev" -SparkPoolName "sparkpooldev"
             
             - name: 'List'
               run: ls
