@@ -463,15 +463,15 @@
 		},
 		"Daily Extend AI column and WBS tags_v1_notebookSparkPoolNameRef": {
 			"type": "string",
-			"defaultValue": "sparkpool32"
+			"defaultValue": "sprkpool33large"
 		},
 		"Daily Extend AI column and WBS tags_v1_notebookSparkPoolIdRef": {
 			"type": "string",
-			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32"
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
 		},
 		"Daily Extend AI column and WBS tags_v1_notebookSparkPoolEndpointRef": {
 			"type": "string",
-			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
 		"Daily Extend AI column and WBS tags_v1_Copy1_notebookSparkPoolNameRef": {
 			"type": "string",
@@ -21934,6 +21934,45 @@
 								"parameters": {}
 							}
 						]
+					},
+					{
+						"name": "NewServiceNowNotebook",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "NewServiceNowPipeline",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "Prod_ServiceNowApplication",
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": "sparkpool32",
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"driverSize": "Medium",
+							"numExecutors": null
+						}
 					}
 				],
 				"policy": {
@@ -21947,7 +21986,9 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/datasets/NewServiceNowSourceDataset')]",
-				"[concat(variables('workspaceId'), '/datasets/NewServiceNowSinkDataset')]"
+				"[concat(variables('workspaceId'), '/datasets/NewServiceNowSinkDataset')]",
+				"[concat(variables('workspaceId'), '/notebooks/Prod_ServiceNowApplication')]",
+				"[concat(variables('workspaceId'), '/bigDataPools/sparkpool32')]"
 			]
 		},
 		{
@@ -35518,6 +35559,44 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/Daily at 12am')]",
+			"type": "Microsoft.Synapse/workspaces/triggers",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "NewServiceNow",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2023-09-26T07:21:00",
+						"timeZone": "W. Europe Standard Time",
+						"schedule": {
+							"minutes": [
+								0
+							],
+							"hours": [
+								0
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/NewServiceNow')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/Daily at 2am')]",
 			"type": "Microsoft.Synapse/workspaces/triggers",
 			"apiVersion": "2019-06-01-preview",
@@ -41648,17 +41727,17 @@
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
-					"driverMemory": "56g",
-					"driverCores": 8,
-					"executorMemory": "56g",
-					"executorCores": 8,
-					"numExecutors": 2,
+					"driverMemory": "112g",
+					"driverCores": 16,
+					"executorMemory": "112g",
+					"executorCores": 16,
+					"numExecutors": 1,
 					"runAsWorkspaceSystemIdentity": false,
 					"conf": {
-						"spark.dynamicAllocation.enabled": "false",
-						"spark.dynamicAllocation.minExecutors": "2",
-						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "9dbb3325-1de2-4c6b-9360-f06cd52929bb"
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "4",
+						"spark.autotune.trackingId": "33b2539e-f754-4448-a507-ddddbabb83db"
 					}
 				},
 				"metadata": {
@@ -41680,10 +41759,10 @@
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net"
 						},
-						"sparkVersion": "3.2",
+						"sparkVersion": "3.3",
 						"nodeCount": 3,
-						"cores": 8,
-						"memory": 56
+						"cores": 16,
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -41696,16 +41775,16 @@
 							]
 						},
 						"source": [
-							"# amortizedCostPath = 'exports/daily/ACMDailyAmortizedCost/'\n",
-							"# amortizedCostPath = 'exports/monthly/ACMMonthlyAmortizedCost/'\n",
-							"# actualCostPath = 'exports/monthly/ACMMonthlyActualCost/'\n",
-							"# actualCostPath = 'exports/daily/ACMDailyActualCost/'\n",
-							"# toDate = '20230831'\n",
-							"# fromDate = '20230801'\n",
-							"# container = 'usage'"
+							" #amortizedCostPath = 'exports/daily/ACMDailyAmortizedCost/'\n",
+							" #amortizedCostPath = 'exports/monthly/ACMMonthlyAmortizedCost/'\n",
+							" #actualCostPath = 'exports/monthly/ACMMonthlyActualCost/'\n",
+							" #actualCostPath = 'exports/daily/ACMDailyActualCost/'\n",
+							" #toDate = '20230930'\n",
+							" #fromDate = '20230901'\n",
+							" #container = 'usage'"
 						],
 						"outputs": [],
-						"execution_count": 16
+						"execution_count": 3
 					},
 					{
 						"cell_type": "code",
@@ -41733,7 +41812,7 @@
 							"import pyspark.sql.types as T"
 						],
 						"outputs": [],
-						"execution_count": 17
+						"execution_count": 4
 					},
 					{
 						"cell_type": "code",
@@ -41767,12 +41846,13 @@
 							"\r\n",
 							"    print(f'Loading SNOW application list - {appListPath}...')\r\n",
 							"    appList = spark.read.format('parquet').load(appListPath)\r\n",
+							"    appList = appList.withColumn('AppID', F.col('AppID').cast(\"int\"))\r\n",
 							"    print(f'App list contains: {appList.count()}')\r\n",
 							"\r\n",
 							"    return cost_df, subscription_list, appList"
 						],
 						"outputs": [],
-						"execution_count": 18
+						"execution_count": 5
 					},
 					{
 						"cell_type": "code",
@@ -41803,7 +41883,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 19
+						"execution_count": 6
 					},
 					{
 						"cell_type": "code",
@@ -41844,7 +41924,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 20
+						"execution_count": 7
 					},
 					{
 						"cell_type": "code",
@@ -41874,7 +41954,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 21
+						"execution_count": 8
 					},
 					{
 						"cell_type": "code",
@@ -41910,7 +41990,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 22
+						"execution_count": 9
 					},
 					{
 						"cell_type": "code",
@@ -41948,7 +42028,7 @@
 							"    return subscription_list"
 						],
 						"outputs": [],
-						"execution_count": 23
+						"execution_count": 10
 					},
 					{
 						"cell_type": "code",
@@ -41972,7 +42052,7 @@
 							"    return cost_df, subscription_list"
 						],
 						"outputs": [],
-						"execution_count": 24
+						"execution_count": 11
 					},
 					{
 						"cell_type": "code",
@@ -42007,7 +42087,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 25
+						"execution_count": 12
 					},
 					{
 						"cell_type": "code",
@@ -42054,17 +42134,17 @@
 							"\r\n",
 							"    # Applying valid AppIDs as Active WBS'\r\n",
 							"    # If the CostAllocationCode is empty, we fill/replace the column ActiveWBS with Operational WBS in the AppList\r\n",
-							"    map_app = appList.withColumn('u_number', F.col('u_number').cast(T.StringType())).select('u_number', 'u_operational_wbs')\r\n",
-							"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.u_number, how='left')\r\n",
-							"    cost_df = joined_df.withColumn('ActiveWBS', F.when(F.col('ActiveWBS').isNull(), F.col('u_operational_wbs')).otherwise(F.col('ActiveWBS')))\r\n",
-							"    cost_df = cost_df.drop('u_operational_wbs')\r\n",
+							"    map_app = appList.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('AppID', 'OperationalWBS')\r\n",
+							"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.AppID, how='left')\r\n",
+							"    cost_df = joined_df.withColumn('ActiveWBS', F.when(F.col('ActiveWBS').isNull(), F.col('OperationalWBS')).otherwise(F.col('ActiveWBS')))\r\n",
+							"    cost_df = cost_df.drop('OperationalWBS')\r\n",
 							"\r\n",
 							"    # Applying valid CIs as Active WBS'\r\n",
-							"    # Same here as above, but we merge the dataframes on names rather than u_number\r\n",
-							"    map_app = appList.withColumn('u_number', F.col('u_number').cast(T.StringType())).select('name', 'u_operational_wbs')\r\n",
-							"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.name, how='left')\r\n",
-							"    cost_df = joined_df.withColumn('ActiveWBS', F.when(F.col('ActiveWBS').isNull(), F.col('u_operational_wbs')).otherwise(F.col('ActiveWBS')))\r\n",
-							"    cost_df = cost_df.drop('name', 'u_operational_wbs', 'u_number')\r\n",
+							"    # Same here as above, but we merge the dataframes on ApplicationNames rather than AppID\r\n",
+							"    map_app = appList.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('ApplicationName', 'OperationalWBS')\r\n",
+							"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.ApplicationName, how='left')\r\n",
+							"    cost_df = joined_df.withColumn('ActiveWBS', F.when(F.col('ActiveWBS').isNull(), F.col('OperationalWBS')).otherwise(F.col('ActiveWBS')))\r\n",
+							"    cost_df = cost_df.drop('ApplicationName', 'OperationalWBS', 'AppID')\r\n",
 							"    \r\n",
 							"    # When ActiveWBS value is string 'TOBESPECIFIED', we replace the value with None\r\n",
 							"    cost_df = cost_df.withColumn('ActiveWBS', F.when(F.upper(F.col('ActiveWBS')) == 'TOBESPECIFIED', F.lit(None)).otherwise(F.col('ActiveWBS')))\r\n",
@@ -42099,7 +42179,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 26
+						"execution_count": 13
 					},
 					{
 						"cell_type": "code",
@@ -42122,27 +42202,27 @@
 							"    appid_mask = F.col('CostAllocationType') == 'APPID'\r\n",
 							"\r\n",
 							"    # When AppID is present, we use the application name from the Service-Now Application list\r\n",
-							"    # First convert u_number to a string, then select the desired columns\r\n",
-							"    map_app = appList.withColumn('u_number', F.col('u_number').cast(T.StringType())).select('u_number', 'name')\r\n",
+							"    # First convert AppID to a string, then select the desired columns\r\n",
+							"    map_app = appList.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('AppID', 'ApplicationName')\r\n",
 							"    # Merge the two lists together with a left-join\r\n",
-							"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.u_number, how='left')\r\n",
+							"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.AppID, how='left')\r\n",
 							"    # Select the application name from AppList when AppID is present in the CostAllocationType, then drop the columns from AppList\r\n",
-							"    cost_df = joined_df.withColumn('ApplicationName', F.when(appid_mask, F.col('name'))).drop('u_number')\r\n",
+							"    cost_df = joined_df.withColumn('Application_Name', F.when(appid_mask, F.col('ApplicationName'))).drop('AppID')\r\n",
 							"\r\n",
-							"    # When Cost AllocationType is CI, we apply the CostAllocationCode as Application Name\r\n",
+							"    # When Cost AllocationType is CI, we apply the A as Application Name\r\n",
 							"    # When neither CI or AppID is present in CostAllocationType, we use the Application Name from the subscription list\r\n",
-							"    cost_df = cost_df.withColumn('ApplicationName', F.when(ci_mask & F.col('CostAllocationCode').cast('int').isNull(), F.col('CostAllocationCode'))\\\r\n",
-							"                                                     .when(ci_mask & F.col('CostAllocationCode').cast('int').isNotNull(), F.col('name'))\\\r\n",
+							"    cost_df = cost_df.withColumn('Application_Name', F.when(ci_mask & F.col('CostAllocationCode').cast('int').isNull(), F.col('CostAllocationCode'))\\\r\n",
+							"                                                     .when(ci_mask & F.col('CostAllocationCode').cast('int').isNotNull(), F.col('Applicationname'))\\\r\n",
 							"                                                     .when(~ci_mask & ~appid_mask, F.col('SubscriptionServiceNow-App'))\\\r\n",
-							"                                                     .otherwise(F.col('ApplicationName'))).drop('name')\r\n",
+							"                                                     .otherwise(F.col('Application_Name'))).drop('ApplicationName')\r\n",
 							"\r\n",
 							"\r\n",
-							"    cost_df = cost_df.withColumn('ApplicationName', F.upper(F.col('ApplicationName')))\r\n",
+							"    cost_df = cost_df.withColumn('Application_Name', F.upper(F.col('Application_Name')))\r\n",
 							"\r\n",
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 14
 					},
 					{
 						"cell_type": "code",
@@ -42177,7 +42257,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 27
+						"execution_count": 15
 					},
 					{
 						"cell_type": "code",
@@ -42209,7 +42289,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 28
+						"execution_count": 16
 					},
 					{
 						"cell_type": "code",
@@ -42239,7 +42319,7 @@
 							"    print('File write complete!')"
 						],
 						"outputs": [],
-						"execution_count": 29
+						"execution_count": 17
 					},
 					{
 						"cell_type": "code",
@@ -42315,16 +42395,35 @@
 							"        subscriptionListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions_' + previousMonthDate + '.json'\n",
 							"        print(f\"Subscription path: {subscriptionListPath}\")\n",
 							"\n",
-							"    appListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/applications/ServiceNowApplication.parquet'\n",
+							"    appListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\n",
 							"    print(f\"App-list path: {appListPath}\")\n",
 							"    cost_df, subscription_list, appList = load_source_files(costSourcefilename, subscriptionListPath, appListPath)\n",
 							"    cost_df = expand_ai_column(cost_df)\n",
 							"    cost_df = populate_wbs_columns(cost_df, subscription_list, appList)\n",
-							"    write_output_file(cost_df, costDestinationfilename)\n",
+							"    #write_output_file(cost_df, costDestinationfilename)\n",
 							"    print(' ')"
 						],
 						"outputs": [],
-						"execution_count": 30
+						"execution_count": 19
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							""
+						],
+						"outputs": [],
+						"execution_count": null
 					}
 				]
 			},
@@ -47370,7 +47469,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "3453b823-fc08-40de-bd86-9a21c9da5feb"
+						"spark.autotune.trackingId": "d54acfa9-6888-47c8-a2de-fdb13fa2c33e"
 					}
 				},
 				"metadata": {
@@ -47414,7 +47513,7 @@
 							"#container = 'usage'"
 						],
 						"outputs": [],
-						"execution_count": 79
+						"execution_count": 47
 					},
 					{
 						"cell_type": "code",
@@ -47442,7 +47541,7 @@
 							"import pyspark.sql.types as T"
 						],
 						"outputs": [],
-						"execution_count": 80
+						"execution_count": 48
 					},
 					{
 						"cell_type": "code",
@@ -47470,12 +47569,14 @@
 							"\r\n",
 							"    print(f'Loading SNOW application list - {appListPath}...')\r\n",
 							"    appList = spark.read.format('parquet').load(appListPath)\r\n",
+							"    appList = appList.withColumn('AppID', F.col('AppID').cast(\"int\"))\r\n",
+							"\r\n",
 							"    print(f'App list contains: {appList.count()}')\r\n",
 							"\r\n",
 							"    return cost_df, subscription_list, appList"
 						],
 						"outputs": [],
-						"execution_count": 81
+						"execution_count": 49
 					},
 					{
 						"cell_type": "code",
@@ -47506,7 +47607,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 82
+						"execution_count": 50
 					},
 					{
 						"cell_type": "code",
@@ -47534,6 +47635,7 @@
 							"                    \"ImageType\",\r\n",
 							"                    \"ServiceType\",\r\n",
 							"                    \"VMName\",\r\n",
+							"                    \"VMApplicationName\",\r\n",
 							"                    \"VMProperties\",\r\n",
 							"                    \"VCPUs\",\r\n",
 							"                    \"AHB\",\r\n",
@@ -47544,10 +47646,11 @@
 							"\r\n",
 							"    for col in cols_to_keep:\r\n",
 							"        cost_df = cost_df.withColumn('ai_' + col, F.coalesce(F.col(f'AdditionalInfo.{col}'), F.lit(None)))\r\n",
+							"    print(cost_df.columns)\r\n",
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 83
+						"execution_count": 51
 					},
 					{
 						"cell_type": "code",
@@ -47577,7 +47680,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 84
+						"execution_count": 52
 					},
 					{
 						"cell_type": "code",
@@ -47613,14 +47716,14 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 85
+						"execution_count": 53
 					},
 					{
 						"cell_type": "code",
 						"metadata": {
 							"jupyter": {
 								"source_hidden": false,
-								"outputs_hidden": false
+								"outputs_hidden": true
 							},
 							"nteract": {
 								"transient": {
@@ -47651,7 +47754,7 @@
 							"    return subscription_list"
 						],
 						"outputs": [],
-						"execution_count": 86
+						"execution_count": 54
 					},
 					{
 						"cell_type": "code",
@@ -47675,7 +47778,7 @@
 							"    return cost_df, subscription_list"
 						],
 						"outputs": [],
-						"execution_count": 87
+						"execution_count": 55
 					},
 					{
 						"cell_type": "code",
@@ -47710,7 +47813,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 88
+						"execution_count": 56
 					},
 					{
 						"cell_type": "code",
@@ -47757,17 +47860,17 @@
 							"\r\n",
 							"    # Applying valid AppIDs as Active WBS'\r\n",
 							"    # If the CostAllocationCode is empty, we fill/replace the column ActiveWBS with Operational WBS in the AppList\r\n",
-							"    map_app = appList.withColumn('u_number', F.col('u_number').cast(T.StringType())).select('u_number', 'u_operational_wbs')\r\n",
-							"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.u_number, how='left')\r\n",
-							"    cost_df = joined_df.withColumn('ActiveWBS', F.when(F.col('ActiveWBS').isNull(), F.col('u_operational_wbs')).otherwise(F.col('ActiveWBS')))\r\n",
-							"    cost_df = cost_df.drop('u_operational_wbs')\r\n",
+							"    map_app = appList.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('AppID', 'OperationalWBS')\r\n",
+							"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.AppID, how='left')\r\n",
+							"    cost_df = joined_df.withColumn('ActiveWBS', F.when(F.col('ActiveWBS').isNull(), F.col('OperationalWBS')).otherwise(F.col('ActiveWBS')))\r\n",
+							"    cost_df = cost_df.drop('OperationalWBS')\r\n",
 							"\r\n",
 							"    # Applying valid CIs as Active WBS'\r\n",
-							"    # Same here as above, but we merge the dataframes on names rather than u_number\r\n",
-							"    map_app = appList.withColumn('u_number', F.col('u_number').cast(T.StringType())).select('name', 'u_operational_wbs')\r\n",
-							"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.name, how='left')\r\n",
-							"    cost_df = joined_df.withColumn('ActiveWBS', F.when(F.col('ActiveWBS').isNull(), F.col('u_operational_wbs')).otherwise(F.col('ActiveWBS')))\r\n",
-							"    cost_df = cost_df.drop('name', 'u_operational_wbs', 'u_number')\r\n",
+							"    # Same here as above, but we merge the dataframes on ApplicationNames rather than AppID\r\n",
+							"    map_app = appList.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('ApplicationName', 'OperationalWBS')\r\n",
+							"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.ApplicationName, how='left')\r\n",
+							"    cost_df = joined_df.withColumn('ActiveWBS', F.when(F.col('ActiveWBS').isNull(), F.col('OperationalWBS')).otherwise(F.col('ActiveWBS')))\r\n",
+							"    cost_df = cost_df.drop('ApplicationName', 'OperationalWBS', 'AppID')\r\n",
 							"    \r\n",
 							"    # When ActiveWBS value is string 'TOBESPECIFIED', we replace the value with None\r\n",
 							"    cost_df = cost_df.withColumn('ActiveWBS', F.when(F.upper(F.col('ActiveWBS')) == 'TOBESPECIFIED', F.lit(None)).otherwise(F.col('ActiveWBS')))\r\n",
@@ -47802,7 +47905,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 89
+						"execution_count": 57
 					},
 					{
 						"cell_type": "code",
@@ -47825,30 +47928,27 @@
 							"    appid_mask = F.col('CostAllocationType') == 'APPID'\r\n",
 							"\r\n",
 							"    # When AppID is present, we use the application name from the Service-Now Application list\r\n",
-							"    # First convert u_number to a string, then select the desired columns\r\n",
-							"    map_app = appList.withColumn('u_number', F.col('u_number').cast(T.StringType())).select('u_number', 'name')\r\n",
+							"    # First convert AppID to a string, then select the desired columns\r\n",
+							"    map_app = appList.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('AppID', 'ApplicationName')\r\n",
 							"    # Merge the two lists together with a left-join\r\n",
-							"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.u_number, how='left')\r\n",
+							"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.AppID, how='left')\r\n",
 							"    # Select the application name from AppList when AppID is present in the CostAllocationType, then drop the columns from AppList\r\n",
-							"    cost_df = joined_df.withColumn('ApplicationName', F.when(appid_mask, F.col('name'))).drop('u_number')\r\n",
+							"    cost_df = joined_df.withColumn('Application_Name', F.when(appid_mask, F.col('ApplicationName'))).drop('AppID')\r\n",
 							"\r\n",
 							"    # When Cost AllocationType is CI, we apply the A as Application Name\r\n",
 							"    # When neither CI or AppID is present in CostAllocationType, we use the Application Name from the subscription list\r\n",
-							"    cost_df = cost_df.withColumn('ApplicationName', F.when(ci_mask & F.col('CostAllocationCode').cast('int').isNull(), F.col('CostAllocationCode'))\\\r\n",
-							"                                                     .when(ci_mask & F.col('CostAllocationCode').cast('int').isNotNull(), F.col('name'))\\\r\n",
+							"    cost_df = cost_df.withColumn('Application_Name', F.when(ci_mask & F.col('CostAllocationCode').cast('int').isNull(), F.col('CostAllocationCode'))\\\r\n",
+							"                                                     .when(ci_mask & F.col('CostAllocationCode').cast('int').isNotNull(), F.col('Applicationname'))\\\r\n",
 							"                                                     .when(~ci_mask & ~appid_mask, F.col('SubscriptionServiceNow-App'))\\\r\n",
-							"                                                     .otherwise(F.col('ApplicationName'))).drop('name')\r\n",
+							"                                                     .otherwise(F.col('Application_Name'))).drop('ApplicationName')\r\n",
 							"\r\n",
 							"\r\n",
-							"cost_df.withColumn('ApplicationName', F.when(ci_mask & F.col('CostAllocationCode').cast('int').isNull(), F.col('CostAllocationCode')).when(ci_mask & F.col('CostAllocationCode').cast('int').isNotNull(), F.col('name'))\r\n",
-							"\r\n",
-							"\r\n",
-							"    cost_df = cost_df.withColumn('ApplicationName', F.upper(F.col('ApplicationName')))\r\n",
+							"    cost_df = cost_df.withColumn('Application_Name', F.upper(F.col('Application_Name')))\r\n",
 							"\r\n",
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 90
+						"execution_count": 58
 					},
 					{
 						"cell_type": "code",
@@ -47883,7 +47983,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 91
+						"execution_count": 59
 					},
 					{
 						"cell_type": "code",
@@ -47915,7 +48015,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 92
+						"execution_count": 60
 					},
 					{
 						"cell_type": "code",
@@ -47945,7 +48045,7 @@
 							"    print('File write complete!')"
 						],
 						"outputs": [],
-						"execution_count": 93
+						"execution_count": 61
 					},
 					{
 						"cell_type": "code",
@@ -47992,16 +48092,16 @@
 							"    else:\n",
 							"        print(f'Using {longToDate} subscription json file')\n",
 							"        subscriptionListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions_' + longToDate + '.json'\n",
-							"    appListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/applications/ServiceNowApplication.parquet'\n",
+							"    appListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\n",
 							"\n",
 							"    cost_df, subscription_list, appList = load_source_files(costSourcefilename, subscriptionListPath, appListPath)\n",
 							"    cost_df = expand_ai_column(cost_df)\n",
 							"    cost_df = populate_wbs_columns(cost_df, subscription_list, appList)\n",
-							"    write_output_file(cost_df, costDestinationfilename)\n",
+							"    #write_output_file(cost_df, costDestinationfilename)\n",
 							"    print(' ')"
 						],
 						"outputs": [],
-						"execution_count": 94
+						"execution_count": 62
 					}
 				]
 			},
@@ -51763,14 +51863,11 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "4ab8f03b-851a-48a9-9605-1ff4a9c19130"
+						"spark.autotune.trackingId": "231d5a0e-4231-4da1-9a6a-047c5de272f5"
 					}
 				},
 				"metadata": {
 					"saveOutput": true,
-					"synapse_widget": {
-						"version": "0.1"
-					},
 					"enableDebugMode": false,
 					"kernelspec": {
 						"name": "synapse_pyspark",
@@ -51786,18 +51883,29 @@
 						"endpoint": "[parameters('Prod_ServiceNowApplication_notebookSparkPoolEndpointRef')]",
 						"auth": {
 							"type": "AAD",
-							"authResource": "https://dev.azuresynapse.net",
-							"authHeader": null
+							"authResource": "https://dev.azuresynapse.net"
 						},
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"extraHeader": null
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Import Libraries"
+						]
+					},
 					{
 						"cell_type": "code",
 						"source": [
@@ -51808,12 +51916,8 @@
 						"execution_count": 1
 					},
 					{
-						"cell_type": "code",
+						"cell_type": "markdown",
 						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
 							"nteract": {
 								"transient": {
 									"deleting": false
@@ -51821,31 +51925,8 @@
 							}
 						},
 						"source": [
-							"# Define path\r\n",
-							"path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/ServiceNowApplication.parquet\"\r\n",
-							"\r\n",
-							"# Load the data\r\n",
-							"df_application = spark.read.format(\"parquet\").load(path).toPandas().rename(columns={'u_number':'APPID'})"
-						],
-						"outputs": []
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"df_application.describe(include='all')"
-						],
-						"outputs": []
+							"# Load the data"
+						]
 					},
 					{
 						"cell_type": "code",
@@ -51862,12 +51943,26 @@
 						},
 						"source": [
 							"# Define path\r\n",
-							"#path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/....parquet\"\r\n",
+							"path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/NewServiceNowDataset.csv\"\r\n",
 							"\r\n",
 							"# Load the data\r\n",
-							"#df_operational_unit = spark.read.format(\"parquet\").load(path).toPandas().rename(columns={'u_number':'APPID'})"
+							"df_application = pd.read_csv(path)"
 						],
-						"outputs": []
+						"outputs": [],
+						"execution_count": 2
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Validate data quality"
+						]
 					},
 					{
 						"cell_type": "code",
@@ -51883,9 +51978,73 @@
 							}
 						},
 						"source": [
-							"#df_application = df_application.merge(how='left',left_on='u_operational_unit',right_on=\"name\")"
+							"# According to the feedback from BPA team (Daniel Lee), we have to filter out all those records that have \"Ignored\" in OperationalStatus field.\r\n",
+							"df = df_application[~(df_application.OperationalStatus=='Ignored')]\r\n",
+							"#df = df_application[(~(df_application.OperationalStatus=='Retired')) & (~(df_application.OperationalStatus=='Ignored'))]"
 						],
-						"outputs": []
+						"outputs": [],
+						"execution_count": 3
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"# The out commented lines of codes are used to bug-fix.\r\n",
+							"#df_application.describe(include='all')\r\n",
+							"#display(df[df.ApplicationName.duplicated(keep=False)])\r\n",
+							"#display(df[df.AppID==0])"
+						],
+						"outputs": [],
+						"execution_count": 4
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Transform the data"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Transform string fields into integer format, and if there are empty entries, set them to 0\r\n",
+							"df[['AppID', 'IsOmniaSubscription','ProductOwnerNo','OperationalUnitManagerNo']] = df[['AppID', 'IsOmniaSubscription','ProductOwnerNo','OperationalUnitManagerNo']].fillna(0).astype('int64')\r\n",
+							"\r\n",
+							"# Transform string fields into date format\r\n",
+							"df.Created = pd.to_datetime(df.Created)\r\n",
+							"df.Updated = pd.to_datetime(df.Updated)\r\n",
+							"df.EndOfLifeDate = pd.to_datetime(df.EndOfLifeDate)"
+						],
+						"outputs": [],
+						"execution_count": 5
 					},
 					{
 						"cell_type": "markdown",
@@ -51914,33 +52073,17 @@
 							}
 						},
 						"source": [
-							"# Drop the empty column\r\n",
-							"df_application = df_application.drop(\"u_product_owner\",axis=1)"
-						],
-						"outputs": []
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
 							"from pyspark.sql import SparkSession\r\n",
 							"spark = SparkSession.builder.getOrCreate()\r\n",
+							"\r\n",
 							"# Define optimized path to save the data\r\n",
-							"optimized_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/parquet/Extended_ACMMonthlyActualCost_Aggregated_overview.parquet\" \r\n",
+							"optimized_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet.parquet\"\r\n",
+							"\r\n",
 							"#Save the data with partitioned by time\r\n",
-							"spark.createDataFrame(df_application ).write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
+							"spark.createDataFrame(df).write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
 						],
-						"outputs": []
+						"outputs": [],
+						"execution_count": 6
 					}
 				]
 			},
