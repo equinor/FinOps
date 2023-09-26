@@ -50,6 +50,18 @@ foreach ($parameter in $workspaceTemplateParams.parameters.PSObject.Properties) 
         continue
     }
 
+    # Override dataset resource references
+
+    if ($parameterKey -like "*dataSetLinkedServiceName") {
+        $workspaceTemplateParams.parameters.$parameterKey.value = $parameterValue.replace("s037-cost-management", $WorkspaceName)
+    }
+
+    # Override pipeline resource references
+
+    if ($parameterKey -like "*pipelineSparkPoolNameRef") {
+        $workspaceTemplateParams.parameters.$parameterKey.value = $sparkPoolName
+    }
+
     # Override spark pool resource parameters
 
     if ($parameterKey -like "*sparkPoolResourceName") {

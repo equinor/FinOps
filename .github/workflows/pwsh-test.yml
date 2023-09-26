@@ -2,8 +2,8 @@ name: pwsh test
 
 on:
     workflow_dispatch:
-    # push:
-    #     branches: [ workspace_publish ]
+    push:
+        branches: [ workspace_publish ]
 
 env:
     BICEP-PARAMETER-PATH: azuredeploy.parameters.dev.json
@@ -36,7 +36,7 @@ jobs:
             - name: 'Update arm template'
               shell: pwsh
               run: |
-                ./powershell/DisableSparkPoolDeployments.ps1 -ARMTemplatePath "./s037-cost-management/TemplateForWorkspace.json" -UpdatedTemplatePath ${{ env.UPDATED-DEPLOYMENT-PATH }}
+                ./powershell/CleanArmTemplate.ps1 -ARMTemplatePath "./s037-cost-management/TemplateForWorkspace.json" -UpdatedTemplatePath ${{ env.UPDATED-DEPLOYMENT-PATH }}
             
             - name: 'List'
               run: ls
