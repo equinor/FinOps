@@ -20,17 +20,22 @@ foreach ($resource in $armTemplate.resources) {
     }
 
     # Replace old Synapse workspace references with new environment references
+    $updatedDependencies = @()
     foreach ($dependency in $resource.dependsOn) {
         if ($dependency -like "*s037-cost-management*") {
-            $dependency = $dependency.replace("s037-cost-management", $WorkspaceName)
+            $updatedDependencies += $dependency.replace("s037-cost-management", $WorkspaceName)
             continue
         }
 
         if (($dependency -like "*bigDataPools*")) {
-            $dependency = "[concat(variables('workspaceId'), '/bigDataPools/$SparkPoolName')]"
+            $updatedDependencies += "[concat(variables('workspaceId'), '/bigDataPools/$SparkPoolName')]"
             continue
         }
+
+        $updatedDependencies += $dependency
     }
+
+    $resource.dependsOn = updatedDependencies
 }
 
 $armTemplate | ConvertTo-Json -Depth 20 | Out-File $UpdatedTemplatePath
