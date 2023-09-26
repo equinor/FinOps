@@ -1,8 +1,10 @@
 {
     "Microsoft.Synapse/workspaces/datasets": {
-        "properties": {
-            "linkedServiceName": {
-                "referenceName": "=:-linkedServiceName:string"
+        "*": {
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "=:-dataSetLinkedServiceName:string"
+                }
             }
         }
     },
@@ -22,19 +24,28 @@
     "Microsoft.Synapse/workspaces/notebooks": {
         "properties": {
             "bigDataPool": {
-                "referenceName": "=:-sparkPoolName:string"
+                "referenceName": "=:-notebookSparkPoolNameRef:string"
             },
              "metadata": {
                 "a365ComputeOptions": {
-                    "id": "=:-sparkPoolId:string",
-                    "name": "=:-sparkPoolName:string",
-                    "endpoint": "=:-sparkPoolEndpoint:string"
+                    "id": "=:-notebookSparkPoolIdRef:string",
+                    "name": "=:-notebookSparkPoolNameRef:string",
+                    "endpoint": "=:-notebookSparkPoolEndpointRef:string"
+                }
+            }
+        }
+    },
+    "Microsoft.Synapse/workspaces/pipelines": {
+        "properties": {
+            "typeProperties": {
+                "sparkPool": {
+                    "referenceName": "=:-pipelineSparkPoolNameRef:string"
                 }
             }
         }
     },
     "Microsoft.Synapse/workspaces/bigDataPools": {
-        "name": "=:-sparkPoolName:string",
+        "name": "=:-sparkPoolResourceName:string",
         "properties": {
             "autoPause": {
                 "delayInMinutes": "=:-delayInMinutes:int"
