@@ -21,6 +21,42 @@
 			"metadata": "Secure string for 'connectionString' of 's037-cost-management-WorkspaceDefaultSqlServer'",
 			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:s037-cost-management.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
 		},
+		"Azure AD Users_v1_pipelineSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sparkpool32"
+		},
+		"Convert Monthly CSV Cost files to Parquet_pipelineSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"Daily Cleanup_pipelineSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"Monthly Combined Extend AI column and WBS tags - Extended Parquet_pipelineSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"NewServiceNow_pipelineSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sparkpool32"
+		},
+		"Prepare Daily HUB File_pipelineSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"RI Recommendations_pipelineSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sparkpool32"
+		},
+		"Run Notebook on Previous Dates_v1_pipelineSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"Test SPARK Ad-hoc Convert and Extend CSV Cost files to Parquet_pipelineSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sparkpool32"
+		},
 		"ACDC_reservation_data_json_dataSetLinkedServiceName": {
 			"type": "string",
 			"defaultValue": "omniaacdcdlsprod"
@@ -3522,7 +3558,7 @@
 							},
 							"snapshot": true,
 							"sparkPool": {
-								"referenceName": "sparkpool32",
+								"referenceName": "[parameters('Azure AD Users_v1_pipelineSparkPoolNameRef')]",
 								"type": "BigDataPoolReference"
 							},
 							"executorSize": "Small",
@@ -3561,7 +3597,7 @@
 							},
 							"snapshot": true,
 							"sparkPool": {
-								"referenceName": "sparkpool32",
+								"referenceName": "[parameters('Azure AD Users_v1_pipelineSparkPoolNameRef')]",
 								"type": "BigDataPoolReference"
 							},
 							"executorSize": "Small",
@@ -3589,7 +3625,7 @@
 				"[concat(variables('workspaceId'), '/datasets/AzureAD_Users')]",
 				"[concat(variables('workspaceId'), '/datasets/Parquet_File')]",
 				"[concat(variables('workspaceId'), '/notebooks/usersWithManagerSnapshot_v1')]",
-				"[concat(variables('workspaceId'), '/bigDataPools/sparkpool32')]",
+				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('Azure AD Users_v1_pipelineSparkPoolNameRef'))]",
 				"[concat(variables('workspaceId'), '/notebooks/usersWithBusinessAreaSnapshot_v1')]"
 			]
 		},
@@ -6874,7 +6910,7 @@
 							},
 							"snapshot": true,
 							"sparkPool": {
-								"referenceName": "sprkpool33large",
+								"referenceName": "[parameters('Convert Monthly CSV Cost files to Parquet_pipelineSparkPoolNameRef')]",
 								"type": "BigDataPoolReference"
 							},
 							"executorSize": "Large",
@@ -6925,7 +6961,7 @@
 				"[concat(variables('workspaceId'), '/datasets/Adhoc_CSV_Source')]",
 				"[concat(variables('workspaceId'), '/datasets/Monthly_Parquet')]",
 				"[concat(variables('workspaceId'), '/notebooks/Monthly Extend AI column and WBS tags_v2')]",
-				"[concat(variables('workspaceId'), '/bigDataPools/sprkpool33large')]"
+				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('Convert Monthly CSV Cost files to Parquet_pipelineSparkPoolNameRef'))]"
 			]
 		},
 		{
@@ -9084,7 +9120,7 @@
 							},
 							"snapshot": true,
 							"sparkPool": {
-								"referenceName": "sprkpool33large",
+								"referenceName": "[parameters('Daily Cleanup_pipelineSparkPoolNameRef')]",
 								"type": "BigDataPoolReference"
 							},
 							"executorSize": "Medium",
@@ -9133,7 +9169,7 @@
 				"[concat(variables('workspaceId'), '/datasets/ds_CSV_File')]",
 				"[concat(variables('workspaceId'), '/datasets/ds_Daily_Parquet_File')]",
 				"[concat(variables('workspaceId'), '/notebooks/Daily Extend AI column and WBS tags_v1')]",
-				"[concat(variables('workspaceId'), '/bigDataPools/sprkpool33large')]",
+				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('Daily Cleanup_pipelineSparkPoolNameRef'))]",
 				"[concat(variables('workspaceId'), '/datasets/ds_Test_delete_file')]",
 				"[concat(variables('workspaceId'), '/datasets/Monthly_Parquet')]"
 			]
@@ -14045,7 +14081,7 @@
 							},
 							"snapshot": true,
 							"sparkPool": {
-								"referenceName": "sprkpool33large",
+								"referenceName": "[parameters('Monthly Combined Extend AI column and WBS tags - Extended Parquet_pipelineSparkPoolNameRef')]",
 								"type": "BigDataPoolReference"
 							},
 							"executorSize": "Large",
@@ -14088,7 +14124,7 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/notebooks/Monthly Extend AI column and WBS tags_v2')]",
-				"[concat(variables('workspaceId'), '/bigDataPools/sprkpool33large')]"
+				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('Monthly Combined Extend AI column and WBS tags - Extended Parquet_pipelineSparkPoolNameRef'))]"
 			]
 		},
 		{
@@ -21961,7 +21997,7 @@
 							},
 							"snapshot": true,
 							"sparkPool": {
-								"referenceName": "sparkpool32",
+								"referenceName": "[parameters('NewServiceNow_pipelineSparkPoolNameRef')]",
 								"type": "BigDataPoolReference"
 							},
 							"executorSize": "Medium",
@@ -21988,7 +22024,7 @@
 				"[concat(variables('workspaceId'), '/datasets/NewServiceNowSourceDataset')]",
 				"[concat(variables('workspaceId'), '/datasets/NewServiceNowSinkDataset')]",
 				"[concat(variables('workspaceId'), '/notebooks/Prod_ServiceNowApplication')]",
-				"[concat(variables('workspaceId'), '/bigDataPools/sparkpool32')]"
+				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('NewServiceNow_pipelineSparkPoolNameRef'))]"
 			]
 		},
 		{
@@ -25201,7 +25237,7 @@
 							},
 							"snapshot": true,
 							"sparkPool": {
-								"referenceName": "sprkpool33large",
+								"referenceName": "[parameters('Prepare Daily HUB File_pipelineSparkPoolNameRef')]",
 								"type": "BigDataPoolReference"
 							},
 							"executorSize": "Medium",
@@ -25246,7 +25282,7 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/notebooks/HUB_Daily_File')]",
-				"[concat(variables('workspaceId'), '/bigDataPools/sprkpool33large')]"
+				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('Prepare Daily HUB File_pipelineSparkPoolNameRef'))]"
 			]
 		},
 		{
@@ -25789,7 +25825,7 @@
 							},
 							"snapshot": true,
 							"sparkPool": {
-								"referenceName": "sparkpool32",
+								"referenceName": "[parameters('RI Recommendations_pipelineSparkPoolNameRef')]",
 								"type": "BigDataPoolReference"
 							},
 							"executorSize": "Small",
@@ -25842,7 +25878,7 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/notebooks/Get RI Recommendations')]",
-				"[concat(variables('workspaceId'), '/bigDataPools/sparkpool32')]"
+				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('RI Recommendations_pipelineSparkPoolNameRef'))]"
 			]
 		},
 		{
@@ -25942,7 +25978,7 @@
 							},
 							"snapshot": true,
 							"sparkPool": {
-								"referenceName": "sprkpool33large",
+								"referenceName": "[parameters('Run Notebook on Previous Dates_v1_pipelineSparkPoolNameRef')]",
 								"type": "BigDataPoolReference"
 							},
 							"executorSize": "Medium",
@@ -25965,7 +26001,7 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/notebooks/Run Notebook on Previous Dates_v1')]",
-				"[concat(variables('workspaceId'), '/bigDataPools/sprkpool33large')]"
+				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('Run Notebook on Previous Dates_v1_pipelineSparkPoolNameRef'))]"
 			]
 		},
 		{
@@ -28971,7 +29007,7 @@
 							},
 							"snapshot": true,
 							"sparkPool": {
-								"referenceName": "sparkpool32",
+								"referenceName": "[parameters('Test SPARK Ad-hoc Convert and Extend CSV Cost files to Parquet_pipelineSparkPoolNameRef')]",
 								"type": "BigDataPoolReference"
 							},
 							"executorSize": "Medium",
@@ -29024,7 +29060,7 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/notebooks/Spark Extend Cost File')]",
-				"[concat(variables('workspaceId'), '/bigDataPools/sparkpool32')]"
+				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('Test SPARK Ad-hoc Convert and Extend CSV Cost files to Parquet_pipelineSparkPoolNameRef'))]"
 			]
 		},
 		{
@@ -48255,7 +48291,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "806e45d6-5cc4-45a6-b5fd-8700fea135d0"
+						"spark.autotune.trackingId": "fbd1dcd0-4bb5-440f-84b9-8aa6aaaec310"
 					}
 				},
 				"metadata": {
@@ -48280,8 +48316,7 @@
 						"sparkVersion": "3.2",
 						"nodeCount": 3,
 						"cores": 8,
-						"memory": 56,
-						"automaticScaleJobs": false
+						"memory": 56
 					},
 					"sessionKeepAliveTimeout": 30
 				},
