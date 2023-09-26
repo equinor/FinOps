@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "6328ad4b-b81a-4db1-b7b9-47253c3bc290"
+				"spark.autotune.trackingId": "df7f3d34-bd9b-4c3a-9dac-cbac45d601c8"
 			}
 		},
 		"metadata": {
@@ -311,7 +311,7 @@
 					"# Change the data type of the 'Report_Date' column to Datetime\r\n",
 					"df = df.withColumn(\"Report_Date\", col(\"Report_Date\").cast(\"timestamp\"))"
 				],
-				"execution_count": 7
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -340,7 +340,7 @@
 					")\r\n",
 					""
 				],
-				"execution_count": 9
+				"execution_count": 7
 			},
 			{
 				"cell_type": "code",
@@ -362,7 +362,7 @@
 					"#display(df.filter((F.col('ApplicationName')).contains('Danske Commodities')))\r\n",
 					"#display(df.filter((F.col('ApplicationName')).contains('Unknown')))"
 				],
-				"execution_count": 10
+				"execution_count": 8
 			},
 			{
 				"cell_type": "markdown",
@@ -397,7 +397,7 @@
 					"# Save the data with partitioned by Report date\r\n",
 					"df.write.format('parquet').mode('overwrite').partitionBy('Report_Date_Partition').option('overwriteSchema', 'true').save(optimized_path)"
 				],
-				"execution_count": 12
+				"execution_count": 9
 			},
 			{
 				"cell_type": "markdown",
@@ -429,7 +429,7 @@
 					"currentSparkSession = SparkSession.builder.getOrCreate()\r\n",
 					"spark.catalog.clearCache()"
 				],
-				"execution_count": 13
+				"execution_count": 10
 			}
 		]
 	}
