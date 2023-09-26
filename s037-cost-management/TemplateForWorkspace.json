@@ -48255,7 +48255,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "4e22f7ca-ccff-4884-88d4-027eae57a474"
+						"spark.autotune.trackingId": "f7077a59-88ad-497d-a435-b10c869cf4e9"
 					}
 				},
 				"metadata": {
@@ -48280,7 +48280,8 @@
 						"sparkVersion": "3.2",
 						"nodeCount": 3,
 						"cores": 8,
-						"memory": 56
+						"memory": 56,
+						"automaticScaleJobs": false
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -48303,7 +48304,8 @@
 						},
 						"source": [
 							"filePath = '/usage/daily/'\n",
-							"fileName = '2022-08-16-raw.csv'"
+							"fileName = '2022-08-16-raw.csv'\n",
+							""
 						],
 						"outputs": [],
 						"execution_count": 138
@@ -55743,14 +55745,11 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "6903be78-b572-457b-905b-90d825ac65c2"
+						"spark.autotune.trackingId": "0ae6e5aa-c924-4193-946d-a2100e6519c1"
 					}
 				},
 				"metadata": {
 					"saveOutput": true,
-					"synapse_widget": {
-						"version": "0.1"
-					},
 					"enableDebugMode": false,
 					"kernelspec": {
 						"name": "synapse_pyspark",
@@ -55766,26 +55765,27 @@
 						"endpoint": "[parameters('usersWithManagerSnapshot_v1_notebookSparkPoolEndpointRef')]",
 						"auth": {
 							"type": "AAD",
-							"authResource": "https://dev.azuresynapse.net",
-							"authHeader": null
+							"authResource": "https://dev.azuresynapse.net"
 						},
 						"sparkVersion": "3.2",
 						"nodeCount": 3,
 						"cores": 8,
 						"memory": 56,
-						"extraHeader": null
+						"automaticScaleJobs": false
 					},
 					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"# Transforming Azure AD user-hierarchy"
 						]
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"import numpy as np\n",
 							"import pandas as pd"
@@ -55795,12 +55795,14 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"### Importing the raw data"
 						]
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"container = 'usage'\n",
 							"file_path = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/AzureAD_BusinessAreaLevel/bronze/AzureAD_EmployeesManagersSnapshot.parquet'\n",
@@ -55814,12 +55816,14 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"### Cleaning the data"
 						]
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"print(f\"Old length of the dataset is: {df_users.shape[0]}\")\n",
 							"\n",
@@ -55836,6 +55840,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"#### Split email and filter out Equinor-domain\n",
 							"cannot call on NoneType, need to rename first: \n",
@@ -55844,6 +55849,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"# Getting the username by splitting e-mail name before \"@\"-symbol\n",
 							"df_users['userName'] = [email[:email.find('@')] for email in df_users['userPrincipalName']]\n",
@@ -55856,6 +55862,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"print(f\"Old length of the dataset is: {df_users.shape[0]}\")\n",
 							"\n",
@@ -55872,12 +55879,14 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"#### Dropping duplicates"
 						]
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"# # Display the duplicates\n",
 							"# display(df_users[df_users['employeeId'].isin(df_users.employeeId.value_counts().loc[lambda x: x>1].index)].sort_values(by=['employeeId']))"
@@ -55887,6 +55896,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"# # some users are registrered with two different employeeId and corresponding department, manager etc. but the same displayName\n",
 							"# display(df_users[df_users['displayName'].isin(df_users.displayName.value_counts().loc[lambda x: x>1].index)].sort_values(by=['displayName']))"
@@ -55896,6 +55906,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"print(f\"Old length of the dataset is: {df_users.shape[0]}\")\n",
 							"\n",
@@ -55913,6 +55924,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"## Hierarchy-table\n",
 							"The hierarchy-table will only connect employeeID to the managerIDs above"
@@ -55920,6 +55932,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"# Make df of employeeId and managerId\n",
 							"df_id = df_users[['employeeId', 'manager_employeeId']].copy()\n",
@@ -55932,6 +55945,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"#### Merge df\n",
 							"Create a total df that connect the employeeID to its closest manager. Merge df_id to itself untill only 1 unique employeeID is at the top.\n",
@@ -55944,6 +55958,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"# Start with copy the first two columns of employeeId and managerId\n",
 							"df_total = df_id.copy()\n",
@@ -55980,6 +55995,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"# Set a threshold for how far up the tree we want to go.\n",
 							"thres = 10\n",
@@ -56009,6 +56025,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"#### Add level-column\n",
 							"Define a level indicating how many managers is above. E.g. vp has normally 3 managers and will be at level 4"
@@ -56016,6 +56033,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"# Count total number of columns in hierarchy and substract number of empty-cells\n",
 							"num_columns = df_total.shape[1]\n",
@@ -56026,12 +56044,14 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"#### Locate employeeID with missing information"
 						]
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"print(f\"Old length of the dataset is: {df_total.shape[0]}\")\n",
 							"\n",
@@ -56052,6 +56072,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"# Check that wrong ID is no longer in hierarchy\n",
 							"id_list = df_removeId['employeeId'].sort_values().unique()\n",
@@ -56068,12 +56089,14 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"#### Final steps to hierarchy of employeeID and corresponding Managers for all levels"
 						]
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"# List of all levels in decreasing order\n",
 							"level_list = df_total.level.sort_values().unique()\n",
@@ -56094,6 +56117,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"# Apply Manager 1, 2, ... according to which level the employee is at\n",
 							"for level, df in combined_tuple:\n",
@@ -56106,6 +56130,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"df_hierarchy = df_list[0].copy()\n",
 							"\n",
@@ -56142,6 +56167,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"### Dataframes in the notebook\n",
 							"1. df_hierarchy shows employeeID, level, Manager1, Manager2 etc. NB! Those employees which have Manager1=0 is not correctly linked to the top leader of the company due to poor data quality. They are included so that one can link to a person registrered in Azure AD, but information about level (or business area/department) will not be accurate.\n",
@@ -56151,12 +56177,14 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"## Write to optimized"
 						]
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"#Set optimized path\n",
 							"\n",
