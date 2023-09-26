@@ -35,7 +35,7 @@ foreach ($resource in $armTemplate.resources) {
         $updatedDependencies += $dependency
     }
 
-    $resource.dependsOn = updatedDependencies
+    $resource.dependsOn = $updatedDependencies
 }
 
 $armTemplate | ConvertTo-Json -Depth 20 | Out-File $UpdatedTemplatePath
