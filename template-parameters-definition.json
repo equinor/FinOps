@@ -1,8 +1,10 @@
 {
     "Microsoft.Synapse/workspaces/datasets": {
-        "properties": {
-            "linkedServiceName": {
-                "referenceName": "=:-linkedServiceName:string"
+        "*": {
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "=:-dataSetLinkedServiceName:string"
+                }
             }
         }
     },
@@ -29,6 +31,15 @@
                     "id": "=:-notebookSparkPoolIdRef:string",
                     "name": "=:-notebookSparkPoolNameRef:string",
                     "endpoint": "=:-notebookSparkPoolEndpointRef:string"
+                }
+            }
+        }
+    },
+    "Microsoft.Synpase/workspaces/pipelines": {
+        "properties": {
+            "typeProperties": {
+                "sparkPool": {
+                    "referenceName": "=-pipelineSparkPoolNameRef:string"
                 }
             }
         }
