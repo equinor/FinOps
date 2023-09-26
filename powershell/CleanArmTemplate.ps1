@@ -2,12 +2,15 @@ param(
     [string]$ARMTemplatePath,
     [string]$UpdatedTemplatePath,
     [string]$WorkspaceName,
-    [string]$SparkPoolName
+    [string]$BicepParameterPath
 )
 
 # Read arm template
 $armTemplate = Get-Content -Path $ARMTemplatePath -Raw | ConvertFrom-Json
 
+# Read bicep parameters
+$bicepParams = Get-Content -Path $BicepParameterPath -Raw | ConvertFrom-Json
+$sparkPoolName = $bicepParams.parameters.sparkPoolName.value
 
 $initialPoolDeployed = $false
 
@@ -28,7 +31,7 @@ foreach ($resource in $armTemplate.resources) {
         }
 
         if (($dependency -like "*bigDataPools*")) {
-            $updatedDependencies += "[concat(variables('workspaceId'), '/bigDataPools/$SparkPoolName')]"
+            $updatedDependencies += "[concat(variables('workspaceId'), '/bigDataPools/$sparkPoolName')]"
             continue
         }
 

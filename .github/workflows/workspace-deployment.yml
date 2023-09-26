@@ -59,7 +59,7 @@ jobs:
       - name: 'Clean ARM Template'
         shell: pwsh
         run: |
-          ./powershell/CleanArmTemplate.ps1 -ARMTemplatePath ${{ env.WORKSPACE_TEMPLATE_DEPLOYMENT_PATH }} -UpdatedTemplatePath ${{ env.UPDATED_DEPLOYMENT_PATH }}
+          ./powershell/CleanArmTemplate.ps1 -ARMTemplatePath ${{ env.WORKSPACE_TEMPLATE_DEPLOYMENT_PATH }} -UpdatedTemplatePath ${{ env.UPDATED_DEPLOYMENT_PATH }} -WorkspaceName ${{ env.SYNAPSE_WORKSPACE_NAME }} -BicepParameterPath ${{ env.PARAMETER_FILE_PATH }}
 
       - name: Synapse workspace deployment
         uses: Azure/synapse-workspace-deployment@V1.8.0
