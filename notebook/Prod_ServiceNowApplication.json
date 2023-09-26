@@ -7,21 +7,21 @@
 		"nbformat": 4,
 		"nbformat_minor": 2,
 		"bigDataPool": {
-			"referenceName": "sprkpool33large",
+			"referenceName": "sparkpool32",
 			"type": "BigDataPoolReference"
 		},
 		"sessionProperties": {
-			"driverMemory": "112g",
-			"driverCores": 16,
-			"executorMemory": "112g",
-			"executorCores": 16,
-			"numExecutors": 1,
+			"driverMemory": "56g",
+			"driverCores": 8,
+			"executorMemory": "56g",
+			"executorCores": 8,
+			"numExecutors": 2,
 			"runAsWorkspaceSystemIdentity": false,
 			"conf": {
-				"spark.dynamicAllocation.enabled": "true",
-				"spark.dynamicAllocation.minExecutors": "1",
-				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "231d5a0e-4231-4da1-9a6a-047c5de272f5"
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "23fdabce-1ca8-467d-b030-87cc9f1d6dbf"
 			}
 		},
 		"metadata": {
@@ -35,19 +35,19 @@
 				"name": "python"
 			},
 			"a365ComputeOptions": {
-				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
-				"name": "sprkpool33large",
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
+				"name": "sparkpool32",
 				"type": "Spark",
-				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
 				"auth": {
 					"type": "AAD",
 					"authResource": "https://dev.azuresynapse.net"
 				},
-				"sparkVersion": "3.3",
+				"sparkVersion": "3.2",
 				"nodeCount": 3,
-				"cores": 16,
-				"memory": 112,
-				"automaticScaleJobs": true
+				"cores": 8,
+				"memory": 56,
+				"automaticScaleJobs": false
 			},
 			"sessionKeepAliveTimeout": 30
 		},
@@ -104,9 +104,9 @@
 					"path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/NewServiceNowDataset.csv\"\r\n",
 					"\r\n",
 					"# Load the data\r\n",
-					"df_application = pd.read_csv(path)"
+					"df_application = pd.read_csv(path, delimiter = ',')"
 				],
-				"execution_count": 2
+				"execution_count": 7
 			},
 			{
 				"cell_type": "markdown",
@@ -139,7 +139,7 @@
 					"df = df_application[~(df_application.OperationalStatus=='Ignored')]\r\n",
 					"#df = df_application[(~(df_application.OperationalStatus=='Retired')) & (~(df_application.OperationalStatus=='Ignored'))]"
 				],
-				"execution_count": 3
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -158,10 +158,10 @@
 				"source": [
 					"# The out commented lines of codes are used to bug-fix.\r\n",
 					"#df_application.describe(include='all')\r\n",
-					"#display(df[df.ApplicationName.duplicated(keep=False)])\r\n",
+					"display(df[df.ApplicationName.duplicated(keep=False)])\r\n",
 					"#display(df[df.AppID==0])"
 				],
-				"execution_count": 4
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",
@@ -198,7 +198,7 @@
 					"df.Updated = pd.to_datetime(df.Updated)\r\n",
 					"df.EndOfLifeDate = pd.to_datetime(df.EndOfLifeDate)"
 				],
-				"execution_count": 5
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",
@@ -231,12 +231,12 @@
 					"spark = SparkSession.builder.getOrCreate()\r\n",
 					"\r\n",
 					"# Define optimized path to save the data\r\n",
-					"optimized_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet.parquet\"\r\n",
+					"optimized_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet\"\r\n",
 					"\r\n",
 					"#Save the data with partitioned by time\r\n",
 					"spark.createDataFrame(df).write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
 				],
-				"execution_count": 6
+				"execution_count": null
 			}
 		]
 	}
