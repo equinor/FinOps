@@ -7,7 +7,7 @@
 		"nbformat": 4,
 		"nbformat_minor": 2,
 		"bigDataPool": {
-			"referenceName": "sparkpool32",
+			"referenceName": "sprkpool33large",
 			"type": "BigDataPoolReference"
 		},
 		"sessionProperties": {
@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "2eb32843-4f2e-4d1d-9f2e-dc346bc9fa92"
+				"spark.autotune.trackingId": "231d5a0e-4231-4da1-9a6a-047c5de272f5"
 			}
 		},
 		"metadata": {
@@ -35,19 +35,19 @@
 				"name": "python"
 			},
 			"a365ComputeOptions": {
-				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
-				"name": "sparkpool32",
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
+				"name": "sprkpool33large",
 				"type": "Spark",
-				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
 				"auth": {
 					"type": "AAD",
 					"authResource": "https://dev.azuresynapse.net"
 				},
-				"sparkVersion": "3.2",
+				"sparkVersion": "3.3",
 				"nodeCount": 3,
-				"cores": 8,
-				"memory": 56,
-				"automaticScaleJobs": false
+				"cores": 16,
+				"memory": 112,
+				"automaticScaleJobs": true
 			},
 			"sessionKeepAliveTimeout": 30
 		},
@@ -71,7 +71,7 @@
 					"import pandas as pd \r\n",
 					"import pyspark.pandas as ps"
 				],
-				"execution_count": 65
+				"execution_count": 1
 			},
 			{
 				"cell_type": "markdown",
@@ -106,7 +106,7 @@
 					"# Load the data\r\n",
 					"df_application = pd.read_csv(path)"
 				],
-				"execution_count": 66
+				"execution_count": 2
 			},
 			{
 				"cell_type": "markdown",
@@ -139,7 +139,7 @@
 					"df = df_application[~(df_application.OperationalStatus=='Ignored')]\r\n",
 					"#df = df_application[(~(df_application.OperationalStatus=='Retired')) & (~(df_application.OperationalStatus=='Ignored'))]"
 				],
-				"execution_count": 68
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -161,7 +161,7 @@
 					"#display(df[df.ApplicationName.duplicated(keep=False)])\r\n",
 					"#display(df[df.AppID==0])"
 				],
-				"execution_count": 69
+				"execution_count": 4
 			},
 			{
 				"cell_type": "markdown",
@@ -198,7 +198,7 @@
 					"df.Updated = pd.to_datetime(df.Updated)\r\n",
 					"df.EndOfLifeDate = pd.to_datetime(df.EndOfLifeDate)"
 				],
-				"execution_count": 71
+				"execution_count": 5
 			},
 			{
 				"cell_type": "markdown",
@@ -236,7 +236,7 @@
 					"#Save the data with partitioned by time\r\n",
 					"spark.createDataFrame(df).write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
 				],
-				"execution_count": 73
+				"execution_count": 6
 			}
 		]
 	}
