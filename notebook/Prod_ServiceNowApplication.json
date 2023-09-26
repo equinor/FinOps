@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "3095a584-7b1f-4279-baa8-560aac9a7a16"
+				"spark.autotune.trackingId": "2eb32843-4f2e-4d1d-9f2e-dc346bc9fa92"
 			}
 		},
 		"metadata": {
@@ -135,26 +135,9 @@
 					}
 				},
 				"source": [
-					"df_application.describe(include='all')"
-				],
-				"execution_count": 67
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"#df = df_application[(~(df_application.OperationalStatus=='Retired')) & (~(df_application.OperationalStatus=='Ignored'))]\r\n",
-					"df = df_application[~(df_application.OperationalStatus=='Ignored')]"
+					"# According to the feedback from BPA team (Daniel Lee), we have to filter out all those records that have \"Ignored\" in OperationalStatus field.\r\n",
+					"df = df_application[~(df_application.OperationalStatus=='Ignored')]\r\n",
+					"#df = df_application[(~(df_application.OperationalStatus=='Retired')) & (~(df_application.OperationalStatus=='Ignored'))]"
 				],
 				"execution_count": 68
 			},
@@ -173,8 +156,10 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(df[df.ApplicationName.duplicated(keep=False)])\r\n",
-					"display(df[df.AppID==0])"
+					"# The out commented lines of codes are used to bug-fix.\r\n",
+					"#df_application.describe(include='all')\r\n",
+					"#display(df[df.ApplicationName.duplicated(keep=False)])\r\n",
+					"#display(df[df.AppID==0])"
 				],
 				"execution_count": 69
 			},
@@ -205,9 +190,10 @@
 					}
 				},
 				"source": [
-					"\r\n",
+					"# Transform string fields into integer format, and if there are empty entries, set them to 0\r\n",
 					"df[['AppID', 'IsOmniaSubscription','ProductOwnerNo','OperationalUnitManagerNo']] = df[['AppID', 'IsOmniaSubscription','ProductOwnerNo','OperationalUnitManagerNo']].fillna(0).astype('int64')\r\n",
 					"\r\n",
+					"# Transform string fields into date format\r\n",
 					"df.Created = pd.to_datetime(df.Created)\r\n",
 					"df.Updated = pd.to_datetime(df.Updated)\r\n",
 					"df.EndOfLifeDate = pd.to_datetime(df.EndOfLifeDate)"
