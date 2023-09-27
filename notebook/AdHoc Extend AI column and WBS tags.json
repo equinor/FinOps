@@ -1,6 +1,9 @@
 {
 	"name": "AdHoc Extend AI column and WBS tags",
 	"properties": {
+		"folder": {
+			"name": "NotebookNotInUse/Keep"
+		},
 		"nbformat": 4,
 		"nbformat_minor": 2,
 		"bigDataPool": {
@@ -18,14 +21,11 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "01127372-97fe-4aa6-970c-7298c8f14bb6"
+				"spark.autotune.trackingId": "eca30b40-9987-4808-8b79-9813011704aa"
 			}
 		},
 		"metadata": {
 			"saveOutput": true,
-			"synapse_widget": {
-				"version": "0.1"
-			},
 			"enableDebugMode": false,
 			"kernelspec": {
 				"name": "synapse_pyspark",
@@ -41,14 +41,13 @@
 				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
 				"auth": {
 					"type": "AAD",
-					"authResource": "https://dev.azuresynapse.net",
-					"authHeader": null
+					"authResource": "https://dev.azuresynapse.net"
 				},
 				"sparkVersion": "3.3",
 				"nodeCount": 3,
 				"cores": 16,
 				"memory": 112,
-				"extraHeader": null
+				"automaticScaleJobs": true
 			},
 			"sessionKeepAliveTimeout": 30
 		},
@@ -91,7 +90,8 @@
 					"from datetime import datetime\n",
 					"import calendar\n",
 					"import warnings"
-				]
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -120,7 +120,8 @@
 					"    #cost_df = cost_df.head(10000)\n",
 					"\n",
 					"    return cost_df, subscription_list, appList"
-				]
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -151,7 +152,8 @@
 					"    \n",
 					"\n",
 					"    return cost_df"
-				]
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -186,7 +188,8 @@
 					"  \n",
 					"\n",
 					"    return cost_df"
-				]
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -214,7 +217,8 @@
 					"        np.where(cost_df['ai_VCPUs'] > 20, cost_df['ai_VCPUs'], 0)))))\n",
 					"\n",
 					"    return cost_df"
-				]
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -240,7 +244,8 @@
 					"    cost_df['Date'] = cost_df['Date'].dt.date\n",
 					"    \n",
 					"    return cost_df"
-				]
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -274,7 +279,8 @@
 					"    subscription_list.drop(columns=subscription_list.columns.difference(columns_to_keep), inplace=True)\n",
 					"    \n",
 					"    return subscription_list"
-				]
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -308,7 +314,8 @@
 					"    \n",
 					"    return cost_df, subscription_list\n",
 					""
-				]
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -365,7 +372,8 @@
 					"    cost_df.loc[mask, 'ActiveWBSReason'] = 'CostAllocationType or CostAllocationCode not present in Tags'\n",
 					"\n",
 					"    return cost_df, subscription_list"
-				]
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -388,7 +396,8 @@
 					"    cost_df.to_parquet(destinationFilename)\n",
 					"    print('File write complete!')\n",
 					"    "
-				]
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -419,7 +428,8 @@
 					"          except:\n",
 					"               return \"ERROR\"\n",
 					"               #print(f\"Isnull = false, Index is {index}, Tags is {cost_df['Tags'][index]}\")"
-				]
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -454,7 +464,8 @@
 					"          except:\n",
 					"               return \"ERROR\"\n",
 					"               #print(f\"Isnull = false, Index is {index}, Tags is {cost_df['Tags'][index]}\")"
-				]
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -478,7 +489,8 @@
 					"    cost_df['CostAllocationCode'] = cost_df.apply(lambda x: return_costallocationcode_list(x['Tags']), axis = 1)\n",
 					"\n",
 					"    return cost_df"
-				]
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -511,7 +523,8 @@
 					"    \n",
 					"    return cost_df\n",
 					""
-				]
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -553,7 +566,8 @@
 					"    cost_df.reset_index(drop=True, inplace=True)\n",
 					"    \n",
 					"    return cost_df     "
-				]
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -626,7 +640,8 @@
 					"            write_output_file(cost_df, costDestinationfilename)\n",
 					"\n",
 					""
-				]
+				],
+				"execution_count": null
 			}
 		]
 	}
