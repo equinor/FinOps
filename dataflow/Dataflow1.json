@@ -14,10 +14,6 @@
 			],
 			"sinks": [
 				{
-					"dataset": {
-						"referenceName": "CleanedCSVDestSink",
-						"type": "DatasetReference"
-					},
 					"name": "CleanedCSVSink"
 				}
 			],
@@ -77,12 +73,11 @@
 				"RawCSVSource sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     partitionFileNames:[(concat($Year,'-',$Month,'-cleaned.csv'))],",
-				"     umask: 0022,",
-				"     preCommands: [],",
-				"     postCommands: [],",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
-				"     partitionBy('hash', 1)) ~> CleanedCSVSink"
+				"     partitionBy('hash', 1),",
+				"     preCommands: [],",
+				"     postCommands: []) ~> CleanedCSVSink"
 			]
 		}
 	}
