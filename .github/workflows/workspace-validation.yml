@@ -17,15 +17,16 @@ jobs:
             
             - name: List
               run: ls
-            # - name: 'Service Principal Authentication'
-            #   uses: azure/login@v1
-            #   with:
-            #     creds: ${{ secrets.S037_AZURE_CREDENTIALS }}
-            #     enable-AzPSSession: true
 
-            # - uses: Azure/synapse-workspace-deployment
-            #   with:
-            #     TargetWorkspaceName: 'targetworkspace'
-            #     ArtifactsFolder: './RootFolder'
-            #     operation: 'validate'
+            - name: 'Service Principal Authentication'
+              uses: azure/login@v1
+              with:
+                creds: ${{ secrets.S037_AZURE_CREDENTIALS }}
+                enable-AzPSSession: true
+
+            - uses: Azure/synapse-workspace-deployment
+              with:
+                TargetWorkspaceName: 'targetworkspace'
+                ArtifactsFolder: './'
+                operation: 'validate'
 
