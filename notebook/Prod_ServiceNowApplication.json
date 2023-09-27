@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "6a21ffce-6703-46e1-999d-5d2104e12773"
+				"spark.autotune.trackingId": "f9fed808-207b-4eab-ac62-07d7aa089c3e"
 			}
 		},
 		"metadata": {
@@ -71,7 +71,7 @@
 					"import pandas as pd \r\n",
 					""
 				],
-				"execution_count": 2
+				"execution_count": 6
 			},
 			{
 				"cell_type": "markdown",
@@ -106,7 +106,7 @@
 					"# Load the data\r\n",
 					"df_application = pd.read_csv(path)"
 				],
-				"execution_count": 3
+				"execution_count": 7
 			},
 			{
 				"cell_type": "markdown",
@@ -139,7 +139,7 @@
 					"df = df_application[~(df_application.OperationalStatus=='Ignored')]\r\n",
 					"#df = df_application[(~(df_application.OperationalStatus=='Retired')) & (~(df_application.OperationalStatus=='Ignored'))]"
 				],
-				"execution_count": 4
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -161,7 +161,7 @@
 					"#display(df[df.ApplicationName.duplicated(keep=False)])\r\n",
 					"#display(df[df.AppID==0])"
 				],
-				"execution_count": 5
+				"execution_count": 9
 			},
 			{
 				"cell_type": "markdown",
@@ -198,7 +198,7 @@
 					"df.Updated = pd.to_datetime(df.Updated)\r\n",
 					"df.EndOfLifeDate = pd.to_datetime(df.EndOfLifeDate)"
 				],
-				"execution_count": 6
+				"execution_count": 10
 			},
 			{
 				"cell_type": "markdown",
@@ -236,7 +236,7 @@
 					"#Save the data with partitioned by time\r\n",
 					"spark.createDataFrame(df).write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
 				],
-				"execution_count": 7
+				"execution_count": 11
 			}
 		]
 	}
