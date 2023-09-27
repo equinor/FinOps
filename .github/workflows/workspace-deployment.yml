@@ -60,6 +60,13 @@ jobs:
         shell: pwsh
         run: |
           ./powershell/CleanArmTemplate.ps1 -ARMTemplatePath ${{ env.WORKSPACE_TEMPLATE_DEPLOYMENT_PATH }} -UpdatedTemplatePath ${{ env.UPDATED_DEPLOYMENT_PATH }} -WorkspaceName ${{ env.SYNAPSE_WORKSPACE_NAME }} -BicepParameterPath ${{ env.PARAMETER_FILE_PATH }}
+      
+      - name: 'Stop Synapse Triggers'
+        uses: azure/powershell@v1
+        with:
+          inlineScript: |
+            ./powershell/ActiveSynapseTriggers.ps1 -WorkspaceName ${{ env.SYNAPSE_WORKSPACE_NAME }} -ResourceGroup ${{ env.RESOURCE_GROUP }} -Action "stop"
+          azPSVersion: "latest"
 
       - name: Synapse workspace deployment
         uses: Azure/synapse-workspace-deployment@V1.8.0
@@ -75,55 +82,15 @@ jobs:
           tenantId: ${{ secrets.AZURE_TENANT_ID }}
           operation: 'deploy'
 
+      - name: 'Start Synapse Triggers'
+        uses: azure/powershell@v1
+        with:
+          inlineScript: |
+            ./powershell/ActiveSynapseTriggers.ps1 -WorkspaceName ${{ env.SYNAPSE_WORKSPACE_NAME }} -ResourceGroup ${{ env.RESOURCE_GROUP }} -Action "start"
+          azPSVersion: "latest"
+
 #   deploy-prod:
 #     needs: deploy-test
 #     name: Deploy Prod Environment
 #     runs-on: ubuntu-latest
 #     environment: prod
-#     env:
-#       RESOURCE_GROUP: finops-cicd-test
-#       SYNAPSE_WORKSPACE_NAME: finops-synapse-prod
-#       PARAMETER_FILE_PATH: azuredeploy.parameters.prod.json
-
-#     steps:
-#       - uses: actions/checkout@v2
-
-#       - name: 'Service Principal Authentication'
-#         uses: azure/login@v1
-#         with:
-#           creds: ${{secrets.AZURE_CREDENTIALS}}
-#           enable-AzPSSession: true
-
-#       - name: Update Bicep parameters
-#         uses: Azure/CLI@v1
-#         with: 
-#           inlineScript: |
-
-#             result=$(az synapse workspace show --name ${{ env.SYNAPSE_WORKSPACE_NAME }} --resource-group ${{ env.RESOURCE_GROUP }} 2>/dev/null || echo "")
-#             echo "$result"
-#             exists=$(if [ -z "$result" ]; then echo false; else echo true; fi)
-#             echo "$exists"
-#             echo "`jq --argjson new "$exists" '.parameters.workspaceExists.value = $new' ${{ env.PARAMETER_FILE_PATH }}`" > ${{ env.PARAMETER_FILE_PATH }}
-
-#       - name: Deploy Azure Resources
-#         uses: Azure/CLI@v1
-#         with:
-#           inlineScript: |
-#             az deployment group create \
-#               --template-file azuredeploy.bicep \
-#               --resource-group ${{ env.RESOURCE_GROUP }} \
-#               --parameters ${{ env.PARAMETER_FILE_PATH }}
-
-#       - name: Synapse workspace deployment
-#         uses: Azure/synapse-workspace-deployment@V1.8.0
-#         with:
-#           TargetWorkspaceName: ${{ env.SYNAPSE_WORKSPACE_NAME }}
-#           TemplateFile: './finops-synapse-test/TemplateForWorkspace.json'
-#           ParametersFile: './synapse.parameters.prod.json'
-#           environment: 'Azure Public'
-#           resourceGroup: ${{ env.RESOURCE_GROUP }}
-#           clientId: ${{ secrets.CLIENTID }}
-#           clientSecret: ${{ secrets.CLIENTSECRET }}
-#           subscriptionId: ${{ secrets.SUBID }}
-#           tenantId: ${{ secrets.TENANTID }}
-#           operation: 'deploy'
