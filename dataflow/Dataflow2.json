@@ -17,6 +17,10 @@
 			],
 			"sinks": [
 				{
+					"dataset": {
+						"referenceName": "TestADFCleanedCSV",
+						"type": "DatasetReference"
+					},
 					"name": "CleanedCSVSink"
 				}
 			],
@@ -36,11 +40,12 @@
 				"SourceRawCSV sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     partitionFileNames:[(concat($fromDate,'-',$toDate,'-cleaned.csv'))],",
+				"     umask: 0666,",
+				"     preCommands: [],",
+				"     postCommands: [],",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
-				"     partitionBy('hash', 1),",
-				"     preCommands: [],",
-				"     postCommands: []) ~> CleanedCSVSink"
+				"     partitionBy('hash', 1)) ~> CleanedCSVSink"
 			]
 		}
 	}
