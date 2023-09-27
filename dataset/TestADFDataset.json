@@ -1,0 +1,35 @@
+{
+	"name": "TestADFDataset",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "s037-cost-management-WorkspaceDefaultStorage",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"toDate": {
+				"type": "string"
+			},
+			"fromDate": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@concat(dataset().fromDate,'-',dataset().toDate,'-raw.csv')",
+					"type": "Expression"
+				},
+				"folderPath": "ADFTest",
+				"fileSystem": "usage"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\"",
+			"firstRowAsHeader": false,
+			"quoteChar": "\""
+		},
+		"schema": []
+	}
+}
