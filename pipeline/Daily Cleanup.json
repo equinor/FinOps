@@ -2162,39 +2162,6 @@
 					"driverSize": "Medium",
 					"numExecutors": null
 				}
-			},
-			{
-				"name": "runNotebook AnomalyDetection_v1",
-				"type": "SynapseNotebook",
-				"dependsOn": [
-					{
-						"activity": "runNotebook Daily Extend AI column and WBS tags_v1",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"notebook": {
-						"referenceName": "Anomaly_Detection_v1",
-						"type": "NotebookReference"
-					},
-					"snapshot": true,
-					"sparkPool": {
-						"referenceName": "sparkpool32",
-						"type": "BigDataPoolReference"
-					},
-					"executorSize": "Small",
-					"driverSize": "Small"
-				}
 			}
 		],
 		"variables": {
