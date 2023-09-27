@@ -33,7 +33,7 @@ foreach ($parameter in $workspaceTemplateParams.parameters.PSObject.Properties) 
         continue
     }
 
-    # Override spark pool references in notebook artifacts
+    # Override notebook resource references
 
     if ($parameterKey -like "*notebookSparkPoolNameRef") {
         $workspaceTemplateParams.parameters.$parameterKey.value = $sparkPoolName
@@ -62,7 +62,13 @@ foreach ($parameter in $workspaceTemplateParams.parameters.PSObject.Properties) 
         $workspaceTemplateParams.parameters.$parameterKey.value = $sparkPoolName
     }
 
-    # Override spark pool resource parameters
+    # Override dataflow resource references
+
+    if ($parameterKey -like "*DataflowLinkedServiceNameRef") {
+        $workspaceTemplateParams.parameters.$parameterKey.value = $parameterValue.replace("s037-cost-management", $WorkspaceName)
+    }
+
+    # Override spark pool resource references
 
     if ($parameterKey -like "*sparkPoolResourceName") {
         $workspaceTemplateParams.parameters.$parameterKey.value = "$WorkspaceName/$sparkPoolName"
