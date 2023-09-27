@@ -2,7 +2,7 @@ name: FinOps Synapse workspace validation
 
 on:
     pull_request:
-        types: [opened, edited]
+        types: [opened, synchronize]
 
 jobs:
     validate:
@@ -21,9 +21,9 @@ jobs:
                 enable-AzPSSession: true
 
             - name: Validate synapse workspace
-              uses: Azure/synapse-workspace-deployment@V1.8.0
+              uses: Azure/synapse-workspace-deployment@latest
               with:
                 TargetWorkspaceName: 'targetworkspace'
-                ArtifactsFolder: '/'
+                ArtifactsFolder: '../'
                 operation: 'validate'
 
