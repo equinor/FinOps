@@ -437,6 +437,14 @@
 			"type": "string",
 			"defaultValue": "https://s037costmgmt.dfs.core.windows.net"
 		},
+		"Remove First Two Lines_sourceDataflowLinkedServiceNameRef": {
+			"type": "string",
+			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
+		},
+		"Remove First Two Lines_sinkDataflowLinkedServiceNameRef": {
+			"type": "string",
+			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
+		},
 		"AdHoc Extend AI column and WBS tags_notebookSparkPoolNameRef": {
 			"type": "string",
 			"defaultValue": "sprkpool33large"
@@ -36044,7 +36052,7 @@
 					"sources": [
 						{
 							"linkedService": {
-								"referenceName": "s037-cost-management-WorkspaceDefaultStorage",
+								"referenceName": "[parameters('Remove First Two Lines_sourceDataflowLinkedServiceNameRef')]",
 								"type": "LinkedServiceReference"
 							},
 							"name": "S037RawCSV"
@@ -36053,7 +36061,7 @@
 					"sinks": [
 						{
 							"linkedService": {
-								"referenceName": "s037-cost-management-WorkspaceDefaultStorage",
+								"referenceName": "[parameters('Remove First Two Lines_sinkDataflowLinkedServiceNameRef')]",
 								"type": "LinkedServiceReference"
 							},
 							"name": "S037CleanedCSV"
@@ -36099,7 +36107,7 @@
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('workspaceId'), '/linkedServices/s037-cost-management-WorkspaceDefaultStorage')]"
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('Remove First Two Lines_sourceDataflowLinkedServiceNameRef'))]"
 			]
 		},
 		{
