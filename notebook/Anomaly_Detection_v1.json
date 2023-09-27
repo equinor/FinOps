@@ -1,6 +1,9 @@
 {
 	"name": "Anomaly_Detection_v1",
 	"properties": {
+		"folder": {
+			"name": "NotebookInProduction"
+		},
 		"nbformat": 4,
 		"nbformat_minor": 2,
 		"bigDataPool": {
@@ -18,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "50759d7d-c94b-42bb-8656-44d484ff7a3c"
+				"spark.autotune.trackingId": "7e417229-7835-4015-98e0-1d36fedefbee"
 			}
 		},
 		"metadata": {
@@ -43,8 +46,7 @@
 				"sparkVersion": "3.2",
 				"nodeCount": 3,
 				"cores": 8,
-				"memory": 56,
-				"automaticScaleJobs": false
+				"memory": 56
 			},
 			"sessionKeepAliveTimeout": 30
 		},
@@ -56,7 +58,7 @@
 					"import pyspark.sql.types as T\r\n",
 					"from pyspark.sql.window import Window"
 				],
-				"execution_count": 413
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -75,7 +77,7 @@
 					"def preprocessing_anomaly_detection(df):\r\n",
 					"\r\n",
 					"    # Selecting just relevant columns for anomaly detection\r\n",
-					"    new_df = df.select('SubscriptionName', 'ActiveWBS', 'MeterCategory', 'Date', 'CostInBillingCurrency')\r\n",
+					"    new_df = df.select('SubscriptionName', 'ResourceGroup', 'MeterCategory', 'Date', 'CostInBillingCurrency')\r\n",
 					"\r\n",
 					"    # Filtering out data older than 90 days to get only the latest historical data\r\n",
 					"    threshold = F.date_sub(F.current_date(), 90)\r\n",
@@ -83,7 +85,7 @@
 					"\r\n",
 					"    # Grouping the data by each filtering level and getting the sum of all costs related to the filtering columns\r\n",
 					"    grouped_df = filtered_df.groupBy('SubscriptionName', \r\n",
-					"                                     'ActiveWBS',\r\n",
+					"                                     'ResourceGroup',\r\n",
 					"                                     'MeterCategory', \r\n",
 					"                                     'Date').agg(F.round(\r\n",
 					"                                                  F.sum(\r\n",
@@ -91,7 +93,7 @@
 					"\r\n",
 					"    return grouped_df"
 				],
-				"execution_count": 414
+				"execution_count": 15
 			},
 			{
 				"cell_type": "code",
@@ -108,12 +110,13 @@
 				},
 				"source": [
 					"def anomaly_detection_classifier(df,\r\n",
-					"                                 filter_column_1, \r\n",
+					"                                 filter_column_1,\r\n",
 					"                                 filter_column_2,\r\n",
+					"                                 filter_column_3,\r\n",
 					"                                 window_size=30):\r\n",
 					"\r\n",
 					"    # Setting a partition window to divide the dataset in the filter options and order it by the Date\r\n",
-					"    windowSpec = Window.partitionBy(filter_column_1, filter_column_2).orderBy('Date').rowsBetween(-window_size, 0)\r\n",
+					"    windowSpec = Window.partitionBy(filter_column_1, filter_column_2, filter_column_3).orderBy('Date').rowsBetween(-window_size, 0)\r\n",
 					"\r\n",
 					"    # Set a moving average that is set by the n previous days\r\n",
 					"    costs_by_dates = df.withColumn('MovingAverage', F.round(F.avg(F.col('TotalCost')).over(windowSpec), 1))\r\n",
@@ -136,7 +139,7 @@
 					"\r\n",
 					"    return costs_by_dates"
 				],
-				"execution_count": 415
+				"execution_count": 16
 			},
 			{
 				"cell_type": "code",
@@ -163,7 +166,8 @@
 					"print(\"Running the Anomaly Detection Classifier for Subscription-partitioned data\")\r\n",
 					"costs_by_dates =  anomaly_detection_classifier(df=preproc_data,\r\n",
 					"                                               filter_column_1='SubscriptionName',\r\n",
-					"                                               filter_column_2='MeterCategory',\r\n",
+					"                                               filter_column_2='ResourceGroup',\r\n",
+					"                                               filter_column_3='MeterCategory',\r\n",
 					"                                               window_size=60)\r\n",
 					"\r\n",
 					"destination_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_AnomalyDetection_3mnth.parquet\"\r\n",
@@ -172,7 +176,7 @@
 					"costs_by_dates.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
 					"print('Write Complete!')"
 				],
-				"execution_count": 416
+				"execution_count": 17
 			}
 		]
 	}
