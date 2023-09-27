@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "4218e7ad-6319-41fd-957a-36a8422bd1ab"
+				"spark.autotune.trackingId": "41277147-d3b4-4812-8aca-13d6cb82d1b6"
 			}
 		},
 		"metadata": {
@@ -113,7 +113,7 @@
 					"from pyspark.sql.functions import when\r\n",
 					""
 				],
-				"execution_count": 1
+				"execution_count": 22
 			},
 			{
 				"cell_type": "markdown",
@@ -168,7 +168,7 @@
 					"df_schema_extended = df_schema_extended.withColumn('Report_Date',lit('') )\r\n",
 					"df_schema_extended = df_schema_extended.withColumn('Report_Date_Partition',lit('') )"
 				],
-				"execution_count": 39
+				"execution_count": 23
 			},
 			{
 				"cell_type": "code",
@@ -187,7 +187,7 @@
 					"print(\"Three-years-ago's date since today:\",date_three_years_ago)\r\n",
 					"len(df_schema_extended.columns)"
 				],
-				"execution_count": 40
+				"execution_count": 24
 			},
 			{
 				"cell_type": "code",
@@ -207,7 +207,7 @@
 					"#df_schema_extended_pd = df_schema_extended_pd.rename(columns={'Azure Hybrid Benefit': 'Azure_Hybrid_Benefit'})\r\n",
 					"#df_schema_extended = spark.createDataFrame(df_schema_extended_pd)"
 				],
-				"execution_count": 41
+				"execution_count": 25
 			},
 			{
 				"cell_type": "markdown",
@@ -278,7 +278,7 @@
 					"                        # Exclude the extended files that are developed by David.\r\n",
 					"                        print(\"Those files will not be read\",file_path.path)"
 				],
-				"execution_count": 42
+				"execution_count": 26
 			},
 			{
 				"cell_type": "markdown",
@@ -292,45 +292,6 @@
 				"source": [
 					"# Display the dataframe"
 				]
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(df.filter((F.col('ApplicationName').isNull())|(F.col('ApplicationName')=='')))"
-				],
-				"execution_count": 48
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"print('Number of rows in the appended dataframe:',df.count())\r\n",
-					"display(df)"
-				],
-				"execution_count": 23
 			},
 			{
 				"cell_type": "code",
@@ -359,7 +320,7 @@
 					")\r\n",
 					""
 				],
-				"execution_count": 24
+				"execution_count": 27
 			},
 			{
 				"cell_type": "code",
@@ -376,28 +337,13 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(df.filter((F.col('ApplicationName')).contains('Danske Commodities')))\r\n",
-					"display(df.filter((F.col('ApplicationName')).contains('Unknown')))"
+					"#print('Number of rows in the appended dataframe:',df.count())\r\n",
+					"#display(df)\r\n",
+					"#display(df.filter((F.col('ApplicationName').isNull())|(F.col('ApplicationName')=='')))\r\n",
+					"#display(df.filter((F.col('ApplicationName')).contains('Danske Commodities')))\r\n",
+					"#display(df.filter((F.col('ApplicationName')).contains('Unknown')))"
 				],
-				"execution_count": 25
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					""
-				],
-				"execution_count": null
+				"execution_count": 28
 			},
 			{
 				"cell_type": "markdown",
@@ -432,7 +378,7 @@
 					"# Aggregate the data\r\n",
 					"df_agg = df.groupBy('SubscriptionId','ApplicationName','SubscriptionName','CostCenter','ResourceGroup','ResourceLocation','ResourceName','MeterName','MeterCategory','MeterSubCategory','Report_Date','Report_Date_Partition','SubscriptionServiceNow-App','ActiveWBS','CostAllocationType','Date').agg(F.sum('Quantity').alias('TotalQuantity'),F.sum('CostInBillingCurrency').alias('CostInKroner'))"
 				],
-				"execution_count": 26
+				"execution_count": 29
 			},
 			{
 				"cell_type": "code",
@@ -451,7 +397,7 @@
 					"# Change the data type of the 'Report_Date_Partition' column to Datetime\r\n",
 					"df_agg = df_agg.withColumn(\"Report_Date_Partition\", col(\"Report_Date_Partition\").cast(\"timestamp\"))"
 				],
-				"execution_count": 27
+				"execution_count": 30
 			},
 			{
 				"cell_type": "code",
@@ -471,7 +417,7 @@
 					"df_agg = df_agg.withColumn(\"year_partition\", year(df_agg[\"Report_Date_Partition\"]))\r\n",
 					"df_agg = df_agg.withColumn(\"month_partition\", month(df_agg[\"Report_Date_Partition\"]))"
 				],
-				"execution_count": 28
+				"execution_count": 31
 			},
 			{
 				"cell_type": "markdown",
@@ -497,33 +443,14 @@
 						"transient": {
 							"deleting": false
 						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"print(\"The number of the rows in the aggregated dataframe:\", df_agg.count())\r\n",
-					"display(df_agg)"
-				],
-				"execution_count": 29
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
 					}
 				},
 				"source": [
 					"# Change the data type of the 'Report_Date' column to Datetime\r\n",
-					"df_agg = df_agg.withColumn(\"Report_Date\", col(\"Report_Date\").cast(\"timestamp\"))"
+					"df_agg = df_agg.withColumn(\"Report_Date\", col(\"Report_Date\").cast(\"timestamp\"))\r\n",
+					"print(\"The number of the rows in the aggregated dataframe:\", df_agg.count())"
 				],
-				"execution_count": 30
+				"execution_count": 32
 			},
 			{
 				"cell_type": "code",
@@ -547,57 +474,6 @@
 					" 'year_partition',\r\n",
 					" 'month_partition','SubscriptionServiceNow-App','ActiveWBS','CostAllocationType','Date']\r\n",
 					"df_agg = df_agg.select(*selected_columns)"
-				],
-				"execution_count": 31
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# Check column types\r\n",
-					"# df_agg.printSchema()"
-				],
-				"execution_count": 32
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# Save it to optimized container"
-				]
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# Check the Date column's values.\r\n",
-					"#df_agg.groupBy('Report_Date').count().show(200)"
 				],
 				"execution_count": 33
 			},
@@ -635,9 +511,25 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(df_agg)"
+					"#df_agg.printSchema()\r\n",
+					"#print(\"The number of the rows in the aggregated dataframe:\", df_agg.count())\r\n",
+					"#display(df_agg)\r\n",
+					"#display(df_agg)"
 				],
-				"execution_count": 50
+				"execution_count": 35
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Save in optimized container"
+				]
 			},
 			{
 				"cell_type": "code",
@@ -662,7 +554,7 @@
 					"# Save the data with no partition.\r\n",
 					"#df_agg.write.format('parquet').mode('overwrite').partitionBy('Report_date).option('overwriteSchema', 'true').save(optimized_path)"
 				],
-				"execution_count": 49
+				"execution_count": 36
 			},
 			{
 				"cell_type": "markdown",
@@ -694,7 +586,7 @@
 					"currentSparkSession = SparkSession.builder.getOrCreate()\r\n",
 					"spark.catalog.clearCache()"
 				],
-				"execution_count": 2
+				"execution_count": 37
 			}
 		]
 	}

@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "39256f4e-0cd9-4898-987e-7fe78f541956"
+				"spark.autotune.trackingId": "6a21ffce-6703-46e1-999d-5d2104e12773"
 			}
 		},
 		"metadata": {
@@ -69,9 +69,9 @@
 				"cell_type": "code",
 				"source": [
 					"import pandas as pd \r\n",
-					"import pyspark.pandas as ps"
+					""
 				],
-				"execution_count": 1
+				"execution_count": 2
 			},
 			{
 				"cell_type": "markdown",
@@ -106,7 +106,7 @@
 					"# Load the data\r\n",
 					"df_application = pd.read_csv(path)"
 				],
-				"execution_count": 2
+				"execution_count": 3
 			},
 			{
 				"cell_type": "markdown",
@@ -139,7 +139,7 @@
 					"df = df_application[~(df_application.OperationalStatus=='Ignored')]\r\n",
 					"#df = df_application[(~(df_application.OperationalStatus=='Retired')) & (~(df_application.OperationalStatus=='Ignored'))]"
 				],
-				"execution_count": 3
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -161,7 +161,7 @@
 					"#display(df[df.ApplicationName.duplicated(keep=False)])\r\n",
 					"#display(df[df.AppID==0])"
 				],
-				"execution_count": 4
+				"execution_count": 5
 			},
 			{
 				"cell_type": "markdown",
@@ -198,7 +198,7 @@
 					"df.Updated = pd.to_datetime(df.Updated)\r\n",
 					"df.EndOfLifeDate = pd.to_datetime(df.EndOfLifeDate)"
 				],
-				"execution_count": 5
+				"execution_count": 6
 			},
 			{
 				"cell_type": "markdown",
@@ -231,12 +231,12 @@
 					"spark = SparkSession.builder.getOrCreate()\r\n",
 					"\r\n",
 					"# Define optimized path to save the data\r\n",
-					"optimized_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet.parquet\"\r\n",
+					"optimized_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet\"\r\n",
 					"\r\n",
 					"#Save the data with partitioned by time\r\n",
 					"spark.createDataFrame(df).write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
 				],
-				"execution_count": 6
+				"execution_count": 7
 			}
 		]
 	}
