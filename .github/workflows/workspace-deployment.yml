@@ -16,7 +16,53 @@ env:
   UPDATED_DEPLOYMENT_PATH: updated-deployment-template.json
     
 jobs:
+  deploy-pre-dev:
+    name: Deploy s037-cost-mgmt
+    runs-on: ubuntu-latest
+    environment: pre-dev
+    env:
+      RESOURCE_GROUP: Synapse
+      SYNAPSE_WORKSPACE_NAME: s037-cost-management
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: 'Service Principal Authentication'
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.S037_AZURE_CREDENTIALS }}
+          enable-AzPSSession: true
+
+      - name: 'Stop Synapse Triggers'
+        uses: azure/powershell@v1
+        with:
+          inlineScript: |
+            ./powershell/ActiveSynapseTriggers.ps1 -WorkspaceName ${{ env.SYNAPSE_WORKSPACE_NAME }} -ResourceGroup ${{ env.RESOURCE_GROUP }} -Action "stop"
+          azPSVersion: "latest"
+
+      - name: Synapse workspace deployment
+        uses: Azure/synapse-workspace-deployment@V1.8.0
+        with:
+          TargetWorkspaceName: ${{ env.SYNAPSE_WORKSPACE_NAME }}
+          TemplateFile: ${{ env.WORKSPACE_TEMPLATE_DEPLOYMENT_PATH }}
+          ParametersFile: ${{ env.WORKSPACE_TEMPLATE_PARAMETER_PATH }}
+          environment: 'Azure Public'
+          resourceGroup: ${{ env.RESOURCE_GROUP }}
+          clientId: ${{ secrets.AZURE_SP_CLIENTID }}
+          clientSecret: ${{ secrets.AZURE_SP_CLIENTSECRET }}
+          subscriptionId: ${{ secrets.S037_AZURE_SUBSCRIPTION_ID }}
+          tenantId: ${{ secrets.AZURE_TENANT_ID }}
+          operation: 'deploy'
+      
+      - name: 'Start Synapse Triggers'
+        uses: azure/powershell@v1
+        with:
+          inlineScript: |
+            ./powershell/ActiveSynapseTriggers.ps1 -WorkspaceName ${{ env.SYNAPSE_WORKSPACE_NAME }} -ResourceGroup ${{ env.RESOURCE_GROUP }} -Action "start"
+          azPSVersion: "latest"
+
   deploy-dev:
+    needs: deploy-pre-dev
     name: Deploy Dev Environment
     runs-on: ubuntu-latest
     environment: dev
