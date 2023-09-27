@@ -1,4 +1,4 @@
-name: FinOps Synapse workspace validation
+name: Synapse Workspace Validation
 
 on:
     pull_request:
@@ -24,6 +24,6 @@ jobs:
               uses: Azure/synapse-workspace-deployment@V1.8.0
               with:
                 TargetWorkspaceName: 'targetworkspace'
-                ArtifactsFolder: ''
+                ArtifactsFolder: '$GITHUB_WORKSPACE'
                 operation: 'validate'
 
