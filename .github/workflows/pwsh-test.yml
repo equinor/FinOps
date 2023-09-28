@@ -25,7 +25,8 @@ jobs:
 
             - name: read output variable
               run: |
-                echo "The count was $(${{ steps.stepid.outputs.arr }}"[0])
+                firstElem=$(${{ steps.stepid.outputs.arr }}[0]) 
+                echo "Array val is $firstElem"
     
             # - name: 'Overwrite parameter file'
             #   shell: pwsh
