@@ -17,16 +17,29 @@ jobs:
         steps:
             - uses: actions/checkout@v2
 
-            - name: write env variable
-              id: stepid
-              run: |
-                myarr=("hello" "world")
-                echo "arr=$myarr[@]" >> $GITHUB_OUTPUT
+            - name: 'Service Principal Authentication'
+              uses: azure/login@v1
+              with:
+                creds: ${{ secrets.S037_AZURE_CREDENTIALS }}
+                enable-AzPSSession: true
+    
+            - name: 'Stop Synapse Triggers'
+              uses: azure/powershell@v1
+              with:
+                inlineScript: |
+                  ./powershell/StopSynapseTriggers.ps1 -WorkspaceName s037-cost-management -ResourceGroup Synapse
+                azPSVersion: "latest"
 
-            - name: read output variable
-              run: |
-                arr=${{ steps.stepid.outputs.arr }}
-                echo "Array val is $arr"
+            # - name: write env variable
+            #   id: stepid
+            #   run: |
+            #     myarr=("hello" "world")
+            #     echo "arr=$myarr[@]" >> $GITHUB_OUTPUT
+
+            # - name: read output variable
+            #   run: |
+            #     arr=${{ steps.stepid.outputs.arr }}
+            #     echo "Array val is $arr"
     
             # - name: 'Overwrite parameter file'
             #   shell: pwsh
