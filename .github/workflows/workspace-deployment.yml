@@ -37,7 +37,7 @@ jobs:
         uses: azure/powershell@v1
         with:
           inlineScript: |
-            ./powershell/ActiveSynapseTriggers.ps1 -WorkspaceName ${{ env.SYNAPSE_WORKSPACE_NAME }} -ResourceGroup ${{ env.RESOURCE_GROUP }} -Action "stop"
+            ./powershell/ActivateSynapseTriggers.ps1 -WorkspaceName ${{ env.SYNAPSE_WORKSPACE_NAME }} -ResourceGroup ${{ env.RESOURCE_GROUP }} -Action "stop"
           azPSVersion: "latest"
 
       - name: Synapse workspace deployment
@@ -59,7 +59,7 @@ jobs:
         uses: azure/powershell@v1
         with:
           inlineScript: |
-            ./powershell/ActiveSynapseTriggers.ps1 -WorkspaceName ${{ env.SYNAPSE_WORKSPACE_NAME }} -ResourceGroup ${{ env.RESOURCE_GROUP }} -Action "start"
+            ./powershell/ActivateSynapseTriggers.ps1 -WorkspaceName ${{ env.SYNAPSE_WORKSPACE_NAME }} -ResourceGroup ${{ env.RESOURCE_GROUP }} -Action "start"
           azPSVersion: "latest"
 
   deploy-dev:
