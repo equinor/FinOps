@@ -1,7 +1,7 @@
 
 param (
     [string]$WorkspaceName,
-    [string]$WorkspaceTemplateParameterPath,
+    [string]$WorkspaceTemplateParameterPath
 )
 
 
