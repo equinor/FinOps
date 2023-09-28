@@ -25,7 +25,8 @@ if ($triggers.Count -gt 0) {
     Write-Output ("Found {0} triggers" -f $triggers.Count)
 
     foreach ($t in $triggers) {
-        Write-Output ("{0} {1} ..." -f $action -eq "stop" ? "Stopping" : "Starting", $t.Name);
+        $verboseAction = $action -eq "stop" ? "Stopping" : "Starting"
+        Write-Output ("{0} {1} ..." -f $verboseAction, $t.Name)
         try {
             
             if ($action -eq "stop") {
