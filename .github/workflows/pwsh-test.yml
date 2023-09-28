@@ -18,17 +18,11 @@ jobs:
             - uses: actions/checkout@v2
 
             - name: write env variable
-              id: writeenv
-              shell: pwsh
-              run: |
-                $val = "testytest"
-                echo "test=$val" >> $GITHUB_OUTPUT
+              id: stepid
+              run: echo "count=5" >> $GITHUB_OUTPUT
 
             - name: read output variable
-              shell: pwsh
-              run: |
-                $val2 = "${{ steps.writeenv.outputs.test }}"
-                Write-Host "output variable: $val2"
+              run: echo "The count was ${{ steps.stepid.outputs.count }}"
     
             # - name: 'Overwrite parameter file'
             #   shell: pwsh
