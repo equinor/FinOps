@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "df7f3d34-bd9b-4c3a-9dac-cbac45d601c8"
+				"spark.autotune.trackingId": "8e3e7e4f-d0d1-420c-ba69-fb2314e4f9c6"
 			}
 		},
 		"metadata": {
@@ -47,7 +47,8 @@
 				"sparkVersion": "3.3",
 				"nodeCount": 3,
 				"cores": 16,
-				"memory": 112
+				"memory": 112,
+				"automaticScaleJobs": true
 			},
 			"sessionKeepAliveTimeout": 30
 		},
@@ -326,8 +327,10 @@
 					}
 				},
 				"source": [
-					"## Applied Unknown label in ApplicationName field. \r\n",
+					"# Change the column name\r\n",
+					"df = df.withColumnRenamed(\"Application_Name\", \"ApplicationName\")\r\n",
 					"\r\n",
+					"# Applied Unknown label in ApplicationName field. \r\n",
 					"condition_1 = (F.col('ApplicationName').isNull()| (F.col('ApplicationName') == \"\")) & (F.col('SubscriptionName').contains('Danske Commodities'))\r\n",
 					"condition_2 = (F.col('ApplicationName').isNull()| (F.col('ApplicationName') == \"\")) & (~(F.col('SubscriptionName').contains('Danske Commodities')))\r\n",
 					"\r\n",
