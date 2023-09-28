@@ -18,7 +18,7 @@ if (-not($triggers)) { exit }
 
 # Continue only if there are triggers to be found
 if ($triggers.Count -gt 0) {
-    $runtimeState = $action -eq "stop" ? "Stopped" : "Started"
+    $runtimeState = $action -eq "stop" ? "Started" : "Stopped"
 
     Write-Output "Looping through triggers ..."
     $triggers = $triggers | Where-Object { $_.Properties.RuntimeState -eq $runtimeState }
