@@ -42,6 +42,7 @@ if ($triggers.Count -gt 0) {
 
         catch {
             Write-Output ("Something went wrong with {0}" -f $t.Name)
+            Write-Warning $Error[0]
             Write-Output $_
         }
     }
