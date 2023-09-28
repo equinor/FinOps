@@ -1,5 +1,5 @@
 {
-	"name": "Convert Monthly CSV Cost files to Parquet",
+	"name": "Amortized_Monthly_Cost_Update_ThreeYears",
 	"properties": {
 		"activities": [
 			{
@@ -1635,6 +1635,72 @@
 					"conf": {
 						"spark.dynamicAllocation.enabled": true
 					},
+					"driverSize": "Large"
+				}
+			},
+			{
+				"name": "Amortized_Monthly_Cost_Update_ThreeYears",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "Extend AI column and WBS tags - populate MS App columns",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "Prod_Extended_Amortized_Cost-Threeyears",
+						"type": "NotebookReference"
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": "sprkpool33large",
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Large",
+					"driverSize": "Large"
+				}
+			},
+			{
+				"name": "Amortized_Monthly_Cost_Update_OneYear",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "Extend AI column and WBS tags - populate MS App columns",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "Prod_Extended_Amortized_Cost-Oneyear",
+						"type": "NotebookReference"
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": "sprkpool33large",
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Large",
 					"driverSize": "Large"
 				}
 			}
