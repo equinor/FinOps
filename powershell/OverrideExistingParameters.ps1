@@ -14,7 +14,7 @@ foreach ($parameter in $workspaceTemplateParams.parameters.PSObject.Properties) 
 
     # Override data lake references
 
-    if ($parameterKey -like "*concat(parameters('workspaceName')*") {
+    if ($parameterValue -like "*concat(parameters('workspaceName')*") {
         # $workspaceTemplateParams.parameters.$parameterKey.value = $parameterValue.replace("s037-cost-management", $WorkspaceName)
         # continue
         Write-Output ("$parameterKey")
