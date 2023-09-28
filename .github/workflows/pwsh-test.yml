@@ -20,11 +20,12 @@ jobs:
             - name: write env variable
               id: stepid
               run: |
-                val1=("5", "2")
-                echo "count=$val1" >> $GITHUB_OUTPUT
+                myarr=("hello", "world")
+                echo "arr=${myarr[@]}" >> $GITHUB_OUTPUT
 
             - name: read output variable
-              run: echo "The count was ${{ steps.stepid.outputs.count }}"
+              run: |
+                echo "The count was ${{ steps.stepid.outputs.arr }}"
     
             # - name: 'Overwrite parameter file'
             #   shell: pwsh
