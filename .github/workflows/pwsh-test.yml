@@ -17,18 +17,23 @@ jobs:
         steps:
             - uses: actions/checkout@v2
 
-            - name: 'Service Principal Authentication'
-              uses: azure/login@v1
-              with:
-                creds: ${{ secrets.S037_AZURE_CREDENTIALS }}
-                enable-AzPSSession: true
+            - name: Override
+              shell: pwsh
+              run: |
+                ./powershell/OverrideWorkspaceParameters.ps1 -WorkspaceName "s037-cost-management" -WorkspaceTemplateParamaterPath "./s037-cost-management/TemplateParametersForWorkspace.json"
+
+            # - name: 'Service Principal Authentication'
+            #   uses: azure/login@v1
+            #   with:
+            #     creds: ${{ secrets.S037_AZURE_CREDENTIALS }}
+            #     enable-AzPSSession: true
     
-            - name: 'Stop Synapse Triggers'
-              uses: azure/powershell@v1
-              with:
-                inlineScript: |
-                  ./powershell/StopSynapseTriggers.ps1 -WorkspaceName s037-cost-management -ResourceGroup Synapse
-                azPSVersion: "latest"
+            # - name: 'Stop Synapse Triggers'
+            #   uses: azure/powershell@v1
+            #   with:
+            #     inlineScript: |
+            #       ./powershell/StopSynapseTriggers.ps1 -WorkspaceName s037-cost-management -ResourceGroup Synapse
+            #     azPSVersion: "latest"
 
             # - name: write env variable
             #   id: stepid
