@@ -20,14 +20,13 @@ jobs:
             - name: write env variable
               id: stepid
               run: |
-                declare -a myarr=("hello" "world")
-                echo "arr=$myarr" >> $GITHUB_OUTPUT
+                myarr=("hello" "world")
+                echo "arr=$myarr[@]" >> $GITHUB_OUTPUT
 
             - name: read output variable
               run: |
                 arr=${{ steps.stepid.outputs.arr }}
-                first=$arr[0]
-                echo "Array val is $first"
+                echo "Array val is $arr"
     
             # - name: 'Overwrite parameter file'
             #   shell: pwsh
