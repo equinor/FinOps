@@ -2,8 +2,8 @@ name: pwsh test
 
 on:
     workflow_dispatch:
-    # push:
-    #     branches: [ workspace_publish ]
+    push:
+        branches: [ workspace_publish ]
 
 env:
     BICEP-PARAMETER-PATH: azuredeploy.parameters.dev.json
@@ -16,35 +16,47 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v2
+
+            - name: write env variable
+              id: writeenv
+              shell: pwsh
+              run: |
+                echo "::set-output name=test::testytest"
+
+            - name: read output variable
+              shell: pwsh
+              run: |
+                $val = ${{ steps.writeenv.outputs.test }}
+                Write-Host "output variable: $val"
     
-            - name: 'Overwrite parameter file'
-              shell: pwsh
-              run: |
-                ./powershell/OverrideWorkspaceParameters.ps1 -SubscriptionId ${{ secrets.S926_AZURE_SUBSCRIPTION_ID }} -ResourceGroupName "finops-rg-dev" -WorkspaceName "finops-synapse-dev"  -BicepParameterPath ${{ env.BICEP-PARAMETER-PATH }} -WorkspaceTemplateParamaterPath "./s037-cost-management/TemplateParametersForWorkspace.json" -UpdatedParameterPath ${{ env.UPDATED-PARAMETER-PATH }}
+            # - name: 'Overwrite parameter file'
+            #   shell: pwsh
+            #   run: |
+            #     ./powershell/OverrideWorkspaceParameters.ps1 -SubscriptionId ${{ secrets.S926_AZURE_SUBSCRIPTION_ID }} -ResourceGroupName "finops-rg-dev" -WorkspaceName "finops-synapse-dev"  -BicepParameterPath ${{ env.BICEP-PARAMETER-PATH }} -WorkspaceTemplateParamaterPath "./s037-cost-management/TemplateParametersForWorkspace.json" -UpdatedParameterPath ${{ env.UPDATED-PARAMETER-PATH }}
             
-            - name: 'List'
-              run: ls
+            # - name: 'List'
+            #   run: ls
 
-            - name: 'Read overwritten file'
-              shell: pwsh
-              run: |
-                Write-Host "Hello test"
-                $test = Get-Content -Path ${{ env.UPDATED-PARAMETER-PATH }} -Raw | ConvertFrom-Json
-                $test2 = $test | ConvertTo-Json
-                Write-Host $test2
+            # - name: 'Read overwritten file'
+            #   shell: pwsh
+            #   run: |
+            #     Write-Host "Hello test"
+            #     $test = Get-Content -Path ${{ env.UPDATED-PARAMETER-PATH }} -Raw | ConvertFrom-Json
+            #     $test2 = $test | ConvertTo-Json
+            #     Write-Host $test2
 
-            - name: 'Update arm template'
-              shell: pwsh
-              run: |
-                ./powershell/CleanArmTemplate.ps1 -ARMTemplatePath "./s037-cost-management/TemplateForWorkspace.json" -UpdatedTemplatePath ${{ env.UPDATED-DEPLOYMENT-PATH }} -WorkspaceName "finops-synapse-dev" -BicepParameterPath ${{ env.BICEP-PARAMETER-PATH }}
+            # - name: 'Update arm template'
+            #   shell: pwsh
+            #   run: |
+            #     ./powershell/CleanArmTemplate.ps1 -ARMTemplatePath "./s037-cost-management/TemplateForWorkspace.json" -UpdatedTemplatePath ${{ env.UPDATED-DEPLOYMENT-PATH }} -WorkspaceName "finops-synapse-dev" -BicepParameterPath ${{ env.BICEP-PARAMETER-PATH }}
             
-            - name: 'List'
-              run: ls
+            # - name: 'List'
+            #   run: ls
 
-            - name: 'Read updated template file'
-              shell: pwsh
-              run: |
-                $test = Get-Content -Path ${{ env.UPDATED-DEPLOYMENT-PATH }} -Raw | ConvertFrom-Json
-                $test2 = $test | ConvertTo-Json -Depth 20
-                Write-Host $test2
+            # - name: 'Read updated template file'
+            #   shell: pwsh
+            #   run: |
+            #     $test = Get-Content -Path ${{ env.UPDATED-DEPLOYMENT-PATH }} -Raw | ConvertFrom-Json
+            #     $test2 = $test | ConvertTo-Json -Depth 20
+            #     Write-Host $test2
 
