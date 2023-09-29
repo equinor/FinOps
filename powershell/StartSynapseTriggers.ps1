@@ -16,7 +16,7 @@ $stoppedTriggers = Import-Csv -Path $StoredTriggerPath | ForEach-Object { $_.PSO
 # Get the list of stopped triggers based on imported references
 Write-Output "Getting triggers stopped before deployment"
 $triggers = Get-AzSynapseTrigger -WorkspaceObject $workspace 
-$triggers = $triggers | Where-Object { stoppedTriggers -contains $_.Properties.Name }
+$triggers = $triggers | Where-Object { $stoppedTriggers -contains $_.Properties.Name }
 Write-Output ("Found {0} stopped triggers" -f $triggers.Count)
 if (-not($triggers)) { exit }
 
