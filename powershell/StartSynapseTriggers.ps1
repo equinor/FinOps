@@ -11,7 +11,7 @@ $workspace = Get-AzSynapseWorkspace -ResourceGroupName $ResourceGroup -Name $Wor
 if (-not($workspace)) { throw "Could not find workspace" }
 
 # Import trigger references stopped before deployment
-$stoppedTriggers = Import-Csv -Path StoredTriggerPath | ForEach-Object { $_.PSObject.Properties.Value }
+$stoppedTriggers = Import-Csv -Path S$toredTriggerPath | ForEach-Object { $_.PSObject.Properties.Value }
 
 # Get the list of stopped triggers based on imported references
 Write-Output "Getting triggers stopped before deployment"
