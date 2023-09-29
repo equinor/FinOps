@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "3e766be6-69a0-4d3a-9ed1-626c742c9074"
+				"spark.autotune.trackingId": "7c5ccf98-a3c3-43a3-8e0d-a83a7db3dc1a"
 			}
 		},
 		"metadata": {
@@ -463,6 +463,42 @@
 					}
 				},
 				"source": [
+					"\r\n",
+					"    # When AppID is present, we use the application name from the Service-Now Application list\r\n",
+					"    # First convert u_number to a string, then select the desired columns\r\n",
+					"    map_app = appList.withColumn('u_number', F.col('u_number').cast(T.StringType())).select('u_number', 'name')\r\n",
+					"    # Merge the two lists together with a left-join\r\n",
+					"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.u_number, how='left')\r\n",
+					"    # Select the application name from AppList when AppID is present in the CostAllocationType, then drop the columns from AppList\r\n",
+					"    cost_df = joined_df.withColumn('ApplicationName', F.when(appid_mask, F.col('name'))).drop('u_number')\r\n",
+					"\r\n",
+					"    # When Cost AllocationType is CI, we apply the A as Application Name\r\n",
+					"    # When neither CI or AppID is present in CostAllocationType, we use the Application Name from the subscription list\r\n",
+					"    cost_df = cost_df.withColumn('ApplicationName', F.when(ci_mask & F.col('CostAllocationCode').cast('int').isNull(), F.col('CostAllocationCode'))\\\r\n",
+					"                                                     .when(ci_mask & F.col('CostAllocationCode').cast('int').isNotNull(), F.col('name'))\\\r\n",
+					"                                                     .when(~ci_mask & ~appid_mask, F.col('SubscriptionServiceNow-App'))\\\r\n",
+					"                                                     .otherwise(F.col('ApplicationName'))).drop('name')\r\n",
+					"\r\n",
+					"\r\n",
+					"# name-> ApplicationName\r\n",
+					"# ApplicationName->Application_Name"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
 					"def get_application_names(cost_df, appList):\r\n",
 					"\r\n",
 					"    # Masks for CI and AppID\r\n",
@@ -480,7 +516,7 @@
 					"    # When Cost AllocationType is CI, we apply the A as Application Name\r\n",
 					"    # When neither CI or AppID is present in CostAllocationType, we use the Application Name from the subscription list\r\n",
 					"    cost_df = cost_df.withColumn('Application_Name', F.when(ci_mask & F.col('CostAllocationCode').cast('int').isNull(), F.col('CostAllocationCode'))\\\r\n",
-					"                                                     .when(ci_mask & F.col('CostAllocationCode').cast('int').isNotNull(), F.col('Applicationname'))\\\r\n",
+					"                                                     .when(ci_mask & F.col('CostAllocationCode').cast('int').isNotNull(), F.col('ApplicationName'))\\\r\n",
 					"                                                     .when(~ci_mask & ~appid_mask, F.col('SubscriptionServiceNow-App'))\\\r\n",
 					"                                                     .otherwise(F.col('Application_Name'))).drop('ApplicationName')\r\n",
 					"\r\n",
