@@ -193,113 +193,53 @@
 			"type": "string",
 			"defaultValue": "ms_consumption_api_rest"
 		},
-		"ACM_Toolkit_kv_linkedServiceName": {
-			"type": "string",
-			"defaultValue": "[concat(parameters('workspaceName'), '/ACM_Toolkit_kv')]"
-		},
-		"AzureDataLakeStorage1_linkedServiceName": {
-			"type": "string",
-			"defaultValue": "[concat(parameters('workspaceName'), '/AzureDataLakeStorage1')]"
-		},
 		"AzureDataLakeStorage1_linkedServiceUrl": {
 			"type": "string",
 			"defaultValue": "https://s037costmgmt.dfs.core.windows.net/"
-		},
-		"HUB Storage Account_linkedServiceName": {
-			"type": "string",
-			"defaultValue": "[concat(parameters('workspaceName'), '/HUB Storage Account')]"
 		},
 		"HUB Storage Account_linkedServiceUrl": {
 			"type": "string",
 			"defaultValue": "https://hubautomation.dfs.core.windows.net/"
 		},
-		"MicrosoftGraphRESTAPI_linkedServiceName": {
-			"type": "string",
-			"defaultValue": "[concat(parameters('workspaceName'), '/MicrosoftGraphRESTAPI')]"
-		},
 		"MicrosoftGraphRESTAPI_linkedServiceUrl": {
 			"type": "string",
 			"defaultValue": "https://graph.microsoft.com/v1.0/"
-		},
-		"NewServiceNow_linkedServiceName": {
-			"type": "string",
-			"defaultValue": "[concat(parameters('workspaceName'), '/NewServiceNow')]"
 		},
 		"NewServiceNow_linkedServiceConnectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'linkedServiceConnectionString' of 'NewServiceNow'"
 		},
-		"PowerBIWorkspace1_linkedServiceName": {
-			"type": "string",
-			"defaultValue": "[concat(parameters('workspaceName'), '/PowerBIWorkspace1')]"
-		},
-		"Pricesheet API_linkedServiceName": {
-			"type": "string",
-			"defaultValue": "[concat(parameters('workspaceName'), '/Pricesheet API')]"
-		},
 		"Pricesheet API_linkedServiceUrl": {
 			"type": "string",
 			"defaultValue": "@{concat('https://consumption.azure.com/v3/enrollments/57950773/billingPeriods/',formatDateTime(utcNow(),'yyyyMM'),'/pricesheet')}"
-		},
-		"ServiceNowLinkedService_linkedServiceName": {
-			"type": "string",
-			"defaultValue": "[concat(parameters('workspaceName'), '/ServiceNowLinkedService')]"
 		},
 		"ServiceNowLinkedService_linkedServiceUrl": {
 			"type": "string",
 			"defaultValue": "https://api.gateway.equinor.com/api/x_stasa_serv_mgnt/v1/"
 		},
-		"ms_billing_cost_report_download_linkedServiceName": {
-			"type": "string",
-			"defaultValue": "[concat(parameters('workspaceName'), '/ms_billing_cost_report_download')]"
-		},
 		"ms_billing_cost_report_download_linkedServiceUrl": {
 			"type": "string",
 			"defaultValue": "@{linkedService().blobPath}"
-		},
-		"ms_consumption_api_http_linkedServiceName": {
-			"type": "string",
-			"defaultValue": "[concat(parameters('workspaceName'), '/ms_consumption_api_http')]"
 		},
 		"ms_consumption_api_http_linkedServiceUrl": {
 			"type": "string",
 			"defaultValue": "@{linkedService().baseUrl}"
 		},
-		"ms_consumption_api_rest_linkedServiceName": {
-			"type": "string",
-			"defaultValue": "[concat(parameters('workspaceName'), '/ms_consumption_api_rest')]"
-		},
 		"ms_consumption_api_rest_linkedServiceUrl": {
 			"type": "string",
 			"defaultValue": "@{linkedService().baseUrl}"
-		},
-		"ms_management_api_rest_linkedServiceName": {
-			"type": "string",
-			"defaultValue": "[concat(parameters('workspaceName'), '/ms_management_api_rest')]"
 		},
 		"ms_management_api_rest_linkedServiceUrl": {
 			"type": "string",
 			"defaultValue": "https://management.azure.com"
 		},
-		"omniaacdcdlsprod_linkedServiceName": {
-			"type": "string",
-			"defaultValue": "[concat(parameters('workspaceName'), '/omniaacdcdlsprod')]"
-		},
 		"omniaacdcdlsprod_linkedServiceUrl": {
 			"type": "string",
 			"defaultValue": "https://omniaacdcdlsprod.dfs.core.windows.net"
 		},
-		"s037-cost-management-WorkspaceDefaultSqlServer_linkedServiceName": {
-			"type": "string",
-			"defaultValue": "[concat(parameters('workspaceName'), '/s037-cost-management-WorkspaceDefaultSqlServer')]"
-		},
 		"s037-cost-management-WorkspaceDefaultSqlServer_linkedServiceConnectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'linkedServiceConnectionString' of 's037-cost-management-WorkspaceDefaultSqlServer'"
-		},
-		"s037-cost-management-WorkspaceDefaultStorage_linkedServiceName": {
-			"type": "string",
-			"defaultValue": "[concat(parameters('workspaceName'), '/s037-cost-management-WorkspaceDefaultStorage')]"
 		},
 		"s037-cost-management-WorkspaceDefaultStorage_linkedServiceUrl": {
 			"type": "string",
@@ -613,10 +553,6 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
 		},
-		"sparkpool32_sparkPoolResourceName": {
-			"type": "string",
-			"defaultValue": "[concat(parameters('workspaceName'), '/sparkpool32')]"
-		},
 		"sparkpool32_delayInMinutes": {
 			"type": "int",
 			"defaultValue": 15
@@ -640,10 +576,6 @@
 		"sparkpool32_sparkVersion": {
 			"type": "string",
 			"defaultValue": "3.2"
-		},
-		"sprkpool33large_sparkPoolResourceName": {
-			"type": "string",
-			"defaultValue": "[concat(parameters('workspaceName'), '/sprkpool33large')]"
 		},
 		"sprkpool33large_delayInMinutes": {
 			"type": "int",
@@ -6046,6 +5978,84 @@
 							},
 							"driverSize": "Large"
 						}
+					},
+					{
+						"name": "Amortized_Monthly_Cost_Update_ThreeYears",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "Extend AI column and WBS tags - populate MS App columns",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "Prod_Extended_Amortized_Cost-Threeyears",
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": "[parameters('Convert Monthly CSV Cost files to Parquet_pipelineSparkPoolNameRef')]",
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Large",
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"driverSize": "Large",
+							"numExecutors": null
+						}
+					},
+					{
+						"name": "Amortized_Monthly_Cost_Update_OneYear",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "Extend AI column and WBS tags - populate MS App columns",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "Prod_Extended_Amortized_Cost-Oneyear",
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": "[parameters('Convert Monthly CSV Cost files to Parquet_pipelineSparkPoolNameRef')]",
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Large",
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"driverSize": "Large",
+							"numExecutors": null
+						}
 					}
 				],
 				"policy": {
@@ -6088,7 +6098,9 @@
 				"[concat(variables('workspaceId'), '/datasets/Adhoc_CSV_Source')]",
 				"[concat(variables('workspaceId'), '/datasets/Monthly_Parquet')]",
 				"[concat(variables('workspaceId'), '/notebooks/Monthly Extend AI column and WBS tags_v2')]",
-				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('Convert Monthly CSV Cost files to Parquet_pipelineSparkPoolNameRef'))]"
+				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('Convert Monthly CSV Cost files to Parquet_pipelineSparkPoolNameRef'))]",
+				"[concat(variables('workspaceId'), '/notebooks/Prod_Extended_Amortized_Cost-Threeyears')]",
+				"[concat(variables('workspaceId'), '/notebooks/Prod_Extended_Amortized_Cost-Oneyear')]"
 			]
 		},
 		{
@@ -17591,6 +17603,365 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/OldServiceNowApplicationList')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get Application List from ServiceNow",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 2,
+							"retryIntervalInSeconds": 300,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "RestSource",
+								"httpRequestTimeout": "00:30:00",
+								"requestInterval": "00.00:00:00.010",
+								"requestMethod": "GET",
+								"paginationRules": {
+									"supportRFC5988": "true"
+								}
+							},
+							"sink": {
+								"type": "JsonSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "JsonWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "ServiceNowLinkedService_Application_View",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ServiceNowAppJson",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "Transform json to parquet",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Get Application List from ServiceNow",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"path": "['u_number']"
+										},
+										"sink": {
+											"name": "u_number",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "['name']"
+										},
+										"sink": {
+											"name": "name",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "['u_business_process_area']"
+										},
+										"sink": {
+											"name": "u_business_process_area",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "['sys_created_on']"
+										},
+										"sink": {
+											"name": "sys_created_on",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "['u_application_family']"
+										},
+										"sink": {
+											"name": "u_application_family",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "['u_product_owner']"
+										},
+										"sink": {
+											"name": "u_product_owner",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "['u_life_cycle_state']"
+										},
+										"sink": {
+											"name": "u_life_cycle_state",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "['operational_status']"
+										},
+										"sink": {
+											"name": "operational_status",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "['u_operational_unit']"
+										},
+										"sink": {
+											"name": "u_operational_unit",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "['u_business_critical']"
+										},
+										"sink": {
+											"name": "u_business_critical",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "['u_user_representative']"
+										},
+										"sink": {
+											"name": "u_user_representative",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "['u_technical_contact_persons']"
+										},
+										"sink": {
+											"name": "u_technical_contact_persons",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "['install_status']"
+										},
+										"sink": {
+											"name": "install_status",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "['u_service_offering']"
+										},
+										"sink": {
+											"name": "u_service_offering",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "['u_service_activities']"
+										},
+										"sink": {
+											"name": "u_service_activities",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "['u_it_application_type']"
+										},
+										"sink": {
+											"name": "u_it_application_type",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "['short_description']"
+										},
+										"sink": {
+											"name": "short_description",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "['u_operational_wbs']"
+										},
+										"sink": {
+											"name": "u_operational_wbs",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "['u_omnia_subscription_name_s']"
+										},
+										"sink": {
+											"name": "u_omnia_subscription_name_s",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "['u_business_service']"
+										},
+										"sink": {
+											"name": "u_business_service",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "['u_allocation_service']"
+										},
+										"sink": {
+											"name": "u_allocation_service",
+											"type": "String"
+										}
+									}
+								],
+								"collectionReference": "$['result']['details']",
+								"mapComplexValuesToString": false
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "ServiceNowAppJson",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ServiceNowApplicationData",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "ServiceNowApplication",
+						"description": "This data is collected from ServiceNow through API.",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "Transform json to parquet",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "Prod_subscription_json",
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"numExecutors": null
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"folder": {
+					"name": "PipelinesInProduction/ServiceNowPipeline"
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-09-12T12:26:35Z"
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/ServiceNowLinkedService_Application_View')]",
+				"[concat(variables('workspaceId'), '/datasets/ServiceNowAppJson')]",
+				"[concat(variables('workspaceId'), '/datasets/ServiceNowApplicationData')]",
+				"[concat(variables('workspaceId'), '/notebooks/Prod_subscription_json')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/Omnia1 Create Export S037 Subscription Scope')]",
 			"type": "Microsoft.Synapse/workspaces/pipelines",
 			"apiVersion": "2019-06-01-preview",
@@ -18925,365 +19296,6 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/notebooks/VM-Performance')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/tsc_Transform json to parquet')]",
-			"type": "Microsoft.Synapse/workspaces/pipelines",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"activities": [
-					{
-						"name": "Get Application List from ServiceNow",
-						"type": "Copy",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 2,
-							"retryIntervalInSeconds": 300,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "RestSource",
-								"httpRequestTimeout": "00:30:00",
-								"requestInterval": "00.00:00:00.010",
-								"requestMethod": "GET",
-								"paginationRules": {
-									"supportRFC5988": "true"
-								}
-							},
-							"sink": {
-								"type": "JsonSink",
-								"storeSettings": {
-									"type": "AzureBlobFSWriteSettings"
-								},
-								"formatSettings": {
-									"type": "JsonWriteSettings"
-								}
-							},
-							"enableStaging": false
-						},
-						"inputs": [
-							{
-								"referenceName": "ServiceNowLinkedService_Application_View",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						],
-						"outputs": [
-							{
-								"referenceName": "ServiceNowAppJson",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						]
-					},
-					{
-						"name": "Transform json to parquet",
-						"type": "Copy",
-						"dependsOn": [
-							{
-								"activity": "Get Application List from ServiceNow",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "JsonSource",
-								"storeSettings": {
-									"type": "AzureBlobFSReadSettings",
-									"recursive": true,
-									"enablePartitionDiscovery": false
-								},
-								"formatSettings": {
-									"type": "JsonReadSettings"
-								}
-							},
-							"sink": {
-								"type": "ParquetSink",
-								"storeSettings": {
-									"type": "AzureBlobFSWriteSettings"
-								},
-								"formatSettings": {
-									"type": "ParquetWriteSettings"
-								}
-							},
-							"enableStaging": false,
-							"translator": {
-								"type": "TabularTranslator",
-								"mappings": [
-									{
-										"source": {
-											"path": "['u_number']"
-										},
-										"sink": {
-											"name": "u_number",
-											"type": "String"
-										}
-									},
-									{
-										"source": {
-											"path": "['name']"
-										},
-										"sink": {
-											"name": "name",
-											"type": "String"
-										}
-									},
-									{
-										"source": {
-											"path": "['u_business_process_area']"
-										},
-										"sink": {
-											"name": "u_business_process_area",
-											"type": "String"
-										}
-									},
-									{
-										"source": {
-											"path": "['sys_created_on']"
-										},
-										"sink": {
-											"name": "sys_created_on",
-											"type": "String"
-										}
-									},
-									{
-										"source": {
-											"path": "['u_application_family']"
-										},
-										"sink": {
-											"name": "u_application_family",
-											"type": "String"
-										}
-									},
-									{
-										"source": {
-											"path": "['u_product_owner']"
-										},
-										"sink": {
-											"name": "u_product_owner",
-											"type": "String"
-										}
-									},
-									{
-										"source": {
-											"path": "['u_life_cycle_state']"
-										},
-										"sink": {
-											"name": "u_life_cycle_state",
-											"type": "String"
-										}
-									},
-									{
-										"source": {
-											"path": "['operational_status']"
-										},
-										"sink": {
-											"name": "operational_status",
-											"type": "String"
-										}
-									},
-									{
-										"source": {
-											"path": "['u_operational_unit']"
-										},
-										"sink": {
-											"name": "u_operational_unit",
-											"type": "String"
-										}
-									},
-									{
-										"source": {
-											"path": "['u_business_critical']"
-										},
-										"sink": {
-											"name": "u_business_critical",
-											"type": "String"
-										}
-									},
-									{
-										"source": {
-											"path": "['u_user_representative']"
-										},
-										"sink": {
-											"name": "u_user_representative",
-											"type": "String"
-										}
-									},
-									{
-										"source": {
-											"path": "['u_technical_contact_persons']"
-										},
-										"sink": {
-											"name": "u_technical_contact_persons",
-											"type": "String"
-										}
-									},
-									{
-										"source": {
-											"path": "['install_status']"
-										},
-										"sink": {
-											"name": "install_status",
-											"type": "String"
-										}
-									},
-									{
-										"source": {
-											"path": "['u_service_offering']"
-										},
-										"sink": {
-											"name": "u_service_offering",
-											"type": "String"
-										}
-									},
-									{
-										"source": {
-											"path": "['u_service_activities']"
-										},
-										"sink": {
-											"name": "u_service_activities",
-											"type": "String"
-										}
-									},
-									{
-										"source": {
-											"path": "['u_it_application_type']"
-										},
-										"sink": {
-											"name": "u_it_application_type",
-											"type": "String"
-										}
-									},
-									{
-										"source": {
-											"path": "['short_description']"
-										},
-										"sink": {
-											"name": "short_description",
-											"type": "String"
-										}
-									},
-									{
-										"source": {
-											"path": "['u_operational_wbs']"
-										},
-										"sink": {
-											"name": "u_operational_wbs",
-											"type": "String"
-										}
-									},
-									{
-										"source": {
-											"path": "['u_omnia_subscription_name_s']"
-										},
-										"sink": {
-											"name": "u_omnia_subscription_name_s",
-											"type": "String"
-										}
-									},
-									{
-										"source": {
-											"path": "['u_business_service']"
-										},
-										"sink": {
-											"name": "u_business_service",
-											"type": "String"
-										}
-									},
-									{
-										"source": {
-											"path": "['u_allocation_service']"
-										},
-										"sink": {
-											"name": "u_allocation_service",
-											"type": "String"
-										}
-									}
-								],
-								"collectionReference": "$['result']['details']",
-								"mapComplexValuesToString": false
-							}
-						},
-						"inputs": [
-							{
-								"referenceName": "ServiceNowAppJson",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						],
-						"outputs": [
-							{
-								"referenceName": "ServiceNowApplicationData",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						]
-					},
-					{
-						"name": "ServiceNowApplication",
-						"description": "This data is collected from ServiceNow through API.",
-						"type": "SynapseNotebook",
-						"dependsOn": [
-							{
-								"activity": "Transform json to parquet",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"notebook": {
-								"referenceName": "Prod_subscription_json",
-								"type": "NotebookReference"
-							},
-							"snapshot": true,
-							"conf": {
-								"spark.dynamicAllocation.enabled": null,
-								"spark.dynamicAllocation.minExecutors": null,
-								"spark.dynamicAllocation.maxExecutors": null
-							},
-							"numExecutors": null
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {},
-					"cancelAfter": {}
-				},
-				"folder": {
-					"name": "PipelinesInProduction/ServiceNowPipeline"
-				},
-				"annotations": [],
-				"lastPublishTime": "2023-09-12T12:26:35Z"
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/datasets/ServiceNowLinkedService_Application_View')]",
-				"[concat(variables('workspaceId'), '/datasets/ServiceNowAppJson')]",
-				"[concat(variables('workspaceId'), '/datasets/ServiceNowApplicationData')]",
-				"[concat(variables('workspaceId'), '/notebooks/Prod_subscription_json')]"
 			]
 		},
 		{
@@ -21986,7 +21998,7 @@
 			]
 		},
 		{
-			"name": "[parameters('ACM_Toolkit_kv_linkedServiceName')]",
+			"name": "[concat(parameters('workspaceName'), '/ACM_Toolkit_kv')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -21999,7 +22011,7 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[parameters('AzureDataLakeStorage1_linkedServiceName')]",
+			"name": "[concat(parameters('workspaceName'), '/AzureDataLakeStorage1')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -22022,7 +22034,7 @@
 			]
 		},
 		{
-			"name": "[parameters('HUB Storage Account_linkedServiceName')]",
+			"name": "[concat(parameters('workspaceName'), '/HUB Storage Account')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -22041,7 +22053,7 @@
 			]
 		},
 		{
-			"name": "[parameters('MicrosoftGraphRESTAPI_linkedServiceName')]",
+			"name": "[concat(parameters('workspaceName'), '/MicrosoftGraphRESTAPI')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -22074,7 +22086,7 @@
 			]
 		},
 		{
-			"name": "[parameters('NewServiceNow_linkedServiceName')]",
+			"name": "[concat(parameters('workspaceName'), '/NewServiceNow')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -22107,7 +22119,7 @@
 			]
 		},
 		{
-			"name": "[parameters('PowerBIWorkspace1_linkedServiceName')]",
+			"name": "[concat(parameters('workspaceName'), '/PowerBIWorkspace1')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -22121,7 +22133,7 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[parameters('Pricesheet API_linkedServiceName')]",
+			"name": "[concat(parameters('workspaceName'), '/Pricesheet API')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -22153,7 +22165,7 @@
 			]
 		},
 		{
-			"name": "[parameters('ServiceNowLinkedService_linkedServiceName')]",
+			"name": "[concat(parameters('workspaceName'), '/ServiceNowLinkedService')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -22197,7 +22209,7 @@
 			]
 		},
 		{
-			"name": "[parameters('ms_billing_cost_report_download_linkedServiceName')]",
+			"name": "[concat(parameters('workspaceName'), '/ms_billing_cost_report_download')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -22223,7 +22235,7 @@
 			]
 		},
 		{
-			"name": "[parameters('ms_consumption_api_http_linkedServiceName')]",
+			"name": "[concat(parameters('workspaceName'), '/ms_consumption_api_http')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -22261,7 +22273,7 @@
 			]
 		},
 		{
-			"name": "[parameters('ms_consumption_api_rest_linkedServiceName')]",
+			"name": "[concat(parameters('workspaceName'), '/ms_consumption_api_rest')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -22299,7 +22311,7 @@
 			]
 		},
 		{
-			"name": "[parameters('ms_management_api_rest_linkedServiceName')]",
+			"name": "[concat(parameters('workspaceName'), '/ms_management_api_rest')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -22332,7 +22344,7 @@
 			]
 		},
 		{
-			"name": "[parameters('omniaacdcdlsprod_linkedServiceName')]",
+			"name": "[concat(parameters('workspaceName'), '/omniaacdcdlsprod')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -22351,7 +22363,7 @@
 			]
 		},
 		{
-			"name": "[parameters('s037-cost-management-WorkspaceDefaultSqlServer_linkedServiceName')]",
+			"name": "[concat(parameters('workspaceName'), '/s037-cost-management-WorkspaceDefaultSqlServer')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -22378,7 +22390,7 @@
 			]
 		},
 		{
-			"name": "[parameters('s037-cost-management-WorkspaceDefaultStorage_linkedServiceName')]",
+			"name": "[concat(parameters('workspaceName'), '/s037-cost-management-WorkspaceDefaultStorage')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -27613,7 +27625,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "be382355-36b6-42e3-b0ef-1ba5771825e1"
+						"spark.autotune.trackingId": "7e417229-7835-4015-98e0-1d36fedefbee"
 					}
 				},
 				"metadata": {
@@ -27638,15 +27650,13 @@
 						"sparkVersion": "3.2",
 						"nodeCount": 3,
 						"cores": 8,
-						"memory": 56,
-						"automaticScaleJobs": false
+						"memory": 56
 					},
 					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"import pyspark.sql.types as T\r\n",
@@ -28295,7 +28305,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "5aa34672-f63d-4e7f-9922-178533e38458"
+						"spark.autotune.trackingId": "18b73861-0ef7-416b-8a62-26f2dfa58f87"
 					}
 				},
 				"metadata": {
@@ -28333,12 +28343,12 @@
 							]
 						},
 						"source": [
-							"# toDate = '20230930'\n",
-							"# fromDate = '20230901'\n",
+							"toDate = '20230930'\n",
+							"fromDate = '20230901'\n",
 							"container = 'usage'"
 						],
 						"outputs": [],
-						"execution_count": 18
+						"execution_count": 17
 					},
 					{
 						"cell_type": "code",
@@ -28366,7 +28376,7 @@
 							"import pyspark.sql.types as T"
 						],
 						"outputs": [],
-						"execution_count": 19
+						"execution_count": 18
 					},
 					{
 						"cell_type": "code",
@@ -28406,7 +28416,7 @@
 							"    return cost_df, subscription_list, appList"
 						],
 						"outputs": [],
-						"execution_count": 20
+						"execution_count": 19
 					},
 					{
 						"cell_type": "code",
@@ -28437,7 +28447,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 21
+						"execution_count": 20
 					},
 					{
 						"cell_type": "code",
@@ -28465,6 +28475,7 @@
 							"                    \"ImageType\",\r\n",
 							"                    \"ServiceType\",\r\n",
 							"                    \"VMName\",\r\n",
+							"                    \"VMApplicationName\",\r\n",
 							"                    \"VMProperties\",\r\n",
 							"                    \"VCPUs\",\r\n",
 							"                    \"AHB\",\r\n",
@@ -28478,7 +28489,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 22
+						"execution_count": 21
 					},
 					{
 						"cell_type": "code",
@@ -28508,7 +28519,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 23
+						"execution_count": 22
 					},
 					{
 						"cell_type": "code",
@@ -28544,7 +28555,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 24
+						"execution_count": 23
 					},
 					{
 						"cell_type": "code",
@@ -28582,7 +28593,7 @@
 							"    return subscription_list"
 						],
 						"outputs": [],
-						"execution_count": 25
+						"execution_count": 24
 					},
 					{
 						"cell_type": "code",
@@ -28606,7 +28617,7 @@
 							"    return cost_df, subscription_list"
 						],
 						"outputs": [],
-						"execution_count": 26
+						"execution_count": 25
 					},
 					{
 						"cell_type": "code",
@@ -28641,7 +28652,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 27
+						"execution_count": 26
 					},
 					{
 						"cell_type": "code",
@@ -28733,7 +28744,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 28
+						"execution_count": 27
 					},
 					{
 						"cell_type": "code",
@@ -28776,7 +28787,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 29
+						"execution_count": 28
 					},
 					{
 						"cell_type": "code",
@@ -28811,7 +28822,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 30
+						"execution_count": 29
 					},
 					{
 						"cell_type": "code",
@@ -28843,7 +28854,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 31
+						"execution_count": 30
 					},
 					{
 						"cell_type": "code",
@@ -28873,7 +28884,7 @@
 							"    print('File write complete!')"
 						],
 						"outputs": [],
-						"execution_count": 32
+						"execution_count": 31
 					},
 					{
 						"cell_type": "code",
@@ -28958,7 +28969,7 @@
 							"    print(' ')"
 						],
 						"outputs": [],
-						"execution_count": 33
+						"execution_count": 32
 					}
 				]
 			},
@@ -32639,7 +32650,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "df7f3d34-bd9b-4c3a-9dac-cbac45d601c8"
+						"spark.autotune.trackingId": "9ae9c652-5926-4db3-91ae-732eabf07597"
 					}
 				},
 				"metadata": {
@@ -32730,7 +32741,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 1
+						"execution_count": 5
 					},
 					{
 						"cell_type": "markdown",
@@ -32785,7 +32796,7 @@
 							"df_schema_extended = df_schema_extended.withColumn('Report_Date_Partition',lit('') )"
 						],
 						"outputs": [],
-						"execution_count": 2
+						"execution_count": 6
 					},
 					{
 						"cell_type": "code",
@@ -32805,7 +32816,7 @@
 							"len(df_schema_extended.columns)"
 						],
 						"outputs": [],
-						"execution_count": 3
+						"execution_count": 7
 					},
 					{
 						"cell_type": "code",
@@ -32827,7 +32838,7 @@
 							"#df_schema_extended = spark.createDataFrame(df_schema_extended_pd)"
 						],
 						"outputs": [],
-						"execution_count": 4
+						"execution_count": 8
 					},
 					{
 						"cell_type": "markdown",
@@ -32897,10 +32908,13 @@
 							"                    except Exception as e:\r\n",
 							"                        # Exclude the extended files that are developed by David.\r\n",
 							"                        print(\"Those files will not be read\",file_path.path)\r\n",
+							"                        print(df_temp.columns)\r\n",
+							"                        print(df)\r\n",
+							"                        print(len(df_temp.columns),len(df.columns))\r\n",
 							""
 						],
 						"outputs": [],
-						"execution_count": 5
+						"execution_count": 9
 					},
 					{
 						"cell_type": "markdown",
@@ -32933,7 +32947,7 @@
 							"df = df.withColumn(\"Report_Date\", col(\"Report_Date\").cast(\"timestamp\"))"
 						],
 						"outputs": [],
-						"execution_count": 6
+						"execution_count": 10
 					},
 					{
 						"cell_type": "code",
@@ -32949,8 +32963,10 @@
 							}
 						},
 						"source": [
-							"## Applied Unknown label in ApplicationName field. \r\n",
+							"# Change the column name\r\n",
+							"df = df.withColumnRenamed(\"Application_Name\", \"ApplicationName\")\r\n",
 							"\r\n",
+							"# Applied Unknown label in ApplicationName field. \r\n",
 							"condition_1 = (F.col('ApplicationName').isNull()| (F.col('ApplicationName') == \"\")) & (F.col('SubscriptionName').contains('Danske Commodities'))\r\n",
 							"condition_2 = (F.col('ApplicationName').isNull()| (F.col('ApplicationName') == \"\")) & (~(F.col('SubscriptionName').contains('Danske Commodities')))\r\n",
 							"\r\n",
@@ -32963,7 +32979,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 7
+						"execution_count": 11
 					},
 					{
 						"cell_type": "code",
@@ -32986,7 +33002,7 @@
 							"#display(df.filter((F.col('ApplicationName')).contains('Unknown')))"
 						],
 						"outputs": [],
-						"execution_count": 8
+						"execution_count": 12
 					},
 					{
 						"cell_type": "markdown",
@@ -33022,7 +33038,7 @@
 							"df.write.format('parquet').mode('overwrite').partitionBy('Report_Date_Partition').option('overwriteSchema', 'true').save(optimized_path)"
 						],
 						"outputs": [],
-						"execution_count": 9
+						"execution_count": 13
 					},
 					{
 						"cell_type": "markdown",
@@ -33055,7 +33071,7 @@
 							"spark.catalog.clearCache()"
 						],
 						"outputs": [],
-						"execution_count": 10
+						"execution_count": 14
 					}
 				]
 			},
@@ -33087,7 +33103,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "41277147-d3b4-4812-8aca-13d6cb82d1b6"
+						"spark.autotune.trackingId": "94958daa-c309-4a76-8b53-bbc038fa391e"
 					}
 				},
 				"metadata": {
@@ -33179,7 +33195,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 22
+						"execution_count": 30
 					},
 					{
 						"cell_type": "markdown",
@@ -33235,7 +33251,7 @@
 							"df_schema_extended = df_schema_extended.withColumn('Report_Date_Partition',lit('') )"
 						],
 						"outputs": [],
-						"execution_count": 23
+						"execution_count": 31
 					},
 					{
 						"cell_type": "code",
@@ -33255,7 +33271,7 @@
 							"len(df_schema_extended.columns)"
 						],
 						"outputs": [],
-						"execution_count": 24
+						"execution_count": 32
 					},
 					{
 						"cell_type": "code",
@@ -33276,7 +33292,7 @@
 							"#df_schema_extended = spark.createDataFrame(df_schema_extended_pd)"
 						],
 						"outputs": [],
-						"execution_count": 25
+						"execution_count": 33
 					},
 					{
 						"cell_type": "markdown",
@@ -33345,10 +33361,13 @@
 							"                        df = df.union(df_temp)\r\n",
 							"                    except Exception as e:\r\n",
 							"                        # Exclude the extended files that are developed by David.\r\n",
-							"                        print(\"Those files will not be read\",file_path.path)"
+							"                        print(\"Those files will not be read\",file_path.path)\r\n",
+							"                        print(df_temp.columns)\r\n",
+							"                        print(df)\r\n",
+							"                        print(len(df_temp.columns),len(df.columns))"
 						],
 						"outputs": [],
-						"execution_count": 26
+						"execution_count": 34
 					},
 					{
 						"cell_type": "markdown",
@@ -33377,8 +33396,10 @@
 							}
 						},
 						"source": [
-							"## Applied Unknown label in ApplicationName field. \r\n",
+							"# Change the column name\r\n",
+							"df = df.withColumnRenamed(\"Application_Name\", \"ApplicationName\")\r\n",
 							"\r\n",
+							"# Applied Unknown label in ApplicationName field. \r\n",
 							"condition_1 = (F.col('ApplicationName').isNull()| (F.col('ApplicationName') == \"\")) & (F.col('SubscriptionName').contains('Danske Commodities'))\r\n",
 							"condition_2 = (F.col('ApplicationName').isNull()| (F.col('ApplicationName') == \"\")) & (~(F.col('SubscriptionName').contains('Danske Commodities')))\r\n",
 							"\r\n",
@@ -33388,10 +33409,11 @@
 							"    ).when(condition_2,'Unknown'\r\n",
 							"    ).otherwise(F.col('ApplicationName'))\r\n",
 							")\r\n",
+							"\r\n",
 							""
 						],
 						"outputs": [],
-						"execution_count": 27
+						"execution_count": 35
 					},
 					{
 						"cell_type": "code",
@@ -33415,7 +33437,7 @@
 							"#display(df.filter((F.col('ApplicationName')).contains('Unknown')))"
 						],
 						"outputs": [],
-						"execution_count": 28
+						"execution_count": 36
 					},
 					{
 						"cell_type": "markdown",
@@ -33451,7 +33473,7 @@
 							"df_agg = df.groupBy('SubscriptionId','ApplicationName','SubscriptionName','CostCenter','ResourceGroup','ResourceLocation','ResourceName','MeterName','MeterCategory','MeterSubCategory','Report_Date','Report_Date_Partition','SubscriptionServiceNow-App','ActiveWBS','CostAllocationType','Date').agg(F.sum('Quantity').alias('TotalQuantity'),F.sum('CostInBillingCurrency').alias('CostInKroner'))"
 						],
 						"outputs": [],
-						"execution_count": 29
+						"execution_count": 37
 					},
 					{
 						"cell_type": "code",
@@ -33471,7 +33493,7 @@
 							"df_agg = df_agg.withColumn(\"Report_Date_Partition\", col(\"Report_Date_Partition\").cast(\"timestamp\"))"
 						],
 						"outputs": [],
-						"execution_count": 30
+						"execution_count": 38
 					},
 					{
 						"cell_type": "code",
@@ -33492,7 +33514,7 @@
 							"df_agg = df_agg.withColumn(\"month_partition\", month(df_agg[\"Report_Date_Partition\"]))"
 						],
 						"outputs": [],
-						"execution_count": 31
+						"execution_count": 39
 					},
 					{
 						"cell_type": "markdown",
@@ -33526,7 +33548,7 @@
 							"print(\"The number of the rows in the aggregated dataframe:\", df_agg.count())"
 						],
 						"outputs": [],
-						"execution_count": 32
+						"execution_count": 40
 					},
 					{
 						"cell_type": "code",
@@ -33552,7 +33574,7 @@
 							"df_agg = df_agg.select(*selected_columns)"
 						],
 						"outputs": [],
-						"execution_count": 33
+						"execution_count": 41
 					},
 					{
 						"cell_type": "code",
@@ -33572,7 +33594,7 @@
 							"df_agg.groupBy(\"ApplicationName\").count().orderBy(\"count\", ascending=False).show()"
 						],
 						"outputs": [],
-						"execution_count": 34
+						"execution_count": 42
 					},
 					{
 						"cell_type": "code",
@@ -33595,7 +33617,7 @@
 							"#display(df_agg)"
 						],
 						"outputs": [],
-						"execution_count": 35
+						"execution_count": 43
 					},
 					{
 						"cell_type": "markdown",
@@ -33634,7 +33656,7 @@
 							"#df_agg.write.format('parquet').mode('overwrite').partitionBy('Report_date).option('overwriteSchema', 'true').save(optimized_path)"
 						],
 						"outputs": [],
-						"execution_count": 36
+						"execution_count": 44
 					},
 					{
 						"cell_type": "markdown",
@@ -33667,7 +33689,7 @@
 							"spark.catalog.clearCache()"
 						],
 						"outputs": [],
-						"execution_count": 37
+						"execution_count": 45
 					}
 				]
 			},
@@ -36222,7 +36244,7 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[parameters('sparkpool32_sparkPoolResourceName')]",
+			"name": "[concat(parameters('workspaceName'), '/sparkpool32')]",
 			"type": "Microsoft.Synapse/workspaces/bigDataPools",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -36252,7 +36274,7 @@
 			"location": "northeurope"
 		},
 		{
-			"name": "[parameters('sprkpool33large_sparkPoolResourceName')]",
+			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
 			"type": "Microsoft.Synapse/workspaces/bigDataPools",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
