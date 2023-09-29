@@ -2,8 +2,8 @@ name: FinOps environment deployment
 
 on:
   workflow_dispatch:
-  # push:
-  #   branches: [ workspace_publish ]
+  push:
+    branches: [ workspace_publish ]
 
 permissions:
   contents: read
@@ -14,6 +14,7 @@ env:
   WORKSPACE_TEMPLATE_DEPLOYMENT_PATH: ./s037-cost-management/TemplateForWorkspace.json
   UPDATED_PARAMETER_PATH: updated-deployment-parameters.json
   UPDATED_DEPLOYMENT_PATH: updated-deployment-template.json
+  STORED_TRIGGER_PATH: stopped-synapse-triggers.csv
     
 jobs:
   deploy-pre-dev:
@@ -38,7 +39,7 @@ jobs:
         uses: azure/powershell@v1
         with:
           inlineScript: |
-            ./powershell/ActivateSynapseTriggers.ps1 -WorkspaceName ${{ env.SYNAPSE_WORKSPACE_NAME }} -ResourceGroup ${{ env.RESOURCE_GROUP }} -Action "stop"
+            ./powershell/StopSynapseTriggers.ps1 -WorkspaceName ${{ env.SYNAPSE_WORKSPACE_NAME }} -ResourceGroup ${{ env.RESOURCE_GROUP }} -StoredTriggerPath ${{ env.STORED_TRIGGER_PATH }}
           azPSVersion: "latest"
 
       - name: Synapse workspace deployment
@@ -60,7 +61,7 @@ jobs:
         uses: azure/powershell@v1
         with:
           inlineScript: |
-            ./powershell/ActivateSynapseTriggers.ps1 -WorkspaceName ${{ env.SYNAPSE_WORKSPACE_NAME }} -ResourceGroup ${{ env.RESOURCE_GROUP }} -Action "start"
+            ./powershell/StartSynapseTriggers.ps1 -WorkspaceName ${{ env.SYNAPSE_WORKSPACE_NAME }} -ResourceGroup ${{ env.RESOURCE_GROUP }} -StoredTriggerPath ${{ env.STORED_TRIGGER_PATH }}
           azPSVersion: "latest"
 
   deploy-dev:
@@ -113,7 +114,7 @@ jobs:
         uses: azure/powershell@v1
         with:
           inlineScript: |
-            ./powershell/ActivateSynapseTriggers.ps1 -WorkspaceName ${{ env.SYNAPSE_WORKSPACE_NAME }} -ResourceGroup ${{ env.RESOURCE_GROUP }} -Action "stop"
+            ./powershell/StopSynapseTriggers.ps1 -WorkspaceName ${{ env.SYNAPSE_WORKSPACE_NAME }} -ResourceGroup ${{ env.RESOURCE_GROUP }} -StoredTriggerPath ${{ env.STORED_TRIGGER_PATH }}
           azPSVersion: "latest"
 
       - name: Synapse workspace deployment
@@ -135,7 +136,7 @@ jobs:
         uses: azure/powershell@v1
         with:
           inlineScript: |
-            ./powershell/ActivateSynapseTriggers.ps1 -WorkspaceName ${{ env.SYNAPSE_WORKSPACE_NAME }} -ResourceGroup ${{ env.RESOURCE_GROUP }} -Action "start"
+            ./powershell/StartSynapseTriggers.ps1 -WorkspaceName ${{ env.SYNAPSE_WORKSPACE_NAME }} -ResourceGroup ${{ env.RESOURCE_GROUP }} -StoredTriggerPath ${{ env.STORED_TRIGGER_PATH }}
           azPSVersion: "latest"
 
 #   deploy-prod:
