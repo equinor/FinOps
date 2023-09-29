@@ -1,7 +1,8 @@
 # Input parameters
 param(
     [string]$WorkspaceName,
-    [string]$ResourceGroup
+    [string]$ResourceGroup,
+    [string]$StoredTriggerPath
 )
 
 # Get the specified workspace
@@ -17,7 +18,7 @@ if (-not($triggers)) { exit }
 
 # Continue only if there are triggers to be found
 if ($triggers.Count -gt 0) {
-    Write-Output "Looping through all active triggers ..."
+    Write-Output "Looping through all triggers ..."
     $triggers = $triggers | Where-Object { $_.Properties.RuntimeState -eq "Started" }
     Write-Output ("Found {0} triggers with 'Started' runtime state" -f $triggers.Count)
 
@@ -39,7 +40,7 @@ if ($triggers.Count -gt 0) {
 
     Write-Output ("Number of stopped triggers {0}" -f $stoppedTrigger.Count)
 
-    $stoppedTrigger | Export-Csv -Path "test.csv" -NoTypeInformation
+    $stoppedTrigger | Export-Csv -Path $StoredTriggerPath -NoTypeInformation
 
     Write-Output "... done"
 }

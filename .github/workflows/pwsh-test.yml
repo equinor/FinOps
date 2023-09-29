@@ -27,14 +27,15 @@ jobs:
               uses: azure/powershell@v1
               with:
                 inlineScript: |
-                  ./powershell/StopSynapseTriggers.ps1 -WorkspaceName s037-cost-management -ResourceGroup Synapse
+                  ./powershell/StopSynapseTriggers.ps1 -WorkspaceName s037-cost-management -ResourceGroup Synapse -StoredTriggerPath "test.csv"
                 azPSVersion: "latest"
 
-            - name: 'Read stopped triggers'
-              shell: pwsh
-              run: |
-                $arrayFromFile = Import-Csv -Path "test.csv" | ForEach-Object { $_.PSObject.Properties.Value }
-                foreach ($a in $arrayFromFile) { Write-Output ("Value: $a") }
+            - name: 'Start Synapse Triggers'
+              uses: azure/powershell@v1
+              with:
+                inlineScript: |
+                  ./powershell/StartSynapseTriggers.ps1 -WorkspaceName s037-cost-management -ResourceGroup Synapse -StoredTriggerPath "test.csv"
+                  azPSVersion: "latest"
 
             # - name: write env variable
             #   id: stepid
