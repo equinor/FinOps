@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "df7f3d34-bd9b-4c3a-9dac-cbac45d601c8"
+				"spark.autotune.trackingId": "9ae9c652-5926-4db3-91ae-732eabf07597"
 			}
 		},
 		"metadata": {
@@ -47,7 +47,8 @@
 				"sparkVersion": "3.3",
 				"nodeCount": 3,
 				"cores": 16,
-				"memory": 112
+				"memory": 112,
+				"automaticScaleJobs": true
 			},
 			"sessionKeepAliveTimeout": 30
 		},
@@ -112,7 +113,7 @@
 					"from pyspark.sql.functions import when\r\n",
 					""
 				],
-				"execution_count": 1
+				"execution_count": 5
 			},
 			{
 				"cell_type": "markdown",
@@ -166,7 +167,7 @@
 					"df_schema_extended = df_schema_extended.withColumn('Report_Date',lit('') )\r\n",
 					"df_schema_extended = df_schema_extended.withColumn('Report_Date_Partition',lit('') )"
 				],
-				"execution_count": 2
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -185,7 +186,7 @@
 					"print(\"A-year-ago's date since today:\",date_one_year_ago)\r\n",
 					"len(df_schema_extended.columns)"
 				],
-				"execution_count": 3
+				"execution_count": 7
 			},
 			{
 				"cell_type": "code",
@@ -206,7 +207,7 @@
 					"#df_schema_extended_pd = df_schema_extended_pd.rename(columns={'Azure Hybrid Benefit': 'Azure_Hybrid_Benefit'})\r\n",
 					"#df_schema_extended = spark.createDataFrame(df_schema_extended_pd)"
 				],
-				"execution_count": 4
+				"execution_count": 8
 			},
 			{
 				"cell_type": "markdown",
@@ -276,9 +277,12 @@
 					"                    except Exception as e:\r\n",
 					"                        # Exclude the extended files that are developed by David.\r\n",
 					"                        print(\"Those files will not be read\",file_path.path)\r\n",
+					"                        print(df_temp.columns)\r\n",
+					"                        print(df)\r\n",
+					"                        print(len(df_temp.columns),len(df.columns))\r\n",
 					""
 				],
-				"execution_count": 5
+				"execution_count": 9
 			},
 			{
 				"cell_type": "markdown",
@@ -310,7 +314,7 @@
 					"# Change the data type of the 'Report_Date' column to Datetime\r\n",
 					"df = df.withColumn(\"Report_Date\", col(\"Report_Date\").cast(\"timestamp\"))"
 				],
-				"execution_count": 6
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -326,8 +330,10 @@
 					}
 				},
 				"source": [
-					"## Applied Unknown label in ApplicationName field. \r\n",
+					"# Change the column name\r\n",
+					"df = df.withColumnRenamed(\"Application_Name\", \"ApplicationName\")\r\n",
 					"\r\n",
+					"# Applied Unknown label in ApplicationName field. \r\n",
 					"condition_1 = (F.col('ApplicationName').isNull()| (F.col('ApplicationName') == \"\")) & (F.col('SubscriptionName').contains('Danske Commodities'))\r\n",
 					"condition_2 = (F.col('ApplicationName').isNull()| (F.col('ApplicationName') == \"\")) & (~(F.col('SubscriptionName').contains('Danske Commodities')))\r\n",
 					"\r\n",
@@ -339,7 +345,7 @@
 					")\r\n",
 					""
 				],
-				"execution_count": 7
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -361,7 +367,7 @@
 					"#display(df.filter((F.col('ApplicationName')).contains('Danske Commodities')))\r\n",
 					"#display(df.filter((F.col('ApplicationName')).contains('Unknown')))"
 				],
-				"execution_count": 8
+				"execution_count": 12
 			},
 			{
 				"cell_type": "markdown",
@@ -396,7 +402,7 @@
 					"# Save the data with partitioned by Report date\r\n",
 					"df.write.format('parquet').mode('overwrite').partitionBy('Report_Date_Partition').option('overwriteSchema', 'true').save(optimized_path)"
 				],
-				"execution_count": 9
+				"execution_count": 13
 			},
 			{
 				"cell_type": "markdown",
@@ -428,7 +434,7 @@
 					"currentSparkSession = SparkSession.builder.getOrCreate()\r\n",
 					"spark.catalog.clearCache()"
 				],
-				"execution_count": 10
+				"execution_count": 14
 			}
 		]
 	}
