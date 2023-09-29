@@ -15,6 +15,7 @@ $bicepParams = Get-Content -Path $BicepParameterPath -Raw | ConvertFrom-Json
 $workspaceTemplateParams = Get-Content -Path $WorkspaceTemplateParamaterPath -Raw | ConvertFrom-Json
 
 # Set necessary variables
+$storageAccountName = $bicepParams.parameter.storageAccountName.value
 $sparkPoolName = $bicepParams.parameters.sparkPoolName.value
 $sparkPoolId = "/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.Synapse/workspaces/$WorkspaceName/bigDataPools/$sparkPoolName"
 $sparkPoolEndpoint = "https://$WorkspaceName.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/$sparkPoolName"
@@ -31,6 +32,10 @@ foreach ($parameter in $workspaceTemplateParams.parameters.PSObject.Properties) 
     if ($parameterKey -like "s037-cost-management*") {
         $workspaceTemplateParams.parameters.$parameterKey.value = $parameterValue.replace("s037-cost-management", $WorkspaceName)
         continue
+    }
+
+    if ($parameterKey -like "*_linkedServiceUrl") {
+        $workspaceTemplateParams.parameters.$parameterKey.value = $parameterValue.replace("s037costmgmt", $storageAccountName)
     }
 
     # Override notebook resource references

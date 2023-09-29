@@ -39,5 +39,7 @@ if ($triggers.Count -gt 0) {
 
     Write-Output ("Number of stopped triggers {0}" -f $stoppedTrigger.Count)
 
+    $stoppedTrigger | Export-Csv -Path "test.csv" -NoTypeInformation
+
     Write-Output "... done"
 }

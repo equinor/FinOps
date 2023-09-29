@@ -17,23 +17,24 @@ jobs:
         steps:
             - uses: actions/checkout@v2
 
-            - name: Override
+            - name: 'Service Principal Authentication'
+              uses: azure/login@v1
+              with:
+                creds: ${{ secrets.S037_AZURE_CREDENTIALS }}
+                enable-AzPSSession: true
+    
+            - name: 'Stop Synapse Triggers'
+              uses: azure/powershell@v1
+              with:
+                inlineScript: |
+                  ./powershell/StopSynapseTriggers.ps1 -WorkspaceName s037-cost-management -ResourceGroup Synapse
+                azPSVersion: "latest"
+
+            - name: 'Read stopped triggers'
               shell: pwsh
               run: |
-                ./powershell/OverrideExistingParameters.ps1 -WorkspaceName "s037-cost-management" -WorkspaceTemplateParameterPath "./s037-cost-management/TemplateParametersForWorkspace.json"
-
-            # - name: 'Service Principal Authentication'
-            #   uses: azure/login@v1
-            #   with:
-            #     creds: ${{ secrets.S037_AZURE_CREDENTIALS }}
-            #     enable-AzPSSession: true
-    
-            # - name: 'Stop Synapse Triggers'
-            #   uses: azure/powershell@v1
-            #   with:
-            #     inlineScript: |
-            #       ./powershell/StopSynapseTriggers.ps1 -WorkspaceName s037-cost-management -ResourceGroup Synapse
-            #     azPSVersion: "latest"
+                $arrayFromFile = Import-Csv -Path "myarray.csv" | ForEach-Object { $_.PSObject.Properties.Value }
+                foreach ($a in $arrayFromFile) { Write-Output ("Value: $a") }
 
             # - name: write env variable
             #   id: stepid
