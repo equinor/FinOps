@@ -230,6 +230,15 @@
 						"referenceName": "usersWithBusinessAreaSnapshot_v1",
 						"type": "NotebookReference"
 					},
+					"parameters": {
+						"storageAccount": {
+							"value": {
+								"value": "@pipeline().parameters.storageAccount",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
 					"snapshot": true,
 					"sparkPool": {
 						"referenceName": "sparkpool32",
@@ -246,6 +255,12 @@
 				}
 			}
 		],
+		"parameters": {
+			"storageAccount": {
+				"type": "string",
+				"defaultValue": "s037costmgmt"
+			}
+		},
 		"folder": {
 			"name": "PipelinesInProduction/Microsoft Graph API"
 		},
