@@ -51,13 +51,21 @@ resource blob 'Microsoft.Storage/storageAccounts/blobServices@2021-09-01' = {
   name:  'default'
 }
 
-resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-09-01' = {
+resource defaultContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-09-01' = {
   parent: blob
   name: defaultDataLakeStorageFilesystemName
   properties: {
     publicAccess: 'None'
   }
-}    
+}
+
+resource mainContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-09-01' = {
+  parent: 'usage'
+  name: defaultDataLakeStorageFilesystemName
+  properties: {
+    publicAccess: 'None'
+  }
+}   
 
 resource synapse 'Microsoft.Synapse/workspaces@2021-06-01' = if (!workspaceExists) {
   name: synapseWorkspaceName
