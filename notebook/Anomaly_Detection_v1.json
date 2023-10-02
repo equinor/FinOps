@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "eea49985-05e1-49d4-a5c8-1852867e1b2a"
+				"spark.autotune.trackingId": "9ead921c-2366-403c-9638-3127b501df58"
 			}
 		},
 		"metadata": {
@@ -320,6 +320,52 @@
 					"display(merged_df)"
 				],
 				"execution_count": 123
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Finding Hyper-parameters for the Scaling-Function"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"import numpy as np\r\n",
+					"from scipy.optimize import curve_fit\r\n",
+					"\r\n",
+					"# The function to fit \r\n",
+					"def power_law(x, a, b):\r\n",
+					"    return a * np.power(x, b)\r\n",
+					"\r\n",
+					"# When costs are \"input values\"\r\n",
+					"input_values = np.array([1000, 10000, 100000])\r\n",
+					"output_values = np.array([3, 2, 1])\r\n",
+					"\r\n",
+					"params, covariance = curve_fit(power_law, input_values, output_values)\r\n",
+					"\r\n",
+					"print(\"Scaling function parameters: a * x**b\")\r\n",
+					"print(f\"'a' has value: {params[0]}\")\r\n",
+					"print(f\"'b' has value: {params[1]}\")"
+				],
+				"execution_count": 139
 			}
 		]
 	}
