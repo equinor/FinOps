@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "be3e2fde-0848-4d51-bff1-d20216fecb8a"
+				"spark.autotune.trackingId": "1cabbe72-ce61-4400-aa24-cc230bd61a1e"
 			}
 		},
 		"metadata": {
@@ -508,9 +508,11 @@
 					"\r\n",
 					"    # When AppID is present, we use the application name from the Service-Now Application list\r\n",
 					"    # First convert AppID to a string, then select the desired columns\r\n",
-					"    map_app = appList.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('AppID', 'ApplicationName','ProductOwner')\r\n",
+					"    map_app = appList.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('AppID', 'ApplicationName')\r\n",
 					"    # Merge the two lists together with a left-join\r\n",
 					"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.AppID, how='left')\r\n",
+					"\r\n",
+					"    joined_df = joined_df.join(map_app, cost_df.CostAllocationCode == map_app.ApplicationName, how='left')\r\n",
 					"    # Select the application name from AppList when AppID is present in the CostAllocationType and remain AppID as key in PBI visualization.\r\n",
 					"    cost_df = joined_df.withColumn('Application_Name', F.when(appid_mask, F.col('ApplicationName')))#.drop('AppID')\r\n",
 					"\r\n",
