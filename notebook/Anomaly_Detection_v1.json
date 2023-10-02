@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "070e2ce7-a67e-4d4d-906d-2e072cea7e10"
+				"spark.autotune.trackingId": "4edfc9f6-f44d-42fd-9d5a-f2b2686d3dc8"
 			}
 		},
 		"metadata": {
@@ -59,7 +59,7 @@
 					"import pyspark.sql.types as T\r\n",
 					"from pyspark.sql.window import Window"
 				],
-				"execution_count": 101
+				"execution_count": 117
 			},
 			{
 				"cell_type": "code",
@@ -95,7 +95,7 @@
 					"\r\n",
 					"    return grouped_df"
 				],
-				"execution_count": 102
+				"execution_count": 118
 			},
 			{
 				"cell_type": "code",
@@ -139,14 +139,35 @@
 					"     # If the cost is more than the stddev threshold (+ some noise cancellation), then set the datapoint to be 1, otherwise 0\r\n",
 					"    costs_by_dates = costs_by_dates.withColumn('AboveThreshold', F.when(F.col('TotalCost') > (F.col('Threshold') + 1), F.lit(1))\\\r\n",
 					"                                                                                 .otherwise(F.lit(0)))\r\n",
-					"\r\n",
-					"\r\n",
+					"    return costs_by_dates"
+				],
+				"execution_count": 119
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def anomaly_notification_filtration(df,\r\n",
+					"                                    filter_column_1,\r\n",
+					"                                    filter_column_2,\r\n",
+					"                                    filter_column_3,\r\n",
+					"                                    filter_column_4):\r\n",
 					"\r\n",
 					"    # Setting a new rolling window for which to track previous days anomalies\r\n",
 					"    window_spec = Window.partitionBy(filter_column_1, filter_column_2, filter_column_3, filter_column_4).orderBy('Date')\r\n",
 					"    \r\n",
 					"    # Applying a lag for yesterday and the day before in order to see if there are anomalies on previous days\r\n",
-					"    thres_df = costs_by_dates.withColumn('AboveThres1Day', F.lag(F.col('AboveThreshold'), 1).over(window_spec))\r\n",
+					"    thres_df = df.withColumn('AboveThres1Day', F.lag(F.col('AboveThreshold'), 1).over(window_spec))\r\n",
 					"    thres_df = thres_df.withColumn('AboveThresFor2Days', F.lag(F.col('AboveThreshold'), 2).over(window_spec))\r\n",
 					"    \r\n",
 					"    # The masks that will determine which anomalies we will report\r\n",
@@ -171,7 +192,7 @@
 					"\r\n",
 					"    return filtered_df"
 				],
-				"execution_count": 103
+				"execution_count": 120
 			},
 			{
 				"cell_type": "code",
@@ -201,7 +222,7 @@
 					"\r\n",
 					"    return merged_df"
 				],
-				"execution_count": 104
+				"execution_count": 121
 			},
 			{
 				"cell_type": "code",
@@ -227,14 +248,27 @@
 					"\r\n",
 					"preproc_data = preprocessing_anomaly_detection(df)\r\n",
 					"\r\n",
-					"print(\"Running the Anomaly Detection Classifier for Subscription-partitioned data\")\r\n",
-					"filtered_df =  anomaly_detection_classifier(df=preproc_data,\r\n",
-					"                                            filter_column_1='SubscriptionName',\r\n",
-					"                                            filter_column_2='ResourceGroup',\r\n",
-					"                                            filter_column_3='MeterCategory',\r\n",
-					"                                            filter_column_4='ActiveWBS',\r\n",
-					"                                            window_size=60)\r\n",
 					"\r\n",
+					"filter_1 = 'SubscriptionName'\r\n",
+					"filter_2 = 'ResourceGroup'\r\n",
+					"filter_3 = 'MeterCategory'\r\n",
+					"filter_4 = 'ActiveWBS'\r\n",
+					"\r\n",
+					"\r\n",
+					"print(\"Running the Anomaly Detection Classifier for Subscription-partitioned data\")\r\n",
+					"anomaly_df =  anomaly_detection_classifier(df=preproc_data,\r\n",
+					"                                           filter_column_1=filter_1,\r\n",
+					"                                           filter_column_2=filter_2,\r\n",
+					"                                           filter_column_3=filter_3,\r\n",
+					"                                           filter_column_4=filter_4,\r\n",
+					"                                           window_size=60)\r\n",
+					"\r\n",
+					"\r\n",
+					"filtered_df = anomaly_notification_filtration(anomaly_df,\r\n",
+					"                                              filter_column_1=filter_1,\r\n",
+					"                                              filter_column_2=filter_2,\r\n",
+					"                                              filter_column_3=filter_3,\r\n",
+					"                                              filter_column_4=filter_4)\r\n",
 					"\r\n",
 					"merged_df = merge_with_subscription(filtered_df, \r\n",
 					"                                    subscription_path)\r\n",
@@ -244,7 +278,7 @@
 					"merged_df.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
 					"print('Write Complete!')"
 				],
-				"execution_count": 105
+				"execution_count": 122
 			},
 			{
 				"cell_type": "code",
@@ -263,7 +297,7 @@
 				"source": [
 					"display(merged_df)"
 				],
-				"execution_count": 106
+				"execution_count": 123
 			}
 		]
 	}
