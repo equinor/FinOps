@@ -629,6 +629,15 @@
 								"referenceName": "AdHoc Extend AI column and WBS tags",
 								"type": "NotebookReference"
 							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@variables('storageAccount')",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
 							"snapshot": true,
 							"conf": {
 								"spark.dynamicAllocation.enabled": null,
@@ -661,6 +670,10 @@
 					"ActualCost_Path": {
 						"type": "String",
 						"defaultValue": "exports/monthly/ACMMonthlyActualCost/"
+					},
+					"storageAccount": {
+						"type": "String",
+						"defaultValue": "s037costmgmt"
 					}
 				},
 				"folder": {
@@ -2449,6 +2462,13 @@
 										"type": "Expression"
 									},
 									"type": "string"
+								},
+								"storageAccount": {
+									"value": {
+										"value": "@variables('storageAccount')",
+										"type": "Expression"
+									},
+									"type": "string"
 								}
 							},
 							"snapshot": true,
@@ -2492,6 +2512,10 @@
 					"ActualCost_Path": {
 						"type": "String",
 						"defaultValue": "exports/monthly/ACMMonthlyActualCost/"
+					},
+					"storageAccount": {
+						"type": "String",
+						"defaultValue": "s037costmgmt"
 					}
 				},
 				"folder": {
@@ -2528,6 +2552,15 @@
 								"referenceName": "Prod_Extended_Amortized_Cost-Oneyear",
 								"type": "NotebookReference"
 							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@pipeline().parameters.storageAccount",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
 							"snapshot": true,
 							"conf": {
 								"spark.dynamicAllocation.enabled": null,
@@ -2554,6 +2587,15 @@
 							"notebook": {
 								"referenceName": "Prod_Extended_Amortized_Cost-Threeyears",
 								"type": "NotebookReference"
+							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@pipeline().parameters.storageAccount",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
 							},
 							"snapshot": true,
 							"conf": {
@@ -2582,6 +2624,15 @@
 								"referenceName": "Prod_subscription_json",
 								"type": "NotebookReference"
 							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@pipeline().parameters.storageAccount",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
 							"snapshot": true,
 							"conf": {
 								"spark.dynamicAllocation.enabled": null,
@@ -2595,6 +2646,12 @@
 				"policy": {
 					"elapsedTimeMetric": {},
 					"cancelAfter": {}
+				},
+				"parameters": {
+					"storageAccount": {
+						"type": "string",
+						"defaultValue": "s037costmgmt"
+					}
 				},
 				"folder": {
 					"name": "PipelinesInProduction"
@@ -2804,6 +2861,15 @@
 								"referenceName": "usersWithManagerSnapshot_v1",
 								"type": "NotebookReference"
 							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@pipeline().parameters.storageAccount",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
 							"snapshot": true,
 							"sparkPool": {
 								"referenceName": "[parameters('Azure AD Users_v1_pipelineSparkPoolNameRef')]",
@@ -2843,6 +2909,15 @@
 								"referenceName": "usersWithBusinessAreaSnapshot_v1",
 								"type": "NotebookReference"
 							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@pipeline().parameters.storageAccount",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
 							"snapshot": true,
 							"sparkPool": {
 								"referenceName": "[parameters('Azure AD Users_v1_pipelineSparkPoolNameRef')]",
@@ -2862,6 +2937,12 @@
 				"policy": {
 					"elapsedTimeMetric": {},
 					"cancelAfter": {}
+				},
+				"parameters": {
+					"storageAccount": {
+						"type": "string",
+						"defaultValue": "s037costmgmt"
+					}
 				},
 				"folder": {
 					"name": "PipelinesInProduction/Microsoft Graph API"
@@ -5965,6 +6046,13 @@
 										"type": "Expression"
 									},
 									"type": "string"
+								},
+								"storageAccount": {
+									"value": {
+										"value": "@variables('storageAccount')",
+										"type": "Expression"
+									},
+									"type": "string"
 								}
 							},
 							"snapshot": true,
@@ -6002,6 +6090,15 @@
 							"notebook": {
 								"referenceName": "Prod_Extended_Amortized_Cost-Threeyears",
 								"type": "NotebookReference"
+							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@variables('storageAccount')",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
 							},
 							"snapshot": true,
 							"sparkPool": {
@@ -6041,6 +6138,15 @@
 							"notebook": {
 								"referenceName": "Prod_Extended_Amortized_Cost-Oneyear",
 								"type": "NotebookReference"
+							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@variables('storageAccount')",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
 							},
 							"snapshot": true,
 							"sparkPool": {
@@ -6086,6 +6192,10 @@
 					"ActualCost_Path": {
 						"type": "String",
 						"defaultValue": "exports/monthly/ACMMonthlyActualCost/"
+					},
+					"storageAccount": {
+						"type": "String",
+						"defaultValue": "s037costmgmt"
 					}
 				},
 				"folder": {
@@ -8252,6 +8362,13 @@
 										"type": "Expression"
 									},
 									"type": "string"
+								},
+								"storageAccount": {
+									"value": {
+										"value": "@variables('storageAccount')",
+										"type": "Expression"
+									},
+									"type": "string"
 								}
 							},
 							"snapshot": true,
@@ -8438,6 +8555,10 @@
 					},
 					"dateRange": {
 						"type": "String"
+					},
+					"storageAccount": {
+						"type": "String",
+						"defaultValue": "s037costmgmt"
 					}
 				},
 				"folder": {
@@ -9517,6 +9638,13 @@
 										"type": "Expression"
 									},
 									"type": "string"
+								},
+								"storageAccount": {
+									"value": {
+										"value": "@variables('storageAccount')",
+										"type": "Expression"
+									},
+									"type": "string"
 								}
 							},
 							"snapshot": true,
@@ -9536,14 +9664,6 @@
 					"elapsedTimeMetric": {},
 					"cancelAfter": {}
 				},
-				"parameters": {
-					"toDate": {
-						"type": "string"
-					},
-					"fromDate": {
-						"type": "string"
-					}
-				},
 				"variables": {
 					"toDate": {
 						"type": "String"
@@ -9554,6 +9674,10 @@
 					"Container": {
 						"type": "String",
 						"defaultValue": "usage"
+					},
+					"storageAccount": {
+						"type": "String",
+						"defaultValue": "s037costmgmt"
 					}
 				},
 				"folder": {
@@ -16437,6 +16561,13 @@
 													"type": "Expression"
 												},
 												"type": "string"
+											},
+											"storageAccount": {
+												"value": {
+													"value": "@pipeline().parameters.storageAccount",
+													"type": "Expression"
+												},
+												"type": "string"
 											}
 										},
 										"snapshot": true,
@@ -16606,6 +16737,10 @@
 					"reportType": {
 						"type": "string",
 						"defaultValue": "ActualCost"
+					},
+					"storageAccount": {
+						"type": "string",
+						"defaultValue": "s037costmgmt"
 					}
 				},
 				"variables": {
@@ -17717,6 +17852,15 @@
 								"referenceName": "Prod_ServiceNowApplication",
 								"type": "NotebookReference"
 							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@pipeline().parameters.storageAccount",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
 							"snapshot": true,
 							"sparkPool": {
 								"referenceName": "[parameters('NewServiceNow_pipelineSparkPoolNameRef')]",
@@ -17736,6 +17880,12 @@
 				"policy": {
 					"elapsedTimeMetric": {},
 					"cancelAfter": {}
+				},
+				"parameters": {
+					"storageAccount": {
+						"type": "string",
+						"defaultValue": "s037costmgmt"
+					}
 				},
 				"folder": {
 					"name": "PipelinesInProduction/ServiceNowPipeline"
@@ -18081,6 +18231,15 @@
 								"referenceName": "Prod_subscription_json",
 								"type": "NotebookReference"
 							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@pipeline().parameters.storageAccount",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
 							"snapshot": true,
 							"conf": {
 								"spark.dynamicAllocation.enabled": null,
@@ -18094,6 +18253,12 @@
 				"policy": {
 					"elapsedTimeMetric": {},
 					"cancelAfter": {}
+				},
+				"parameters": {
+					"storageAccount": {
+						"type": "string",
+						"defaultValue": "s037costmgmt"
+					}
 				},
 				"folder": {
 					"name": "PipelinesInProduction/ServiceNowPipeline"
@@ -18609,6 +18774,13 @@
 										"type": "Expression"
 									},
 									"type": "string"
+								},
+								"storageAccount": {
+									"value": {
+										"value": "@pipeline().parameters.storageAccount",
+										"type": "Expression"
+									},
+									"type": "string"
 								}
 							},
 							"snapshot": true,
@@ -18633,6 +18805,10 @@
 					"month": {
 						"type": "string",
 						"defaultValue": "01"
+					},
+					"storageAccount": {
+						"type": "string",
+						"defaultValue": "s037costmgmt"
 					}
 				},
 				"variables": {
@@ -18690,6 +18866,13 @@
 										"type": "Expression"
 									},
 									"type": "string"
+								},
+								"storageAccount": {
+									"value": {
+										"value": "@variables('storageAccount')",
+										"type": "Expression"
+									},
+									"type": "string"
 								}
 							},
 							"snapshot": true,
@@ -18729,6 +18912,10 @@
 				"variables": {
 					"Today": {
 						"type": "String"
+					},
+					"storageAccount": {
+						"type": "String",
+						"defaultValue": "s037costmgmt"
 					}
 				},
 				"folder": {
@@ -19004,6 +19191,13 @@
 										"type": "Expression"
 									},
 									"type": "string"
+								},
+								"storageAccount": {
+									"value": {
+										"value": "@pipeline().parameters.storageAccount",
+										"type": "Expression"
+									},
+									"type": "string"
 								}
 							},
 							"snapshot": true,
@@ -19051,6 +19245,10 @@
 					"folder": {
 						"type": "string",
 						"defaultValue": "recommendations"
+					},
+					"storageAccount": {
+						"type": "string",
+						"defaultValue": "s037costmgmt"
 					}
 				},
 				"folder": {
@@ -19087,6 +19285,15 @@
 								"referenceName": "Run Notebook on Previous Dates_v1",
 								"type": "NotebookReference"
 							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@pipeline().parameters.storageAccount",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
 							"snapshot": true,
 							"sparkPool": {
 								"referenceName": "[parameters('Run Notebook on Previous Dates_v1_pipelineSparkPoolNameRef')]",
@@ -19106,6 +19313,12 @@
 				"policy": {
 					"elapsedTimeMetric": {},
 					"cancelAfter": {}
+				},
+				"parameters": {
+					"storageAccount": {
+						"type": "string",
+						"defaultValue": "s037costmgmt"
+					}
 				},
 				"folder": {
 					"name": "PipelinesInProduction"
@@ -19421,6 +19634,15 @@
 								"referenceName": "VM-Performance",
 								"type": "NotebookReference"
 							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@pipeline().parameters.storageAccount",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
 							"snapshot": true,
 							"conf": {
 								"spark.dynamicAllocation.enabled": null,
@@ -19434,6 +19656,12 @@
 				"policy": {
 					"elapsedTimeMetric": {},
 					"cancelAfter": {}
+				},
+				"parameters": {
+					"storageAccount": {
+						"type": "string",
+						"defaultValue": "s037costmgmt"
+					}
 				},
 				"folder": {
 					"name": "PipelinesInProduction/Performance"
@@ -27105,7 +27333,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "eca30b40-9987-4808-8b79-9813011704aa"
+						"spark.autotune.trackingId": "23f76bae-9670-4ced-9091-e63f2465819e"
 					}
 				},
 				"metadata": {
@@ -27149,7 +27377,8 @@
 							"fromDate = '20230101'\n",
 							"container = 'usage'\n",
 							"months = ['02']\n",
-							"years = ['2023']"
+							"years = ['2023']\n",
+							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
 						"execution_count": 1
@@ -27607,10 +27836,10 @@
 							"\n",
 							"    warnings.simplefilter(action='ignore', category=FutureWarning)\n",
 							"\n",
-							"    #actualCostSourcefilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + actualCostPath + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
-							"    #actualCostDestinationfilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + actualCostPath + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
-							"    #amortizedCostSourcefilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
-							"    #amortizedCostDestinationfilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
+							"    #actualCostSourcefilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + actualCostPath + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
+							"    #actualCostDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + actualCostPath + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
+							"    #amortizedCostSourcefilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
+							"    #amortizedCostDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
 							"\n",
 							"    #cost_df = load_source(actualCostSourcefilename)\n",
 							"    cost_df = populate_columns(cost_df)\n",
@@ -27717,21 +27946,21 @@
 							"            dateRange = fromDate + '-' + toDate\n",
 							"\n",
 							"            print(dateRange)\n",
-							"            #sourceFilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + sourceCostPath + dateRange + '/ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
-							"            #sourceCostFilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + sourceCostPath + dateRange + '/Extended_ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
-							"            costSourcefilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + sourceCostPath + dateRange + '/ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
-							"            costDestinationfilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + sourceCostPath + dateRange + '/Extended_ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
-							"            #destinationFilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + destinationPath + '/' + reportType + '/CostTagsExtended_ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
+							"            #sourceFilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + sourceCostPath + dateRange + '/ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
+							"            #sourceCostFilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + sourceCostPath + dateRange + '/Extended_ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
+							"            costSourcefilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + sourceCostPath + dateRange + '/ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
+							"            costDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + sourceCostPath + dateRange + '/Extended_ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
+							"            #destinationFilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + destinationPath + '/' + reportType + '/CostTagsExtended_ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
 							"            #destinationFilename = sourceFilename\n",
-							"            #subscriptionListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + destinationPath + '/subscriptions.json'\n",
+							"            #subscriptionListPath = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + destinationPath + '/subscriptions.json'\n",
 							"            if str(longToDate) < '2021-11-30':\n",
 							"                print(longToDate)\n",
 							"                print(f'Using default 2021-11-30 subscription json file')\n",
-							"                subscriptionListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions_2021-11-30.json'\n",
+							"                subscriptionListPath = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/subscriptions_2021-11-30.json'\n",
 							"            else:\n",
 							"                print(f'Using {longToDate} subscription json file')\n",
-							"                subscriptionListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions_' + longToDate + '.json'\n",
-							"            appListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/applications/applicationList.parquet'\n",
+							"                subscriptionListPath = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/subscriptions_' + longToDate + '.json'\n",
+							"            appListPath = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/applications/applicationList.parquet'\n",
 							"\n",
 							"            cost_df, subscription_list, appList = load_source_files(costSourcefilename, subscriptionListPath, appListPath)\n",
 							"            cost_df = expand_ai_column(cost_df, year, month, reportType)\n",
@@ -27772,7 +28001,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "7e417229-7835-4015-98e0-1d36fedefbee"
+						"spark.autotune.trackingId": "46bf0a4c-1b4e-4edb-aa17-61c6f5cfce86"
 					}
 				},
 				"metadata": {
@@ -27811,6 +28040,28 @@
 						],
 						"outputs": [],
 						"execution_count": 14
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": null
 					},
 					{
 						"cell_type": "code",
@@ -27910,7 +28161,7 @@
 							"collapsed": false
 						},
 						"source": [
-							"source_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear.parquet\"\r\n",
+							"source_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear.parquet\"\r\n",
 							"\r\n",
 							"print(f\"Reading data from: {source_path}\")\r\n",
 							"df = spark.read.format('parquet').load(source_path)\r\n",
@@ -27924,7 +28175,7 @@
 							"                                               filter_column_3='MeterCategory',\r\n",
 							"                                               window_size=60)\r\n",
 							"\r\n",
-							"destination_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_AnomalyDetection_3mnth.parquet\"\r\n",
+							"destination_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_AnomalyDetection_3mnth.parquet\"\r\n",
 							"\r\n",
 							"print(f\"Writing classification data to this path: {destination_path}\")\r\n",
 							"costs_by_dates.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
@@ -27962,7 +28213,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "4c4d2bc6-a65d-44e5-b545-7c9b2166512a"
+						"spark.autotune.trackingId": "ef2dc14b-362a-482a-9041-66628e00badc"
 					}
 				},
 				"metadata": {
@@ -28013,7 +28264,8 @@
 							"actualCostPath = 'exports/monthly/ACMMonthlyActualCost/'\n",
 							"toDate = '20230430'\n",
 							"fromDate = '20230401'\n",
-							"container = 'usage'"
+							"container = 'usage'\n",
+							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
 						"execution_count": 1
@@ -28395,10 +28647,10 @@
 							"\n",
 							"        longToDate = datetime.strptime(toDate, '%Y%m%d').strftime('%Y-%m-%d')\n",
 							"\n",
-							"        extended_actual_cost_data_path = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + actualCostPath + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
-							"        subscription_path = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions_' + longToDate + '.json'\n",
-							"        #subscription_path = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions.json'\n",
-							"        appListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/applications/applicationList.parquet'\n",
+							"        extended_actual_cost_data_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + actualCostPath + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
+							"        subscription_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/subscriptions_' + longToDate + '.json'\n",
+							"        #subscription_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/subscriptions.json'\n",
+							"        appListPath = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/applications/applicationList.parquet'\n",
 							"\n",
 							"        #extended_actual_cost_data_path = 'data/2022 Actual cost (10k rows).csv'\n",
 							"        #extended_actual_cost_data_path = 'data/ACMMonthlyActualCost_20220101-20220131.parquet'\n",
@@ -28452,7 +28704,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "18b73861-0ef7-416b-8a62-26f2dfa58f87"
+						"spark.autotune.trackingId": "d6e89fdb-6b17-4851-9d64-288803225fa9"
 					}
 				},
 				"metadata": {
@@ -28492,7 +28744,8 @@
 						"source": [
 							"toDate = '20230930'\n",
 							"fromDate = '20230901'\n",
-							"container = 'usage'"
+							"container = 'usage'\n",
+							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
 						"execution_count": 17
@@ -28954,11 +29207,11 @@
 							"\r\n",
 							"    warnings.simplefilter(action='ignore', category=FutureWarning)\r\n",
 							"\r\n",
-							"    # actualCostSourcefilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + actualCostPath + dateRange + '/ACMDailyActualCost_' + dateRange + '.parquet'\r\n",
-							"    # amortizedCostSourcefilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/ACMDailyAmortizedCost_' + dateRange + '.parquet'\r\n",
+							"    # actualCostSourcefilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + actualCostPath + dateRange + '/ACMDailyActualCost_' + dateRange + '.parquet'\r\n",
+							"    # amortizedCostSourcefilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/ACMDailyAmortizedCost_' + dateRange + '.parquet'\r\n",
 							"\r\n",
-							"    # actualCostDestinationfilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + actualCostPath + dateRange + '/Extended_ACMDailyActualCost_' + dateRange + '.parquet'\r\n",
-							"    # amortizedCostDestinationfilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/Extended_ACMDailyAmortizedCost_' + dateRange + '.parquet'\r\n",
+							"    # actualCostDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + actualCostPath + dateRange + '/Extended_ACMDailyActualCost_' + dateRange + '.parquet'\r\n",
+							"    # amortizedCostDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/Extended_ACMDailyAmortizedCost_' + dateRange + '.parquet'\r\n",
 							"\r\n",
 							"    # cost_df = load_source(actualCostSourcefilename)\r\n",
 							"    cost_df = populate_columns(cost_df)\r\n",
@@ -29070,15 +29323,15 @@
 							"    print(f'dateRange: {dateRange}')\n",
 							"\n",
 							"    print(dateRange)\n",
-							"    costSourcefilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + sourceCostPath + dateRange + '/*.csv'\n",
-							"    costDestinationfilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + destinationCostPath + dateRange + '/Extended_v2_ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
+							"    costSourcefilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + sourceCostPath + dateRange + '/*.csv'\n",
+							"    costDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + destinationCostPath + dateRange + '/Extended_v2_ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
 							"    print(f\"Cost data path: {costSourcefilename}\")\n",
 							"    print(f\"Cost destination path: {costDestinationfilename}\")\n",
 							"    \n",
 							"    if str(longToDate) < '2021-11-30':\n",
 							"        print(longToDate)\n",
 							"        print(f'Using default 2021-11-30 subscription json file')\n",
-							"        subscriptionListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions_2021-11-30.json'\n",
+							"        subscriptionListPath = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/subscriptions_2021-11-30.json'\n",
 							"        print(f\"Subscription path: {subscriptionListPath}\")\n",
 							"    \n",
 							"    else:\n",
@@ -29104,10 +29357,10 @@
 							"        previousMonthDate = previous_year_str + '-' + previous_month_str + '-' + last_day_str\n",
 							"\n",
 							"        print(f'Using {longToDate} subscription json file')\n",
-							"        subscriptionListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions_' + previousMonthDate + '.json'\n",
+							"        subscriptionListPath = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/subscriptions_' + previousMonthDate + '.json'\n",
 							"        print(f\"Subscription path: {subscriptionListPath}\")\n",
 							"\n",
-							"    appListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\n",
+							"    appListPath = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\n",
 							"    print(f\"App-list path: {appListPath}\")\n",
 							"    cost_df, subscription_list, appList = load_source_files(costSourcefilename, subscriptionListPath, appListPath)\n",
 							"    cost_df = expand_ai_column(cost_df)\n",
@@ -29147,7 +29400,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "af74f12b-6d7d-466a-ba2a-617e5c137cdb"
+						"spark.autotune.trackingId": "fe69609e-d933-436c-a7c7-9669e6b073da"
 					}
 				},
 				"metadata": {
@@ -29190,7 +29443,7 @@
 							"toDate = '20230131'\n",
 							"fromDate = '20230101'\n",
 							"container = 'usage'\n",
-							"    "
+							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
 						"execution_count": 1
@@ -29433,10 +29686,10 @@
 							"\n",
 							"dateRange = fromDate + '-' + toDate\n",
 							"\n",
-							"actualCostSourcefilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + actualCostPath + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
-							"actualCostDestinationfilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + actualCostPath + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
-							"#amortizedCostSourcefilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
-							"#amortizedCostDestinationfilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
+							"actualCostSourcefilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + actualCostPath + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
+							"actualCostDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + actualCostPath + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
+							"#amortizedCostSourcefilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
+							"#amortizedCostDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
 							"\n",
 							"actualCost_df = load_source(actualCostSourcefilename)\n",
 							"actualCost_df = populate_columns(actualCost_df)\n",
@@ -29478,14 +29731,11 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "6600c6ce-c9fe-4471-ab9f-be8b02695c15"
+						"spark.autotune.trackingId": "5ecb6445-8c35-4210-98cc-b7e7b3827f39"
 					}
 				},
 				"metadata": {
 					"saveOutput": true,
-					"synapse_widget": {
-						"version": "0.1"
-					},
 					"enableDebugMode": false,
 					"kernelspec": {
 						"name": "synapse_pyspark",
@@ -29501,26 +29751,30 @@
 						"endpoint": "[parameters('Extend Cost File_v2_notebookSparkPoolEndpointRef')]",
 						"auth": {
 							"type": "AAD",
-							"authResource": "https://dev.azuresynapse.net",
-							"authHeader": null
+							"authResource": "https://dev.azuresynapse.net"
 						},
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"extraHeader": null
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
 					{
 						"cell_type": "code",
+						"metadata": {
+							"tags": [
+								"parameters"
+							]
+						},
 						"source": [
 							"amortizedCostPath = 'exports/monthly/ACMMonthlyAmortizedCost/'\r\n",
 							"actualCostPath = 'exports/monthly/ACMMonthlyActualCost/'\r\n",
 							"toDate = '20230731'\r\n",
 							"fromDate = '20230701'\r\n",
-							"container = 'usage'"
+							"container = 'usage'\r\n",
+							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
 						"execution_count": 24
@@ -29782,11 +30036,11 @@
 							"\r\n",
 							"dateRange = fromDate + '-' + toDate\r\n",
 							"\r\n",
-							"#actualCostSourcefilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + actualCostPath + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\r\n",
-							"#actualCostDestinationfilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + actualCostPath + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\r\n",
+							"#actualCostSourcefilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + actualCostPath + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\r\n",
+							"#actualCostDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + actualCostPath + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\r\n",
 							"\r\n",
-							"actualCostSourcefilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + amortizedCostPath + dateRange + '/ACMMonthlyAmortizedCost_' + dateRange + '.parquet'\r\n",
-							"actualCostDestinationfilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + amortizedCostPath + dateRange + '/Extended_ACMMonthlyAmortizedCost_' + dateRange + '.parquet'\r\n",
+							"actualCostSourcefilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + amortizedCostPath + dateRange + '/ACMMonthlyAmortizedCost_' + dateRange + '.parquet'\r\n",
+							"actualCostDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + amortizedCostPath + dateRange + '/Extended_ACMMonthlyAmortizedCost_' + dateRange + '.parquet'\r\n",
 							"\r\n",
 							"actualCost_df = load_source(actualCostSourcefilename)\r\n",
 							"actualCost_df = populate_columns(actualCost_df)\r\n",
@@ -29829,7 +30083,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "4c4601e6-6c5e-4715-a4ac-d893a025f6fa"
+						"spark.autotune.trackingId": "84fa994b-836e-4000-a25e-0165401d2c5c"
 					}
 				},
 				"metadata": {
@@ -29874,7 +30128,8 @@
 							"billingAccount = 'tbc'\n",
 							"lookBackPeriod = 'Last30Days'\n",
 							"resourceType = 'tbc'\n",
-							"term = 'P3Y'"
+							"term = 'P3Y'\n",
+							"storageAccount = ''"
 						],
 						"outputs": [],
 						"execution_count": 3
@@ -29947,7 +30202,7 @@
 							"    return recommendations_df\n",
 							"\n",
 							"def save_df_to_csv(recommendations_df, container, folder, filename, scope, billingAccount, lookBackPeriod, resourceType):\n",
-							"    ri_recs_filename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + folder + '/' + filename\n",
+							"    ri_recs_filename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + folder + '/' + filename\n",
 							"    print('Saving Recommendation DataFrame to csv file at: ', ri_recs_filename)\n",
 							"    recommendations_df.to_csv()\n",
 							"    print(recommendations_df)\n",
@@ -29958,25 +30213,6 @@
 						],
 						"outputs": [],
 						"execution_count": 4
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							""
-						],
-						"outputs": [],
-						"execution_count": null
 					}
 				]
 			},
@@ -30007,14 +30243,11 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "45b0078f-8641-4293-9745-4abfd5a860a5"
+						"spark.autotune.trackingId": "0d8366e4-ffb5-4a3b-a042-45e38f067107"
 					}
 				},
 				"metadata": {
 					"saveOutput": true,
-					"synapse_widget": {
-						"version": "0.1"
-					},
 					"enableDebugMode": false,
 					"kernelspec": {
 						"name": "synapse_pyspark",
@@ -30030,14 +30263,12 @@
 						"endpoint": "[parameters('HUB Savings_notebookSparkPoolEndpointRef')]",
 						"auth": {
 							"type": "AAD",
-							"authResource": "https://dev.azuresynapse.net",
-							"authHeader": null
+							"authResource": "https://dev.azuresynapse.net"
 						},
 						"sparkVersion": "3.2",
 						"nodeCount": 3,
 						"cores": 8,
-						"memory": 56,
-						"extraHeader": null
+						"memory": 56
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -30052,10 +30283,11 @@
 						"source": [
 							"start_date = '2022-06-01'\n",
 							"end_date = '2022-06-30'\n",
+							"storageAccount = 's037costmgmt'\n",
 							"\n",
 							"source_filename = 'data/' + start_date + '_' + end_date + '-cleaned.parquet'\n",
 							"\n",
-							"pricelist_file = 'abfss://usage@s037costmgmt.dfs.core.windows.net/pricesheet/pricesheet-LATEST.parquet'"
+							"pricelist_file = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/pricesheet-LATEST.parquet'"
 						],
 						"outputs": [],
 						"execution_count": 1
@@ -30152,27 +30384,27 @@
 							"    #print(df.columns)\n",
 							"    #print(df[df['ServiceType'] == 'Standard_D4s_v3']['Saving'].sum())\n",
 							"    print('Writing Saving to CSV')\n",
-							"    df.to_csv('abfss://savings@s037costmgmt.dfs.core.windows.net/monthly/'+year+'/'+month+'/'+start_date + '_' + end_date + '-HUB_Windows.csv', index=False)\n",
+							"    df.to_csv('abfss://savings@'+storageAccount+'.dfs.core.windows.net/monthly/'+year+'/'+month+'/'+start_date + '_' + end_date + '-HUB_Windows.csv', index=False)\n",
 							"    print('Writing Saving to Parquet')\n",
-							"    df.to_parquet('abfss://savings@s037costmgmt.dfs.core.windows.net/monthly/'+year+'/'+month+'/'+start_date + '_' + end_date + '-HUB_Windows.parquet', index=False)\n",
+							"    df.to_parquet('abfss://savings@'+storageAccount+'.dfs.core.windows.net/monthly/'+year+'/'+month+'/'+start_date + '_' + end_date + '-HUB_Windows.parquet', index=False)\n",
 							"\n",
 							"\n",
 							"pricelist = pd.read_parquet(pricelist_file)\n",
 							"#print(source_filename)\n",
 							"\n",
-							"year_list = mssparkutils.fs.ls('abfss://usage@s037costmgmt.dfs.core.windows.net/monthly')\n",
+							"year_list = mssparkutils.fs.ls(f'abfss://usage@{storageAccount}.dfs.core.windows.net/monthly')\n",
 							"\n",
 							"schema = ['path','name','size']\n",
 							"year_list_df = pd.DataFrame([[getattr(i,j) for j in schema] for i in year_list], columns = schema)\n",
 							"#print(dir_list_df)\n",
 							"\n",
 							"for year in year_list_df['name']:\n",
-							"    month_list = mssparkutils.fs.ls('abfss://usage@s037costmgmt.dfs.core.windows.net/monthly/' + year)\n",
+							"    month_list = mssparkutils.fs.ls('abfss://usage@' + storageAccount + '.dfs.core.windows.net/monthly/' + year)\n",
 							"    schema = ['path','name','size']\n",
 							"    month_list_df = pd.DataFrame([[getattr(i,j) for j in schema] for i in month_list], columns = schema)\n",
 							"    #print(month_list_df)\n",
 							"    for month in month_list_df['name']:\n",
-							"        calculate_hub_saving('abfss://usage@s037costmgmt.dfs.core.windows.net/monthly/' + year + '/' + month + '/', year, month, pricelist)\n",
+							"        calculate_hub_saving('abfss://usage' + storageAccount + '.dfs.core.windows.net/monthly/' + year + '/' + month + '/', year, month, pricelist)\n",
 							"\n",
 							"\n",
 							"\n",
@@ -30210,7 +30442,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "89e57637-5228-4c96-8a1a-360bd71bc1f1"
+						"spark.autotune.trackingId": "8b5d4014-559e-43c7-b8fc-4c49536111b1"
 					}
 				},
 				"metadata": {
@@ -30249,7 +30481,8 @@
 						},
 						"source": [
 							"today = '2023-04-24'\n",
-							"last_month = '202303'"
+							"last_month = '202303'\n",
+							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
 						"execution_count": 1
@@ -30326,9 +30559,9 @@
 							}
 						},
 						"source": [
-							"daily_file = 'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/daily/ACMDailyActualCost/ACMDailyActualCost.parquet'\n",
-							"monthly_file = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/{last_month_start}-{last_month_end}/ACMMonthlyActualCost_{last_month_start}-{last_month_end}.parquet'\n",
-							"pricesheet = 'abfss://usage@s037costmgmt.dfs.core.windows.net/pricesheet/New/ArmPriceSheet_Enrollment_LATEST.csv'\n",
+							"daily_file = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/daily/ACMDailyActualCost/ACMDailyActualCost.parquet'\n",
+							"monthly_file = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/{last_month_start}-{last_month_end}/ACMMonthlyActualCost_{last_month_start}-{last_month_end}.parquet'\n",
+							"pricesheet = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/New/ArmPriceSheet_Enrollment_LATEST.csv'\n",
 							"sql_config_file = 'abfss://sql-config@hubautomation.dfs.core.windows.net/config.json'\n",
 							"sql_config_file2 = 'wasbs://sql-config@hubautomation.blob.core.windows.net/config.json'\n",
 							"#output_file = 'abfss://usage@hubautomation.dfs.core.windows.net/vm.parquet'\n",
@@ -30491,7 +30724,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "b04acfe4-fc75-4fdf-a5af-0bbce44f4a19"
+						"spark.autotune.trackingId": "67786a6c-5389-4e35-b72c-ef4b24e89859"
 					}
 				},
 				"metadata": {
@@ -30533,7 +30766,8 @@
 							"#actualCostPath = 'exports/monthly/ACMMonthlyActualCost/'\n",
 							"toDate = '20230531'\n",
 							"fromDate = '20230501'\n",
-							"container = 'usage'"
+							"container = 'usage'\n",
+							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
 						"execution_count": 53
@@ -30991,10 +31225,10 @@
 							"\n",
 							"    warnings.simplefilter(action='ignore', category=FutureWarning)\n",
 							"\n",
-							"    #actualCostSourcefilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + actualCostPath + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
-							"    #actualCostDestinationfilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + actualCostPath + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
-							"    #amortizedCostSourcefilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
-							"    #amortizedCostDestinationfilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
+							"    #actualCostSourcefilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + actualCostPath + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
+							"    #actualCostDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + actualCostPath + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
+							"    #amortizedCostSourcefilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
+							"    #amortizedCostDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
 							"\n",
 							"    #cost_df = load_source(actualCostSourcefilename)\n",
 							"    cost_df = populate_columns(cost_df)\n",
@@ -31084,16 +31318,16 @@
 							"    print(f'dateRange: {dateRange}')\n",
 							"\n",
 							"    print(dateRange)\n",
-							"    costSourcefilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + sourceCostPath + dateRange + '/ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
-							"    costDestinationfilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + sourceCostPath + dateRange + '/Extended_ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
+							"    costSourcefilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + sourceCostPath + dateRange + '/ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
+							"    costDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + sourceCostPath + dateRange + '/Extended_ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
 							"    if str(longToDate) < '2021-11-30':\n",
 							"        print(longToDate)\n",
 							"        print(f'Using default 2021-11-30 subscription json file')\n",
-							"        subscriptionListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions_2021-11-30.json'\n",
+							"        subscriptionListPath = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/subscriptions_2021-11-30.json'\n",
 							"    else:\n",
 							"        print(f'Using {longToDate} subscription json file')\n",
-							"        subscriptionListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions_' + longToDate + '.json'\n",
-							"    appListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/applications/applicationList.parquet'\n",
+							"        subscriptionListPath = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/subscriptions_' + longToDate + '.json'\n",
+							"    appListPath = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/applications/applicationList.parquet'\n",
 							"\n",
 							"    cost_df, subscription_list, appList = load_source_files(costSourcefilename, subscriptionListPath, appListPath)\n",
 							"    cost_df = expand_ai_column(cost_df)\n",
@@ -31134,7 +31368,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "3e766be6-69a0-4d3a-9ed1-626c742c9074"
+						"spark.autotune.trackingId": "f26372bf-30f8-4320-8bce-d71448952acc"
 					}
 				},
 				"metadata": {
@@ -31175,7 +31409,8 @@
 							"# # Input data\n",
 							"#toDate = '20230430'\n",
 							"#fromDate = '20230401'\n",
-							"container = 'usage'"
+							"container = 'usage'\n",
+							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
 						"execution_count": 2
@@ -31633,11 +31868,11 @@
 							"\r\n",
 							"    warnings.simplefilter(action='ignore', category=FutureWarning)\r\n",
 							"\r\n",
-							"    # actualCostSourcefilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + actualCostPath + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\r\n",
-							"    # amortizedCostSourcefilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\r\n",
+							"    # actualCostSourcefilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + actualCostPath + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\r\n",
+							"    # amortizedCostSourcefilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\r\n",
 							"\r\n",
-							"    # actualCostDestinationfilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + actualCostPath + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\r\n",
-							"    # amortizedCostDestinationfilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\r\n",
+							"    # actualCostDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + actualCostPath + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\r\n",
+							"    # amortizedCostDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\r\n",
 							"\r\n",
 							"    # cost_df = load_source(actualCostSourcefilename)\r\n",
 							"    cost_df = populate_columns(cost_df)\r\n",
@@ -31748,16 +31983,16 @@
 							"    print(f'dateRange: {dateRange}')\n",
 							"\n",
 							"    print(dateRange)\n",
-							"    costSourcefilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + sourceCostPath + dateRange + '/ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
-							"    costDestinationfilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + sourceCostPath + dateRange + '/Extended_v2_ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
+							"    costSourcefilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + sourceCostPath + dateRange + '/ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
+							"    costDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + sourceCostPath + dateRange + '/Extended_v2_ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
 							"    if str(longToDate) < '2021-11-30':\n",
 							"        print(longToDate)\n",
 							"        print(f'Using default 2021-11-30 subscription json file')\n",
-							"        subscriptionListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions_2021-11-30.json'\n",
+							"        subscriptionListPath = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/subscriptions_2021-11-30.json'\n",
 							"    else:\n",
 							"        print(f'Using {longToDate} subscription json file')\n",
-							"        subscriptionListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions_' + longToDate + '.json'\n",
-							"    appListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\n",
+							"        subscriptionListPath = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/subscriptions_' + longToDate + '.json'\n",
+							"    appListPath = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\n",
 							"\n",
 							"    cost_df, subscription_list, appList = load_source_files(costSourcefilename, subscriptionListPath, appListPath)\n",
 							"    cost_df = expand_ai_column(cost_df)\n",
@@ -31797,7 +32032,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "8faf3e76-86d7-4cb9-b425-712a1ea1cc0d"
+						"spark.autotune.trackingId": "a4b6b6de-a3ef-49fb-8efd-50f9f22ca139"
 					}
 				},
 				"metadata": {
@@ -31840,7 +32075,7 @@
 							"reportType = 'ActualCost'\n",
 							"dateRange = '20220101-20220131'\n",
 							"path = ''\n",
-							""
+							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
 						"execution_count": 27
@@ -31862,9 +32097,9 @@
 							"import pandas as pd\n",
 							"\n",
 							"if reportType == 'ActualCost':\n",
-							"    source_filename = 'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/' + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
+							"    source_filename = 'abfss://usage@' + storageAccount + '.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/' + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
 							"elif reportType == 'AmortizedCost':\n",
-							"    source_filename = 'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/' + dateRange + '/ACMMonthlyAmortizedCost_' + dateRange + '.parquet'\n",
+							"    source_filename = 'abfss://usage@' + storageAccount + '.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/' + dateRange + '/ACMMonthlyAmortizedCost_' + dateRange + '.parquet'\n",
 							"\n",
 							"print(f'Loading source file... ',source_filename)\n",
 							"#usage = pd.read_csv(source_filename)\n",
@@ -31880,9 +32115,9 @@
 							"usage['TotalUsedSavings'] = (usage['UnitPrice'] - usage['EffectivePrice']) * usage['Quantity']\n",
 							"\n",
 							"if reportType == 'ActualCost':\n",
-							"    dest_filename = 'abfss://savings@s037costmgmt.dfs.core.windows.net/New-monthly/' + dateRange + '/' + dateRange + '-RI_Savings'\n",
+							"    dest_filename = 'abfss://savings@' + storageAccount + '.dfs.core.windows.net/New-monthly/' + dateRange + '/' + dateRange + '-RI_Savings'\n",
 							"elif reportType == 'AmortizedCost':\n",
-							"    dest_filename = 'abfss://savings@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/' + dateRange + '/ACMMonthlyAmortizedCost_' + dateRange + '-RI_Savings'\n",
+							"    dest_filename = 'abfss://savings@' + storageAccount + '.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/' + dateRange + '/ACMMonthlyAmortizedCost_' + dateRange + '-RI_Savings'\n",
 							"\n",
 							"print(f'Writing csv savings file... ',dest_filename+'.csv')\n",
 							"usage.to_csv(dest_filename+'.csv')\n",
@@ -31921,7 +32156,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "4",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "f921d8c1-75f2-4fed-8c27-f57f588bc3d6"
+						"spark.autotune.trackingId": "5fb1e517-48b6-4232-861d-379b8cb17b83"
 					}
 				},
 				"metadata": {
@@ -31966,6 +32201,7 @@
 							"container = 'usage'\n",
 							"year = '2023'\n",
 							"month = '05'\n",
+							"storageAccount = 's037costmgmt'\n",
 							""
 						],
 						"outputs": [],
@@ -32372,19 +32608,19 @@
 							"            dateRange = fromDate + '-' + toDate\n",
 							"\n",
 							"            print(dateRange)\n",
-							"            #sourceFilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + sourceCostPath + dateRange + '/ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
-							"            sourceFilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + sourceCostPath + dateRange + '/Extended_ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
-							"            #destinationFilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + destinationPath + '/' + reportType + '/CostTagsExtended_ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
+							"            #sourceFilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + sourceCostPath + dateRange + '/ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
+							"            sourceFilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + sourceCostPath + dateRange + '/Extended_ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
+							"            #destinationFilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + destinationPath + '/' + reportType + '/CostTagsExtended_ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
 							"            destinationFilename = sourceFilename\n",
-							"            #subscriptionListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + destinationPath + '/subscriptions.json'\n",
+							"            #subscriptionListPath = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + destinationPath + '/subscriptions.json'\n",
 							"            if str(longToDate) < '2021-11-30':\n",
 							"                print(longToDate)\n",
 							"                print('here1')\n",
-							"                subscriptionListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions_2021-11-30.json'\n",
+							"                subscriptionListPath = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/subscriptions_2021-11-30.json'\n",
 							"            else:\n",
 							"                print('here2')\n",
-							"                subscriptionListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions_' + longToDate + '.json'\n",
-							"            appListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + destinationPath + '/applicationList.parquet'\n",
+							"                subscriptionListPath = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/subscriptions_' + longToDate + '.json'\n",
+							"            appListPath = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + destinationPath + '/applicationList.parquet'\n",
 							"\n",
 							"            pd.set_option('max_colwidth', 50)\n",
 							"\n",
@@ -32442,7 +32678,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "0ce79c20-fb2a-4ef7-b441-4a51d155b57a"
+						"spark.autotune.trackingId": "5d3cbdde-c5f5-4137-b81c-191e8fbabc0f"
 					}
 				},
 				"metadata": {
@@ -32494,10 +32730,32 @@
 								"transient": {
 									"deleting": false
 								}
+							},
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
 							}
 						},
 						"source": [
-							"df_BusinessAreaLevel = spark.read.format('delta').load('abfss://usage@s037costmgmt.dfs.core.windows.net/AzureAD_BusinessAreaLevel/usersWithBusinessAreaSnapshot_v2.delta').toPandas()\r\n",
+							"df_BusinessAreaLevel = spark.read.format('delta').load(f'abfss://usage@{storageAccount}.dfs.core.windows.net/AzureAD_BusinessAreaLevel/usersWithBusinessAreaSnapshot_v2.delta').toPandas()\r\n",
 							""
 						],
 						"outputs": [],
@@ -32556,7 +32814,7 @@
 							}
 						},
 						"source": [
-							"optimized_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/AzureAD_BusinessAreaLevel/AzureAD_BusinessAreaLevel.parquet\" \r\n",
+							"optimized_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/AzureAD_BusinessAreaLevel/AzureAD_BusinessAreaLevel.parquet\" \r\n",
 							"#df.repartition(1).write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)\r\n",
 							"spark.createDataFrame(df_BusinessAreaLevel).write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
 						],
@@ -32626,7 +32884,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "b239b961-fb9b-416b-a3fb-cba1d5410f6d"
+						"spark.autotune.trackingId": "86e0d14b-b922-421c-b6ea-ab2ee6210cf1"
 					}
 				},
 				"metadata": {
@@ -32675,6 +32933,28 @@
 						],
 						"outputs": [],
 						"execution_count": 10
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": null
 					},
 					{
 						"cell_type": "code",
@@ -32759,7 +33039,7 @@
 						},
 						"source": [
 							"# Define path to save the data\r\n",
-							"path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/Calendar/delta/Calendar.delta\" \r\n",
+							"path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/Calendar/delta/Calendar.delta\" \r\n",
 							"\r\n",
 							"#Save the data\r\n",
 							"spark.createDataFrame(calendar).write.format('delta').mode('overwrite').option('overwriteSchema', 'True').save(path)"
@@ -32797,7 +33077,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "9ae9c652-5926-4db3-91ae-732eabf07597"
+						"spark.autotune.trackingId": "d6a10d6a-5b53-43ed-9ae5-39e934eac7f6"
 					}
 				},
 				"metadata": {
@@ -32846,6 +33126,28 @@
 							"To reduce the size of the data, a years period with all columns has been selected. This has been verified and confirmed by the end-users (WBS owners).\r\n",
 							""
 						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": null
 					},
 					{
 						"cell_type": "markdown",
@@ -32934,7 +33236,7 @@
 							"date_one_year_ago = datetime.now().date()-timedelta(days=365)\r\n",
 							"\r\n",
 							"# Define a path for the data with random period\r\n",
-							"path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20230501-20230531/Extended_v2_ACMMonthlyAmortizedCost_20230501-20230531.parquet\"\r\n",
+							"path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20230501-20230531/Extended_v2_ACMMonthlyAmortizedCost_20230501-20230531.parquet\"\r\n",
 							"\r\n",
 							"# Load the data schema and add a new column for Report Date\r\n",
 							"df_schema_extended = spark.read.format('parquet').load(path)\r\n",
@@ -33025,7 +33327,7 @@
 							"df = spark.createDataFrame([], schema)\r\n",
 							"\r\n",
 							"# Define the root path\r\n",
-							"root_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost\"\r\n",
+							"root_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost\"\r\n",
 							"\r\n",
 							"# Collect all the folders under this root path\r\n",
 							"folders = mssparkutils.fs.ls(root_path)\r\n",
@@ -33179,7 +33481,7 @@
 						},
 						"source": [
 							"# Define optimized path to save the data\r\n",
-							"optimized_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear.parquet\" \r\n",
+							"optimized_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear.parquet\" \r\n",
 							"\r\n",
 							"# Save the data with partitioned by Report date\r\n",
 							"df.write.format('parquet').mode('overwrite').partitionBy('Report_Date_Partition').option('overwriteSchema', 'true').save(optimized_path)"
@@ -33250,7 +33552,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "94958daa-c309-4a76-8b53-bbc038fa391e"
+						"spark.autotune.trackingId": "f3fcdbf0-469a-4fc5-80da-b05ab1e403f1"
 					}
 				},
 				"metadata": {
@@ -33300,6 +33602,28 @@
 							"\r\n",
 							""
 						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": null
 					},
 					{
 						"cell_type": "markdown",
@@ -33388,7 +33712,7 @@
 							"date_three_years_ago = datetime.now().date()-timedelta(days=1095)\r\n",
 							"\r\n",
 							"# Define a path for the data with random period\r\n",
-							"path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20210101-20210131/Extended_v2_ACMMonthlyAmortizedCost_20210101-20210131.parquet\"\r\n",
+							"path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20210101-20210131/Extended_v2_ACMMonthlyAmortizedCost_20210101-20210131.parquet\"\r\n",
 							"\r\n",
 							"# Load the data schema for later use\r\n",
 							"df_schema_extended = spark.read.format('parquet').load(path)\r\n",
@@ -33479,7 +33803,7 @@
 							"df = spark.createDataFrame([], schema)\r\n",
 							"\r\n",
 							"# Define the root path\r\n",
-							"root_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost\"\r\n",
+							"root_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost\"\r\n",
 							"\r\n",
 							"# Collect all the folders under this root path\r\n",
 							"folders = mssparkutils.fs.ls(root_path)\r\n",
@@ -33794,7 +34118,7 @@
 						},
 						"source": [
 							"# Define optimized path to save the data\r\n",
-							"optimized_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_Threeyears.parquet\" \r\n",
+							"optimized_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_Threeyears.parquet\" \r\n",
 							"\r\n",
 							"# Save the data with partitioned by Month and Year.\r\n",
 							"df_agg.write.format('parquet').mode('overwrite').partitionBy('year_partition','month_partition').option('overwriteSchema', 'true').save(optimized_path)\r\n",
@@ -33867,7 +34191,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "f9fed808-207b-4eab-ac62-07d7aa089c3e"
+						"spark.autotune.trackingId": "bdfe0eaf-1b4c-4906-abf0-786c534afdb9"
 					}
 				},
 				"metadata": {
@@ -33897,6 +34221,28 @@
 					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
 					{
 						"cell_type": "markdown",
 						"metadata": {
@@ -33947,7 +34293,7 @@
 						},
 						"source": [
 							"# Define path\r\n",
-							"path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/NewServiceNowDataset.csv\"\r\n",
+							"path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/applications/NewServiceNowDataset.csv\"\r\n",
 							"\r\n",
 							"# Load the data\r\n",
 							"df_application = pd.read_csv(path)"
@@ -34081,7 +34427,7 @@
 							"spark = SparkSession.builder.getOrCreate()\r\n",
 							"\r\n",
 							"# Define optimized path to save the data\r\n",
-							"optimized_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet\"\r\n",
+							"optimized_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet\"\r\n",
 							"\r\n",
 							"#Save the data with partitioned by time\r\n",
 							"spark.createDataFrame(df).write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
@@ -34118,14 +34464,11 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "a2e23000-0228-4c91-a0e4-039a68e2781a"
+						"spark.autotune.trackingId": "5c4322ac-e36c-497d-98c7-8747c3f63d11"
 					}
 				},
 				"metadata": {
 					"saveOutput": true,
-					"synapse_widget": {
-						"version": "0.1"
-					},
 					"enableDebugMode": false,
 					"kernelspec": {
 						"name": "synapse_pyspark",
@@ -34141,18 +34484,38 @@
 						"endpoint": "[parameters('Prod_import_most_recent_notebookSparkPoolEndpointRef')]",
 						"auth": {
 							"type": "AAD",
-							"authResource": "https://dev.azuresynapse.net",
-							"authHeader": null
+							"authResource": "https://dev.azuresynapse.net"
 						},
 						"sparkVersion": "3.2",
 						"nodeCount": 3,
 						"cores": 8,
-						"memory": 56,
-						"extraHeader": null
+						"memory": 56
 					},
 					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
 					{
 						"cell_type": "code",
 						"metadata": {
@@ -34172,7 +34535,7 @@
 							"from datetime import datetime\r\n",
 							"\r\n",
 							"\r\n",
-							"#root_folder = \"abfss://usage@s037costmgmt.dfs.core.windows.net/subscriptions\"\r\n",
+							"#root_folder = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/subscriptions\"\r\n",
 							"#file_name = \"subscriptions_\"\r\n",
 							"#file_type = 'json'\r\n",
 							"def most_recent(root_folder, file_name,file_type):\r\n",
@@ -34201,24 +34564,6 @@
 						],
 						"outputs": [],
 						"execution_count": 82
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							""
-						],
-						"outputs": []
 					}
 				]
 			},
@@ -34250,7 +34595,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "cbf0c4df-1c5d-4d98-a0ee-ec4c9b55b00b"
+						"spark.autotune.trackingId": "be027907-9095-4cff-ade0-0541914735d1"
 					}
 				},
 				"metadata": {
@@ -34280,6 +34625,28 @@
 					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
 					{
 						"cell_type": "code",
 						"source": [
@@ -34371,7 +34738,7 @@
 						},
 						"source": [
 							"# Define path\r\n",
-							"rootpath_subscription = \"abfss://usage@s037costmgmt.dfs.core.windows.net/subscriptions/\"\r\n",
+							"rootpath_subscription = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/subscriptions/\"\r\n",
 							"file_name ='subscriptions_'\r\n",
 							"file_type = 'json'\r\n",
 							"path_subscription = most_recent(rootpath_subscription,file_name,file_type)"
@@ -34738,7 +35105,7 @@
 							}
 						},
 						"source": [
-							"optimized_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/subscriptions/optimized/subscription_optimized.parquet\" \r\n",
+							"optimized_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/subscriptions/optimized/subscription_optimized.parquet\" \r\n",
 							"#df.repartition(1).write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)\r\n",
 							"spark.createDataFrame(df_subscription).write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
 						],
@@ -34807,7 +35174,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "261c8a63-4c26-4879-bfc5-6ec7cf644218"
+						"spark.autotune.trackingId": "63155bbc-8d78-4831-8a0a-0f6cb9e06740"
 					}
 				},
 				"metadata": {
@@ -34849,8 +35216,7 @@
 							"end_date = '2022-06-30'\n",
 							"Year = '2022'\n",
 							"Month = '06'\n",
-							"\n",
-							""
+							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
 						"execution_count": 20
@@ -34874,14 +35240,14 @@
 							"import pyarrow as pa\n",
 							"import json\n",
 							"\n",
-							"source_usage_filename = 'abfss://usage@s037costmgmt.dfs.core.windows.net/monthly/' + Year + '/' + Month + '/' + start_date + '_' + end_date + '-cleaned.parquet'\n",
+							"source_usage_filename = 'abfss://usage@' + storageAccount + '.dfs.core.windows.net/monthly/' + Year + '/' + Month + '/' + start_date + '_' + end_date + '-cleaned.parquet'\n",
 							"\n",
-							"reservation_charges_source_file = 'abfss://reservations@s037costmgmt.dfs.core.windows.net/' + Year + '/' + Month + '/reservation-charges.parquet'\n",
+							"reservation_charges_source_file = 'abfss://reservations@' + storageAccount + '.dfs.core.windows.net/' + Year + '/' + Month + '/reservation-charges.parquet'\n",
 							"\n",
-							"pricelist_file = 'abfss://usage@s037costmgmt.dfs.core.windows.net/pricesheet/pricesheet-LATEST.parquet'\n",
+							"pricelist_file = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/pricesheet-LATEST.parquet'\n",
 							"\n",
-							"saving_file_parquet = 'abfss://savings@s037costmgmt.dfs.core.windows.net/monthly/' + Year + '/' + Month + '/' + start_date + '_' + end_date + '-RI-VM.parquet'\n",
-							"saving_file_csv = 'abfss://savings@s037costmgmt.dfs.core.windows.net/monthly/' + Year + '/' + Month + '/' + start_date + '_' + end_date + '-RI-VM.csv'\n",
+							"saving_file_parquet = 'abfss://savings@' + storageAccount + '.dfs.core.windows.net/monthly/' + Year + '/' + Month + '/' + start_date + '_' + end_date + '-RI-VM.parquet'\n",
+							"saving_file_csv = 'abfss://savings@' + storageAccount + '.dfs.core.windows.net/monthly/' + Year + '/' + Month + '/' + start_date + '_' + end_date + '-RI-VM.csv'\n",
 							"\n",
 							"print(source_usage_filename)\n",
 							"\n",
@@ -34993,7 +35359,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "6e5297a6-6b7f-4585-a07c-3624315824e1"
+						"spark.autotune.trackingId": "1347d567-b698-4f6d-b96c-aa12db69c194"
 					}
 				},
 				"metadata": {
@@ -35034,6 +35400,28 @@
 								"transient": {
 									"deleting": false
 								}
+							},
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
 							}
 						},
 						"source": [
@@ -35058,7 +35446,7 @@
 						"source": [
 							"# Setting a root directory to get all the dates. Whether it is Actual or Amortized isn't important seeing as we only want the dates\r\n",
 							"container = 'usage'\r\n",
-							"root_dir = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/'\r\n",
+							"root_dir = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/'\r\n",
 							"\r\n",
 							"\r\n",
 							"# Getting the dates from the directory folder\r\n",
@@ -35156,7 +35544,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "a304969f-d3e8-4d2a-a201-8c566cf31ba3"
+						"spark.autotune.trackingId": "6f597c97-c77b-4e83-b356-17556bff3755"
 					}
 				},
 				"metadata": {
@@ -35203,7 +35591,8 @@
 							]
 						},
 						"source": [
-							"KVUri = 'https://acm-toolkit-kv.vault.azure.net/'"
+							"KVUri = 'https://acm-toolkit-kv.vault.azure.net/'\r\n",
+							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
 						"execution_count": 7
@@ -35304,7 +35693,7 @@
 							"month = (datetime.now() - timedelta(days=1)).strftime('%m')\n",
 							"day = (datetime.now() - timedelta(days=1)).strftime('%d')\n",
 							"\n",
-							"performance_store = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + vm_path + '/' + cpu_avg_folder + '/' + year + '/' + month + '/' + day + '/'\n",
+							"performance_store = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + vm_path + '/' + cpu_avg_folder + '/' + year + '/' + month + '/' + day + '/'\n",
 							"\n",
 							"## Get subscription, resourcegroup and name of every VM that the service principal has access to in graph   \n",
 							"token, credential, client_id, client_secret, tenant_id = get_token(KVUri)\n",
@@ -35414,7 +35803,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "2904e6c3-592f-4dd1-94d3-41cd1333bad0"
+						"spark.autotune.trackingId": "10a1aa61-123b-4c32-8109-ab9acd0a01aa"
 					}
 				},
 				"metadata": {
@@ -35459,6 +35848,28 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
 						"source": [
 							"# %pip install -U pandas==1.5.3"
 						],
@@ -35500,7 +35911,7 @@
 						},
 						"source": [
 							"container = 'usage'\r\n",
-							"file_path = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + 'AzureAD_BusinessAreaLevel/bronze/AzureAD_EmployeesManagersSnapshot.parquet'\r\n",
+							"file_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + 'AzureAD_BusinessAreaLevel/bronze/AzureAD_EmployeesManagersSnapshot.parquet'\r\n",
 							"\r\n",
 							"df_users = spark.read.format('parquet').load(file_path).toPandas()\r\n",
 							"# df_users.head(10)"
@@ -35525,7 +35936,7 @@
 						"cell_type": "code",
 						"source": [
 							"# Get Hierarchy-dataframe from ADLS\n",
-							"file_path = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + 'AzureAD_BusinessAreaLevel/silver/usersWithManagerSnapshot_v1.parquet'\n",
+							"file_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + 'AzureAD_BusinessAreaLevel/silver/usersWithManagerSnapshot_v1.parquet'\n",
 							"\n",
 							"employees = spark.read.format('parquet').load(file_path).toPandas()\n",
 							"# employees.head(10)"
@@ -35892,7 +36303,7 @@
 						"cell_type": "code",
 						"source": [
 							"#Set optimized path\n",
-							"optimized_path = file_path = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + 'AzureAD_BusinessAreaLevel/gold/usersWithBusinessAreaSnapshot_v1.parquet'\n",
+							"optimized_path = file_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + 'AzureAD_BusinessAreaLevel/gold/usersWithBusinessAreaSnapshot_v1.parquet'\n",
 							"\n",
 							"df_spark = spark.createDataFrame(employees_short)\n",
 							"\n",
@@ -35964,7 +36375,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "00d6dc24-e3f1-4abb-8f79-b5e7fea006eb"
+						"spark.autotune.trackingId": "f674e7f4-c77c-436b-91cd-d4afe0ff1698"
 					}
 				},
 				"metadata": {
@@ -35995,6 +36406,29 @@
 				},
 				"cells": [
 					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"container = 'usage'\r\n",
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
 						"cell_type": "markdown",
 						"source": [
 							"# Transforming Azure AD user-hierarchy"
@@ -36018,8 +36452,7 @@
 					{
 						"cell_type": "code",
 						"source": [
-							"container = 'usage'\n",
-							"file_path = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/AzureAD_BusinessAreaLevel/bronze/AzureAD_EmployeesManagersSnapshot.parquet'\n",
+							"file_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/AzureAD_BusinessAreaLevel/bronze/AzureAD_EmployeesManagersSnapshot.parquet'\n",
 							"\n",
 							"# Read in the dataframe using Spark and transform it into a Pandas-core DataFrame\n",
 							"df_users = spark.read.format('parquet').load(file_path).toPandas()\n",
@@ -36376,7 +36809,7 @@
 						"source": [
 							"#Set optimized path\n",
 							"\n",
-							"optimized_path = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/AzureAD_BusinessAreaLevel/silver/usersWithManagerSnapshot_v1.parquet'\n",
+							"optimized_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/AzureAD_BusinessAreaLevel/silver/usersWithManagerSnapshot_v1.parquet'\n",
 							"\n",
 							"df_spark = spark.createDataFrame(df_hierarchy)\n",
 							"\n",
