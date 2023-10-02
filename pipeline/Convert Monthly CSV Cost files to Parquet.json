@@ -1624,6 +1624,13 @@
 								"type": "Expression"
 							},
 							"type": "string"
+						},
+						"storageAccount": {
+							"value": {
+								"value": "@variables('storageAccount')",
+								"type": "Expression"
+							},
+							"type": "string"
 						}
 					},
 					"snapshot": true,
@@ -1668,7 +1675,13 @@
 						"type": "BigDataPoolReference"
 					},
 					"executorSize": "Large",
-					"driverSize": "Large"
+					"conf": {
+						"spark.dynamicAllocation.enabled": null,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"driverSize": "Large",
+					"numExecutors": null
 				}
 			},
 			{
@@ -1701,7 +1714,13 @@
 						"type": "BigDataPoolReference"
 					},
 					"executorSize": "Large",
-					"driverSize": "Large"
+					"conf": {
+						"spark.dynamicAllocation.enabled": null,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"driverSize": "Large",
+					"numExecutors": null
 				}
 			}
 		],
@@ -1729,6 +1748,10 @@
 			"ActualCost_Path": {
 				"type": "String",
 				"defaultValue": "exports/monthly/ACMMonthlyActualCost/"
+			},
+			"storageAccount": {
+				"type": "String",
+				"defaultValue": "s037costmgmt"
 			}
 		},
 		"folder": {
