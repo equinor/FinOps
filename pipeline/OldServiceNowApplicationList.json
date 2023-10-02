@@ -324,6 +324,15 @@
 						"referenceName": "Prod_subscription_json",
 						"type": "NotebookReference"
 					},
+					"parameters": {
+						"storageAccount": {
+							"value": {
+								"value": "@pipeline().parameters.storageAccount",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
 					"snapshot": true,
 					"conf": {
 						"spark.dynamicAllocation.enabled": null,
@@ -334,6 +343,12 @@
 				}
 			}
 		],
+		"parameters": {
+			"storageAccount": {
+				"type": "string",
+				"defaultValue": "s037costmgmt"
+			}
+		},
 		"folder": {
 			"name": "PipelinesInProduction/ServiceNowPipeline"
 		},
