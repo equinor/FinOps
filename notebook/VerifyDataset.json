@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "dc849e64-cb7f-495f-9e01-979df62e09bd"
+				"spark.autotune.trackingId": "edafb55d-4fb3-482f-a90d-b4d3a4f18c5b"
 			}
 		},
 		"metadata": {
@@ -65,7 +65,7 @@
 					"import pyspark.sql.functions as F\r\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 1
+				"execution_count": 18
 			},
 			{
 				"cell_type": "code",
@@ -84,7 +84,7 @@
 					"path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_Threeyears.parquet\"\r\n",
 					"Threeyears = spark.read.format('parquet').load(path)"
 				],
-				"execution_count": 2
+				"execution_count": 19
 			},
 			{
 				"cell_type": "code",
@@ -97,7 +97,8 @@
 						"transient": {
 							"deleting": false
 						}
-					}
+					},
+					"collapsed": false
 				},
 				"source": [
 					"Threeyears = Threeyears.select(\"ApplicationName\")\r\n",
@@ -105,7 +106,7 @@
 					"Threeyears = Threeyears.toPandas()\r\n",
 					"display(Threeyears)"
 				],
-				"execution_count": 10
+				"execution_count": 20
 			},
 			{
 				"cell_type": "code",
@@ -124,7 +125,7 @@
 				"source": [
 					"len(Threeyears)"
 				],
-				"execution_count": 14
+				"execution_count": 21
 			},
 			{
 				"cell_type": "code",
@@ -143,7 +144,7 @@
 					"path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet\"\r\n",
 					"ServiceNow = spark.read.format('parquet').load(path).toPandas()"
 				],
-				"execution_count": 15
+				"execution_count": 22
 			},
 			{
 				"cell_type": "code",
@@ -161,7 +162,7 @@
 				"source": [
 					"ServiceNow = ServiceNow[['AppID','ApplicationName','OperationalStatus']]"
 				],
-				"execution_count": 16
+				"execution_count": 23
 			},
 			{
 				"cell_type": "code",
@@ -179,7 +180,7 @@
 				"source": [
 					"ServiceNow = ServiceNow.drop_duplicates(['ApplicationName'])"
 				],
-				"execution_count": 20
+				"execution_count": 24
 			},
 			{
 				"cell_type": "code",
@@ -197,7 +198,7 @@
 				"source": [
 					"ServiceNow = ServiceNow[ServiceNow.OperationalStatus!=\"Retired\"]"
 				],
-				"execution_count": 26
+				"execution_count": 25
 			},
 			{
 				"cell_type": "code",
@@ -213,9 +214,28 @@
 					}
 				},
 				"source": [
-					"ServiceNow.loc['ApplicationServiceNow',:] = ServiceNow['ApplicationName']"
+					"#ServiceNow.loc['ApplicationServiceNow',:] = ServiceNow['ApplicationName']\r\n",
+					"ServiceNow['ApplicationServiceNow'] = ServiceNow['ApplicationName']"
 				],
-				"execution_count": 27
+				"execution_count": 37
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"ServiceNow.columns"
+				],
+				"execution_count": 38
 			},
 			{
 				"cell_type": "code",
@@ -233,7 +253,7 @@
 				"source": [
 					"len(ServiceNow)"
 				],
-				"execution_count": 28
+				"execution_count": 39
 			},
 			{
 				"cell_type": "code",
@@ -252,7 +272,7 @@
 				"source": [
 					"display(ServiceNow)"
 				],
-				"execution_count": 30
+				"execution_count": 40
 			},
 			{
 				"cell_type": "code",
@@ -270,7 +290,7 @@
 				"source": [
 					"len(ServiceNow)"
 				],
-				"execution_count": 34
+				"execution_count": 41
 			},
 			{
 				"cell_type": "code",
@@ -288,7 +308,7 @@
 				"source": [
 					"df = ServiceNow.merge(Threeyears, left_on= \"ApplicationServiceNow\",right_on='ApplicationName', how='outer',validate='1:1',indicator=True,suffixes=('_ServiceNow', '_Threeyears'))"
 				],
-				"execution_count": 59
+				"execution_count": 42
 			},
 			{
 				"cell_type": "code",
@@ -306,7 +326,7 @@
 				"source": [
 					"df.describe(include='all')"
 				],
-				"execution_count": 60
+				"execution_count": 43
 			},
 			{
 				"cell_type": "code",
@@ -325,7 +345,7 @@
 				"source": [
 					"display(df)"
 				],
-				"execution_count": 61
+				"execution_count": 44
 			},
 			{
 				"cell_type": "code",
@@ -343,7 +363,7 @@
 				"source": [
 					"len(df[df._merge=='left_only'])# Only ServiceNow Application not Threeyears Application "
 				],
-				"execution_count": 66
+				"execution_count": 45
 			},
 			{
 				"cell_type": "code",
@@ -361,7 +381,7 @@
 				"source": [
 					"len(df[df._merge=='both']) # Both ServiceNow and Threeyears Application. They are matched. "
 				],
-				"execution_count": 68
+				"execution_count": 46
 			},
 			{
 				"cell_type": "code",
@@ -379,7 +399,7 @@
 				"source": [
 					"len(df[df._merge=='right_only'])# Only Threeyreas Application not ServiceNow Applications"
 				],
-				"execution_count": 69
+				"execution_count": 47
 			},
 			{
 				"cell_type": "code",
@@ -397,7 +417,7 @@
 				"source": [
 					"len(df) # Total rows. "
 				],
-				"execution_count": 70
+				"execution_count": 48
 			},
 			{
 				"cell_type": "code",
@@ -414,9 +434,9 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(df[df._merge=='right_only'][['ApplicationName_y']]) #76 "
+					"display(df[df._merge=='right_only'][['ApplicationName_Threeyears']]) #76 "
 				],
-				"execution_count": 58
+				"execution_count": 49
 			},
 			{
 				"cell_type": "code",
@@ -434,7 +454,7 @@
 				"source": [
 					"len(df[df._merge=='right_only'])"
 				],
-				"execution_count": 56
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
