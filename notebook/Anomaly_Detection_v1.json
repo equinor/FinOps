@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "628a2c05-f5ba-42e4-9efe-6ee591cc442c"
+				"spark.autotune.trackingId": "630502f1-8918-403a-b9df-b63f59253818"
 			}
 		},
 		"metadata": {
@@ -59,7 +59,7 @@
 					"import pyspark.sql.types as T\r\n",
 					"from pyspark.sql.window import Window"
 				],
-				"execution_count": 87
+				"execution_count": 95
 			},
 			{
 				"cell_type": "code",
@@ -95,7 +95,7 @@
 					"\r\n",
 					"    return grouped_df"
 				],
-				"execution_count": 88
+				"execution_count": 96
 			},
 			{
 				"cell_type": "code",
@@ -142,12 +142,13 @@
 					"\r\n",
 					"\r\n",
 					"\r\n",
-					"\r\n",
+					"    # Setting a new rolling window\r\n",
 					"    window_spec = Window.partitionBy(filter_column_1, filter_column_2, filter_column_3, filter_column_4).orderBy('Date')\r\n",
 					"\r\n",
 					"    thres_df = costs_by_dates.withColumn('AboveThresYstrdy', F.lag(F.col('AboveThreshold'), 1).over(window_spec))\r\n",
 					"    thres_df = thres_df.withColumn('AboveThresFor2Days', F.lag(F.col('AboveThreshold'), 2).over(window_spec))\r\n",
-					"\r\n",
+					"    \r\n",
+					"    # The masks that will determine which anomalies we will report\r\n",
 					"    thres_mask = (F.col('AboveThreshold') == 1) & (F.col('AboveThresYstrdy') == 1) & (F.col('AboveThresFor2Days') == 1)\r\n",
 					"    cost_mask = F.col('TotalCost') >= 10000\r\n",
 					"    date_mask = F.col('Date') == F.current_date()\r\n",
@@ -158,13 +159,15 @@
 					"    # # For Production\r\n",
 					"    # thres_df = thres_df.withColumn('NotifyAnomaly', F.when(thres_mask & date_mask & cost_mask, F.lit(True)).otherwise(F.lit(False)))\r\n",
 					"\r\n",
+					"    # Dropping columns that are unimportant\r\n",
 					"    dropped_df = thres_df.drop('Scaler', 'AboveThreshold', 'AboveThresYstrdy', 'AboveThresFor2Days')\r\n",
 					"\r\n",
+					"    # Filtering only the relevant data\r\n",
 					"    filtered_df = dropped_df.filter(F.col('NotifyAnomaly') == True)\r\n",
 					"\r\n",
 					"    return filtered_df"
 				],
-				"execution_count": 89
+				"execution_count": 97
 			},
 			{
 				"cell_type": "code",
@@ -183,13 +186,18 @@
 				"source": [
 					"def merge_with_subscription(input_df, subscription_path):\r\n",
 					"\r\n",
+					"    # Reading in useful columns from the subscription.json file\r\n",
 					"    sub_df = spark.read.json(subscription_path).select('name', 'WBSOwner', 'productOwner')\r\n",
 					"\r\n",
+					"    # Merging on subscription names\r\n",
 					"    merged_df = input_df.join(sub_df, on=input_df.SubscriptionName == sub_df.name, how='left')\r\n",
 					"    \r\n",
+					"    # Dropping the right-join column to avoid duplicate records\r\n",
+					"    merged_df = merged_df.drop('name')\r\n",
+					"\r\n",
 					"    return merged_df"
 				],
-				"execution_count": 94
+				"execution_count": 98
 			},
 			{
 				"cell_type": "code",
@@ -228,11 +236,30 @@
 					"                                    subscription_path)\r\n",
 					"\r\n",
 					"\r\n",
-					"# print(f\"Writing classification data to this path: {destination_path}\")\r\n",
-					"# merged_df.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
-					"# print('Write Complete!')"
+					"print(f\"Writing classification data to this path: {destination_path}\")\r\n",
+					"merged_df.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
+					"print('Write Complete!')"
 				],
-				"execution_count": 90
+				"execution_count": 99
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(merged_df)"
+				],
+				"execution_count": 100
 			}
 		]
 	}
