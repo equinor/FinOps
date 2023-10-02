@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "e9d0b332-c2ef-49ab-a929-b1840a3098e7"
+				"spark.autotune.trackingId": "628a2c05-f5ba-42e4-9efe-6ee591cc442c"
 			}
 		},
 		"metadata": {
@@ -59,7 +59,7 @@
 					"import pyspark.sql.types as T\r\n",
 					"from pyspark.sql.window import Window"
 				],
-				"execution_count": 75
+				"execution_count": 87
 			},
 			{
 				"cell_type": "code",
@@ -95,7 +95,7 @@
 					"\r\n",
 					"    return grouped_df"
 				],
-				"execution_count": 76
+				"execution_count": 88
 			},
 			{
 				"cell_type": "code",
@@ -158,11 +158,38 @@
 					"    # # For Production\r\n",
 					"    # thres_df = thres_df.withColumn('NotifyAnomaly', F.when(thres_mask & date_mask & cost_mask, F.lit(True)).otherwise(F.lit(False)))\r\n",
 					"\r\n",
-					"    filtered_df = thres_df.filter(F.col('NotifyAnomaly') == True)\r\n",
+					"    dropped_df = thres_df.drop('Scaler', 'AboveThreshold', 'AboveThresYstrdy', 'AboveThresFor2Days')\r\n",
+					"\r\n",
+					"    filtered_df = dropped_df.filter(F.col('NotifyAnomaly') == True)\r\n",
 					"\r\n",
 					"    return filtered_df"
 				],
-				"execution_count": 77
+				"execution_count": 89
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"def merge_with_subscription(input_df, subscription_path):\r\n",
+					"\r\n",
+					"    sub_df = spark.read.json(subscription_path).select('name', 'WBSOwner', 'productOwner')\r\n",
+					"\r\n",
+					"    merged_df = input_df.join(sub_df, on=input_df.SubscriptionName == sub_df.name, how='left')\r\n",
+					"    \r\n",
+					"    return merged_df"
+				],
+				"execution_count": 94
 			},
 			{
 				"cell_type": "code",
@@ -180,6 +207,8 @@
 				},
 				"source": [
 					"source_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear.parquet\"\r\n",
+					"destination_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_AnomalyDetection_3mnth.parquet\"\r\n",
+					"subscription_path = 'abfss://usage@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions_2023-08-31.json'\r\n",
 					"\r\n",
 					"print(f\"Reading data from: {source_path}\")\r\n",
 					"df = spark.read.format('parquet').load(source_path)\r\n",
@@ -188,57 +217,22 @@
 					"\r\n",
 					"print(\"Running the Anomaly Detection Classifier for Subscription-partitioned data\")\r\n",
 					"filtered_df =  anomaly_detection_classifier(df=preproc_data,\r\n",
-					"                                               filter_column_1='SubscriptionName',\r\n",
-					"                                               filter_column_2='ResourceGroup',\r\n",
-					"                                               filter_column_3='MeterCategory',\r\n",
-					"                                               filter_column_4='ActiveWBS',\r\n",
-					"                                               window_size=60)\r\n",
+					"                                            filter_column_1='SubscriptionName',\r\n",
+					"                                            filter_column_2='ResourceGroup',\r\n",
+					"                                            filter_column_3='MeterCategory',\r\n",
+					"                                            filter_column_4='ActiveWBS',\r\n",
+					"                                            window_size=60)\r\n",
 					"\r\n",
-					"destination_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_AnomalyDetection_3mnth.parquet\"\r\n",
+					"\r\n",
+					"merged_df = merge_with_subscription(filtered_df, \r\n",
+					"                                    subscription_path)\r\n",
+					"\r\n",
 					"\r\n",
 					"# print(f\"Writing classification data to this path: {destination_path}\")\r\n",
-					"# filtered_df.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
+					"# merged_df.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
 					"# print('Write Complete!')"
 				],
-				"execution_count": 78
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"print(filtered_df.count(), len(filtered_df.columns))\r\n",
-					"display(filtered_df)"
-				],
-				"execution_count": 79
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					""
-				],
-				"execution_count": null
+				"execution_count": 90
 			}
 		]
 	}
