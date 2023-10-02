@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "63d6f57c-b344-42d0-9c81-64a7f72913c1"
+				"spark.autotune.trackingId": "f5b4ac0b-091d-43d2-9d92-13c05a8665c4"
 			}
 		},
 		"metadata": {
@@ -59,7 +59,7 @@
 					"import pyspark.sql.types as T\r\n",
 					"from pyspark.sql.window import Window"
 				],
-				"execution_count": 14
+				"execution_count": 56
 			},
 			{
 				"cell_type": "code",
@@ -78,23 +78,24 @@
 					"def preprocessing_anomaly_detection(df):\r\n",
 					"\r\n",
 					"    # Selecting just relevant columns for anomaly detection\r\n",
-					"    new_df = df.select('SubscriptionName', 'ResourceGroup', 'MeterCategory', 'Date', 'CostInBillingCurrency')\r\n",
+					"    new_df = df.select('SubscriptionName', 'ResourceGroup', 'MeterCategory', 'ActiveWBS', 'Date', 'CostInBillingCurrency')\r\n",
 					"\r\n",
 					"    # Filtering out data older than 90 days to get only the latest historical data\r\n",
 					"    threshold = F.date_sub(F.current_date(), 90)\r\n",
 					"    filtered_df = new_df.filter(F.col('Date') >= threshold)\r\n",
 					"\r\n",
 					"    # Grouping the data by each filtering level and getting the sum of all costs related to the filtering columns\r\n",
-					"    grouped_df = filtered_df.groupBy('SubscriptionName', \r\n",
+					"    grouped_df = filtered_df.groupBy('SubscriptionName',\r\n",
 					"                                     'ResourceGroup',\r\n",
-					"                                     'MeterCategory', \r\n",
+					"                                     'MeterCategory',\r\n",
+					"                                     'ActiveWBS',\r\n",
 					"                                     'Date').agg(F.round(\r\n",
 					"                                                  F.sum(\r\n",
 					"                                                   F.col('CostInBillingCurrency')), 1).alias('TotalCost'))\r\n",
 					"\r\n",
 					"    return grouped_df"
 				],
-				"execution_count": 15
+				"execution_count": 57
 			},
 			{
 				"cell_type": "code",
@@ -117,7 +118,7 @@
 					"                                 window_size=30):\r\n",
 					"\r\n",
 					"    # Setting a partition window to divide the dataset in the filter options and order it by the Date\r\n",
-					"    windowSpec = Window.partitionBy(filter_column_1, filter_column_2, filter_column_3).orderBy('Date').rowsBetween(-window_size, 0)\r\n",
+					"    windowSpec = Window.partitionBy(filter_column_1, filter_column_2, filter_column_3, filter_column_4).orderBy('Date').rowsBetween(-window_size, 0)\r\n",
 					"\r\n",
 					"    # Set a moving average that is set by the n previous days\r\n",
 					"    costs_by_dates = df.withColumn('MovingAverage', F.round(F.avg(F.col('TotalCost')).over(windowSpec), 1))\r\n",
@@ -138,9 +139,27 @@
 					"    costs_by_dates = costs_by_dates.withColumn('Above_Threshold', F.when(F.col('TotalCost') > (F.col('Threshold') + 1), F.lit(1))\\\r\n",
 					"                                                                                 .otherwise(F.lit(0)))\r\n",
 					"\r\n",
-					"    return costs_by_dates"
+					"\r\n",
+					"\r\n",
+					"\r\n",
+					"    window_spec = Window.partitionBy(filter_column_1, filter_column_2, filter_column_3, filter_column_4).orderBy('Date')\r\n",
+					"\r\n",
+					"    thres_df = costs_by_dates.withColumn('AboveThresYstrdy', F.lag(F.col('AboveThreshold'), 1).over(window_spec))\r\n",
+					"    thres_df = thres_df.withColumn('AboveThresFor2Days', F.lag(F.col('AboveThreshold'), 2).over(window_spec))\r\n",
+					"\r\n",
+					"    thres_mask = (F.col('AboveThreshold') + F.col('AboveThresYstrdy') + F.col('AboveThresholdFor2Days')) == 3\r\n",
+					"    cost_mask = F.col('TotalCost') >= 10000\r\n",
+					"    date_mask = F.col('Date') == F.current_date()\r\n",
+					"\r\n",
+					"    # For Testing\r\n",
+					"    filtered_df = thres_df.withColumn('NotifyAnomaly', F.when(thres_mask & cost_mask, F.lit(True)).otherwise(F.lit(False)))\r\n",
+					"\r\n",
+					"    # # For Production\r\n",
+					"    # filtered_df = thres_df.withColumn('NotifyAnomaly', F.when(thres_mask & date_mask & cost_mask, F.lit(True)).otherwise(F.lit(False)))\r\n",
+					"\r\n",
+					"    return filtered_df"
 				],
-				"execution_count": 16
+				"execution_count": 58
 			},
 			{
 				"cell_type": "code",
@@ -165,19 +184,20 @@
 					"preproc_data = preprocessing_anomaly_detection(df)\r\n",
 					"\r\n",
 					"print(\"Running the Anomaly Detection Classifier for Subscription-partitioned data\")\r\n",
-					"costs_by_dates =  anomaly_detection_classifier(df=preproc_data,\r\n",
+					"filtered_df =  anomaly_detection_classifier(df=preproc_data,\r\n",
 					"                                               filter_column_1='SubscriptionName',\r\n",
 					"                                               filter_column_2='ResourceGroup',\r\n",
 					"                                               filter_column_3='MeterCategory',\r\n",
+					"                                               filter_column_4='ActiveWBS'\r\n",
 					"                                               window_size=60)\r\n",
 					"\r\n",
 					"destination_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_AnomalyDetection_3mnth.parquet\"\r\n",
 					"\r\n",
 					"# print(f\"Writing classification data to this path: {destination_path}\")\r\n",
-					"# costs_by_dates.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
+					"# filtered_df.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
 					"# print('Write Complete!')"
 				],
-				"execution_count": 17
+				"execution_count": 59
 			},
 			{
 				"cell_type": "code",
@@ -193,18 +213,7 @@
 					}
 				},
 				"source": [
-					"window_spec = Window.orderBy('Date')\r\n",
-					"\r\n",
-					"\r\n",
-					"new_df = costs_by_dates.withColumn('AboveThresYstrdy', F.lag(F.col('AboveThreshold'), 1).over(window_spec))\r\n",
-					"new_df = new_df.withColumn('AboveThresFor2Days', F.lag(F.col('AboveThreshold'), 2).over(window_spec))\r\n",
-					"\r\n",
-					"thres_mask = F.col('AboveThreshold') + F.col('AboveThresYstrdy') + F.col('AboveThresholdFor2Days')) == 3\r\n",
-					"date_mask = F.col('Date') == F.current_date()\r\n",
-					"\r\n",
-					"new_df = new_df.withColumn('NotifyAnomaly', F.when(thres_mask & date_mask, F.lit(True)).otherwise(F.lit(False)))\r\n",
-					"\r\n",
-					"print(new_df.columns)\r\n",
+					"print(filtered_df.count(), len(filtered_df.columns))\r\n",
 					"display(new_df)"
 				],
 				"execution_count": null
