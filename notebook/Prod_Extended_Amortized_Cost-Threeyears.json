@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "94958daa-c309-4a76-8b53-bbc038fa391e"
+				"spark.autotune.trackingId": "f3fcdbf0-469a-4fc5-80da-b05ab1e403f1"
 			}
 		},
 		"metadata": {
@@ -73,6 +73,27 @@
 					"\r\n",
 					""
 				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"storageAccount = 's037costmgmt'"
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",
@@ -160,7 +181,7 @@
 					"date_three_years_ago = datetime.now().date()-timedelta(days=1095)\r\n",
 					"\r\n",
 					"# Define a path for the data with random period\r\n",
-					"path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20210101-20210131/Extended_v2_ACMMonthlyAmortizedCost_20210101-20210131.parquet\"\r\n",
+					"path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20210101-20210131/Extended_v2_ACMMonthlyAmortizedCost_20210101-20210131.parquet\"\r\n",
 					"\r\n",
 					"# Load the data schema for later use\r\n",
 					"df_schema_extended = spark.read.format('parquet').load(path)\r\n",
@@ -248,7 +269,7 @@
 					"df = spark.createDataFrame([], schema)\r\n",
 					"\r\n",
 					"# Define the root path\r\n",
-					"root_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost\"\r\n",
+					"root_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost\"\r\n",
 					"\r\n",
 					"# Collect all the folders under this root path\r\n",
 					"folders = mssparkutils.fs.ls(root_path)\r\n",
@@ -553,7 +574,7 @@
 				},
 				"source": [
 					"# Define optimized path to save the data\r\n",
-					"optimized_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_Threeyears.parquet\" \r\n",
+					"optimized_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_Threeyears.parquet\" \r\n",
 					"\r\n",
 					"# Save the data with partitioned by Month and Year.\r\n",
 					"df_agg.write.format('parquet').mode('overwrite').partitionBy('year_partition','month_partition').option('overwriteSchema', 'true').save(optimized_path)\r\n",
