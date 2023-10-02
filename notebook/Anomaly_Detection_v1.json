@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "630502f1-8918-403a-b9df-b63f59253818"
+				"spark.autotune.trackingId": "070e2ce7-a67e-4d4d-906d-2e072cea7e10"
 			}
 		},
 		"metadata": {
@@ -59,7 +59,7 @@
 					"import pyspark.sql.types as T\r\n",
 					"from pyspark.sql.window import Window"
 				],
-				"execution_count": 95
+				"execution_count": 101
 			},
 			{
 				"cell_type": "code",
@@ -95,7 +95,7 @@
 					"\r\n",
 					"    return grouped_df"
 				],
-				"execution_count": 96
+				"execution_count": 102
 			},
 			{
 				"cell_type": "code",
@@ -142,15 +142,19 @@
 					"\r\n",
 					"\r\n",
 					"\r\n",
-					"    # Setting a new rolling window\r\n",
+					"    # Setting a new rolling window for which to track previous days anomalies\r\n",
 					"    window_spec = Window.partitionBy(filter_column_1, filter_column_2, filter_column_3, filter_column_4).orderBy('Date')\r\n",
-					"\r\n",
-					"    thres_df = costs_by_dates.withColumn('AboveThresYstrdy', F.lag(F.col('AboveThreshold'), 1).over(window_spec))\r\n",
+					"    \r\n",
+					"    # Applying a lag for yesterday and the day before in order to see if there are anomalies on previous days\r\n",
+					"    thres_df = costs_by_dates.withColumn('AboveThres1Day', F.lag(F.col('AboveThreshold'), 1).over(window_spec))\r\n",
 					"    thres_df = thres_df.withColumn('AboveThresFor2Days', F.lag(F.col('AboveThreshold'), 2).over(window_spec))\r\n",
 					"    \r\n",
 					"    # The masks that will determine which anomalies we will report\r\n",
-					"    thres_mask = (F.col('AboveThreshold') == 1) & (F.col('AboveThresYstrdy') == 1) & (F.col('AboveThresFor2Days') == 1)\r\n",
+					"    # If an anomaly occured for three days straight\r\n",
+					"    thres_mask = (F.col('AboveThreshold') == 1) & (F.col('AboveThres1Day') == 1) & (F.col('AboveThresFor2Days') == 1)\r\n",
+					"    # If the daily cost where anomalies occured is 10.000 NOK or more\r\n",
 					"    cost_mask = F.col('TotalCost') >= 10000\r\n",
+					"    # If the date is on the current date\r\n",
 					"    date_mask = F.col('Date') == F.current_date()\r\n",
 					"\r\n",
 					"    # For Testing\r\n",
@@ -160,14 +164,14 @@
 					"    # thres_df = thres_df.withColumn('NotifyAnomaly', F.when(thres_mask & date_mask & cost_mask, F.lit(True)).otherwise(F.lit(False)))\r\n",
 					"\r\n",
 					"    # Dropping columns that are unimportant\r\n",
-					"    dropped_df = thres_df.drop('Scaler', 'AboveThreshold', 'AboveThresYstrdy', 'AboveThresFor2Days')\r\n",
+					"    dropped_df = thres_df.drop('Scaler', 'AboveThreshold', 'AboveThres1Day', 'AboveThresFor2Days')\r\n",
 					"\r\n",
 					"    # Filtering only the relevant data\r\n",
 					"    filtered_df = dropped_df.filter(F.col('NotifyAnomaly') == True)\r\n",
 					"\r\n",
 					"    return filtered_df"
 				],
-				"execution_count": 97
+				"execution_count": 103
 			},
 			{
 				"cell_type": "code",
@@ -197,7 +201,7 @@
 					"\r\n",
 					"    return merged_df"
 				],
-				"execution_count": 98
+				"execution_count": 104
 			},
 			{
 				"cell_type": "code",
@@ -240,7 +244,7 @@
 					"merged_df.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
 					"print('Write Complete!')"
 				],
-				"execution_count": 99
+				"execution_count": 105
 			},
 			{
 				"cell_type": "code",
@@ -259,7 +263,7 @@
 				"source": [
 					"display(merged_df)"
 				],
-				"execution_count": 100
+				"execution_count": 106
 			}
 		]
 	}
