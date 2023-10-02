@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "ed7f5f60-20a5-4c1c-b108-d964aa27622d"
+				"spark.autotune.trackingId": "dbdb3a7e-1459-45d4-b33b-ec162dc2e398"
 			}
 		},
 		"metadata": {
@@ -521,6 +521,7 @@
 					"                                                     .when(~ci_mask & ~appid_mask, 'Not Found in ServiceNow')\\ \r\n",
 					"                                                     #F.col('SubscriptionServiceNow-App'))\\\r\n",
 					"                                                     .otherwise(F.col('Application_Name'))).drop('ApplicationName')\r\n",
+					"    # From Joakim cost_df.withColumn('ApplicationName', F.when(ci_mask & F.col('CostAllocationCode').cast('int').isNull(), F.col('CostAllocationCode')).when(ci_mask & F.col('CostAllocationCode').cast('int').isNotNull(), F.col('name'))\r\n",
 					"\r\n",
 					"\r\n",
 					"    cost_df = cost_df.withColumn('Application_Name', F.upper(F.col('Application_Name')))\r\n",
