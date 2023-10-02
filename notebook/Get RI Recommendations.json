@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "4c4601e6-6c5e-4715-a4ac-d893a025f6fa"
+				"spark.autotune.trackingId": "84fa994b-836e-4000-a25e-0165401d2c5c"
 			}
 		},
 		"metadata": {
@@ -67,7 +67,8 @@
 					"billingAccount = 'tbc'\n",
 					"lookBackPeriod = 'Last30Days'\n",
 					"resourceType = 'tbc'\n",
-					"term = 'P3Y'"
+					"term = 'P3Y'\n",
+					"storageAccount = ''"
 				],
 				"execution_count": 3
 			},
@@ -139,7 +140,7 @@
 					"    return recommendations_df\n",
 					"\n",
 					"def save_df_to_csv(recommendations_df, container, folder, filename, scope, billingAccount, lookBackPeriod, resourceType):\n",
-					"    ri_recs_filename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + folder + '/' + filename\n",
+					"    ri_recs_filename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + folder + '/' + filename\n",
 					"    print('Saving Recommendation DataFrame to csv file at: ', ri_recs_filename)\n",
 					"    recommendations_df.to_csv()\n",
 					"    print(recommendations_df)\n",
@@ -149,24 +150,6 @@
 					"    save_df_to_csv(recommendations_df, container, folder, filename, scope, billingAccount, lookBackPeriod, resourceType)"
 				],
 				"execution_count": 4
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					""
-				],
-				"execution_count": null
 			}
 		]
 	}

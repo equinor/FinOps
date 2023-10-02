@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "0ce79c20-fb2a-4ef7-b441-4a51d155b57a"
+				"spark.autotune.trackingId": "5d3cbdde-c5f5-4137-b81c-191e8fbabc0f"
 			}
 		},
 		"metadata": {
@@ -46,7 +46,8 @@
 				"sparkVersion": "3.3",
 				"nodeCount": 3,
 				"cores": 16,
-				"memory": 112
+				"memory": 112,
+				"automaticScaleJobs": true
 			},
 			"sessionKeepAliveTimeout": 30
 		},
@@ -72,10 +73,31 @@
 						"transient": {
 							"deleting": false
 						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"storageAccount = 's037costmgmt'"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
 					}
 				},
 				"source": [
-					"df_BusinessAreaLevel = spark.read.format('delta').load('abfss://usage@s037costmgmt.dfs.core.windows.net/AzureAD_BusinessAreaLevel/usersWithBusinessAreaSnapshot_v2.delta').toPandas()\r\n",
+					"df_BusinessAreaLevel = spark.read.format('delta').load(f'abfss://usage@{storageAccount}.dfs.core.windows.net/AzureAD_BusinessAreaLevel/usersWithBusinessAreaSnapshot_v2.delta').toPandas()\r\n",
 					""
 				],
 				"execution_count": 19
@@ -131,7 +153,7 @@
 					}
 				},
 				"source": [
-					"optimized_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/AzureAD_BusinessAreaLevel/AzureAD_BusinessAreaLevel.parquet\" \r\n",
+					"optimized_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/AzureAD_BusinessAreaLevel/AzureAD_BusinessAreaLevel.parquet\" \r\n",
 					"#df.repartition(1).write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)\r\n",
 					"spark.createDataFrame(df_BusinessAreaLevel).write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
 				],

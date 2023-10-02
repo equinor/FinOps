@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "a304969f-d3e8-4d2a-a201-8c566cf31ba3"
+				"spark.autotune.trackingId": "6f597c97-c77b-4e83-b356-17556bff3755"
 			}
 		},
 		"metadata": {
@@ -69,7 +69,8 @@
 					]
 				},
 				"source": [
-					"KVUri = 'https://acm-toolkit-kv.vault.azure.net/'"
+					"KVUri = 'https://acm-toolkit-kv.vault.azure.net/'\r\n",
+					"storageAccount = 's037costmgmt'"
 				],
 				"execution_count": 7
 			},
@@ -169,7 +170,7 @@
 					"month = (datetime.now() - timedelta(days=1)).strftime('%m')\n",
 					"day = (datetime.now() - timedelta(days=1)).strftime('%d')\n",
 					"\n",
-					"performance_store = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + vm_path + '/' + cpu_avg_folder + '/' + year + '/' + month + '/' + day + '/'\n",
+					"performance_store = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + vm_path + '/' + cpu_avg_folder + '/' + year + '/' + month + '/' + day + '/'\n",
 					"\n",
 					"## Get subscription, resourcegroup and name of every VM that the service principal has access to in graph   \n",
 					"token, credential, client_id, client_secret, tenant_id = get_token(KVUri)\n",

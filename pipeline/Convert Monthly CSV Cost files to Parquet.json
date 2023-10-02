@@ -1624,6 +1624,13 @@
 								"type": "Expression"
 							},
 							"type": "string"
+						},
+						"storageAccount": {
+							"value": {
+								"value": "@variables('storageAccount')",
+								"type": "Expression"
+							},
+							"type": "string"
 						}
 					},
 					"snapshot": true,
@@ -1662,13 +1669,28 @@
 						"referenceName": "Prod_Extended_Amortized_Cost-Threeyears",
 						"type": "NotebookReference"
 					},
+					"parameters": {
+						"storageAccount": {
+							"value": {
+								"value": "@variables('storageAccount')",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
 					"snapshot": true,
 					"sparkPool": {
 						"referenceName": "sprkpool33large",
 						"type": "BigDataPoolReference"
 					},
 					"executorSize": "Large",
-					"driverSize": "Large"
+					"conf": {
+						"spark.dynamicAllocation.enabled": null,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"driverSize": "Large",
+					"numExecutors": null
 				}
 			},
 			{
@@ -1695,13 +1717,28 @@
 						"referenceName": "Prod_Extended_Amortized_Cost-Oneyear",
 						"type": "NotebookReference"
 					},
+					"parameters": {
+						"storageAccount": {
+							"value": {
+								"value": "@variables('storageAccount')",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
 					"snapshot": true,
 					"sparkPool": {
 						"referenceName": "sprkpool33large",
 						"type": "BigDataPoolReference"
 					},
 					"executorSize": "Large",
-					"driverSize": "Large"
+					"conf": {
+						"spark.dynamicAllocation.enabled": null,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"driverSize": "Large",
+					"numExecutors": null
 				}
 			}
 		],
@@ -1729,6 +1766,10 @@
 			"ActualCost_Path": {
 				"type": "String",
 				"defaultValue": "exports/monthly/ACMMonthlyActualCost/"
+			},
+			"storageAccount": {
+				"type": "String",
+				"defaultValue": "s037costmgmt"
 			}
 		},
 		"folder": {
