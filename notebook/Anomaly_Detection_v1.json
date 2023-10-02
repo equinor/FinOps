@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "f5b4ac0b-091d-43d2-9d92-13c05a8665c4"
+				"spark.autotune.trackingId": "8420c4d9-1e5d-41dc-b4bc-302d196b1648"
 			}
 		},
 		"metadata": {
@@ -115,6 +115,7 @@
 					"                                 filter_column_1,\r\n",
 					"                                 filter_column_2,\r\n",
 					"                                 filter_column_3,\r\n",
+					"                                 filter_column_4,\r\n",
 					"                                 window_size=30):\r\n",
 					"\r\n",
 					"    # Setting a partition window to divide the dataset in the filter options and order it by the Date\r\n",
@@ -136,7 +137,7 @@
 					"    costs_by_dates = costs_by_dates.withColumn('Threshold', F.col('MovingAverage') + (F.col('MovingStdDev') * F.col('Scaler')))\r\n",
 					"\r\n",
 					"     # If the cost is more than the stddev threshold (+ some noise cancellation), then set the datapoint to be 1, otherwise 0\r\n",
-					"    costs_by_dates = costs_by_dates.withColumn('Above_Threshold', F.when(F.col('TotalCost') > (F.col('Threshold') + 1), F.lit(1))\\\r\n",
+					"    costs_by_dates = costs_by_dates.withColumn('AboveThreshold', F.when(F.col('TotalCost') > (F.col('Threshold') + 1), F.lit(1))\\\r\n",
 					"                                                                                 .otherwise(F.lit(0)))\r\n",
 					"\r\n",
 					"\r\n",
@@ -147,19 +148,21 @@
 					"    thres_df = costs_by_dates.withColumn('AboveThresYstrdy', F.lag(F.col('AboveThreshold'), 1).over(window_spec))\r\n",
 					"    thres_df = thres_df.withColumn('AboveThresFor2Days', F.lag(F.col('AboveThreshold'), 2).over(window_spec))\r\n",
 					"\r\n",
-					"    thres_mask = (F.col('AboveThreshold') + F.col('AboveThresYstrdy') + F.col('AboveThresholdFor2Days')) == 3\r\n",
+					"    thres_mask = (F.col('AboveThreshold') == 1) & (F.col('AboveThresYstrdy') == 1) & (F.col('AboveThresFor2Days') == 1)\r\n",
 					"    cost_mask = F.col('TotalCost') >= 10000\r\n",
 					"    date_mask = F.col('Date') == F.current_date()\r\n",
 					"\r\n",
 					"    # For Testing\r\n",
-					"    filtered_df = thres_df.withColumn('NotifyAnomaly', F.when(thres_mask & cost_mask, F.lit(True)).otherwise(F.lit(False)))\r\n",
+					"    thres_df = thres_df.withColumn('NotifyAnomaly', F.when(thres_mask & cost_mask, F.lit(True)).otherwise(F.lit(False)))\r\n",
 					"\r\n",
 					"    # # For Production\r\n",
-					"    # filtered_df = thres_df.withColumn('NotifyAnomaly', F.when(thres_mask & date_mask & cost_mask, F.lit(True)).otherwise(F.lit(False)))\r\n",
+					"    # thres_df = thres_df.withColumn('NotifyAnomaly', F.when(thres_mask & date_mask & cost_mask, F.lit(True)).otherwise(F.lit(False)))\r\n",
+					"\r\n",
+					"    filtered_df = thres_df.filter(F.col('NotifyAnomaly') == True)\r\n",
 					"\r\n",
 					"    return filtered_df"
 				],
-				"execution_count": 58
+				"execution_count": 72
 			},
 			{
 				"cell_type": "code",
@@ -188,7 +191,7 @@
 					"                                               filter_column_1='SubscriptionName',\r\n",
 					"                                               filter_column_2='ResourceGroup',\r\n",
 					"                                               filter_column_3='MeterCategory',\r\n",
-					"                                               filter_column_4='ActiveWBS'\r\n",
+					"                                               filter_column_4='ActiveWBS',\r\n",
 					"                                               window_size=60)\r\n",
 					"\r\n",
 					"destination_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_AnomalyDetection_3mnth.parquet\"\r\n",
@@ -197,7 +200,27 @@
 					"# filtered_df.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
 					"# print('Write Complete!')"
 				],
-				"execution_count": 59
+				"execution_count": 73
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"print(filtered_df.count(), len(filtered_df.columns))\r\n",
+					"display(filtered_df)"
+				],
+				"execution_count": 74
 			},
 			{
 				"cell_type": "code",
@@ -213,8 +236,7 @@
 					}
 				},
 				"source": [
-					"print(filtered_df.count(), len(filtered_df.columns))\r\n",
-					"display(new_df)"
+					""
 				],
 				"execution_count": null
 			}
