@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "4edfc9f6-f44d-42fd-9d5a-f2b2686d3dc8"
+				"spark.autotune.trackingId": "eea49985-05e1-49d4-a5c8-1852867e1b2a"
 			}
 		},
 		"metadata": {
@@ -52,6 +52,28 @@
 			"sessionKeepAliveTimeout": 30
 		},
 		"cells": [
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"# Pipeline parameter\r\n",
+					"storageAccount = 's037costmgmt'"
+				],
+				"execution_count": null
+			},
 			{
 				"cell_type": "code",
 				"source": [
@@ -130,7 +152,7 @@
 					"    # Setting a scaling mechanism on the threshold in order to reduce the threshold when the costs are very high\r\n",
 					"    am_curve = lambda x: 13.6 * x ** -0.22\r\n",
 					"    \r\n",
-					"    # Set a minimum scale of 0.1 and a maximum scale of 3.5 \r\n",
+					"    # Set a minimum scale of 0.1 and a maximum scale of 3.5\r\n",
 					"    costs_by_dates = costs_by_dates.withColumn('Scaler', F.when(F.col('MovingStdDev') > 0.1, am_curve(F.col('MovingStdDev'))).otherwise(F.lit(0.1)))\r\n",
 					"    costs_by_dates = costs_by_dates.withColumn('Scaler', F.when(F.col('Scaler') > 3.5, F.lit(3.5)).otherwise(F.col('Scaler')))\r\n",
 					"\r\n",
@@ -239,9 +261,9 @@
 					"collapsed": false
 				},
 				"source": [
-					"source_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear.parquet\"\r\n",
-					"destination_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_AnomalyDetection_3mnth.parquet\"\r\n",
-					"subscription_path = 'abfss://usage@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions_2023-08-31.json'\r\n",
+					"source_path = \"abfss://usage@\" + storageAccount + \".dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear.parquet\"\r\n",
+					"destination_path = \"abfss://usage@\" + storageAccount + \".dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_AnomalyDetection_3mnth.parquet\"\r\n",
+					"subscription_path = \"abfss://usage@\" + storageAccount + \".dfs.core.windows.net/subscriptions/subscriptions_2023-08-31.json\"\r\n",
 					"\r\n",
 					"print(f\"Reading data from: {source_path}\")\r\n",
 					"df = spark.read.format('parquet').load(source_path)\r\n",
