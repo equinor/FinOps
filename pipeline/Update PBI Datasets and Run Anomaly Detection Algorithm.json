@@ -1,0 +1,108 @@
+{
+	"name": "Update PBI Datasets and Run Anomaly Detection Algorithm",
+	"properties": {
+		"activities": [
+			{
+				"name": "Amortized_Monthly_Cost_Update_ThreeYears",
+				"type": "SynapseNotebook",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "Prod_Extended_Amortized_Cost-Threeyears",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"storageAccount": {
+							"value": {
+								"value": "@variables('storageAccount')",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true
+				}
+			},
+			{
+				"name": "Amortized_Monthly_Cost_Update_OneYear",
+				"type": "SynapseNotebook",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "Prod_Extended_Amortized_Cost-Oneyear",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"storageAccount": {
+							"value": "",
+							"type": "string"
+						}
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": "sprkpool33large",
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Large",
+					"driverSize": "Large"
+				}
+			},
+			{
+				"name": "Anomaly_Detection_v1",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "Amortized_Monthly_Cost_Update_OneYear",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "Anomaly_Detection_v1",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"storageAccount": {
+							"value": {
+								"value": "@variables('storageAccount')",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true
+				}
+			}
+		],
+		"folder": {
+			"name": "PipelinesInProduction/Management API (New)"
+		},
+		"annotations": []
+	}
+}
