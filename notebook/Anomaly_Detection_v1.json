@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "05a7f86b-1786-4db8-93c3-9d4e64c90861"
+				"spark.autotune.trackingId": "f55ba71a-6f73-4977-8bbb-c190f88fd456"
 			}
 		},
 		"metadata": {
@@ -72,7 +72,7 @@
 					"# Pipeline parameter\r\n",
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": null
+				"execution_count": 13
 			},
 			{
 				"cell_type": "code",
@@ -81,7 +81,7 @@
 					"import pyspark.sql.types as T\r\n",
 					"from pyspark.sql.window import Window"
 				],
-				"execution_count": 117
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -117,7 +117,7 @@
 					"\r\n",
 					"    return grouped_df"
 				],
-				"execution_count": 118
+				"execution_count": 15
 			},
 			{
 				"cell_type": "code",
@@ -163,7 +163,7 @@
 					"                                                                                 .otherwise(F.lit(0)))\r\n",
 					"    return costs_by_dates"
 				],
-				"execution_count": 119
+				"execution_count": 16
 			},
 			{
 				"cell_type": "code",
@@ -197,8 +197,8 @@
 					"    thres_mask = (F.col('AboveThreshold') == 1) & (F.col('AboveThres1Day') == 1) & (F.col('AboveThresFor2Days') == 1)\r\n",
 					"    # If the daily cost where anomalies occured is 10.000 NOK or more\r\n",
 					"    cost_mask = F.col('TotalCost') >= 10000\r\n",
-					"    # If the date is on the current date\r\n",
-					"    date_mask = F.col('Date') == F.current_date()\r\n",
+					"    # If the date is on yesterdays date (the most updated data we recieve contains yesterdays costs)\r\n",
+					"    date_mask = F.col('Date') >= F.date_sub(F.current_date(), 1)\r\n",
 					"\r\n",
 					"    # For Testing\r\n",
 					"    thres_df = thres_df.withColumn('NotifyAnomaly', F.when(thres_mask & cost_mask, F.lit(True)).otherwise(F.lit(False)))\r\n",
@@ -214,7 +214,7 @@
 					"\r\n",
 					"    return filtered_df"
 				],
-				"execution_count": 120
+				"execution_count": 17
 			},
 			{
 				"cell_type": "code",
@@ -244,7 +244,7 @@
 					"\r\n",
 					"    return merged_df"
 				],
-				"execution_count": 121
+				"execution_count": 18
 			},
 			{
 				"cell_type": "code",
@@ -291,16 +291,18 @@
 					"                                              filter_column_2=filter_2,\r\n",
 					"                                              filter_column_3=filter_3,\r\n",
 					"                                              filter_column_4=filter_4)\r\n",
+					"if filtered_df.count() == 0:\r\n",
+					"    print('No Anomalies today!')\r\n",
+					"else:\r\n",
+					"    merged_df = merge_with_subscription(filtered_df, \r\n",
+					"                                        subscription_path)\r\n",
 					"\r\n",
-					"merged_df = merge_with_subscription(filtered_df, \r\n",
-					"                                    subscription_path)\r\n",
 					"\r\n",
-					"\r\n",
-					"print(f\"Writing classification data to this path: {destination_path}\")\r\n",
-					"merged_df.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
-					"print('Write Complete!')"
+					"    print(f\"Writing classification data to this path: {destination_path}\")\r\n",
+					"    merged_df.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
+					"    print('Write Complete!')"
 				],
-				"execution_count": 122
+				"execution_count": 19
 			},
 			{
 				"cell_type": "code",
@@ -317,9 +319,9 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(merged_df)"
+					"# display(merged_df)"
 				],
-				"execution_count": 123
+				"execution_count": 21
 			},
 			{
 				"cell_type": "markdown",
@@ -357,8 +359,8 @@
 					"#     return a * np.power(x, b)\r\n",
 					"\r\n",
 					"# # Costs are the \"input values\" and the degree of scaling are the output values\r\n",
-					"# input_values = np.array([1000, 50000, 100000])\r\n",
-					"# output_values = np.array([3, 1.5, 1])\r\n",
+					"# input_values = np.array([1000, 10000, 100000])\r\n",
+					"# output_values = np.array([3, 2, 1])\r\n",
 					"\r\n",
 					"# # Finding the unknown parameters (a, b) for the scaling function\r\n",
 					"# params, covariance = curve_fit(power_law, input_values, output_values)\r\n",
@@ -371,7 +373,25 @@
 					"# y = [scaling_function(i, 13.6, -0.22) for i in x]\r\n",
 					"# plt.plot(x, y)"
 				],
-				"execution_count": 10
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				],
+				"execution_count": null
 			}
 		]
 	}
