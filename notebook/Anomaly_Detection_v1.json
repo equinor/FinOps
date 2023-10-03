@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "9ead921c-2366-403c-9638-3127b501df58"
+				"spark.autotune.trackingId": "05a7f86b-1786-4db8-93c3-9d4e64c90861"
 			}
 		},
 		"metadata": {
@@ -348,24 +348,30 @@
 					}
 				},
 				"source": [
-					"import numpy as np\r\n",
-					"from scipy.optimize import curve_fit\r\n",
+					"# import numpy as np\r\n",
+					"# from scipy.optimize import curve_fit\r\n",
+					"# import matplotlib.pyplot as plt\r\n",
 					"\r\n",
-					"# The function to fit \r\n",
-					"def power_law(x, a, b):\r\n",
-					"    return a * np.power(x, b)\r\n",
+					"# # The function we want to use to apply the scaling function \r\n",
+					"# def scaling_function(x, a, b):\r\n",
+					"#     return a * np.power(x, b)\r\n",
 					"\r\n",
-					"# When costs are \"input values\"\r\n",
-					"input_values = np.array([1000, 10000, 100000])\r\n",
-					"output_values = np.array([3, 2, 1])\r\n",
+					"# # Costs are the \"input values\" and the degree of scaling are the output values\r\n",
+					"# input_values = np.array([1000, 50000, 100000])\r\n",
+					"# output_values = np.array([3, 1.5, 1])\r\n",
 					"\r\n",
-					"params, covariance = curve_fit(power_law, input_values, output_values)\r\n",
+					"# # Finding the unknown parameters (a, b) for the scaling function\r\n",
+					"# params, covariance = curve_fit(power_law, input_values, output_values)\r\n",
 					"\r\n",
-					"print(\"Scaling function parameters: a * x**b\")\r\n",
-					"print(f\"'a' has value: {params[0]}\")\r\n",
-					"print(f\"'b' has value: {params[1]}\")"
+					"# print(f\"'a' has value: {params[0]}\")\r\n",
+					"# print(f\"'b' has value: {params[1]}\")\r\n",
+					"\r\n",
+					"# # Plotting the scaling function against a range\r\n",
+					"# x = range(0, 100000, 1000)\r\n",
+					"# y = [scaling_function(i, 13.6, -0.22) for i in x]\r\n",
+					"# plt.plot(x, y)"
 				],
-				"execution_count": 139
+				"execution_count": 10
 			}
 		]
 	}
