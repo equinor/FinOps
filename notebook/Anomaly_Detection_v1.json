@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "f55ba71a-6f73-4977-8bbb-c190f88fd456"
+				"spark.autotune.trackingId": "df0fecb2-9081-4bec-bb9e-619baf5801f4"
 			}
 		},
 		"metadata": {
@@ -363,7 +363,7 @@
 					"# output_values = np.array([3, 2, 1])\r\n",
 					"\r\n",
 					"# # Finding the unknown parameters (a, b) for the scaling function\r\n",
-					"# params, covariance = curve_fit(power_law, input_values, output_values)\r\n",
+					"# params, covariance = curve_fit(scaling_function, input_values, output_values)\r\n",
 					"\r\n",
 					"# print(f\"'a' has value: {params[0]}\")\r\n",
 					"# print(f\"'b' has value: {params[1]}\")\r\n",
@@ -371,9 +371,13 @@
 					"# # Plotting the scaling function against a range\r\n",
 					"# x = range(0, 100000, 1000)\r\n",
 					"# y = [scaling_function(i, 13.6, -0.22) for i in x]\r\n",
-					"# plt.plot(x, y)"
+					"# plt.figure(figsize=(14, 10))\r\n",
+					"# plt.plot(x, y, c='blue', label='Fitted curve')\r\n",
+					"# plt.scatter(input_values, output_values, c='red', label='Input data points')\r\n",
+					"# plt.legend()\r\n",
+					"# plt.show()"
 				],
-				"execution_count": null
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
