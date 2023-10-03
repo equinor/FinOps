@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "9bce0bd9-d386-419b-baf8-5c76064cef44"
+				"spark.autotune.trackingId": "4f61375d-8563-40ab-a91c-baf67dee6642"
 			}
 		},
 		"metadata": {
@@ -61,11 +61,11 @@
 				},
 				"source": [
 					"# # Input data\n",
-					"toDate = '20230430'\n",
-					"fromDate = '20230401'\n",
+					"toDate = '20220131'\n",
+					"fromDate = '20220101'\n",
 					"container = 'usage'"
 				],
-				"execution_count": 134
+				"execution_count": 177
 			},
 			{
 				"cell_type": "code",
@@ -92,7 +92,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 135
+				"execution_count": 178
 			},
 			{
 				"cell_type": "code",
@@ -126,7 +126,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list, appList"
 				],
-				"execution_count": 136
+				"execution_count": 179
 			},
 			{
 				"cell_type": "code",
@@ -156,7 +156,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 137
+				"execution_count": 180
 			},
 			{
 				"cell_type": "code",
@@ -198,7 +198,7 @@
 					"    print(cost_df.columns)\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 138
+				"execution_count": 181
 			},
 			{
 				"cell_type": "code",
@@ -227,7 +227,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 139
+				"execution_count": 182
 			},
 			{
 				"cell_type": "code",
@@ -262,7 +262,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 140
+				"execution_count": 183
 			},
 			{
 				"cell_type": "code",
@@ -297,9 +297,11 @@
 					"    columns_to_keep = ['SubId', 'SubscriptionWBS', 'SubscriptionServiceNow-App']\r\n",
 					"    subscription_list = subscription_list.select(columns_to_keep)\r\n",
 					"\r\n",
+					"    \r\n",
+					"\r\n",
 					"    return subscription_list"
 				],
-				"execution_count": 141
+				"execution_count": 184
 			},
 			{
 				"cell_type": "code",
@@ -322,7 +324,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list"
 				],
-				"execution_count": 142
+				"execution_count": 185
 			},
 			{
 				"cell_type": "code",
@@ -356,7 +358,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 143
+				"execution_count": 186
 			},
 			{
 				"cell_type": "code",
@@ -384,7 +386,7 @@
 					"    cost_df = cost_df.withColumn('ActiveWBSReason', F.when(mask1, F.lit('CostAllocationType or CostAllocationCode not present in Tags')))\r\n",
 					"\r\n",
 					"    # When either value in mask appears in AcitveWBS, add invalid reason in new column\r\n",
-					"    mask2 = ['WBS', 'APPID', 'CI', 'SubscriptionWBS']\r\n",
+					"    mask2 = ['WBS', 'APPID', 'CI', 'SubscriptionWBS'] # where is SubscriptionWBS? \r\n",
 					"    cost_df = cost_df.withColumn('ActiveWBSReason', F.when(~F.col('CostAllocationType').isin(mask2), F.lit('Invalid CostAllocationType: not APPID, CI or WBS')).otherwise(F.col('ActiveWBSReason')))\r\n",
 					"\r\n",
 					"    # When the values in the columns below match the mask and the cost type is WBS, then:\r\n",
@@ -410,11 +412,11 @@
 					"\r\n",
 					"    # Applying valid CIs as Active WBS'\r\n",
 					"    # Same here as above, but we merge the dataframes on ApplicationNames rather than AppID\r\n",
-					"    map_app = appList.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('ApplicationName', 'OperationalWBS')\r\n",
+					"    map_app = appList.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('ApplicationName', 'OperationalWBS') # Remove withColumn\r\n",
 					"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.ApplicationName, how='left')\r\n",
 					"    cost_df = joined_df.withColumn('ActiveWBS', F.when(F.col('ActiveWBS').isNull(), F.col('OperationalWBS')).otherwise(F.col('ActiveWBS')))\r\n",
 					"    #cost_df = cost_df.drop('ApplicationName', 'OperationalWBS', 'AppID')\r\n",
-					"    # Alternative 1\r\n",
+					"    # Alternative 1 remove \"AppID\" \r\n",
 					"    cost_df = cost_df.drop('ApplicationName', 'OperationalWBS')\r\n",
 					"\r\n",
 					"    # When ActiveWBS value is string 'TOBESPECIFIED', we replace the value with None\r\n",
@@ -450,13 +452,14 @@
 					"    # Alternative\r\n",
 					"    mask3 = (F.upper(F.col('CostAllocationType')).isin(['APPID']) & F.col('CostAllocationCode').isNull())\r\n",
 					"    mask4 = (F.upper(F.col('CostAllocationType')).isin(['CI']) & F.col('CostAllocationCode').isNull())\r\n",
-					"    cost_df = cost_df.withColumn('CostAllocationCode', F.when(mask3, F.col('SubscriptionServiceNow-App'))\\ \r\n",
-					"                                                        .when(mask4, F.col('AppID'))\\\r\n",
-					"                                                        .otherwise(F.col('CostAllocationCode'))).drop('AppID')\r\n",
-					"    # ## Put ServiceNow ApplicationName instead? \r\n",
+					"    cost_df = cost_df.withColumn('CostAllocationCode', F.when(mask3, F.col('SubscriptionServiceNow-App')) \\\r\n",
+					"                                                       .when(mask4, F.col('AppID')) \\\r\n",
+					"                                                       .otherwise(F.col('CostAllocationCode'))).drop('AppID')\r\n",
+					"    \r\n",
+					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 144
+				"execution_count": 187
 			},
 			{
 				"cell_type": "code",
@@ -493,7 +496,7 @@
 					"# name-> ApplicationName\r\n",
 					"# ApplicationName->Application_Name"
 				],
-				"execution_count": 145
+				"execution_count": 188
 			},
 			{
 				"cell_type": "code",
@@ -552,7 +555,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 146
+				"execution_count": 189
 			},
 			{
 				"cell_type": "code",
@@ -586,7 +589,7 @@
 					"    \r\n",
 					"    return cost_df"
 				],
-				"execution_count": 147
+				"execution_count": 190
 			},
 			{
 				"cell_type": "code",
@@ -617,7 +620,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 148
+				"execution_count": 191
 			},
 			{
 				"cell_type": "code",
@@ -646,7 +649,7 @@
 					"\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": 149
+				"execution_count": 192
 			},
 			{
 				"cell_type": "code",
@@ -701,7 +704,7 @@
 					"    #write_output_file(cost_df, costDestinationfilename)\n",
 					"    print(' ')"
 				],
-				"execution_count": 150
+				"execution_count": 193
 			},
 			{
 				"cell_type": "code",
@@ -719,7 +722,7 @@
 				"source": [
 					"#display(cost_df.filter(cost_df.Application_Name.contains(\"IDEATION MACHINE\")))"
 				],
-				"execution_count": 153
+				"execution_count": 194
 			},
 			{
 				"cell_type": "code",
@@ -738,7 +741,7 @@
 				"source": [
 					"display(cost_df)"
 				],
-				"execution_count": 151
+				"execution_count": 195
 			}
 		]
 	}
