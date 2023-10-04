@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "8dc7c3a0-46ac-4479-b075-d7f9ec27754c"
+				"spark.autotune.trackingId": "e69e1dd1-0d98-4c8e-a037-3bb102d52859"
 			}
 		},
 		"metadata": {
@@ -166,6 +166,22 @@
 				"execution_count": 74
 			},
 			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# NB! The notebook has Testing and Production Conditions.\r\n",
+					"Check which conditions that is in use and which is commented out\r\n",
+					"\r\n",
+					"See lines 22-26 for further details"
+				]
+			},
+			{
 				"cell_type": "code",
 				"metadata": {
 					"jupyter": {
@@ -200,11 +216,11 @@
 					"    # If the date is on yesterdays date (the most updated data we recieve contains yesterdays costs)\r\n",
 					"    date_mask = F.col('Date') >= F.date_sub(F.current_date(), 1)\r\n",
 					"\r\n",
-					"    # For Testing\r\n",
-					"    thres_df = thres_df.withColumn('NotifyAnomaly', F.when(thres_mask & cost_mask, F.lit(True)).otherwise(F.lit(False)))\r\n",
+					"    # # For Testing\r\n",
+					"    # thres_df = thres_df.withColumn('NotifyAnomaly', F.when(thres_mask & cost_mask, F.lit(True)).otherwise(F.lit(False)))\r\n",
 					"\r\n",
-					"    # # For Production\r\n",
-					"    # thres_df = thres_df.withColumn('NotifyAnomaly', F.when(thres_mask & date_mask & cost_mask, F.lit(True)).otherwise(F.lit(False)))\r\n",
+					"    # For Production\r\n",
+					"    thres_df = thres_df.withColumn('NotifyAnomaly', F.when(thres_mask & date_mask & cost_mask, F.lit(True)).otherwise(F.lit(False)))\r\n",
 					"\r\n",
 					"    # Dropping columns that are unimportant\r\n",
 					"    dropped_df = thres_df.select('SubscriptionName', 'ResourceGroup', 'MeterCategory', 'ActiveWBS', 'NotifyAnomaly')\r\n",
@@ -220,7 +236,7 @@
 					"\r\n",
 					"    return grouped_df"
 				],
-				"execution_count": null
+				"execution_count": 75
 			},
 			{
 				"cell_type": "code",
@@ -250,7 +266,7 @@
 					"\r\n",
 					"    return merged_df"
 				],
-				"execution_count": null
+				"execution_count": 76
 			},
 			{
 				"cell_type": "code",
@@ -309,7 +325,7 @@
 					"    merged_df.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
 					"    print('Write Complete!')"
 				],
-				"execution_count": null
+				"execution_count": 77
 			},
 			{
 				"cell_type": "code",
@@ -326,9 +342,9 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(merged_df)"
+					"# display(merged_df)"
 				],
-				"execution_count": null
+				"execution_count": 80
 			},
 			{
 				"cell_type": "markdown",
@@ -384,7 +400,7 @@
 					"# plt.legend()\r\n",
 					"# plt.show()"
 				],
-				"execution_count": null
+				"execution_count": 79
 			}
 		]
 	}
