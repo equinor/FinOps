@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "bbc99564-d84f-45fa-a946-6e771a95fd8b"
+				"spark.autotune.trackingId": "2d6599ea-a068-4d0c-b606-8d819aa1c967"
 			}
 		},
 		"metadata": {
@@ -528,13 +528,8 @@
 					"    appid_mask = F.col('CostAllocationType') == 'APPID'\r\n",
 					"\r\n",
 					"    # When AppID is present, we use the application name from the Service-Now Application list\r\n",
-					"\r\n",
 					"    # First convert AppID to a string, then select the desired columns\r\n",
 					"    map_app = appList.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('AppID', 'ApplicationName')\r\n",
-					"    # Merge the two lists together with a left-join\r\n",
-					"\r\n",
-					"    #joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.AppID, how='left')\r\n",
-					"    # Alternative\r\n",
 					"    \r\n",
 					"    # Apply case insensitivity merge by creating upper case columns\r\n",
 					"    cost_df = cost_df.withColumn('CostAllocationCode_upper',F.upper(F.col('CostAllocationCode')))\r\n",
@@ -611,6 +606,9 @@
 					"    #display(map_app)\r\n",
 					"    #print('-joined df:')\r\n",
 					"    #display(joined_df)\r\n",
+					"        # Merge the two lists together with a left-join\r\n",
+					"\r\n",
+					"    #joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.AppID, how='left')\r\n",
 					"    # From Joakim cost_df.withColumn('ApplicationName',\r\n",
 					"    #cost_df.withColumn('Application_Name', F.when(ci_mask & F.col('CostAllocationCode').cast('int').isNull(), F.col('CostAllocationCode'))\\\r\n",
 					"    #                                        .when(ci_mask & F.col('CostAllocationCode').cast('int').isNotNull(), F.col('ApplicationName'))\r\n",
