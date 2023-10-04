@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "46bf0a4c-1b4e-4edb-aa17-61c6f5cfce86"
+				"spark.autotune.trackingId": "de36a8ac-3df1-4499-9633-d752032dd1a3"
 			}
 		},
 		"metadata": {
@@ -52,6 +52,28 @@
 			"sessionKeepAliveTimeout": 30
 		},
 		"cells": [
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"# Pipeline parameter\r\n",
+					"storageAccount = 's037costmgmt'"
+				],
+				"execution_count": 13
+			},
 			{
 				"cell_type": "code",
 				"source": [
@@ -99,16 +121,17 @@
 					"def preprocessing_anomaly_detection(df):\r\n",
 					"\r\n",
 					"    # Selecting just relevant columns for anomaly detection\r\n",
-					"    new_df = df.select('SubscriptionName', 'ResourceGroup', 'MeterCategory', 'Date', 'CostInBillingCurrency')\r\n",
+					"    new_df = df.select('SubscriptionName', 'ResourceGroup', 'MeterCategory', 'ActiveWBS', 'Date', 'CostInBillingCurrency')\r\n",
 					"\r\n",
 					"    # Filtering out data older than 90 days to get only the latest historical data\r\n",
 					"    threshold = F.date_sub(F.current_date(), 90)\r\n",
 					"    filtered_df = new_df.filter(F.col('Date') >= threshold)\r\n",
 					"\r\n",
 					"    # Grouping the data by each filtering level and getting the sum of all costs related to the filtering columns\r\n",
-					"    grouped_df = filtered_df.groupBy('SubscriptionName', \r\n",
+					"    grouped_df = filtered_df.groupBy('SubscriptionName',\r\n",
 					"                                     'ResourceGroup',\r\n",
-					"                                     'MeterCategory', \r\n",
+					"                                     'MeterCategory',\r\n",
+					"                                     'ActiveWBS',\r\n",
 					"                                     'Date').agg(F.round(\r\n",
 					"                                                  F.sum(\r\n",
 					"                                                   F.col('CostInBillingCurrency')), 1).alias('TotalCost'))\r\n",
@@ -135,10 +158,11 @@
 					"                                 filter_column_1,\r\n",
 					"                                 filter_column_2,\r\n",
 					"                                 filter_column_3,\r\n",
+					"                                 filter_column_4,\r\n",
 					"                                 window_size=30):\r\n",
 					"\r\n",
 					"    # Setting a partition window to divide the dataset in the filter options and order it by the Date\r\n",
-					"    windowSpec = Window.partitionBy(filter_column_1, filter_column_2, filter_column_3).orderBy('Date').rowsBetween(-window_size, 0)\r\n",
+					"    windowSpec = Window.partitionBy(filter_column_1, filter_column_2, filter_column_3, filter_column_4).orderBy('Date').rowsBetween(-window_size, 0)\r\n",
 					"\r\n",
 					"    # Set a moving average that is set by the n previous days\r\n",
 					"    costs_by_dates = df.withColumn('MovingAverage', F.round(F.avg(F.col('TotalCost')).over(windowSpec), 1))\r\n",
@@ -149,19 +173,69 @@
 					"    # Setting a scaling mechanism on the threshold in order to reduce the threshold when the costs are very high\r\n",
 					"    am_curve = lambda x: 13.6 * x ** -0.22\r\n",
 					"    \r\n",
-					"    # Set a minimum scale of 0.1 and a maximum scale of 3.5 \r\n",
+					"    # Set a minimum scale of 0.1 and a maximum scale of 3.5\r\n",
 					"    costs_by_dates = costs_by_dates.withColumn('Scaler', F.when(F.col('MovingStdDev') > 0.1, am_curve(F.col('MovingStdDev'))).otherwise(F.lit(0.1)))\r\n",
 					"    costs_by_dates = costs_by_dates.withColumn('Scaler', F.when(F.col('Scaler') > 3.5, F.lit(3.5)).otherwise(F.col('Scaler')))\r\n",
 					"\r\n",
 					"    costs_by_dates = costs_by_dates.withColumn('Threshold', F.col('MovingAverage') + (F.col('MovingStdDev') * F.col('Scaler')))\r\n",
 					"\r\n",
 					"     # If the cost is more than the stddev threshold (+ some noise cancellation), then set the datapoint to be 1, otherwise 0\r\n",
-					"    costs_by_dates = costs_by_dates.withColumn('Above_Threshold', F.when(F.col('TotalCost') > (F.col('Threshold') + 1), F.lit(1))\\\r\n",
+					"    costs_by_dates = costs_by_dates.withColumn('AboveThreshold', F.when(F.col('TotalCost') > (F.col('Threshold') + 1), F.lit(1))\\\r\n",
 					"                                                                                 .otherwise(F.lit(0)))\r\n",
-					"\r\n",
 					"    return costs_by_dates"
 				],
 				"execution_count": 16
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def anomaly_notification_filtration(df,\r\n",
+					"                                    filter_column_1,\r\n",
+					"                                    filter_column_2,\r\n",
+					"                                    filter_column_3,\r\n",
+					"                                    filter_column_4):\r\n",
+					"\r\n",
+					"    # Setting a new rolling window for which to track previous days anomalies\r\n",
+					"    window_spec = Window.partitionBy(filter_column_1, filter_column_2, filter_column_3, filter_column_4).orderBy('Date')\r\n",
+					"    \r\n",
+					"    # Applying a lag for yesterday and the day before in order to see if there are anomalies on previous days\r\n",
+					"    thres_df = df.withColumn('AboveThres1Day', F.lag(F.col('AboveThreshold'), 1).over(window_spec))\r\n",
+					"    thres_df = thres_df.withColumn('AboveThresFor2Days', F.lag(F.col('AboveThreshold'), 2).over(window_spec))\r\n",
+					"    \r\n",
+					"    # The masks that will determine which anomalies we will report\r\n",
+					"    # If an anomaly occured for three days straight\r\n",
+					"    thres_mask = (F.col('AboveThreshold') == 1) & (F.col('AboveThres1Day') == 1) & (F.col('AboveThresFor2Days') == 1)\r\n",
+					"    # If the daily cost where anomalies occured is 10.000 NOK or more\r\n",
+					"    cost_mask = F.col('TotalCost') >= 10000\r\n",
+					"    # If the date is on yesterdays date (the most updated data we recieve contains yesterdays costs)\r\n",
+					"    date_mask = F.col('Date') >= F.date_sub(F.current_date(), 1)\r\n",
+					"\r\n",
+					"    # For Testing\r\n",
+					"    thres_df = thres_df.withColumn('NotifyAnomaly', F.when(thres_mask & cost_mask, F.lit(True)).otherwise(F.lit(False)))\r\n",
+					"\r\n",
+					"    # # For Production\r\n",
+					"    # thres_df = thres_df.withColumn('NotifyAnomaly', F.when(thres_mask & date_mask & cost_mask, F.lit(True)).otherwise(F.lit(False)))\r\n",
+					"\r\n",
+					"    # Dropping columns that are unimportant\r\n",
+					"    dropped_df = thres_df.drop('Scaler', 'AboveThreshold', 'AboveThres1Day', 'AboveThresFor2Days')\r\n",
+					"\r\n",
+					"    # Filtering only the relevant data\r\n",
+					"    filtered_df = dropped_df.filter(F.col('NotifyAnomaly') == True)\r\n",
+					"\r\n",
+					"    return filtered_df"
+				],
+				"execution_count": 17
 			},
 			{
 				"cell_type": "code",
@@ -178,27 +252,153 @@
 					"collapsed": false
 				},
 				"source": [
-					"source_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear.parquet\"\r\n",
+					"def merge_with_subscription(input_df, subscription_path):\r\n",
+					"\r\n",
+					"    # Reading in useful columns from the subscription.json file\r\n",
+					"    sub_df = spark.read.json(subscription_path).select('name', 'WBSOwner', 'productOwner')\r\n",
+					"\r\n",
+					"    # Merging on subscription names\r\n",
+					"    merged_df = input_df.join(sub_df, on=input_df.SubscriptionName == sub_df.name, how='left')\r\n",
+					"    \r\n",
+					"    # Dropping the right-join column to avoid duplicate records\r\n",
+					"    merged_df = merged_df.drop('name')\r\n",
+					"\r\n",
+					"    return merged_df"
+				],
+				"execution_count": 18
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"source_path = \"abfss://usage@\" + storageAccount + \".dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear.parquet\"\r\n",
+					"destination_path = \"abfss://usage@\" + storageAccount + \".dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_AnomalyDetection_3mnth.parquet\"\r\n",
+					"subscription_path = \"abfss://usage@\" + storageAccount + \".dfs.core.windows.net/subscriptions/subscriptions_2023-08-31.json\"\r\n",
 					"\r\n",
 					"print(f\"Reading data from: {source_path}\")\r\n",
 					"df = spark.read.format('parquet').load(source_path)\r\n",
 					"\r\n",
 					"preproc_data = preprocessing_anomaly_detection(df)\r\n",
 					"\r\n",
+					"\r\n",
+					"filter_1 = 'SubscriptionName'\r\n",
+					"filter_2 = 'ResourceGroup'\r\n",
+					"filter_3 = 'MeterCategory'\r\n",
+					"filter_4 = 'ActiveWBS'\r\n",
+					"\r\n",
+					"\r\n",
 					"print(\"Running the Anomaly Detection Classifier for Subscription-partitioned data\")\r\n",
-					"costs_by_dates =  anomaly_detection_classifier(df=preproc_data,\r\n",
-					"                                               filter_column_1='SubscriptionName',\r\n",
-					"                                               filter_column_2='ResourceGroup',\r\n",
-					"                                               filter_column_3='MeterCategory',\r\n",
-					"                                               window_size=60)\r\n",
+					"anomaly_df =  anomaly_detection_classifier(df=preproc_data,\r\n",
+					"                                           filter_column_1=filter_1,\r\n",
+					"                                           filter_column_2=filter_2,\r\n",
+					"                                           filter_column_3=filter_3,\r\n",
+					"                                           filter_column_4=filter_4,\r\n",
+					"                                           window_size=60)\r\n",
 					"\r\n",
-					"destination_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_AnomalyDetection_3mnth.parquet\"\r\n",
 					"\r\n",
-					"print(f\"Writing classification data to this path: {destination_path}\")\r\n",
-					"costs_by_dates.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
-					"print('Write Complete!')"
+					"filtered_df = anomaly_notification_filtration(anomaly_df,\r\n",
+					"                                              filter_column_1=filter_1,\r\n",
+					"                                              filter_column_2=filter_2,\r\n",
+					"                                              filter_column_3=filter_3,\r\n",
+					"                                              filter_column_4=filter_4)\r\n",
+					"if filtered_df.count() == 0:\r\n",
+					"    print('No Anomalies today!')\r\n",
+					"else:\r\n",
+					"    merged_df = merge_with_subscription(filtered_df, \r\n",
+					"                                        subscription_path)\r\n",
+					"\r\n",
+					"\r\n",
+					"    print(f\"Writing classification data to this path: {destination_path}\")\r\n",
+					"    merged_df.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
+					"    print('Write Complete!')"
 				],
-				"execution_count": 17
+				"execution_count": 19
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"# display(merged_df)"
+				],
+				"execution_count": 21
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Finding Hyper-parameters for the Scaling-Function"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# import numpy as np\r\n",
+					"# from scipy.optimize import curve_fit\r\n",
+					"# import matplotlib.pyplot as plt\r\n",
+					"\r\n",
+					"# # The function we want to use to apply the scaling function \r\n",
+					"# def scaling_function(x, a, b):\r\n",
+					"#     return a * np.power(x, b)\r\n",
+					"\r\n",
+					"# # Costs are the \"input values\" and the degree of scaling are the output values\r\n",
+					"# input_values = np.array([1000, 10000, 100000])\r\n",
+					"# output_values = np.array([3, 2, 1])\r\n",
+					"\r\n",
+					"# # Finding the unknown parameters (a, b) for the scaling function\r\n",
+					"# params, covariance = curve_fit(scaling_function, input_values, output_values)\r\n",
+					"\r\n",
+					"# print(f\"'a' has value: {params[0]}\")\r\n",
+					"# print(f\"'b' has value: {params[1]}\")\r\n",
+					"\r\n",
+					"# # Plotting the scaling function against a range\r\n",
+					"# x = range(0, 100000, 1000)\r\n",
+					"# y = [scaling_function(i, 13.6, -0.22) for i in x]\r\n",
+					"# plt.figure(figsize=(14, 10))\r\n",
+					"# plt.plot(x, y, c='blue', label='Fitted curve')\r\n",
+					"# plt.scatter(input_values, output_values, c='red', label='Input data points')\r\n",
+					"# plt.legend()\r\n",
+					"# plt.show()"
+				],
+				"execution_count": 6
 			}
 		]
 	}
