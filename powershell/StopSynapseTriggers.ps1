@@ -26,9 +26,9 @@ if ($triggers.Count -gt 0) {
     foreach ($t in $triggers) {
         Write-Output ("Stopping {0} ..." -f $t.Name)
         try {
+            $stoppedTrigger += $t.Name
             $result = Stop-AzSynapseTrigger -WorkspaceName $WorkspaceName -Name $t.name -PassThru
             Write-Output ("Result of stopping trigger {0}: {1}" -f $t.Name, $result)
-            $stoppedTrigger += $t.Name
         }
 
         catch {
