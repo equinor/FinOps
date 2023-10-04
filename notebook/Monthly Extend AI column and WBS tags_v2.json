@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "37fe6e51-25d0-4c62-8033-ac1191c5a491"
+				"spark.autotune.trackingId": "f4455df1-703e-4ca2-9201-20ca01ddde98"
 			}
 		},
 		"metadata": {
@@ -65,7 +65,7 @@
 					"fromDate = '20220101'\n",
 					"container = 'usage'"
 				],
-				"execution_count": 334
+				"execution_count": 370
 			},
 			{
 				"cell_type": "code",
@@ -92,7 +92,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 335
+				"execution_count": 371
 			},
 			{
 				"cell_type": "code",
@@ -126,7 +126,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list, appList"
 				],
-				"execution_count": 336
+				"execution_count": 372
 			},
 			{
 				"cell_type": "code",
@@ -156,7 +156,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 337
+				"execution_count": 373
 			},
 			{
 				"cell_type": "code",
@@ -198,7 +198,7 @@
 					"    print(cost_df.columns)\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 338
+				"execution_count": 374
 			},
 			{
 				"cell_type": "code",
@@ -227,7 +227,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 339
+				"execution_count": 375
 			},
 			{
 				"cell_type": "code",
@@ -262,7 +262,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 340
+				"execution_count": 376
 			},
 			{
 				"cell_type": "code",
@@ -301,7 +301,7 @@
 					"\r\n",
 					"    return subscription_list"
 				],
-				"execution_count": 341
+				"execution_count": 377
 			},
 			{
 				"cell_type": "code",
@@ -324,7 +324,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list"
 				],
-				"execution_count": 342
+				"execution_count": 378
 			},
 			{
 				"cell_type": "code",
@@ -358,7 +358,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 343
+				"execution_count": 379
 			},
 			{
 				"cell_type": "code",
@@ -467,7 +467,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 344
+				"execution_count": 380
 			},
 			{
 				"cell_type": "code",
@@ -504,7 +504,7 @@
 					"# name-> ApplicationName\r\n",
 					"# ApplicationName->Application_Name"
 				],
-				"execution_count": 345
+				"execution_count": 381
 			},
 			{
 				"cell_type": "code",
@@ -592,11 +592,11 @@
 					"    map_app = map_app.withColumn('ServiceNowApplicationName_upper',F.upper(F.col('ApplicationName'))).drop('ApplicationName','ApplicationName_upper')\r\n",
 					"    map_app = map_app.withColumn('ServiceNowAppID',F.col('AppID')).drop('AppID')\r\n",
 					"    print('Lookup application in ServiceNow')\r\n",
-					"    display(cost_df.join(map_app,cost_df.Application_Name_upper==map_app.ServiceNowApplicationName_upper,how='left'))\r\n",
+					"    #display(cost_df.join(map_app,cost_df.Application_Name_upper==map_app.ServiceNowApplicationName_upper,how='left'))\r\n",
 					"    cost_df = cost_df.join(map_app,cost_df.Application_Name_upper==map_app.ServiceNowApplicationName_upper,how='left')\r\n",
 					"    print('Fill empty AppID with AppID from ServiceNow')\r\n",
-					"    display(cost_df.withColumn('AppID',F.when(F.col('AppID').isNull(),F.col('ServiceNowAppID'))\\\r\n",
-					"                                 .otherwise(F.col('AppID'))))\r\n",
+					"    #display(cost_df.withColumn('AppID',F.when(F.col('AppID').isNull(),F.col('ServiceNowAppID'))\\\r\n",
+					"    #                             .otherwise(F.col('AppID'))))\r\n",
 					"\r\n",
 					"    cost_df = cost_df.withColumn('AppID',F.when(F.col('AppID').isNull(),F.col('ServiceNowAppID'))\\\r\n",
 					"                                          .otherwise(F.col('AppID')))\r\n",
@@ -616,7 +616,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 365
+				"execution_count": 382
 			},
 			{
 				"cell_type": "code",
@@ -650,7 +650,7 @@
 					"    \r\n",
 					"    return cost_df"
 				],
-				"execution_count": 366
+				"execution_count": 383
 			},
 			{
 				"cell_type": "code",
@@ -681,7 +681,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 367
+				"execution_count": 384
 			},
 			{
 				"cell_type": "code",
@@ -710,7 +710,7 @@
 					"\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": 368
+				"execution_count": 385
 			},
 			{
 				"cell_type": "code",
@@ -765,7 +765,7 @@
 					"    #write_output_file(cost_df, costDestinationfilename)\n",
 					"    print(' ')"
 				],
-				"execution_count": 369
+				"execution_count": 386
 			},
 			{
 				"cell_type": "code",
