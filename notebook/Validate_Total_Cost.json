@@ -8,20 +8,20 @@
 		"nbformat": 4,
 		"nbformat_minor": 2,
 		"bigDataPool": {
-			"referenceName": "sprkpool33large",
+			"referenceName": "sparkpool32",
 			"type": "BigDataPoolReference"
 		},
 		"sessionProperties": {
-			"driverMemory": "112g",
-			"driverCores": 16,
-			"executorMemory": "112g",
-			"executorCores": 16,
-			"numExecutors": 1,
+			"driverMemory": "56g",
+			"driverCores": 8,
+			"executorMemory": "56g",
+			"executorCores": 8,
+			"numExecutors": 2,
 			"conf": {
-				"spark.dynamicAllocation.enabled": "true",
-				"spark.dynamicAllocation.minExecutors": "1",
-				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "f078f283-b56b-4f04-9868-e8f4b7ccbb59"
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "cc2db376-bf99-4cdc-8603-c37fc3244db9"
 			}
 		},
 		"metadata": {
@@ -35,19 +35,19 @@
 				"name": "python"
 			},
 			"a365ComputeOptions": {
-				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
-				"name": "sprkpool33large",
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
+				"name": "sparkpool32",
 				"type": "Spark",
-				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
 				"auth": {
 					"type": "AAD",
 					"authResource": "https://dev.azuresynapse.net"
 				},
-				"sparkVersion": "3.3",
+				"sparkVersion": "3.2",
 				"nodeCount": 3,
-				"cores": 16,
-				"memory": 112,
-				"automaticScaleJobs": true
+				"cores": 8,
+				"memory": 56,
+				"automaticScaleJobs": false
 			},
 			"sessionKeepAliveTimeout": 30
 		},
@@ -66,9 +66,11 @@
 					}
 				},
 				"source": [
-					"import pyspark.sql.functions as F"
+					"import pandas as pd \r\n",
+					"import pyspark.sql.functions as F\r\n",
+					"import pyspark.sql.types as T"
 				],
-				"execution_count": 6
+				"execution_count": 15
 			},
 			{
 				"cell_type": "code",
@@ -90,7 +92,100 @@
 					"container = 'usage'\r\n",
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 7
+				"execution_count": 16
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Create schema\r\n",
+					"\r\n",
+					"schema = T.StructType([\r\n",
+					"    T.StructField(\"Date\", T.TimestampType(), True),\r\n",
+					"    T.StructField(\"RawDataTotalCost\", T.DoubleType(), True),\r\n",
+					"    T.StructField(\"ProcessedDataTotalCost\", T.DoubleType(), True),\r\n",
+					"    T.StructField(\"TotalCostDiff\", T.IntegerType(), True),\r\n",
+					"    T.StructField(\"CostType\", T.StringType(), True)\r\n",
+					"])\r\n",
+					"\r\n",
+					"# Create an empty DataFrame with the specified schema\r\n",
+					"df = spark.createDataFrame([], schema=schema)"
+				],
+				"execution_count": 17
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"costTypes = ['ActualCost', 'AmortizedCost']\r\n",
+					"\r\n",
+					"for costType in costTypes:\r\n",
+					"    # Define the root path\r\n",
+					"    root_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthly{costType}\"\r\n",
+					"\r\n",
+					"    # Collect all the folders under this root path\r\n",
+					"    folders = mssparkutils.fs.ls(root_path)\r\n",
+					"\r\n",
+					"    for folder in folders:\r\n",
+					"        # List all file paths in current folder\r\n",
+					"        files = mssparkutils.fs.ls(root_path +'/'+ str(folder.name))\r\n",
+					"        file_paths = [file.path for file in files]\r\n",
+					"\r\n",
+					"        # Find the raw data file (csv) and processed data (extended data file - parquet)\r\n",
+					"        csv_file = next(filter(lambda file_path: \"csv\" in file_path, file_paths), None)\r\n",
+					"        extended_file = next(filter(lambda file_path: \"Extended_v2\" in file_path, file_paths), None)\r\n",
+					"        \r\n",
+					"        try:\r\n",
+					"            # Extract date for current folder\r\n",
+					"            date = pd.to_datetime(folder.path.split('/')[-1].split('-')[0],format=\"%Y/%m/%d\")\r\n",
+					"\r\n",
+					"            # Read raw data and transformed fata\r\n",
+					"            csv_df = spark.read.format('csv').load(csv_file, header=True)\r\n",
+					"            extended_df = spark.read.format('parquet').load(extended_file)\r\n",
+					"\r\n",
+					"            # Aggregate on cost for raw data file\r\n",
+					"            agg_csv_df = csv_df.select(F.sum(F.col('CostInBillingCurrency')).alias('RawDataTotalCost'))\r\n",
+					"            agg_csv_df = agg_csv_df.withColumn(\"Date\", F.lit(date).cast(T.TimestampType()))\r\n",
+					"\r\n",
+					"            # Aggregate on cost for processed data file\r\n",
+					"            agg_extended_df = extended_df.select(F.sum(F.col('CostInBillingCurrency')).alias('ProcessedDataTotalCost'))\r\n",
+					"            agg_extended_df = agg_extended_df.withColumn(\"Date\", F.lit(date).cast(T.TimestampType()))\r\n",
+					"\r\n",
+					"            # Combine aggregated cost data into one dataframe\r\n",
+					"            combined_df = agg_csv_df.join(agg_extended_df, on=\"Date\", how=\"left\")\r\n",
+					"            combined_df = combined_df.withColumn(\"TotalCostDiff\", F.expr(\"FLOOR(ABS(ProcessedDataTotalCost - RawDataTotalCost))\"))\r\n",
+					"            combined_df = combined_df.withColumn(\"CostType\", F.lit(costType))\r\n",
+					"            combined_df.show()\r\n",
+					"\r\n",
+					"            # Add aggregated cost to historic aggregations\r\n",
+					"            df = df.union(combined_df)\r\n",
+					"\r\n",
+					"        except Exception as e:\r\n",
+					"            print(f\"Error processing the current folder contents: {e}\")\r\n",
+					"\r\n",
+					"display(df)"
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
