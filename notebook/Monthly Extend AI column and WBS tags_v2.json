@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "3e766be6-69a0-4d3a-9ed1-626c742c9074"
+				"spark.autotune.trackingId": "f26372bf-30f8-4320-8bce-d71448952acc"
 			}
 		},
 		"metadata": {
@@ -63,7 +63,8 @@
 					"# # Input data\n",
 					"#toDate = '20230430'\n",
 					"#fromDate = '20230401'\n",
-					"container = 'usage'"
+					"container = 'usage'\n",
+					"storageAccount = 's037costmgmt'"
 				],
 				"execution_count": 2
 			},
@@ -509,11 +510,11 @@
 					"\r\n",
 					"    warnings.simplefilter(action='ignore', category=FutureWarning)\r\n",
 					"\r\n",
-					"    # actualCostSourcefilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + actualCostPath + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\r\n",
-					"    # amortizedCostSourcefilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\r\n",
+					"    # actualCostSourcefilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + actualCostPath + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\r\n",
+					"    # amortizedCostSourcefilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\r\n",
 					"\r\n",
-					"    # actualCostDestinationfilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + actualCostPath + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\r\n",
-					"    # amortizedCostDestinationfilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\r\n",
+					"    # actualCostDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + actualCostPath + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\r\n",
+					"    # amortizedCostDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\r\n",
 					"\r\n",
 					"    # cost_df = load_source(actualCostSourcefilename)\r\n",
 					"    cost_df = populate_columns(cost_df)\r\n",
@@ -621,16 +622,16 @@
 					"    print(f'dateRange: {dateRange}')\n",
 					"\n",
 					"    print(dateRange)\n",
-					"    costSourcefilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + sourceCostPath + dateRange + '/ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
-					"    costDestinationfilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + sourceCostPath + dateRange + '/Extended_v2_ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
+					"    costSourcefilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + sourceCostPath + dateRange + '/ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
+					"    costDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + sourceCostPath + dateRange + '/Extended_v2_ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
 					"    if str(longToDate) < '2021-11-30':\n",
 					"        print(longToDate)\n",
 					"        print(f'Using default 2021-11-30 subscription json file')\n",
-					"        subscriptionListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions_2021-11-30.json'\n",
+					"        subscriptionListPath = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/subscriptions_2021-11-30.json'\n",
 					"    else:\n",
 					"        print(f'Using {longToDate} subscription json file')\n",
-					"        subscriptionListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions_' + longToDate + '.json'\n",
-					"    appListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\n",
+					"        subscriptionListPath = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/subscriptions_' + longToDate + '.json'\n",
+					"    appListPath = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\n",
 					"\n",
 					"    cost_df, subscription_list, appList = load_source_files(costSourcefilename, subscriptionListPath, appListPath)\n",
 					"    cost_df = expand_ai_column(cost_df)\n",

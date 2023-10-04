@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "89e57637-5228-4c96-8a1a-360bd71bc1f1"
+				"spark.autotune.trackingId": "8b5d4014-559e-43c7-b8fc-4c49536111b1"
 			}
 		},
 		"metadata": {
@@ -61,7 +61,8 @@
 				},
 				"source": [
 					"today = '2023-04-24'\n",
-					"last_month = '202303'"
+					"last_month = '202303'\n",
+					"storageAccount = 's037costmgmt'"
 				],
 				"execution_count": 1
 			},
@@ -135,9 +136,9 @@
 					}
 				},
 				"source": [
-					"daily_file = 'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/daily/ACMDailyActualCost/ACMDailyActualCost.parquet'\n",
-					"monthly_file = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/{last_month_start}-{last_month_end}/ACMMonthlyActualCost_{last_month_start}-{last_month_end}.parquet'\n",
-					"pricesheet = 'abfss://usage@s037costmgmt.dfs.core.windows.net/pricesheet/New/ArmPriceSheet_Enrollment_LATEST.csv'\n",
+					"daily_file = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/daily/ACMDailyActualCost/ACMDailyActualCost.parquet'\n",
+					"monthly_file = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/{last_month_start}-{last_month_end}/ACMMonthlyActualCost_{last_month_start}-{last_month_end}.parquet'\n",
+					"pricesheet = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/New/ArmPriceSheet_Enrollment_LATEST.csv'\n",
 					"sql_config_file = 'abfss://sql-config@hubautomation.dfs.core.windows.net/config.json'\n",
 					"sql_config_file2 = 'wasbs://sql-config@hubautomation.blob.core.windows.net/config.json'\n",
 					"#output_file = 'abfss://usage@hubautomation.dfs.core.windows.net/vm.parquet'\n",

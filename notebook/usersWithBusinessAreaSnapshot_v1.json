@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "2904e6c3-592f-4dd1-94d3-41cd1333bad0"
+				"spark.autotune.trackingId": "10a1aa61-123b-4c32-8109-ab9acd0a01aa"
 			}
 		},
 		"metadata": {
@@ -67,6 +67,27 @@
 			},
 			{
 				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"storageAccount = 's037costmgmt'"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
 				"source": [
 					"# %pip install -U pandas==1.5.3"
 				],
@@ -106,7 +127,7 @@
 				},
 				"source": [
 					"container = 'usage'\r\n",
-					"file_path = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + 'AzureAD_BusinessAreaLevel/bronze/AzureAD_EmployeesManagersSnapshot.parquet'\r\n",
+					"file_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + 'AzureAD_BusinessAreaLevel/bronze/AzureAD_EmployeesManagersSnapshot.parquet'\r\n",
 					"\r\n",
 					"df_users = spark.read.format('parquet').load(file_path).toPandas()\r\n",
 					"# df_users.head(10)"
@@ -130,7 +151,7 @@
 				"cell_type": "code",
 				"source": [
 					"# Get Hierarchy-dataframe from ADLS\n",
-					"file_path = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + 'AzureAD_BusinessAreaLevel/silver/usersWithManagerSnapshot_v1.parquet'\n",
+					"file_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + 'AzureAD_BusinessAreaLevel/silver/usersWithManagerSnapshot_v1.parquet'\n",
 					"\n",
 					"employees = spark.read.format('parquet').load(file_path).toPandas()\n",
 					"# employees.head(10)"
@@ -476,7 +497,7 @@
 				"cell_type": "code",
 				"source": [
 					"#Set optimized path\n",
-					"optimized_path = file_path = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + 'AzureAD_BusinessAreaLevel/gold/usersWithBusinessAreaSnapshot_v1.parquet'\n",
+					"optimized_path = file_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + 'AzureAD_BusinessAreaLevel/gold/usersWithBusinessAreaSnapshot_v1.parquet'\n",
 					"\n",
 					"df_spark = spark.createDataFrame(employees_short)\n",
 					"\n",
