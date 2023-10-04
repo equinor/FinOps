@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "5ae63c6b-e928-405e-8371-355cecf4cf3e"
+				"spark.autotune.trackingId": "a1a9613b-218d-448e-b42b-2cbdb7843e3b"
 			}
 		},
 		"metadata": {
@@ -65,7 +65,7 @@
 					"fromDate = '20220101'\n",
 					"container = 'usage'"
 				],
-				"execution_count": 404
+				"execution_count": 421
 			},
 			{
 				"cell_type": "code",
@@ -92,7 +92,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 405
+				"execution_count": 422
 			},
 			{
 				"cell_type": "code",
@@ -126,7 +126,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list, appList"
 				],
-				"execution_count": 406
+				"execution_count": 423
 			},
 			{
 				"cell_type": "code",
@@ -156,7 +156,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 407
+				"execution_count": 424
 			},
 			{
 				"cell_type": "code",
@@ -198,7 +198,7 @@
 					"    print(cost_df.columns)\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 408
+				"execution_count": 425
 			},
 			{
 				"cell_type": "code",
@@ -227,7 +227,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 409
+				"execution_count": 426
 			},
 			{
 				"cell_type": "code",
@@ -262,7 +262,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 410
+				"execution_count": 427
 			},
 			{
 				"cell_type": "code",
@@ -301,7 +301,7 @@
 					"\r\n",
 					"    return subscription_list"
 				],
-				"execution_count": 411
+				"execution_count": 428
 			},
 			{
 				"cell_type": "code",
@@ -324,7 +324,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list"
 				],
-				"execution_count": 412
+				"execution_count": 429
 			},
 			{
 				"cell_type": "code",
@@ -358,7 +358,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 413
+				"execution_count": 430
 			},
 			{
 				"cell_type": "code",
@@ -412,7 +412,8 @@
 					"\r\n",
 					"    # Applying valid CIs as Active WBS'\r\n",
 					"    # Same here as above, but we merge the dataframes on ApplicationNames rather than AppID\r\n",
-					"    map_app = appList.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('ApplicationName', 'OperationalWBS') # Remove withColumn\r\n",
+					"    #map_app = appList.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('ApplicationName', 'OperationalWBS') # Remove withColumn\r\n",
+					"    map_app = appList.select('ApplicationName', 'OperationalWBS') # Remove withColumn\r\n",
 					"    # Apply join with case insensitivity\r\n",
 					"    cost_df = cost_df.withColumn('CostAllocationCode_upper',F.upper(F.col('CostAllocationCode')))\r\n",
 					"    map_app = map_app.withColumn('ApplicationName_upper',F.upper(F.col('ApplicationName')))\r\n",
@@ -467,7 +468,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 414
+				"execution_count": 431
 			},
 			{
 				"cell_type": "code",
@@ -504,7 +505,7 @@
 					"# name-> ApplicationName\r\n",
 					"# ApplicationName->Application_Name"
 				],
-				"execution_count": 415
+				"execution_count": 432
 			},
 			{
 				"cell_type": "code",
@@ -607,16 +608,18 @@
 					"    #                                       .otherwise(F.col('ApplicationName'))))  \r\n",
 					"\r\n",
 					"    print('Application Name is not found when SubscriptionServiceNow-App is equal to Application_name and AppID is empty')\r\n",
-					"    cost_df = cost_df.withColumn('Application_Name',F.when((F.upper(F.col('SubscriptionServiceNow-App'))==F.upper(F.col('Application_Name'))) & (F.col('AppID').isNull()),F.lit('Application not Found in ServiceNow'))\\\r\n",
+					"    cost_df = cost_df.withColumn('Application_Name',F.when((F.upper(F.col('SubscriptionServiceNow-App'))==F.upper(F.col('Application_Name'))) & (F.col('AppID').isNull()),F.lit('Application not defined or not found'))\\\r\n",
 					"                                           .otherwise(F.col('Application_Name')))\r\n",
+					"    cost_df = cost_df.withColumn('Application_Name',F.when(F.col('Application_Name').isNull(),F.lit('Application not defined or not found')))\r\n",
 					"    #cost_df = cost_df.withColumn('Application_Name',F.when(~ci_mask & ~appid_mask, F.lit(\"Application not defined or not found\"))\\\r\n",
 					"                                                     #.otherwise(F.col('Application_Name')))\r\n",
 					"    display(cost_df)\r\n",
+					"    \r\n",
 					"    #cost_df = cost_df.withColumn('Application_Name', F.upper(F.col('Application_Name')))\r\n",
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 416
+				"execution_count": 433
 			},
 			{
 				"cell_type": "code",
@@ -650,7 +653,7 @@
 					"    \r\n",
 					"    return cost_df"
 				],
-				"execution_count": 417
+				"execution_count": 434
 			},
 			{
 				"cell_type": "code",
@@ -681,7 +684,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 418
+				"execution_count": 435
 			},
 			{
 				"cell_type": "code",
@@ -710,7 +713,7 @@
 					"\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": 419
+				"execution_count": 436
 			},
 			{
 				"cell_type": "code",
@@ -766,7 +769,7 @@
 					"    #write_output_file(cost_df, costDestinationfilename)\n",
 					"    print(' ')"
 				],
-				"execution_count": 420
+				"execution_count": 437
 			},
 			{
 				"cell_type": "code",
