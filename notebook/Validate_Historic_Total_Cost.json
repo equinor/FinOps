@@ -1,5 +1,5 @@
 {
-	"name": "Validate_Total_Cost",
+	"name": "Validate_Historic_Total_Cost",
 	"properties": {
 		"description": "This notebook aggregates the cost from the csv cost file and compares it to the aggregated cost of the extended parquet cost file.",
 		"folder": {
@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "cc2db376-bf99-4cdc-8603-c37fc3244db9"
+				"spark.autotune.trackingId": "83b0e05d-ac5d-42ce-8417-0ca813d0d35b"
 			}
 		},
 		"metadata": {
@@ -70,7 +70,7 @@
 					"import pyspark.sql.functions as F\r\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 15
+				"execution_count": 19
 			},
 			{
 				"cell_type": "code",
@@ -83,16 +83,17 @@
 						"transient": {
 							"deleting": false
 						}
-					}
+					},
+					"tags": [
+						"parameters"
+					]
 				},
 				"source": [
-					"# # Input data\r\n",
-					"toDate = '20230831'\r\n",
-					"fromDate = '20230801'\r\n",
+					"# Input data\r\n",
 					"container = 'usage'\r\n",
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 16
+				"execution_count": 20
 			},
 			{
 				"cell_type": "code",
@@ -108,40 +109,23 @@
 					}
 				},
 				"source": [
-					"# Create schema\r\n",
+					"# Aggregate the entire cost history for both raw and processed data based on cost type ('AmortizedCost' or 'ActualCost')\r\n",
 					"\r\n",
-					"schema = T.StructType([\r\n",
-					"    T.StructField(\"Date\", T.TimestampType(), True),\r\n",
-					"    T.StructField(\"RawDataTotalCost\", T.DoubleType(), True),\r\n",
-					"    T.StructField(\"ProcessedDataTotalCost\", T.DoubleType(), True),\r\n",
-					"    T.StructField(\"TotalCostDiff\", T.IntegerType(), True),\r\n",
-					"    T.StructField(\"CostType\", T.StringType(), True)\r\n",
-					"])\r\n",
+					"def aggregate_cost_data(cost_type):\r\n",
+					"    # Create schema for cost aggregation\r\n",
+					"    schema = T.StructType([\r\n",
+					"        T.StructField(\"Date\", T.TimestampType(), True),\r\n",
+					"        T.StructField(\"RawDataTotalCost\", T.DoubleType(), True),\r\n",
+					"        T.StructField(\"ProcessedDataTotalCost\", T.DoubleType(), True),\r\n",
+					"        T.StructField(\"TotalCostDiff\", T.IntegerType(), True),\r\n",
+					"        T.StructField(\"CostType\", T.StringType(), True)\r\n",
+					"    ])\r\n",
 					"\r\n",
-					"# Create an empty DataFrame with the specified schema\r\n",
-					"df = spark.createDataFrame([], schema=schema)"
-				],
-				"execution_count": 17
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"costTypes = ['ActualCost', 'AmortizedCost']\r\n",
+					"    # Create an empty DataFrame with the specified schema\r\n",
+					"    df = spark.createDataFrame([], schema=schema)\r\n",
 					"\r\n",
-					"for costType in costTypes:\r\n",
 					"    # Define the root path\r\n",
-					"    root_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthly{costType}\"\r\n",
+					"    root_path = f\"abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthly{cost_type}\"\r\n",
 					"\r\n",
 					"    # Collect all the folders under this root path\r\n",
 					"    folders = mssparkutils.fs.ls(root_path)\r\n",
@@ -173,57 +157,85 @@
 					"\r\n",
 					"            # Combine aggregated cost data into one dataframe\r\n",
 					"            combined_df = agg_csv_df.join(agg_extended_df, on=\"Date\", how=\"left\")\r\n",
+					"\r\n",
+					"            # Compute difference between the raw and processed total cost\r\n",
 					"            combined_df = combined_df.withColumn(\"TotalCostDiff\", F.expr(\"FLOOR(ABS(ProcessedDataTotalCost - RawDataTotalCost))\"))\r\n",
-					"            combined_df = combined_df.withColumn(\"CostType\", F.lit(costType))\r\n",
-					"            combined_df.show()\r\n",
+					"\r\n",
+					"            combined_df = combined_df.withColumn(\"CostType\", F.lit(cost_type))\r\n",
 					"\r\n",
 					"            # Add aggregated cost to historic aggregations\r\n",
 					"            df = df.union(combined_df)\r\n",
 					"\r\n",
 					"        except Exception as e:\r\n",
-					"            print(f\"Error processing the current folder contents: {e}\")\r\n",
+					"            print(f\"Error processing the {folder.name} folder contents: {e}\")\r\n",
 					"\r\n",
-					"display(df)"
+					"    return df"
+				],
+				"execution_count": 23
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"# Aggregate actual cost data\r\n",
+					"actual_cost_df = aggregate_cost_data(\"ActualCost\")"
 				],
 				"execution_count": null
 			},
 			{
 				"cell_type": "code",
 				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
 					"collapsed": false
 				},
 				"source": [
-					"print(f'fromDate: {fromDate}')\r\n",
-					"print(f'toDate: {toDate}')\r\n",
-					"reportTypes = ['ActualCost', 'AmortizedCost']\r\n",
-					"year = toDate[:4]\r\n",
-					"month = toDate[4:6]\r\n",
-					"day = toDate[6:]\r\n",
-					"\r\n",
-					"print(f\"------ From: {fromDate}, To: {toDate} -----------\")\r\n",
-					"\r\n",
-					"for reportType in reportTypes:\r\n",
-					"\r\n",
-					"    print(f\"------ {reportType} -----------\")\r\n",
-					"\r\n",
-					"    sourceCostPath = 'exports/monthly/ACMMonthly' + reportType + '/'\r\n",
-					"\r\n",
-					"    longToDate = f'{toDate[0:4]}-{toDate[4:6]}-{toDate[6:]}'\r\n",
-					"    dateRange = fromDate + '-' + toDate\r\n",
-					"\r\n",
-					"    preCostFilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + sourceCostPath + dateRange + '/ACMMonthly' + reportType + '_' + dateRange + '.parquet'\r\n",
-					"    postCostFilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + sourceCostPath + dateRange + '/Extended_v2_ACMMonthly' + reportType + '_' + dateRange + '.parquet'\r\n",
-					"    \r\n",
-					"    pre_df = spark.read.format(\"parquet\").load(preCostFilename)\r\n",
-					"    post_df = spark.read.format('parquet').load(postCostFilename)\r\n",
-					"    \r\n",
-					"    total_cost_pre_processing = pre_df.select(F.sum(F.col('CostInBillingCurrency')).alias('TotalCost'))\r\n",
-					"    total_cost_post_processing = post_df.select(F.sum(F.col('CostInBillingCurrency')).alias('TotalCost'))\r\n",
-					"    diff = abs(total_cost_pre_processing.collect()[0].TotalCost - total_cost_post_processing.collect()[0].TotalCost)\r\n",
-					"    print(diff)\r\n",
-					""
+					"# Aggregate amortized cost data\r\n",
+					"amortized_cost_df = aggregate_cost_data(\"AmortizedCost\")"
 				],
-				"execution_count": 18
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Combine aggregated amortized and actual cost into a single dataframe\r\n",
+					"total_cost_df = actual_cost_df.union(amortized_cost_df)\r\n",
+					"\r\n",
+					"# Display the total aggregated cost difference of the entire cost data history\r\n",
+					"# The computed value should always be 0 when historic data has been processed properly\r\n",
+					"# If the aggregated cost diff is greater than 0, the extend script is erroneous and produces inconsistent data\r\n",
+					"total_cost_df.select(F.sum(F.col(\"TotalCostDiff\")).alias(\"AggregatedCostDiff\")).show()"
+				],
+				"execution_count": 29
 			}
 		]
 	}
