@@ -17,65 +17,65 @@ jobs:
         steps:
             - uses: actions/checkout@v2
 
-            - name: 'Service Principal Authentication'
-              uses: azure/login@v1
-              with:
-                creds: ${{ secrets.S037_AZURE_CREDENTIALS }}
-                enable-AzPSSession: true
+            # - name: 'Service Principal Authentication'
+            #   uses: azure/login@v1
+            #   with:
+            #     creds: ${{ secrets.S037_AZURE_CREDENTIALS }}
+            #     enable-AzPSSession: true
     
-            - name: 'Stop Synapse Triggers'
-              uses: azure/powershell@v1
-              with:
-                inlineScript: |
-                  ./powershell/StopSynapseTriggers.ps1 -WorkspaceName s037-cost-management -ResourceGroup Synapse -StoredTriggerPath "test.csv"
-                azPSVersion: "latest"
+            # - name: 'Stop Synapse Triggers'
+            #   uses: azure/powershell@v1
+            #   with:
+            #     inlineScript: |
+            #       ./powershell/StopSynapseTriggers.ps1 -WorkspaceName s037-cost-management -ResourceGroup Synapse -StoredTriggerPath "test.csv"
+            #     azPSVersion: "latest"
 
-            - name: 'Start Synapse Triggers'
-              uses: azure/powershell@v1
-              with:
-                inlineScript: |
-                  ./powershell/StartSynapseTriggers.ps1 -WorkspaceName s037-cost-management -ResourceGroup Synapse -StoredTriggerPath "test.csv"
-                azPSVersion: "latest"
+            # - name: 'Start Synapse Triggers'
+            #   uses: azure/powershell@v1
+            #   with:
+            #     inlineScript: |
+            #       ./powershell/StartSynapseTriggers.ps1 -WorkspaceName s037-cost-management -ResourceGroup Synapse -StoredTriggerPath "test.csv"
+            #     azPSVersion: "latest"
 
-            # - name: write env variable
-            #   id: stepid
-            #   run: |
-            #     myarr=("hello" "world")
-            #     echo "arr=$myarr[@]" >> $GITHUB_OUTPUT
+            - name: write env variable
+              id: stepid
+              run: |
+                myarr=("hello" "world")
+                echo "arr=$myarr[@]" >> $GITHUB_OUTPUT
 
-            # - name: read output variable
-            #   run: |
-            #     arr=${{ steps.stepid.outputs.arr }}
-            #     echo "Array val is $arr"
+            - name: read output variable
+              run: |
+                arr=${{ steps.stepid.outputs.arr }}
+                echo "Array val is $arr"
     
-            # - name: 'Overwrite parameter file'
-            #   shell: pwsh
-            #   run: |
-            #     ./powershell/OverrideWorkspaceParameters.ps1 -SubscriptionId ${{ secrets.S926_AZURE_SUBSCRIPTION_ID }} -ResourceGroupName "finops-rg-dev" -WorkspaceName "finops-synapse-dev"  -BicepParameterPath ${{ env.BICEP-PARAMETER-PATH }} -WorkspaceTemplateParamaterPath "./s037-cost-management/TemplateParametersForWorkspace.json" -UpdatedParameterPath ${{ env.UPDATED-PARAMETER-PATH }}
+            - name: 'Overwrite parameter file'
+              shell: pwsh
+              run: |
+                ./powershell/OverrideWorkspaceParameters.ps1 -SubscriptionId ${{ secrets.S926_AZURE_SUBSCRIPTION_ID }} -ResourceGroupName "finops-rg-dev" -WorkspaceName "finops-synapse-dev"  -BicepParameterPath ${{ env.BICEP-PARAMETER-PATH }} -WorkspaceTemplateParamaterPath "./s037-cost-management/TemplateParametersForWorkspace.json" -UpdatedParameterPath ${{ env.UPDATED-PARAMETER-PATH }}
             
-            # - name: 'List'
-            #   run: ls
+            - name: 'List'
+              run: ls
 
-            # - name: 'Read overwritten file'
-            #   shell: pwsh
-            #   run: |
-            #     Write-Host "Hello test"
-            #     $test = Get-Content -Path ${{ env.UPDATED-PARAMETER-PATH }} -Raw | ConvertFrom-Json
-            #     $test2 = $test | ConvertTo-Json
-            #     Write-Host $test2
+            - name: 'Read overwritten file'
+              shell: pwsh
+              run: |
+                Write-Host "Hello test"
+                $test = Get-Content -Path ${{ env.UPDATED-PARAMETER-PATH }} -Raw | ConvertFrom-Json
+                $test2 = $test | ConvertTo-Json
+                Write-Host $test2
 
-            # - name: 'Update arm template'
-            #   shell: pwsh
-            #   run: |
-            #     ./powershell/CleanArmTemplate.ps1 -ARMTemplatePath "./s037-cost-management/TemplateForWorkspace.json" -UpdatedTemplatePath ${{ env.UPDATED-DEPLOYMENT-PATH }} -WorkspaceName "finops-synapse-dev" -BicepParameterPath ${{ env.BICEP-PARAMETER-PATH }}
+            - name: 'Update arm template'
+              shell: pwsh
+              run: |
+                ./powershell/CleanArmTemplate.ps1 -ARMTemplatePath "./s037-cost-management/TemplateForWorkspace.json" -UpdatedTemplatePath ${{ env.UPDATED-DEPLOYMENT-PATH }} -WorkspaceName "finops-synapse-dev" -BicepParameterPath ${{ env.BICEP-PARAMETER-PATH }}
             
-            # - name: 'List'
-            #   run: ls
+            - name: 'List'
+              run: ls
 
-            # - name: 'Read updated template file'
-            #   shell: pwsh
-            #   run: |
-            #     $test = Get-Content -Path ${{ env.UPDATED-DEPLOYMENT-PATH }} -Raw | ConvertFrom-Json
-            #     $test2 = $test | ConvertTo-Json -Depth 20
-            #     Write-Host $test2
+            - name: 'Read updated template file'
+              shell: pwsh
+              run: |
+                $test = Get-Content -Path ${{ env.UPDATED-DEPLOYMENT-PATH }} -Raw | ConvertFrom-Json
+                $test2 = $test | ConvertTo-Json -Depth 20
+                Write-Host $test2
 
