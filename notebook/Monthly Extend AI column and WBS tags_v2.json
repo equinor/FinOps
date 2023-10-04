@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "2d6599ea-a068-4d0c-b606-8d819aa1c967"
+				"spark.autotune.trackingId": "6286c115-1c33-43df-b132-7ea94620fdba"
 			}
 		},
 		"metadata": {
@@ -419,6 +419,7 @@
 					"    map_app = map_app.withColumn('ApplicationName_upper',F.upper(F.col('ApplicationName')))\r\n",
 					"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode_upper == map_app.ApplicationName_upper, how='left').drop('CostAllocationCode_upper','ApplicationName_upper')\r\n",
 					"    cost_df = joined_df.withColumn('ActiveWBS', F.when(F.col('ActiveWBS').isNull(), F.col('OperationalWBS')).otherwise(F.col('ActiveWBS')))\r\n",
+					"    \r\n",
 					"    #cost_df = cost_df.drop('ApplicationName', 'OperationalWBS', 'AppID')\r\n",
 					"    # Alternative 1 remove \"AppID\" \r\n",
 					"    cost_df = cost_df.drop('ApplicationName', 'OperationalWBS')\r\n",
@@ -537,7 +538,7 @@
 					"\r\n",
 					"    # Conduct the merge between Azure cost file and ServiceNow data based on CostAllocationCode and APPID or ApplicationName. \r\n",
 					"    joined_df = cost_df.join(\r\n",
-					"    map_app,(cost_df.CostAllocationCode_upper == map_app.AppID) | (cost_df.CostAllocationCode == map_app.ApplicationName_upper),how='left').drop('CostAllocationCode_upper','ApplicationName_upper') # maybe need upper case\r\n",
+					"    map_app,(cost_df.CostAllocationCode_upper == map_app.AppID) | (cost_df.CostAllocationCode_upper == map_app.ApplicationName_upper),how='left').drop('CostAllocationCode_upper','ApplicationName_upper') # maybe need upper case\r\n",
 					"    \r\n",
 					"    \r\n",
 					"    # When Cost AllocationType is AppID, we apply the CostAllocationCode as Application Name\r\n",
