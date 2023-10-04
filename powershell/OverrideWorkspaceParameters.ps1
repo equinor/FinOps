@@ -71,7 +71,7 @@ foreach ($parameter in $workspaceTemplateParams.parameters.PSObject.Properties) 
     }
 
     if (($parameterKey -like "*pipelineStorageAccountParameter") -or ($parameterKey -like "*pipelineStorageAccountVariable")) {
-        $workspaceTemplateParams.parameters.$parameterKey.value = storageAccountName;
+        $workspaceTemplateParams.parameters.$parameterKey.value = $storageAccountName;
         continue
     }
 
