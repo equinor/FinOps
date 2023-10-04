@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "b771f973-667b-4da0-abfc-e24db8411fff"
+				"spark.autotune.trackingId": "7e4873c9-912f-4fd5-9111-5faa399b7a01"
 			}
 		},
 		"metadata": {
@@ -564,12 +564,7 @@
 					"                                                    .when((F.col('CostAllocationType') == 'CI') & F.col('CostAllocationCode').cast('int').isNotNull(),F.col('SubscriptionServiceNow-App')).otherwise(F.col('Application_Name')))\r\n",
 					"  \r\n",
 					"    print('For those empty ApplicationNames will be replaced by SubscriptionServiceNowApp (Applications from Subscription.json) when CostAllocationTypes are SubscriptionWBS and WBS')\r\n",
-					"    # For those empty ApplicationNames will be replaced by SubscriptionServiceNowApp (Applications from Subscription.json) when CostAllocationTypes are SUbscriptionWBS and WBS.\r\n",
-					"    #cost_df = cost_df.withColumn('Application_Name', F.when(((F.col('CostAllocationType') == \"SubscriptionWBS\") | (F.col('CostAllocationType') == \"WBS\")),\r\n",
-					"    #                                                 F.when(F.col('Application_Name').isNull(), F.col('SubscriptionServiceNow-App'))\\\r\n",
-					"    #                                                  .otherwise(F.col('Application_Name'))))\r\n",
-					"    #display(cost_df.filter(cost_df.CostAllocationCode == \"PETRAL\"))\r\n",
-					"\r\n",
+					"    # For those empty ApplicationNames will be replaced by SubscriptionServiceNowApp (Applications from Subscription.json) when CostAllocationTypes are SubscriptionWBS and WBS\r\n",
 					"    cost_df = cost_df.withColumn('Application_Name',F.when((F.col('CostAllocationType') == \"SubscriptionWBS\") | (F.col('CostAllocationType') == \"WBS\"),\r\n",
 					"                                                    F.when(F.col('Application_Name').isNull(),F.col('SubscriptionServiceNow-App')).otherwise(F.col('Application_Name')))\\\r\n",
 					"                                                    .otherwise(F.col('Application_Name')))\r\n",
