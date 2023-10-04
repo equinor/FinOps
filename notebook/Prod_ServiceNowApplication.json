@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "678b6a35-94b5-4484-972a-0a3fe2dd7199"
+				"spark.autotune.trackingId": "19a5ca02-c785-4bb9-b006-e9221bbcb081"
 			}
 		},
 		"metadata": {
@@ -46,7 +46,8 @@
 				"sparkVersion": "3.3",
 				"nodeCount": 3,
 				"cores": 16,
-				"memory": 112
+				"memory": 112,
+				"automaticScaleJobs": true
 			},
 			"sessionKeepAliveTimeout": 30
 		},
@@ -70,7 +71,7 @@
 					"import pandas as pd \r\n",
 					""
 				],
-				"execution_count": 1
+				"execution_count": 23
 			},
 			{
 				"cell_type": "markdown",
@@ -105,7 +106,7 @@
 					"# Load the data\r\n",
 					"df_application = pd.read_csv(path)"
 				],
-				"execution_count": 2
+				"execution_count": 24
 			},
 			{
 				"cell_type": "code",
@@ -123,7 +124,7 @@
 				"source": [
 					"#df_application[df_application['ApplicationName'].str.contains('WEATHER PORTAL')]"
 				],
-				"execution_count": 8
+				"execution_count": 25
 			},
 			{
 				"cell_type": "markdown",
@@ -156,7 +157,7 @@
 					"df = df_application[~(df_application.OperationalStatus=='Ignored')]\r\n",
 					"#df = df_application[(~(df_application.OperationalStatus=='Retired')) & (~(df_application.OperationalStatus=='Ignored'))]"
 				],
-				"execution_count": 8
+				"execution_count": 26
 			},
 			{
 				"cell_type": "code",
@@ -178,7 +179,7 @@
 					"#display(df[df.ApplicationName.duplicated(keep=False)])\r\n",
 					"#display(df[df.AppID==0])"
 				],
-				"execution_count": 9
+				"execution_count": 27
 			},
 			{
 				"cell_type": "markdown",
@@ -215,7 +216,60 @@
 					"df.Updated = pd.to_datetime(df.Updated)\r\n",
 					"df.EndOfLifeDate = pd.to_datetime(df.EndOfLifeDate)"
 				],
-				"execution_count": 10
+				"execution_count": 28
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"df['AppID'] = df['AppID'].fillna(0)"
+				],
+				"execution_count": 29
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Collect the UserName from the shortname column due to GDPR.\r\n",
+					"df['ProductOwnerUserName'] = df['ProductOwnerShortName'].str.split('@').str[0] \r\n",
+					"df['OperationalManagerUserName'] = df['OperationalManagerShortName'].str.split('@').str[0] \r\n",
+					"# Remove the shortname columns due to GDPR \r\n",
+					"df = df.drop(['ProductOwnerShortName', 'OperationalManagerShortName'], axis=1)"
+				],
+				"execution_count": 30
 			},
 			{
 				"cell_type": "markdown",
@@ -253,7 +307,7 @@
 					"#Save the data with partitioned by time\r\n",
 					"spark.createDataFrame(df).write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
 				],
-				"execution_count": 11
+				"execution_count": 31
 			}
 		]
 	}
