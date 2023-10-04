@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "b3b7ae69-832b-4ecb-a082-f83545a08acc"
+				"spark.autotune.trackingId": "17f7c44a-912a-42aa-aad5-27679d90aba2"
 			}
 		},
 		"metadata": {
@@ -602,8 +602,10 @@
 					"                                          .otherwise(F.col('AppID')))\r\n",
 					"    print('remove unused dataframe')\r\n",
 					"    cost_df = cost_df.drop('Application_Name_upper','ApplicationName','ServiceNowApplicationName_upper','ServiceNowAppID')\r\n",
-					"  \r\n",
-					"    display(cost_df)\r\n",
+					"    \r\n",
+					"    display(cost_df.withColumns('ApplicationName',F.when((F.upper(F.col('SubscriptionServiceNow-App'))==F.upper(F.col('Application_Name'))|(F.col('AppID').isNull())),F.lit('Application not Found in ServiceNow'))\\\r\n",
+					"                                           .otherwise(F.col('ApplicationName'))))  \r\n",
+					"    #display(cost_df)\r\n",
 					"    #cost_df = cost_df.withColumn('Application_Name', F.upper(F.col('Application_Name')))\r\n",
 					"\r\n",
 					"    return cost_df"
