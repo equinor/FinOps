@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "50414d82-04f2-4cdb-88a1-3fc08f162ef6"
+				"spark.autotune.trackingId": "77696c0e-c23f-43b0-b791-a6818043c3e7"
 			}
 		},
 		"metadata": {
@@ -662,7 +662,7 @@
 					"\n",
 					"    # Writing the df to the destination path\n",
 					"    cost_df.write.format('parquet').mode('overwrite').option('path', destinationFilename).save() # df.coalesce(1) if partition should be 1\n",
-					"\n",
+					"    # IF not able to write to destination path, may use .option('overwriteSchema', 'true') after mode().\n",
 					"    print('File write complete!')"
 				],
 				"execution_count": 31
