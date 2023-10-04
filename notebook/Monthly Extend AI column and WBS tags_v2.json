@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "33668027-f587-4092-8408-e6b77db2d542"
+				"spark.autotune.trackingId": "7fe3e11c-0874-4155-9498-5b9fac9e4eab"
 			}
 		},
 		"metadata": {
@@ -416,7 +416,7 @@
 					"    # Apply join with case insensitivity\r\n",
 					"    cost_df = cost_df.withColumn('CostAllocationCode_upper',F.upper(F.col('CostAllocationCode')))\r\n",
 					"    map_app = map_app.withColumn('ApplicationName_upper',F.upper(F.col('ApplicationName')))\r\n",
-					"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode_upper == map_app.ApplicationName_upper, how='left').drop('CostAllocationCod_upper','ApplicationName_upper')\r\n",
+					"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode_upper == map_app.ApplicationName_upper, how='left').drop('CostAllocationCode_upper','ApplicationName_upper')\r\n",
 					"    cost_df = joined_df.withColumn('ActiveWBS', F.when(F.col('ActiveWBS').isNull(), F.col('OperationalWBS')).otherwise(F.col('ActiveWBS')))\r\n",
 					"    #cost_df = cost_df.drop('ApplicationName', 'OperationalWBS', 'AppID')\r\n",
 					"    # Alternative 1 remove \"AppID\" \r\n",
@@ -537,7 +537,7 @@
 					"    cost_df = cost_df.withColumn('CostAllocationCode_upper',F.upper(F.col('CostAllocationCode')))\r\n",
 					"    map_app = map_app.withColumn('ApplicationName_upper',F.upper(F.col('ApplicationName')))\r\n",
 					"    joined_df = cost_df.join(\r\n",
-					"    map_app,(cost_df.CostAllocationCode_upper == map_app.AppID) | (cost_df.CostAllocationCode == map_app.ApplicationName_upper),how='left').drop('CostAllocationCod_upper','ApplicationName_upper') # maybe need upper case\r\n",
+					"    map_app,(cost_df.CostAllocationCode_upper == map_app.AppID) | (cost_df.CostAllocationCode == map_app.ApplicationName_upper),how='left').drop('CostAllocationCode_upper','ApplicationName_upper') # maybe need upper case\r\n",
 					"    print('---Testing App join:')\r\n",
 					"    print('-map app:')\r\n",
 					"    #display(map_app)\r\n",
@@ -579,7 +579,13 @@
 					"        ((F.col('CostAllocationType') == \"SubscriptionWBS\") | (F.col('CostAllocationType') == \"WBS\")),\r\n",
 					"        F.when(F.col('Application_Name').isNull(), F.col('SubscriptionServiceNow-App')).otherwise(F.col('Application_Name'))\r\n",
 					"    ).otherwise(F.col('Application_Name'))\r\n",
-					"))\r\n",
+					"))  \r\n",
+					"    cost_df = cost_df.withColumn('Application_Name', \r\n",
+					"    F.when(\r\n",
+					"        ((F.col('CostAllocationType') == \"SubscriptionWBS\") | (F.col('CostAllocationType') == \"WBS\")),\r\n",
+					"        F.when(F.col('Application_Name').isNull(), F.col('SubscriptionServiceNow-App')).otherwise(F.col('Application_Name'))\r\n",
+					"    ).otherwise(F.col('Application_Name'))\r\n",
+					")  \r\n",
 					"\r\n",
 					"\r\n",
 					"    #cost_df.loc[(cost_df.CostAllocationType==\"SubscriptionWBS\")|(cost_df.CostAllocationType==\"WBS\"), 'ApplicationName'].fillna(cost_df['SubscriptionServiceNow-App'])\r\n",
