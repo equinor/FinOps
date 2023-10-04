@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "d58c74e0-dc99-42ba-b50b-72b696e8dea9"
+				"spark.autotune.trackingId": "9076a7ab-aa7d-4ce0-9889-0f98117c91ba"
 			}
 		},
 		"metadata": {
@@ -451,21 +451,12 @@
 					"\r\n",
 					"    cost_df = cost_df.withColumn('ActiveWBS', F.upper(F.col('ActiveWBS')))\r\n",
 					"\r\n",
-					"    # Old Code When CostAllocationType is either AppID or CI and CostAllocationCode is empty, then we use the value from ServiceNow \r\n",
-					"    #mask3 = (F.upper(F.col('CostAllocationType')).isin(['APPID', 'CI']) & F.col('CostAllocationCode').isNull())\r\n",
-					"    #cost_df = cost_df.withColumn('CostAllocationCode', F.when(mask3, F.col('SubscriptionServiceNow-App')).otherwise(F.col('CostAllocationCode')))\r\n",
-					"    \r\n",
-					"    # Alternative\r\n",
+					"    # For cases that where CostAllocationCode is empty, we will use AppID from SerivceNow and Application from Subscription.json to replace.\r\n",
 					"    mask3 = (F.upper(F.col('CostAllocationType')).isin(['APPID']) & F.col('CostAllocationCode').isNull())\r\n",
 					"    mask4 = (F.upper(F.col('CostAllocationType')).isin(['CI']) & F.col('CostAllocationCode').isNull())\r\n",
-					"    mask5 = (F.upper(F.col('CostAllocationType')).isin(['APPID', 'CI']) & F.col('CostAllocationCode').isNull())\r\n",
-					"    #print('Check the CostAllocationCode in the dataframe')\r\n",
-					"    #display(cost_df.filter(mask5))\r\n",
 					"    cost_df = cost_df.withColumn('CostAllocationCode', F.when(mask3, F.col('AppID')) \\\r\n",
 					"                                                       .when(mask4, F.col('SubscriptionServiceNow-App')) \\\r\n",
 					"                                                       .otherwise(F.col('CostAllocationCode'))).drop('AppID')\r\n",
-					"    \r\n",
-					"    \r\n",
 					"\r\n",
 					"    return cost_df"
 				],
