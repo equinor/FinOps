@@ -60,8 +60,8 @@ resource defaultContainer 'Microsoft.Storage/storageAccounts/blobServices/contai
 }
 
 resource mainContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-09-01' = {
-  parent: 'usage'
-  name: defaultDataLakeStorageFilesystemName
+  parent: blob
+  name: 'usage'
   properties: {
     publicAccess: 'None'
   }
