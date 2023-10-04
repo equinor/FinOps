@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "7737e0da-b154-4b94-a80c-55a332a535fa"
+				"spark.autotune.trackingId": "82430f91-a3a3-4109-b574-2e1f933e5790"
 			}
 		},
 		"metadata": {
@@ -758,7 +758,7 @@
 					"\n",
 					"    # Writing the df to the destination path\n",
 					"    cost_df.write.format('parquet').mode('overwrite').option('path', destinationFilename).save() # df.coalesce(1) if partition should be 1\n",
-					"\n",
+					"    # IF not able to write to destination path, may use .option('overwriteSchema', 'true') after mode().\n",
 					"    print('File write complete!')"
 				],
 				"execution_count": 1207
@@ -781,7 +781,7 @@
 					"print(f'fromDate: {fromDate}')\n",
 					"print(f'toDate: {toDate}')\n",
 					"reportTypes = ['ActualCost', 'AmortizedCost']\n",
-					"\n",
+					"#reportTypes = ['AmortizedCost']\n",
 					"year = toDate[:4]\n",
 					"month = toDate[4:6]\n",
 					"day = toDate[6:]\n",
