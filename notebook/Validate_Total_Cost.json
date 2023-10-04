@@ -7,17 +7,21 @@
 		},
 		"nbformat": 4,
 		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sprkpool33large",
+			"type": "BigDataPoolReference"
+		},
 		"sessionProperties": {
-			"driverMemory": "28g",
-			"driverCores": 4,
-			"executorMemory": "28g",
-			"executorCores": 4,
-			"numExecutors": 2,
+			"driverMemory": "112g",
+			"driverCores": 16,
+			"executorMemory": "112g",
+			"executorCores": 16,
+			"numExecutors": 1,
 			"conf": {
-				"spark.dynamicAllocation.enabled": "false",
-				"spark.dynamicAllocation.minExecutors": "2",
-				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "4550e977-baf6-4b9a-becd-bf19a446b9dc"
+				"spark.dynamicAllocation.enabled": "true",
+				"spark.dynamicAllocation.minExecutors": "1",
+				"spark.dynamicAllocation.maxExecutors": "4",
+				"spark.autotune.trackingId": "f078f283-b56b-4f04-9868-e8f4b7ccbb59"
 			}
 		},
 		"metadata": {
@@ -25,20 +29,106 @@
 			"enableDebugMode": false,
 			"kernelspec": {
 				"name": "synapse_pyspark",
-				"display_name": "python"
+				"display_name": "Synapse PySpark"
 			},
 			"language_info": {
 				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
+				"name": "sprkpool33large",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 16,
+				"memory": 112,
+				"automaticScaleJobs": true
 			},
 			"sessionKeepAliveTimeout": 30
 		},
 		"cells": [
 			{
 				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
 				"source": [
+					"import pyspark.sql.functions as F"
+				],
+				"execution_count": 6
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# # Input data\r\n",
+					"toDate = '20230831'\r\n",
+					"fromDate = '20230801'\r\n",
+					"container = 'usage'\r\n",
+					"storageAccount = 's037costmgmt'"
+				],
+				"execution_count": 7
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"collapsed": false
+				},
+				"source": [
+					"print(f'fromDate: {fromDate}')\r\n",
+					"print(f'toDate: {toDate}')\r\n",
+					"reportTypes = ['ActualCost', 'AmortizedCost']\r\n",
+					"year = toDate[:4]\r\n",
+					"month = toDate[4:6]\r\n",
+					"day = toDate[6:]\r\n",
+					"\r\n",
+					"print(f\"------ From: {fromDate}, To: {toDate} -----------\")\r\n",
+					"\r\n",
+					"for reportType in reportTypes:\r\n",
+					"\r\n",
+					"    print(f\"------ {reportType} -----------\")\r\n",
+					"\r\n",
+					"    sourceCostPath = 'exports/monthly/ACMMonthly' + reportType + '/'\r\n",
+					"\r\n",
+					"    longToDate = f'{toDate[0:4]}-{toDate[4:6]}-{toDate[6:]}'\r\n",
+					"    dateRange = fromDate + '-' + toDate\r\n",
+					"\r\n",
+					"    preCostFilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + sourceCostPath + dateRange + '/ACMMonthly' + reportType + '_' + dateRange + '.parquet'\r\n",
+					"    postCostFilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + sourceCostPath + dateRange + '/Extended_v2_ACMMonthly' + reportType + '_' + dateRange + '.parquet'\r\n",
+					"    \r\n",
+					"    pre_df = spark.read.format(\"parquet\").load(preCostFilename)\r\n",
+					"    post_df = spark.read.format('parquet').load(postCostFilename)\r\n",
+					"    \r\n",
+					"    total_cost_pre_processing = pre_df.select(F.sum(F.col('CostInBillingCurrency')).alias('TotalCost'))\r\n",
+					"    total_cost_post_processing = post_df.select(F.sum(F.col('CostInBillingCurrency')).alias('TotalCost'))\r\n",
+					"    diff = abs(total_cost_pre_processing.collect()[0].TotalCost - total_cost_post_processing.collect()[0].TotalCost)\r\n",
+					"    print(diff)\r\n",
 					""
 				],
-				"execution_count": null
+				"execution_count": 18
 			}
 		]
 	}
