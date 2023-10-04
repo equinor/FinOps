@@ -29,7 +29,7 @@ if ($triggers.Count -gt 0) {
     foreach ($t in $triggers) {
         Write-Output ("Starting {0} ..." -f $t.Name)
         try {
-            $result = Start-AzSynapseTrigger -WorkspaceName $WorkspaceName -Name $t.name
+            $result = Start-AzSynapseTrigger -WorkspaceName $WorkspaceName -Name $t.name -PassThru
             Write-Output ("Result of starting trigger {0}: {1}" -f $t.Name, $result)
         }
 

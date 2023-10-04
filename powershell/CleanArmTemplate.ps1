@@ -11,6 +11,7 @@ $armTemplate = Get-Content -Path $ARMTemplatePath -Raw | ConvertFrom-Json
 # Read bicep parameters
 $bicepParams = Get-Content -Path $BicepParameterPath -Raw | ConvertFrom-Json
 $sparkPoolName = $bicepParams.parameters.sparkPoolName.value
+$storageAccount = $bicepParams.parameters.storageAccountName.value
 
 $initialPoolDeployed = $false
 
@@ -21,6 +22,11 @@ foreach ($resource in $armTemplate.resources) {
         $conditionValue = -not $initialPoolDeployed
         Add-Member -InputObject $resource -MemberType NoteProperty -Name "condition" -Value $conditionValue
         $initialPoolDeployed = $true
+    }
+
+    # Replace storage account references in SQL scripts
+    if ($resource.type -eq "Microsoft.Synapse/workspaces/sqlscripts") {
+        $resource.properties.content.query = $resource.properties.content.query.replace("s037costmgmt", $storageAccount)
     }
 
     # Update named resources including a reference to the Synapse workspace

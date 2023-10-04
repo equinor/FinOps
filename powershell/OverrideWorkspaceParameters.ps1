@@ -36,6 +36,7 @@ foreach ($parameter in $workspaceTemplateParams.parameters.PSObject.Properties) 
 
     if ($parameterKey -like "*_linkedServiceUrl") {
         $workspaceTemplateParams.parameters.$parameterKey.value = $parameterValue.replace("s037costmgmt", $storageAccountName)
+        continue
     }
 
     # Override notebook resource references
@@ -59,18 +60,26 @@ foreach ($parameter in $workspaceTemplateParams.parameters.PSObject.Properties) 
 
     if ($parameterKey -like "*dataSetLinkedServiceName") {
         $workspaceTemplateParams.parameters.$parameterKey.value = $parameterValue.replace("s037-cost-management", $WorkspaceName)
+        continue
     }
 
     # Override pipeline resource references
 
     if ($parameterKey -like "*pipelineSparkPoolNameRef") {
         $workspaceTemplateParams.parameters.$parameterKey.value = $sparkPoolName
+        continue
+    }
+
+    if (($parameterKey -like "*pipelineStorageAccountParameter") -or ($parameterKey -like "*pipelineStorageAccountVariable")) {
+        $workspaceTemplateParams.parameters.$parameterKey.value = storageAccountName;
+        continue
     }
 
     # Override dataflow resource references
 
     if ($parameterKey -like "*DataflowLinkedServiceNameRef") {
         $workspaceTemplateParams.parameters.$parameterKey.value = $parameterValue.replace("s037-cost-management", $WorkspaceName)
+        continue
     }
 
     # Override spark pool resource references
