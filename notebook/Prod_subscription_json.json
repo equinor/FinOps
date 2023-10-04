@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "d088a6fe-dd92-4da3-bea9-56708a50ec9a"
+				"spark.autotune.trackingId": "71529849-d779-4a02-b037-f618873ebf6c"
 			}
 		},
 		"metadata": {
@@ -93,7 +93,7 @@
 					"# spark.conf.set(\"spark.sql.execution.arrow.pyspark.enabled\", \"false\")\r\n",
 					"#%pip install -U pandas==1.5.3"
 				],
-				"execution_count": null
+				"execution_count": 3
 			},
 			{
 				"cell_type": "markdown",
@@ -124,7 +124,7 @@
 				"source": [
 					"%run /Prod_import_most_recent"
 				],
-				"execution_count": null
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -146,7 +146,7 @@
 					"file_type = 'json'\r\n",
 					"path_subscription = most_recent(rootpath_subscription,file_name,file_type)"
 				],
-				"execution_count": null
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -167,7 +167,7 @@
 					"# Rename columns\r\n",
 					"df_subscription = df_subscription.rename({'id':'Subscription_id','name':'Subscription_name','prefix':'Subscription_prefix','type':'Subscription_type'},axis=1)"
 				],
-				"execution_count": null
+				"execution_count": 7
 			},
 			{
 				"cell_type": "markdown",
@@ -221,7 +221,7 @@
 				"source": [
 					"df_subscription.describe(include='O')"
 				],
-				"execution_count": null
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -239,7 +239,7 @@
 				"source": [
 					"df_subscription.describe()"
 				],
-				"execution_count": null
+				"execution_count": 9
 			},
 			{
 				"cell_type": "markdown",
@@ -270,7 +270,7 @@
 				"source": [
 					"df_subscription['WBS'] = df_subscription['tags'].apply(lambda x: x['WBS'])"
 				],
-				"execution_count": null
+				"execution_count": 10
 			},
 			{
 				"cell_type": "markdown",
@@ -301,7 +301,7 @@
 				"source": [
 					"df_subscription['ServiceNow_App'] = df_subscription['tags'].apply(lambda x: x['ServiceNow-App'])"
 				],
-				"execution_count": null
+				"execution_count": 11
 			},
 			{
 				"cell_type": "markdown",
@@ -332,7 +332,7 @@
 				"source": [
 					"df_subscription['Username'] = df_subscription['WBSOwner'].str.split('@', expand=True)[0]"
 				],
-				"execution_count": null
+				"execution_count": 12
 			},
 			{
 				"cell_type": "code",
@@ -350,7 +350,7 @@
 				"source": [
 					"df_subscription['Username'].value_counts()"
 				],
-				"execution_count": null
+				"execution_count": 13
 			},
 			{
 				"cell_type": "markdown",
@@ -410,7 +410,7 @@
 					"df_top10_subscription = df_top10_subscription.sort_values(by=['Subscription_counts'],axis=0, ascending=False).reset_index().drop(['index'],axis=1)\r\n",
 					"df_top10_subscription = df_top10_subscription[0:10]"
 				],
-				"execution_count": null
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -428,13 +428,13 @@
 				"source": [
 					"# WBS owner, technicalOwner, productOwner\r\n",
 					"df_subscription['WBSOwnerUserName'] = df_subscription['WBSOwner'].str.split('@').str[0]\r\n",
-					"df_subscription['productOnwerUserName'] = df_subscription['productOnwer'].str.split('@').str[0]\r\n",
+					"df_subscription['productOnwerUserName'] = df_subscription['productOwner'].str.split('@').str[0]\r\n",
 					"df_subscription['technicalOwnerUserName'] = df_subscription['technicalOwner'].str.split('@').str[0]\r\n",
 					"\r\n",
 					"# Remove the shortname columns due to GDPR \r\n",
-					"df = df.drop(['WBSOwner', 'productOnwer','technicalOwner'], axis=1)"
+					"df_subscription = df_subscription.drop(['WBSOwner', 'productOwner','technicalOwner'], axis=1)"
 				],
-				"execution_count": null
+				"execution_count": 24
 			},
 			{
 				"cell_type": "code",
@@ -453,7 +453,7 @@
 				"source": [
 					"display(df_top10_subscription)"
 				],
-				"execution_count": null
+				"execution_count": 25
 			},
 			{
 				"cell_type": "code",
@@ -472,7 +472,7 @@
 				"source": [
 					"display(df_subscription)"
 				],
-				"execution_count": null
+				"execution_count": 26
 			},
 			{
 				"cell_type": "code",
@@ -491,7 +491,7 @@
 					"# Drop Duplicated rows\r\n",
 					"df_subscription = df_subscription.drop_duplicates(subset=[\"Subscription_id\"])"
 				],
-				"execution_count": null
+				"execution_count": 27
 			},
 			{
 				"cell_type": "markdown",
@@ -524,7 +524,7 @@
 					"#df.repartition(1).write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)\r\n",
 					"spark.createDataFrame(df_subscription).write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
 				],
-				"execution_count": null
+				"execution_count": 28
 			},
 			{
 				"cell_type": "markdown",
@@ -556,7 +556,7 @@
 					"currentSparkSession = SparkSession.builder.getOrCreate()\r\n",
 					"spark.catalog.clearCache()"
 				],
-				"execution_count": null
+				"execution_count": 29
 			}
 		]
 	}
