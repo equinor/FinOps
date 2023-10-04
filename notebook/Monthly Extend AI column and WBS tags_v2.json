@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "8a4f2393-14d7-4303-a71b-ff56963a5c5e"
+				"spark.autotune.trackingId": "d407a962-906b-446b-91cb-241503a9fe28"
 			}
 		},
 		"metadata": {
@@ -65,7 +65,7 @@
 					"fromDate = '20220101'\n",
 					"container = 'usage'"
 				],
-				"execution_count": 847
+				"execution_count": 866
 			},
 			{
 				"cell_type": "code",
@@ -92,7 +92,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 848
+				"execution_count": 867
 			},
 			{
 				"cell_type": "code",
@@ -126,7 +126,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list, appList"
 				],
-				"execution_count": 849
+				"execution_count": 868
 			},
 			{
 				"cell_type": "code",
@@ -156,7 +156,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 850
+				"execution_count": 869
 			},
 			{
 				"cell_type": "code",
@@ -198,7 +198,7 @@
 					"    print(cost_df.columns)\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 851
+				"execution_count": 870
 			},
 			{
 				"cell_type": "code",
@@ -227,7 +227,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 852
+				"execution_count": 871
 			},
 			{
 				"cell_type": "code",
@@ -262,7 +262,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 853
+				"execution_count": 872
 			},
 			{
 				"cell_type": "code",
@@ -301,7 +301,7 @@
 					"\r\n",
 					"    return subscription_list"
 				],
-				"execution_count": 854
+				"execution_count": 873
 			},
 			{
 				"cell_type": "code",
@@ -324,7 +324,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list"
 				],
-				"execution_count": 855
+				"execution_count": 874
 			},
 			{
 				"cell_type": "code",
@@ -358,7 +358,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 856
+				"execution_count": 875
 			},
 			{
 				"cell_type": "code",
@@ -469,7 +469,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 857
+				"execution_count": 876
 			},
 			{
 				"cell_type": "code",
@@ -506,7 +506,7 @@
 					"# name-> ApplicationName\r\n",
 					"# ApplicationName->Application_Name"
 				],
-				"execution_count": 858
+				"execution_count": 877
 			},
 			{
 				"cell_type": "code",
@@ -563,8 +563,8 @@
 					"    print(\"start\")\r\n",
 					"    display(cost_df.filter(cost_df.CostAllocationCode == \"PETRAL\"))\r\n",
 					"    # To Resolve typo error for CostAllocationCode and CostAllocationType in case of CostAllocationType is CI but CostAllocationCOde is APPID and vice versa.\r\n",
-					"    cost_df.withColumn('Application_Name',F.when((F.col('CostAllocationType') == 'APPID') & F.col('CostAllocationCode').rlike(\"[a-zA-Z]\"),F.col('SubscriptionServiceNow-App'))\\\r\n",
-					"    .when((F.col('CostAllocationType') == 'CI') & F.col('CostAllocationCode').rlike('[^0-9]'),F.col('SubscriptionServiceNow-App')).otherwise(F.col('Application_Name')))\r\n",
+					"    cost_df = cost_df.withColumn('Application_Name',F.when((F.col('CostAllocationType') == 'APPID') & F.col('CostAllocationCode').rlike(\"[a-zA-Z]\"),F.col('SubscriptionServiceNow-App'))\\\r\n",
+					"                                                     .when((F.col('CostAllocationType') == 'CI') & F.col('CostAllocationCode').rlike('[^0-9]'),F.col('SubscriptionServiceNow-App')).otherwise(F.col('Application_Name')))\r\n",
 					"    print(\"end\")\r\n",
 					"    display(cost_df.filter(cost_df.CostAllocationCode == \"PETRAL\"))\r\n",
 					"\r\n",
@@ -657,7 +657,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 859
+				"execution_count": 878
 			},
 			{
 				"cell_type": "code",
@@ -691,7 +691,7 @@
 					"    \r\n",
 					"    return cost_df"
 				],
-				"execution_count": 860
+				"execution_count": 879
 			},
 			{
 				"cell_type": "code",
@@ -722,7 +722,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 861
+				"execution_count": 880
 			},
 			{
 				"cell_type": "code",
@@ -751,7 +751,7 @@
 					"\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": 862
+				"execution_count": 881
 			},
 			{
 				"cell_type": "code",
@@ -807,7 +807,45 @@
 					"    #write_output_file(cost_df, costDestinationfilename)\n",
 					"    print(' ')"
 				],
-				"execution_count": 863
+				"execution_count": 882
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(cost_df.filter(cost_df.CostAllocationCode == \"PETRAL\"))\r\n",
+					""
+				],
+				"execution_count": 883
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				],
+				"execution_count": null
 			}
 		]
 	}
