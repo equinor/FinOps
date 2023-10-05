@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "af74f12b-6d7d-466a-ba2a-617e5c137cdb"
+				"spark.autotune.trackingId": "fe69609e-d933-436c-a7c7-9669e6b073da"
 			}
 		},
 		"metadata": {
@@ -65,7 +65,7 @@
 					"toDate = '20230131'\n",
 					"fromDate = '20230101'\n",
 					"container = 'usage'\n",
-					"    "
+					"storageAccount = 's037costmgmt'"
 				],
 				"execution_count": 1
 			},
@@ -300,10 +300,10 @@
 					"\n",
 					"dateRange = fromDate + '-' + toDate\n",
 					"\n",
-					"actualCostSourcefilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + actualCostPath + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
-					"actualCostDestinationfilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + actualCostPath + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
-					"#amortizedCostSourcefilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
-					"#amortizedCostDestinationfilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
+					"actualCostSourcefilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + actualCostPath + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
+					"actualCostDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + actualCostPath + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
+					"#amortizedCostSourcefilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
+					"#amortizedCostDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
 					"\n",
 					"actualCost_df = load_source(actualCostSourcefilename)\n",
 					"actualCost_df = populate_columns(actualCost_df)\n",

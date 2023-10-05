@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "b239b961-fb9b-416b-a3fb-cba1d5410f6d"
+				"spark.autotune.trackingId": "86e0d14b-b922-421c-b6ea-ab2ee6210cf1"
 			}
 		},
 		"metadata": {
@@ -71,6 +71,27 @@
 					"from datetime import datetime as dt"
 				],
 				"execution_count": 10
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"storageAccount = 's037costmgmt'"
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -152,7 +173,7 @@
 				},
 				"source": [
 					"# Define path to save the data\r\n",
-					"path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/Calendar/delta/Calendar.delta\" \r\n",
+					"path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/Calendar/delta/Calendar.delta\" \r\n",
 					"\r\n",
 					"#Save the data\r\n",
 					"spark.createDataFrame(calendar).write.format('delta').mode('overwrite').option('overwriteSchema', 'True').save(path)"

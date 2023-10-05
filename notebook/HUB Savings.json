@@ -21,14 +21,11 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "45b0078f-8641-4293-9745-4abfd5a860a5"
+				"spark.autotune.trackingId": "0d8366e4-ffb5-4a3b-a042-45e38f067107"
 			}
 		},
 		"metadata": {
 			"saveOutput": true,
-			"synapse_widget": {
-				"version": "0.1"
-			},
 			"enableDebugMode": false,
 			"kernelspec": {
 				"name": "synapse_pyspark",
@@ -44,14 +41,13 @@
 				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
 				"auth": {
 					"type": "AAD",
-					"authResource": "https://dev.azuresynapse.net",
-					"authHeader": null
+					"authResource": "https://dev.azuresynapse.net"
 				},
 				"sparkVersion": "3.2",
 				"nodeCount": 3,
 				"cores": 8,
 				"memory": 56,
-				"extraHeader": null
+				"automaticScaleJobs": false
 			},
 			"sessionKeepAliveTimeout": 30
 		},
@@ -66,10 +62,11 @@
 				"source": [
 					"start_date = '2022-06-01'\n",
 					"end_date = '2022-06-30'\n",
+					"storageAccount = 's037costmgmt'\n",
 					"\n",
 					"source_filename = 'data/' + start_date + '_' + end_date + '-cleaned.parquet'\n",
 					"\n",
-					"pricelist_file = 'abfss://usage@s037costmgmt.dfs.core.windows.net/pricesheet/pricesheet-LATEST.parquet'"
+					"pricelist_file = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/pricesheet-LATEST.parquet'"
 				],
 				"execution_count": 1
 			},
@@ -165,27 +162,27 @@
 					"    #print(df.columns)\n",
 					"    #print(df[df['ServiceType'] == 'Standard_D4s_v3']['Saving'].sum())\n",
 					"    print('Writing Saving to CSV')\n",
-					"    df.to_csv('abfss://savings@s037costmgmt.dfs.core.windows.net/monthly/'+year+'/'+month+'/'+start_date + '_' + end_date + '-HUB_Windows.csv', index=False)\n",
+					"    df.to_csv('abfss://savings@'+storageAccount+'.dfs.core.windows.net/monthly/'+year+'/'+month+'/'+start_date + '_' + end_date + '-HUB_Windows.csv', index=False)\n",
 					"    print('Writing Saving to Parquet')\n",
-					"    df.to_parquet('abfss://savings@s037costmgmt.dfs.core.windows.net/monthly/'+year+'/'+month+'/'+start_date + '_' + end_date + '-HUB_Windows.parquet', index=False)\n",
+					"    df.to_parquet('abfss://savings@'+storageAccount+'.dfs.core.windows.net/monthly/'+year+'/'+month+'/'+start_date + '_' + end_date + '-HUB_Windows.parquet', index=False)\n",
 					"\n",
 					"\n",
 					"pricelist = pd.read_parquet(pricelist_file)\n",
 					"#print(source_filename)\n",
 					"\n",
-					"year_list = mssparkutils.fs.ls('abfss://usage@s037costmgmt.dfs.core.windows.net/monthly')\n",
+					"year_list = mssparkutils.fs.ls(f'abfss://usage@{storageAccount}.dfs.core.windows.net/monthly')\n",
 					"\n",
 					"schema = ['path','name','size']\n",
 					"year_list_df = pd.DataFrame([[getattr(i,j) for j in schema] for i in year_list], columns = schema)\n",
 					"#print(dir_list_df)\n",
 					"\n",
 					"for year in year_list_df['name']:\n",
-					"    month_list = mssparkutils.fs.ls('abfss://usage@s037costmgmt.dfs.core.windows.net/monthly/' + year)\n",
+					"    month_list = mssparkutils.fs.ls('abfss://usage@' + storageAccount + '.dfs.core.windows.net/monthly/' + year)\n",
 					"    schema = ['path','name','size']\n",
 					"    month_list_df = pd.DataFrame([[getattr(i,j) for j in schema] for i in month_list], columns = schema)\n",
 					"    #print(month_list_df)\n",
 					"    for month in month_list_df['name']:\n",
-					"        calculate_hub_saving('abfss://usage@s037costmgmt.dfs.core.windows.net/monthly/' + year + '/' + month + '/', year, month, pricelist)\n",
+					"        calculate_hub_saving('abfss://usage' + storageAccount + '.dfs.core.windows.net/monthly/' + year + '/' + month + '/', year, month, pricelist)\n",
 					"\n",
 					"\n",
 					"\n",

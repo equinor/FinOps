@@ -55,6 +55,27 @@
 		"cells": [
 			{
 				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"storageAccount = 's037costmgmt'"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
 				"source": [
 					"import pandas as pd \r\n",
 					"import pyspark.pandas as ps\r\n",
@@ -141,7 +162,7 @@
 				},
 				"source": [
 					"# Define path\r\n",
-					"rootpath_subscription = \"abfss://usage@s037costmgmt.dfs.core.windows.net/subscriptions/\"\r\n",
+					"rootpath_subscription = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/subscriptions/\"\r\n",
 					"file_name ='subscriptions_'\r\n",
 					"file_type = 'json'\r\n",
 					"path_subscription = most_recent(rootpath_subscription,file_name,file_type)"
@@ -520,7 +541,7 @@
 					}
 				},
 				"source": [
-					"optimized_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/subscriptions/optimized/subscription_optimized.parquet\" \r\n",
+					"optimized_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/subscriptions/optimized/subscription_optimized.parquet\" \r\n",
 					"#df.repartition(1).write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)\r\n",
 					"spark.createDataFrame(df_subscription).write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
 				],

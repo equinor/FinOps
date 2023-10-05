@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "4c4d2bc6-a65d-44e5-b545-7c9b2166512a"
+				"spark.autotune.trackingId": "ef2dc14b-362a-482a-9041-66628e00badc"
 			}
 		},
 		"metadata": {
@@ -73,7 +73,8 @@
 					"actualCostPath = 'exports/monthly/ACMMonthlyActualCost/'\n",
 					"toDate = '20230430'\n",
 					"fromDate = '20230401'\n",
-					"container = 'usage'"
+					"container = 'usage'\n",
+					"storageAccount = 's037costmgmt'"
 				],
 				"execution_count": 1
 			},
@@ -444,10 +445,10 @@
 					"\n",
 					"        longToDate = datetime.strptime(toDate, '%Y%m%d').strftime('%Y-%m-%d')\n",
 					"\n",
-					"        extended_actual_cost_data_path = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + actualCostPath + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
-					"        subscription_path = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions_' + longToDate + '.json'\n",
-					"        #subscription_path = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions.json'\n",
-					"        appListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/applications/applicationList.parquet'\n",
+					"        extended_actual_cost_data_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + actualCostPath + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
+					"        subscription_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/subscriptions_' + longToDate + '.json'\n",
+					"        #subscription_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/subscriptions.json'\n",
+					"        appListPath = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/applications/applicationList.parquet'\n",
 					"\n",
 					"        #extended_actual_cost_data_path = 'data/2022 Actual cost (10k rows).csv'\n",
 					"        #extended_actual_cost_data_path = 'data/ACMMonthlyActualCost_20220101-20220131.parquet'\n",

@@ -1,46 +1,9 @@
 {
-	"name": "Amortized_Monthly_Cost_Update",
+	"name": "Update PBI Datasets and Run AnomalyDetection_v1",
 	"properties": {
 		"activities": [
 			{
-				"name": "Amortized_Monthly_Cost_OneYear",
-				"description": "This is dataset for one year period and contain granular information.",
-				"type": "SynapseNotebook",
-				"dependsOn": [],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"notebook": {
-						"referenceName": "Prod_Extended_Amortized_Cost-Oneyear",
-						"type": "NotebookReference"
-					},
-					"parameters": {
-						"storageAccount": {
-							"value": {
-								"value": "@pipeline().parameters.storageAccount",
-								"type": "Expression"
-							},
-							"type": "string"
-						}
-					},
-					"snapshot": true,
-					"conf": {
-						"spark.dynamicAllocation.enabled": null,
-						"spark.dynamicAllocation.minExecutors": null,
-						"spark.dynamicAllocation.maxExecutors": null
-					},
-					"numExecutors": null
-				}
-			},
-			{
-				"name": "Amortized_Monthly_Cost_ThreeYears",
-				"description": "This is dataset that has three years period and contains aggregated information.",
+				"name": "Amortized_Monthly_Cost_Update_ThreeYears",
 				"type": "SynapseNotebook",
 				"dependsOn": [],
 				"policy": {
@@ -59,7 +22,7 @@
 					"parameters": {
 						"storageAccount": {
 							"value": {
-								"value": "@pipeline().parameters.storageAccount",
+								"value": "@variables('storageAccount')",
 								"type": "Expression"
 							},
 							"type": "string"
@@ -75,8 +38,7 @@
 				}
 			},
 			{
-				"name": "Subscription",
-				"description": "This data is collected from Solum team.",
+				"name": "Amortized_Monthly_Cost_Update_OneYear",
 				"type": "SynapseNotebook",
 				"dependsOn": [],
 				"policy": {
@@ -89,39 +51,91 @@
 				"userProperties": [],
 				"typeProperties": {
 					"notebook": {
-						"referenceName": "Prod_subscription_json",
+						"referenceName": "Prod_Extended_Amortized_Cost-Oneyear",
 						"type": "NotebookReference"
 					},
 					"parameters": {
 						"storageAccount": {
 							"value": {
-								"value": "@pipeline().parameters.storageAccount",
+								"value": "@variables('storageAccount')",
 								"type": "Expression"
 							},
 							"type": "string"
 						}
 					},
 					"snapshot": true,
+					"sparkPool": {
+						"referenceName": "sprkpool33large",
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Large",
 					"conf": {
 						"spark.dynamicAllocation.enabled": null,
 						"spark.dynamicAllocation.minExecutors": null,
 						"spark.dynamicAllocation.maxExecutors": null
 					},
+					"driverSize": "Large",
+					"numExecutors": null
+				}
+			},
+			{
+				"name": "Anomaly_Detection_v1",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "Amortized_Monthly_Cost_Update_OneYear",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "Anomaly_Detection_v1",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"storageAccount": {
+							"value": {
+								"value": "@variables('storageAccount')",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": "sparkpool32",
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Medium",
+					"conf": {
+						"spark.dynamicAllocation.enabled": null,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"driverSize": "Medium",
 					"numExecutors": null
 				}
 			}
 		],
-		"parameters": {
+		"variables": {
 			"storageAccount": {
-				"type": "string",
+				"type": "String",
 				"defaultValue": "s037costmgmt"
 			}
 		},
 		"folder": {
-			"name": "PipelinesInProduction"
+			"name": "PipelinesInProduction/Management API (New)"
 		},
-		"annotations": [],
-		"lastPublishTime": "2023-07-20T08:46:18Z"
-	},
-	"type": "Microsoft.Synapse/workspaces/pipelines"
+		"annotations": []
+	}
 }
