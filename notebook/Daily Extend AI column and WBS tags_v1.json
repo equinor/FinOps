@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "9c4615a1-f0eb-4e07-87ac-57f086533a03"
+				"spark.autotune.trackingId": "3b5c8992-62b5-4b4e-a128-7eb94cc686ee"
 			}
 		},
 		"metadata": {
@@ -60,11 +60,11 @@
 					]
 				},
 				"source": [
-					"#toDate = '20230930'\n",
-					"#fromDate = '20230901'\n",
+					"toDate = '20230930'\n",
+					"fromDate = '20230901'\n",
 					"container = 'usage'"
 				],
-				"execution_count": 17
+				"execution_count": 33
 			},
 			{
 				"cell_type": "code",
@@ -91,7 +91,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 18
+				"execution_count": 34
 			},
 			{
 				"cell_type": "code",
@@ -130,7 +130,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list, appList"
 				],
-				"execution_count": 19
+				"execution_count": 35
 			},
 			{
 				"cell_type": "code",
@@ -160,7 +160,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 20
+				"execution_count": 36
 			},
 			{
 				"cell_type": "code",
@@ -201,7 +201,7 @@
 					"        cost_df = cost_df.withColumn('ai_' + col, F.coalesce(F.col(f'AdditionalInfo.{col}'), F.lit(None)))\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 21
+				"execution_count": 37
 			},
 			{
 				"cell_type": "code",
@@ -230,7 +230,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 22
+				"execution_count": 38
 			},
 			{
 				"cell_type": "code",
@@ -265,7 +265,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 23
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -302,7 +302,7 @@
 					"\r\n",
 					"    return subscription_list"
 				],
-				"execution_count": 24
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -325,7 +325,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list"
 				],
-				"execution_count": 25
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -359,7 +359,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 26
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -458,7 +458,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 27
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -541,7 +541,7 @@
 					"\r\n",
 					"    print('remove unused Columns')\r\n",
 					"    # Remove unused Columns\r\n",
-					"    cost_df = cost_df.drop('Application_Name_upper','ApplicationName','ServiceNowAppID','ServiceNowApplicationName_upper')\r\n",
+					"    cost_df = cost_df.drop('Application_Name_upper','ApplicationName','ServiceNowAppID','ServiceNowApplicationName_upper','ApplicationName_upper')\r\n",
 					"\r\n",
 					"    print('Application Name is not found when SubscriptionServiceNow-App is equal to Application_name and AppID is empty')\r\n",
 					"    # Application Name will be \"Application not defined or not found\" when SubscriptionServiceNow-App is equal to Application_name as well as AppID is empty.\r\n",
@@ -568,7 +568,7 @@
 					"    #display(cost_df.filter(cost_df.Application_Name == \"BIZTALK360\"))\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 28
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -602,7 +602,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 29
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -633,7 +633,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 30
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -658,11 +658,11 @@
 					"    print(f'Dataframe length is: {cost_df.count()}')\n",
 					"\n",
 					"    # Writing the df to the destination path\n",
-					"    cost_df.write.format('parquet').mode('overwrite').option('path', destinationFilename).save() # df.coalesce(1) if partition should be 1\n",
+					"    #cost_df.write.format('parquet').mode('overwrite').option('path', destinationFilename).save() # df.coalesce(1) if partition should be 1\n",
 					"    # IF not able to write to destination path, may use .option('overwriteSchema', 'true') after mode().\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": 31
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -747,7 +747,7 @@
 					"    \n",
 					"    print(' ')"
 				],
-				"execution_count": 32
+				"execution_count": null
 			}
 		]
 	}
