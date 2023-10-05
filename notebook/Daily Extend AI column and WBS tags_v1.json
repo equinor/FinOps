@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "0d3fbaaa-5731-4d9d-a341-4c676086703a"
+				"spark.autotune.trackingId": "9c4615a1-f0eb-4e07-87ac-57f086533a03"
 			}
 		},
 		"metadata": {
@@ -505,8 +505,8 @@
 					"    map_app = map_app.withColumn('ApplicationName_upper',F.upper(F.col('ApplicationName')))\r\n",
 					"\r\n",
 					"    # Conduct the merge between Azure cost file and ServiceNow data based on CostAllocationCode and APPID or ApplicationName.\r\n",
-					"    condition1= (cost_df.CostAllocationCode_upper == map_app.AppID)& (cost_df.CostAllocationType == 'APPID')\r\n",
-					"    condition2= (cost_df.CostAllocationCode_upper == map_app.ApplicationName)& (cost_df.CostAllocationType == 'CI')\r\n",
+					"    condition1 = (cost_df.CostAllocationCode_upper == map_app.AppID) & (cost_df.CostAllocationType == 'APPID')\r\n",
+					"    condition2 = (cost_df.CostAllocationCode_upper == map_app.ApplicationName) & (cost_df.CostAllocationType == 'CI')\r\n",
 					"    cost_df = cost_df.join(map_app,(condition1 | condition2),how='left').drop('CostAllocationCode_upper','ApplicationName_upper') \r\n",
 					"\r\n",
 					"    # Create Application_Name column based on Application from ServiceNow to start with.\r\n",
@@ -527,7 +527,7 @@
 					"    print(\"Create upper case column for merge purpose.\")\r\n",
 					"    # Create upper case column for merge purpose.\r\n",
 					"    cost_df = cost_df.withColumn('Application_Name_upper',F.upper(F.col('Application_Name')))\r\n",
-					"    map_app = map_app.withColumn('ServiceNowApplicationName_upper',F.upper(F.col('ApplicationName'))).drop('ApplicationName','ApplicationName_upper')\r\n",
+					"    map_app = map_app.withColumn('ServiceNowApplicationName_upper',F.upper(F.col('ApplicationName')))\r\n",
 					"    map_app = map_app.withColumn('ServiceNowAppID',F.col('AppID')).drop('AppID')\r\n",
 					"\r\n",
 					"    print('Lookup application in ServiceNow')\r\n",
