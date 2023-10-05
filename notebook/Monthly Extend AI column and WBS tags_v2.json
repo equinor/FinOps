@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "ba8d6e9a-0ead-4762-bec8-b303b7a93a92"
+				"spark.autotune.trackingId": "a07cebff-0c53-4155-a0ad-910e786e0ac2"
 			}
 		},
 		"metadata": {
@@ -66,7 +66,7 @@
 					"container = 'usage'\n",
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 119
+				"execution_count": 138
 			},
 			{
 				"cell_type": "code",
@@ -93,7 +93,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 120
+				"execution_count": 139
 			},
 			{
 				"cell_type": "code",
@@ -127,7 +127,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list, appList"
 				],
-				"execution_count": 121
+				"execution_count": 140
 			},
 			{
 				"cell_type": "code",
@@ -157,7 +157,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 122
+				"execution_count": 141
 			},
 			{
 				"cell_type": "code",
@@ -199,7 +199,7 @@
 					"    print(cost_df.columns)\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 123
+				"execution_count": 142
 			},
 			{
 				"cell_type": "code",
@@ -228,7 +228,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 124
+				"execution_count": 143
 			},
 			{
 				"cell_type": "code",
@@ -263,7 +263,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 125
+				"execution_count": 144
 			},
 			{
 				"cell_type": "code",
@@ -302,7 +302,7 @@
 					"\r\n",
 					"    return subscription_list"
 				],
-				"execution_count": 126
+				"execution_count": 145
 			},
 			{
 				"cell_type": "code",
@@ -325,7 +325,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list"
 				],
-				"execution_count": 127
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -531,7 +531,8 @@
 					"\r\n",
 					"    joined_df = cost_df.join(map_app,condition1,how='left')\r\n",
 					"    cost_df = joined_df.join(map_app,condition2,how='left')\r\n",
-					"\r\n",
+					"    print('Here is the join')\r\n",
+					"    display(cost_df)\r\n",
 					"    # Create Application_Name column based on Application from ServiceNow to start with.\r\n",
 					"    cost_df = cost_df.withColumn('Application_Name',F.col('ApplicationName'))\r\n",
 					"\r\n",
