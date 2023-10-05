@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "e5d9e73f-6fd3-46cb-ac19-eb96ba13ac28"
+				"spark.autotune.trackingId": "d343d185-1e1b-4e85-a309-5134f16e9b45"
 			}
 		},
 		"metadata": {
@@ -66,7 +66,7 @@
 					"container = 'usage'\n",
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 568
+				"execution_count": 647
 			},
 			{
 				"cell_type": "code",
@@ -93,7 +93,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 569
+				"execution_count": 648
 			},
 			{
 				"cell_type": "code",
@@ -127,7 +127,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list, appList"
 				],
-				"execution_count": 570
+				"execution_count": 649
 			},
 			{
 				"cell_type": "code",
@@ -157,7 +157,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 571
+				"execution_count": 650
 			},
 			{
 				"cell_type": "code",
@@ -199,7 +199,7 @@
 					"    print(cost_df.columns)\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 572
+				"execution_count": 651
 			},
 			{
 				"cell_type": "code",
@@ -228,7 +228,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 573
+				"execution_count": 652
 			},
 			{
 				"cell_type": "code",
@@ -263,7 +263,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 574
+				"execution_count": 653
 			},
 			{
 				"cell_type": "code",
@@ -302,7 +302,7 @@
 					"\r\n",
 					"    return subscription_list"
 				],
-				"execution_count": 575
+				"execution_count": 654
 			},
 			{
 				"cell_type": "code",
@@ -325,7 +325,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list"
 				],
-				"execution_count": 576
+				"execution_count": 655
 			},
 			{
 				"cell_type": "code",
@@ -359,7 +359,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 577
+				"execution_count": 656
 			},
 			{
 				"cell_type": "code",
@@ -458,7 +458,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 578
+				"execution_count": 657
 			},
 			{
 				"cell_type": "code",
@@ -518,15 +518,18 @@
 					"    # Tobias can take a look. \r\n",
 					"    # Using the following code to replace the code above. \r\n",
 					"    print(cost_df.count())\r\n",
-					"    joined_df1 = cost_df.join(broadcast(map_app),condition1, how='inner')   \r\n",
+					"    joined_df1 = cost_df.join(broadcast(map_app),condition1, how='inner')\r\n",
+					"    cost_df = cost_df.exceptAll(joined_df1)\r\n",
+					"    print(cost_df.count())\r\n",
 					"    joined_df2 = cost_df.join(broadcast(map_app),condition2, how='inner')\r\n",
-					"    print(joined_df2 .count())\r\n",
+					"    cost_df = cost_df.exceptAll(joined_df2)\r\n",
+					"    print(cost_df.count())\r\n",
 					"    #cost_df = joined_df1.join(broadcast(map_app),condition2, how='left')    \r\n",
 					"    joined_df3 = joined_df1.union(joined_df2) \r\n",
 					"    cost_df = cost_df.withColumn(\"AppID\", F.lit(None).cast(\"string\"))\r\n",
 					"    cost_df = cost_df.withColumn(\"ApplicationName\", F.lit(None).cast(\"string\"))\r\n",
 					"    cost_df = cost_df.withColumn('ApplicationName_upper', F.lit(None).cast(\"string\"))\r\n",
-					"    cost_df = cost_df.filter(~(ci_mask&appid_mask)).union(joined_df3)\r\n",
+					"    cost_df = cost_df.union(joined_df3)\r\n",
 					"    print(cost_df.count())\r\n",
 					"    display(cost_df.filter((F.col('CostAllocationType')=='CI')))\r\n",
 					"\r\n",
@@ -603,7 +606,7 @@
 					"    cost_df.cache()\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 579
+				"execution_count": 658
 			},
 			{
 				"cell_type": "code",
@@ -637,7 +640,7 @@
 					"    \r\n",
 					"    return cost_df"
 				],
-				"execution_count": 580
+				"execution_count": 659
 			},
 			{
 				"cell_type": "code",
@@ -668,7 +671,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 581
+				"execution_count": 660
 			},
 			{
 				"cell_type": "code",
@@ -699,7 +702,7 @@
 					"    # IF not able to write to destination path, may use .option('overwriteSchema', 'true') after mode().\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": 582
+				"execution_count": 661
 			},
 			{
 				"cell_type": "code",
@@ -755,7 +758,97 @@
 					"    write_output_file(cost_df, costDestinationfilename)\n",
 					"    print(' ')"
 				],
-				"execution_count": 583
+				"execution_count": 662
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				],
+				"execution_count": null
 			}
 		]
 	}
