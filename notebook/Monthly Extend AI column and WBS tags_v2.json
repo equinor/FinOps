@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "b41c49df-1216-4e38-b503-18bc9e994b02"
+				"spark.autotune.trackingId": "e5d9e73f-6fd3-46cb-ac19-eb96ba13ac28"
 			}
 		},
 		"metadata": {
@@ -375,24 +375,6 @@
 					}
 				},
 				"source": [
-					""
-				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
 					"def replace_empty_cost_fields_with_subscription_details(cost_df, appList):\r\n",
 					"    print(\"Creating ActiveWBS column, copying over CostAllocationCode, replacing 'TOBESPECIFIED' and empty values then filling gaps with SubscriptionWBS...\")\r\n",
 					"\r\n",
@@ -676,7 +658,7 @@
 					"    cost_df = expand_cost_tags(cost_df)\r\n",
 					"    subscription_list = expand_subscription_tags(subscription_list)\r\n",
 					"    cost_df, subscription_list = merge_dataframes(cost_df, subscription_list)\r\n",
-					"    #cost_df = replace_empty_cost_fields_with_subscription_details(cost_df, appList)\r\n",
+					"    cost_df = replace_empty_cost_fields_with_subscription_details(cost_df, appList)\r\n",
 					"\r\n",
 					"    print('WBS population complete. Populating application names')\r\n",
 					"\r\n",
@@ -774,213 +756,6 @@
 					"    print(' ')"
 				],
 				"execution_count": 583
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"#test_df = cost_df.limit(30000)"
-				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"#display(cost_df)"
-				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"#cost_df.schema"
-				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					" cost_df.limit(10000).write.format('parquet').mode('overwrite').option('path', \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20230501-20230531/Extended_v2_ACMMonthlyAmortizedCost_20230501-20230531.parquet\").save()"
-				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					""
-				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"#test_df.write.format('parquet').mode('overwrite').option('path', \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20180501-20180531/Extended_v2_ACMMonthlyAmortizedCost_20180501-20180531.parquet\").save()"
-				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"optimized_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20230501-20230531/Extended_v2_ACMMonthlyAmortizedCost_20230501-20230531.parquet\" \r\n",
-					"#cost_df = cost_df.withColumn('Date_partition',F.col('Date'))\r\n",
-					"cost_df = cost_df.withColumn('SubscriptionId_partition',F.col('SubscriptionId'))\r\n",
-					"cost_df.write.format('parquet').mode('overwrite').partitionBy('SubscriptionId_partition').option('overwriteSchema', 'true').save(optimized_path)"
-				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20230501-20230531/ACMMonthlyAmortizedCost_20230501-20230531.parquet\"\r\n",
-					"print(f'Loading Cost file list - {path}')\r\n",
-					"\r\n",
-					"cost_df = spark.read.format('parquet').load(path)\r\n",
-					""
-				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"cost_df.count()"
-				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(cost_df)"
-				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					" cost_df.write.format('parquet').mode('overwrite').option('path', \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20230501-20230531/Extended_v2_ACMMonthlyAmortizedCost_20230501-20230531.parquet\").save()"
-				],
-				"execution_count": null
 			}
 		]
 	}
