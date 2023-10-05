@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "e69e1dd1-0d98-4c8e-a037-3bb102d52859"
+				"spark.autotune.trackingId": "4fe65f24-4587-4113-9370-eb24ac5169df"
 			}
 		},
 		"metadata": {
@@ -72,7 +72,7 @@
 					"# Pipeline parameter\r\n",
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 71
+				"execution_count": 108
 			},
 			{
 				"cell_type": "code",
@@ -81,7 +81,7 @@
 					"import pyspark.sql.types as T\r\n",
 					"from pyspark.sql.window import Window"
 				],
-				"execution_count": 72
+				"execution_count": 109
 			},
 			{
 				"cell_type": "code",
@@ -117,7 +117,7 @@
 					"\r\n",
 					"    return grouped_df"
 				],
-				"execution_count": 73
+				"execution_count": 110
 			},
 			{
 				"cell_type": "code",
@@ -163,7 +163,7 @@
 					"                                                                                 .otherwise(F.lit(0)))\r\n",
 					"    return costs_by_dates"
 				],
-				"execution_count": 74
+				"execution_count": 111
 			},
 			{
 				"cell_type": "markdown",
@@ -216,11 +216,11 @@
 					"    # If the date is on yesterdays date (the most updated data we recieve contains yesterdays costs)\r\n",
 					"    date_mask = F.col('Date') >= F.date_sub(F.current_date(), 1)\r\n",
 					"\r\n",
-					"    # # For Testing\r\n",
-					"    # thres_df = thres_df.withColumn('NotifyAnomaly', F.when(thres_mask & cost_mask, F.lit(True)).otherwise(F.lit(False)))\r\n",
+					"    # For Testing\r\n",
+					"    thres_df = thres_df.withColumn('NotifyAnomaly', F.when(thres_mask & cost_mask, F.lit(True)).otherwise(F.lit(False)))\r\n",
 					"\r\n",
-					"    # For Production\r\n",
-					"    thres_df = thres_df.withColumn('NotifyAnomaly', F.when(thres_mask & date_mask & cost_mask, F.lit(True)).otherwise(F.lit(False)))\r\n",
+					"    # # For Production\r\n",
+					"    # thres_df = thres_df.withColumn('NotifyAnomaly', F.when(thres_mask & date_mask & cost_mask, F.lit(True)).otherwise(F.lit(False)))\r\n",
 					"\r\n",
 					"    # Dropping columns that are unimportant\r\n",
 					"    dropped_df = thres_df.select('SubscriptionName', 'ResourceGroup', 'MeterCategory', 'ActiveWBS', 'NotifyAnomaly')\r\n",
@@ -236,7 +236,7 @@
 					"\r\n",
 					"    return grouped_df"
 				],
-				"execution_count": 75
+				"execution_count": 112
 			},
 			{
 				"cell_type": "code",
@@ -266,7 +266,7 @@
 					"\r\n",
 					"    return merged_df"
 				],
-				"execution_count": 76
+				"execution_count": 113
 			},
 			{
 				"cell_type": "code",
@@ -325,7 +325,7 @@
 					"    merged_df.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
 					"    print('Write Complete!')"
 				],
-				"execution_count": 77
+				"execution_count": 114
 			},
 			{
 				"cell_type": "code",
@@ -342,9 +342,9 @@
 					"collapsed": false
 				},
 				"source": [
-					"# display(merged_df)"
+					"# merged_df.show(truncate=False)"
 				],
-				"execution_count": 80
+				"execution_count": 115
 			},
 			{
 				"cell_type": "markdown",
@@ -400,7 +400,7 @@
 					"# plt.legend()\r\n",
 					"# plt.show()"
 				],
-				"execution_count": 79
+				"execution_count": 116
 			}
 		]
 	}
