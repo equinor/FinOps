@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "263323f7-0f24-4e7a-b702-57e4f53cfd43"
+				"spark.autotune.trackingId": "99c5e5f5-5ea5-43e3-91c0-d64f8161e42b"
 			}
 		},
 		"metadata": {
@@ -538,9 +538,9 @@
 					"\r\n",
 					"    # check 1 \r\n",
 					"    #cost_df = cost_df.join(map_app,condition1,how='left')\r\n",
-					"    condition = ((cost_df.CostAllocationCode_upper == map_app.AppID) | (cost_df.CostAllocationCode_upper == map_app.ApplicationName_upper))\r\n",
-					"    cost_df = cost_df.join(broadcast(map_app),condition,how='left')\r\n",
-					"\r\n",
+					"    #condition = ((cost_df.CostAllocationCode_upper == map_app.AppID) | (cost_df.CostAllocationCode_upper == map_app.ApplicationName_upper))\r\n",
+					"    joined_df = cost_df.join(broadcast(map_app),condition1,how='left')\r\n",
+					"    cost_df = joined_df.join(broadcast(map_app),condition2,how='left')\r\n",
 					"    # Create Application_Name column based on Application from ServiceNow to start with.\r\n",
 					"    cost_df = cost_df.withColumn('Application_Name',F.col('ApplicationName'))\r\n",
 					"\r\n",
