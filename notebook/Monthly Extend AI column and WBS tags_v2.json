@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "e0963920-4423-4690-a3d2-e6e5ca57df7d"
+				"spark.autotune.trackingId": "247453a2-52cb-4e2e-826f-b3304c404ff1"
 			}
 		},
 		"metadata": {
@@ -61,11 +61,11 @@
 				},
 				"source": [
 					"# # Input data\n",
-					"toDate = '20210930'\n",
-					"fromDate = '20210901'\n",
+					"#toDate = '20210930'\n",
+					"#fromDate = '20210901'\n",
 					"container = 'usage'"
 				],
-				"execution_count": 1191
+				"execution_count": 1
 			},
 			{
 				"cell_type": "code",
@@ -92,7 +92,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 1192
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -126,7 +126,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list, appList"
 				],
-				"execution_count": 1193
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -156,7 +156,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 1194
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -198,7 +198,7 @@
 					"    print(cost_df.columns)\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 1195
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -227,7 +227,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 1196
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -262,7 +262,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 1197
+				"execution_count": 7
 			},
 			{
 				"cell_type": "code",
@@ -301,7 +301,7 @@
 					"\r\n",
 					"    return subscription_list"
 				],
-				"execution_count": 1198
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -324,7 +324,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list"
 				],
-				"execution_count": 1199
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -358,7 +358,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 1200
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -457,7 +457,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 1201
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -567,7 +567,7 @@
 					"    #display(cost_df.filter(cost_df.Application_Name == \"BIZTALK360\"))\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 1203
+				"execution_count": 12
 			},
 			{
 				"cell_type": "code",
@@ -627,7 +627,7 @@
 					"    #                                                 .when(ci_mask & F.col('CostAllocationCode').cast('int').isNotNull(), F.col('ApplicationName'))\\\r\n",
 					"    #                                                 .otherwise(F.col('ApplicationName'))).drop('ApplicationName')"
 				],
-				"execution_count": 1204
+				"execution_count": 13
 			},
 			{
 				"cell_type": "code",
@@ -661,7 +661,7 @@
 					"    \r\n",
 					"    return cost_df"
 				],
-				"execution_count": 1205
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -692,7 +692,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 1206
+				"execution_count": 15
 			},
 			{
 				"cell_type": "code",
@@ -717,11 +717,11 @@
 					"    print(f'Dataframe length is: {cost_df.count()}')\n",
 					"\n",
 					"    # Writing the df to the destination path\n",
-					"    #cost_df.write.format('parquet').mode('overwrite').option('path', destinationFilename).save() # df.coalesce(1) if partition should be 1\n",
+					"    cost_df.write.format('parquet').mode('overwrite').option('path', destinationFilename).save() # df.coalesce(1) if partition should be 1\n",
 					"    # IF not able to write to destination path, may use .option('overwriteSchema', 'true') after mode().\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": 1207
+				"execution_count": 16
 			},
 			{
 				"cell_type": "code",
@@ -777,7 +777,7 @@
 					"    write_output_file(cost_df, costDestinationfilename)\n",
 					"    print(' ')"
 				],
-				"execution_count": 1208
+				"execution_count": 17
 			}
 		]
 	}
