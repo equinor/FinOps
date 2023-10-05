@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "c35d30c8-9473-4c88-a54d-8af02374f168"
+				"spark.autotune.trackingId": "655ae082-60c4-40d0-9829-1d9ed2e7709d"
 			}
 		},
 		"metadata": {
@@ -409,7 +409,7 @@
 					"    map_app = appList.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('AppID', 'OperationalWBS')\r\n",
 					"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.AppID, how='left')\r\n",
 					"    cost_df = joined_df.withColumn('ActiveWBS', F.when(F.col('ActiveWBS').isNull(), F.col('OperationalWBS')).otherwise(F.col('ActiveWBS')))\r\n",
-					"    cost_df = cost_df.drop('OperationalWBS', 'AppID')\r\n",
+					"    cost_df = cost_df.drop('OperationalWBS')\r\n",
 					"\r\n",
 					"    # Applying valid CIs as Active WBS'\r\n",
 					"    # Same here as above, but we merge the dataframes on ApplicationNames rather than AppID\r\n",
