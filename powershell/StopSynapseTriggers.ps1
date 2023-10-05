@@ -1,9 +1,10 @@
 # Input parameters
 param(
     [string]$WorkspaceName,
-    [string]$ResourceGroup,
-    [string]$StoredTriggerPath
+    [string]$ResourceGroup
 )
+
+$ErrorActionPreference = "Stop"
 
 # Get the specified workspace
 Write-Output ("Getting workspace {0} in resource group {1}" -f $WorkspaceName, $ResourceGroup)
@@ -33,14 +34,12 @@ if ($triggers.Count -gt 0) {
 
         catch {
             Write-Output ("Something went wrong with {0}" -f $t.Name)
-            Write-Warning $Error[0]
+            Write-Error $Error[0]
             Write-Output $_
         }
     }
 
     Write-Output ("Number of stopped triggers {0}" -f $stoppedTrigger.Count)
-
-    $stoppedTrigger | Export-Csv -Path $StoredTriggerPath -NoTypeInformation
 
     Write-Output "... done"
 }
