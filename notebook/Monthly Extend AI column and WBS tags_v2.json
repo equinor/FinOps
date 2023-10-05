@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "5f1591d1-4bdb-4b9b-993a-361acdca7091"
+				"spark.autotune.trackingId": "b41c49df-1216-4e38-b503-18bc9e994b02"
 			}
 		},
 		"metadata": {
@@ -66,7 +66,7 @@
 					"container = 'usage'\n",
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 488
+				"execution_count": 568
 			},
 			{
 				"cell_type": "code",
@@ -93,7 +93,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 489
+				"execution_count": 569
 			},
 			{
 				"cell_type": "code",
@@ -127,7 +127,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list, appList"
 				],
-				"execution_count": 490
+				"execution_count": 570
 			},
 			{
 				"cell_type": "code",
@@ -157,7 +157,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 491
+				"execution_count": 571
 			},
 			{
 				"cell_type": "code",
@@ -199,7 +199,7 @@
 					"    print(cost_df.columns)\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 492
+				"execution_count": 572
 			},
 			{
 				"cell_type": "code",
@@ -228,7 +228,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 493
+				"execution_count": 573
 			},
 			{
 				"cell_type": "code",
@@ -263,7 +263,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 494
+				"execution_count": 574
 			},
 			{
 				"cell_type": "code",
@@ -302,7 +302,7 @@
 					"\r\n",
 					"    return subscription_list"
 				],
-				"execution_count": 495
+				"execution_count": 575
 			},
 			{
 				"cell_type": "code",
@@ -325,7 +325,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list"
 				],
-				"execution_count": 496
+				"execution_count": 576
 			},
 			{
 				"cell_type": "code",
@@ -359,7 +359,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 497
+				"execution_count": 577
 			},
 			{
 				"cell_type": "code",
@@ -476,7 +476,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 498
+				"execution_count": 578
 			},
 			{
 				"cell_type": "code",
@@ -524,25 +524,29 @@
 					"    map_app = map_app.withColumn('ApplicationName_upper',F.upper(F.col('ApplicationName')))\r\n",
 					"\r\n",
 					"    # Conduct the merge between Azure cost file and ServiceNow data based on CostAllocationCode and APPID or ApplicationName.\r\n",
+					"\r\n",
+					"    # Tobias can take a look. \r\n",
 					"    ## Old Code\r\n",
 					"    #condition1 = (cost_df.CostAllocationCode_upper == map_app.AppID) & (cost_df.CostAllocationType == 'APPID')\r\n",
 					"    condition1 = (cost_df.CostAllocationCode_upper == map_app.AppID)\r\n",
 					"    #condition2 = (cost_df.CostAllocationCode_upper == map_app.ApplicationName_upper) & (cost_df.CostAllocationType == 'CI')\r\n",
 					"    condition2 = (cost_df.CostAllocationCode_upper == map_app.ApplicationName_upper)\r\n",
 					"    #cost_df = cost_df.join(map_app,(condition1 | condition2),how='left').drop('CostAllocationCode_upper','ApplicationName_upper') \r\n",
-					"    #joined_df = cost_df.join(map_app,condition1,how='left')\r\n",
 					"\r\n",
-					"    # check 1 \r\n",
-					"    #cost_df = cost_df.join(map_app,condition1,how='left')\r\n",
-					"    #condition = ((cost_df.CostAllocationCode_upper == map_app.AppID) | (cost_df.CostAllocationCode_upper == map_app.ApplicationName_upper))\r\n",
+					"    # Tobias can take a look. \r\n",
+					"    # Using the following code to replace the code above. \r\n",
 					"    print(cost_df.count())\r\n",
 					"    joined_df1 = cost_df.join(broadcast(map_app),condition1, how='inner')   \r\n",
 					"    joined_df2 = cost_df.join(broadcast(map_app),condition2, how='inner')\r\n",
+					"    print(joined_df2 .count())\r\n",
 					"    #cost_df = joined_df1.join(broadcast(map_app),condition2, how='left')    \r\n",
 					"    joined_df3 = joined_df1.union(joined_df2) \r\n",
-					"    cost_df = cost_df.filter(~(ci_mask)&(appid_mask)).union(joined_df3)\r\n",
+					"    cost_df = cost_df.withColumn(\"AppID\", F.lit(None).cast(\"string\"))\r\n",
+					"    cost_df = cost_df.withColumn(\"ApplicationName\", F.lit(None).cast(\"string\"))\r\n",
+					"    cost_df = cost_df.withColumn('ApplicationName_upper', F.lit(None).cast(\"string\"))\r\n",
+					"    cost_df = cost_df.filter(~(ci_mask&appid_mask)).union(joined_df3)\r\n",
 					"    print(cost_df.count())\r\n",
-					"    display(cost_df.filter((F.col('CostAllocationType')=='CI'))&(F.col('ApplicationName').isNotNull()))\r\n",
+					"    display(cost_df.filter((F.col('CostAllocationType')=='CI')))\r\n",
 					"\r\n",
 					"    # Create Application_Name column based on Application from ServiceNow to start with.\r\n",
 					"    cost_df = cost_df.withColumn('Application_Name',F.col('ApplicationName'))\r\n",
@@ -554,7 +558,7 @@
 					"    print('For those empty ApplicationNames will be replaced by SubscriptionServiceNowApp (Applications from Subscription.json) when CostAllocationTypes are SubscriptionWBS and WBS')\r\n",
 					"    # For those empty ApplicationNames will be replaced by SubscriptionServiceNowApp (Applications from Subscription.json) when CostAllocationTypes are SubscriptionWBS and WBS\r\n",
 					"    # We need two otherwise in the code to avoid any Null/empty value return to Applciation_Name column\r\n",
-					"    ## Olde Code\r\n",
+					"    ## Old Code\r\n",
 					"#   cost_df = cost_df.withColumn('Application_Name',F.when((F.col('CostAllocationType') == \"SubscriptionWBS\") | (F.col('CostAllocationType') == \"WBS\"),\r\n",
 					"#                                                    F.when(F.col('Application_Name').isNull(),F.col('SubscriptionServiceNow-App')).otherwise(F.col('Application_Name')))\\\r\n",
 					"#                                                    .otherwise(F.col('Application_Name')))\r\n",
@@ -592,12 +596,10 @@
 					"                                                    .otherwise(F.col('Application_Name')))\r\n",
 					"\r\n",
 					"    print('For anything that left ApplicationName will be \"Application not defined or not found\".')\r\n",
-					"\r\n",
-					"\r\n",
 					"    # For anything that left ApplicationName will be \"Application not defined or not found\" and For anything that left AppID will be 0.\r\n",
 					"    cost_df = cost_df.na.fill({'AppID': 0, 'Application_Name': 'Application not defined or not found'})\r\n",
 					"\r\n",
-					"    ##  Old COde \r\n",
+					"    ##  Old Code \r\n",
 					"    # For anything that left ApplicationName will be \"Application not defined or not found\".\r\n",
 					"    #cost_df = cost_df.withColumn('Application_Name',F.when(F.col('Application_Name').isNull(),F.lit('Application not defined or not found'))\\\r\n",
 					"    #                                                 .otherwise(F.col('Application_Name')))\r\n",
@@ -619,7 +621,7 @@
 					"    cost_df.cache()\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 499
+				"execution_count": 579
 			},
 			{
 				"cell_type": "code",
@@ -653,7 +655,7 @@
 					"    \r\n",
 					"    return cost_df"
 				],
-				"execution_count": 500
+				"execution_count": 580
 			},
 			{
 				"cell_type": "code",
@@ -684,7 +686,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 501
+				"execution_count": 581
 			},
 			{
 				"cell_type": "code",
@@ -715,7 +717,7 @@
 					"    # IF not able to write to destination path, may use .option('overwriteSchema', 'true') after mode().\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": 502
+				"execution_count": 582
 			},
 			{
 				"cell_type": "code",
@@ -771,7 +773,7 @@
 					"    write_output_file(cost_df, costDestinationfilename)\n",
 					"    print(' ')"
 				],
-				"execution_count": 503
+				"execution_count": 583
 			},
 			{
 				"cell_type": "code",
