@@ -26,17 +26,10 @@ if ($triggers.Count -gt 0) {
     $stoppedTrigger =@()
     foreach ($t in $triggers) {
         Write-Output ("Stopping {0} ..." -f $t.Name)
-        try {
-            $stoppedTrigger += $t.Name
-            $result = Stop-AzSynapseTrigger -WorkspaceName $WorkspaceName -Name $t.name -PassThru
-            Write-Output ("Result of stopping trigger {0}: {1}" -f $t.Name, $result)
-        }
-
-        catch {
-            Write-Output ("Something went wrong with {0}" -f $t.Name)
-            Write-Error $Error[0]
-            Write-Output $_
-        }
+        $stoppedTrigger += $t.Name
+        $result = Stop-AzSynapseTrigger -WorkspaceName $WorkspaceName -Name $t.name -PassThru
+        Write-Output ("Result of stopping trigger {0}: {1}" -f $t.Name, $result)
+        
     }
 
     Write-Output ("Number of stopped triggers {0}" -f $stoppedTrigger.Count)
