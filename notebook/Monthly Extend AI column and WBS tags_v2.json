@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "ef6e7dab-1c40-4e22-b63c-397e2fafaca0"
+				"spark.autotune.trackingId": "3d88a3bb-c979-4495-be32-4a50b186fcbc"
 			}
 		},
 		"metadata": {
@@ -61,12 +61,12 @@
 				},
 				"source": [
 					"# # Input data\n",
-					"#toDate = '20230430'\n",
-					"#fromDate = '20230401'\n",
+					"toDate = '20230531'\n",
+					"fromDate = '20230501'\n",
 					"container = 'usage'\n",
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 19
+				"execution_count": 100
 			},
 			{
 				"cell_type": "code",
@@ -93,7 +93,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": null
+				"execution_count": 101
 			},
 			{
 				"cell_type": "code",
@@ -127,7 +127,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list, appList"
 				],
-				"execution_count": null
+				"execution_count": 102
 			},
 			{
 				"cell_type": "code",
@@ -157,7 +157,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": null
+				"execution_count": 103
 			},
 			{
 				"cell_type": "code",
@@ -199,7 +199,7 @@
 					"    print(cost_df.columns)\r\n",
 					"    return cost_df"
 				],
-				"execution_count": null
+				"execution_count": 104
 			},
 			{
 				"cell_type": "code",
@@ -228,7 +228,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": null
+				"execution_count": 105
 			},
 			{
 				"cell_type": "code",
@@ -263,7 +263,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": null
+				"execution_count": 106
 			},
 			{
 				"cell_type": "code",
@@ -302,7 +302,7 @@
 					"\r\n",
 					"    return subscription_list"
 				],
-				"execution_count": null
+				"execution_count": 107
 			},
 			{
 				"cell_type": "code",
@@ -325,7 +325,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list"
 				],
-				"execution_count": null
+				"execution_count": 108
 			},
 			{
 				"cell_type": "code",
@@ -358,6 +358,24 @@
 					"    print(\"Cost Tags expansion complete\")\r\n",
 					"\r\n",
 					"    return cost_df"
+				],
+				"execution_count": 109
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
 				],
 				"execution_count": null
 			},
@@ -458,7 +476,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": null
+				"execution_count": 110
 			},
 			{
 				"cell_type": "code",
@@ -506,7 +524,7 @@
 					"\r\n",
 					"    # Conduct the merge between Azure cost file and ServiceNow data based on CostAllocationCode and APPID or ApplicationName.\r\n",
 					"    condition1 = (cost_df.CostAllocationCode_upper == map_app.AppID) & (cost_df.CostAllocationType == 'APPID')\r\n",
-					"    condition2 = (cost_df.CostAllocationCode_upper == map_app.ApplicationName) & (cost_df.CostAllocationType == 'CI')\r\n",
+					"    condition2 = (cost_df.CostAllocationCode_upper == map_app.ApplicationName_upper) & (cost_df.CostAllocationType == 'CI')\r\n",
 					"    cost_df = cost_df.join(map_app,(condition1 | condition2),how='left').drop('CostAllocationCode_upper','ApplicationName_upper') \r\n",
 					"\r\n",
 					"    # Create Application_Name column based on Application from ServiceNow to start with.\r\n",
@@ -519,9 +537,11 @@
 					"    print('For those empty ApplicationNames will be replaced by SubscriptionServiceNowApp (Applications from Subscription.json) when CostAllocationTypes are SubscriptionWBS and WBS')\r\n",
 					"    # For those empty ApplicationNames will be replaced by SubscriptionServiceNowApp (Applications from Subscription.json) when CostAllocationTypes are SubscriptionWBS and WBS\r\n",
 					"    # We need two otherwise in the code to avoid any Null/empty value return to Applciation_Name column\r\n",
-					"    cost_df = cost_df.withColumn('Application_Name',F.when((F.col('CostAllocationType') == \"SubscriptionWBS\") | (F.col('CostAllocationType') == \"WBS\"),\r\n",
-					"                                                    F.when(F.col('Application_Name').isNull(),F.col('SubscriptionServiceNow-App')).otherwise(F.col('Application_Name')))\\\r\n",
-					"                                                    .otherwise(F.col('Application_Name')))\r\n",
+					"#    cost_df = cost_df.withColumn('Application_Name',F.when((F.col('CostAllocationType') == \"SubscriptionWBS\") | (F.col('CostAllocationType') == \"WBS\"),\r\n",
+					"#                                                    F.when(F.col('Application_Name').isNull(),F.col('SubscriptionServiceNow-App')).otherwise(F.col('Application_Name')))\\\r\n",
+					"#                                                    .otherwise(F.col('Application_Name')))\r\n",
+					"    cost_df = cost_df.withColumn('Application_Name',F.when(((F.col('CostAllocationType') == \"SubscriptionWBS\") | (F.col('CostAllocationType') == \"WBS\"))&(F.col('Application_Name').isNull()),F.col('SubscriptionServiceNow-App'))\\\r\n",
+					"                                                     .otherwise(F.col('Application_Name')))\\\r\n",
 					"\r\n",
 					"    ## Title : Assign Applications that do not have AppID with AppID from ServiceNow by looking up the applications in ServiceNow.\r\n",
 					"    print(\"Create upper case column for merge purpose.\")\r\n",
@@ -568,7 +588,7 @@
 					"    #display(cost_df.filter(cost_df.Application_Name == \"BIZTALK360\"))\r\n",
 					"    return cost_df"
 				],
-				"execution_count": null
+				"execution_count": 111
 			},
 			{
 				"cell_type": "code",
@@ -628,7 +648,7 @@
 					"    #                                                 .when(ci_mask & F.col('CostAllocationCode').cast('int').isNotNull(), F.col('ApplicationName'))\\\r\n",
 					"    #                                                 .otherwise(F.col('ApplicationName'))).drop('ApplicationName')"
 				],
-				"execution_count": null
+				"execution_count": 112
 			},
 			{
 				"cell_type": "code",
@@ -662,7 +682,7 @@
 					"    \r\n",
 					"    return cost_df"
 				],
-				"execution_count": null
+				"execution_count": 113
 			},
 			{
 				"cell_type": "code",
@@ -683,7 +703,7 @@
 					"    cost_df = expand_cost_tags(cost_df)\r\n",
 					"    subscription_list = expand_subscription_tags(subscription_list)\r\n",
 					"    cost_df, subscription_list = merge_dataframes(cost_df, subscription_list)\r\n",
-					"    cost_df = replace_empty_cost_fields_with_subscription_details(cost_df, appList)\r\n",
+					"    #cost_df = replace_empty_cost_fields_with_subscription_details(cost_df, appList)\r\n",
 					"\r\n",
 					"    print('WBS population complete. Populating application names')\r\n",
 					"\r\n",
@@ -693,7 +713,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": null
+				"execution_count": 114
 			},
 			{
 				"cell_type": "code",
@@ -715,14 +735,16 @@
 					"    cost_df = cost_df.drop('id', 'AdditionalInfo')\n",
 					"    \n",
 					"    print(f'Writing output file to: \"{destinationFilename}\"')\n",
-					"    print(f'Dataframe length is: {cost_df.count()}')\n",
-					"\n",
+					"    #print(f'Dataframe length is: {cost_df.count()}')\n",
+					"    print('start to write to container')\n",
+					"    # Cache the dataframe to accelerate the process to write into container.\n",
+					"    cost_df.cache()\n",
 					"    # Writing the df to the destination path\n",
-					"    cost_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').option('path', destinationFilename).save() # df.coalesce(1) if partition should be 1\n",
+					"    cost_df.write.format('parquet').mode('overwrite').option('path', destinationFilename).save() # df.coalesce(1) if partition should be 1\n",
 					"    # IF not able to write to destination path, may use .option('overwriteSchema', 'true') after mode().\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": null
+				"execution_count": 115
 			},
 			{
 				"cell_type": "code",
@@ -777,6 +799,231 @@
 					"    cost_df = populate_wbs_columns(cost_df, subscription_list, appList)\n",
 					"    write_output_file(cost_df, costDestinationfilename)\n",
 					"    print(' ')"
+				],
+				"execution_count": 116
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"#cost_df.count()"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"#test_df = cost_df.limit(30000)"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"#display(cost_df)"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"#cost_df.schema"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					" cost_df.write.format('parquet').mode('overwrite').option('path', \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20230501-20230531/Extended_v2_ACMMonthlyAmortizedCost_20230501-20230531.parquet\").save()"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"#test_df.write.format('parquet').mode('overwrite').option('path', \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20180501-20180531/Extended_v2_ACMMonthlyAmortizedCost_20180501-20180531.parquet\").save()"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"optimized_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20230501-20230531/Extended_v2_ACMMonthlyAmortizedCost_20230501-20230531.parquet\" \r\n",
+					"#cost_df = cost_df.withColumn('Date_partition',F.col('Date'))\r\n",
+					"cost_df = cost_df.withColumn('SubscriptionId_partition',F.col('SubscriptionId'))\r\n",
+					"cost_df.write.format('parquet').mode('overwrite').partitionBy('SubscriptionId_partition').option('overwriteSchema', 'true').save(optimized_path)"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20230501-20230531/ACMMonthlyAmortizedCost_20230501-20230531.parquet\"\r\n",
+					"print(f'Loading Cost file list - {path}')\r\n",
+					"\r\n",
+					"cost_df = spark.read.format('parquet').load(path)\r\n",
+					""
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cost_df.count()"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(cost_df)"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					" cost_df.write.format('parquet').mode('overwrite').option('path', \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20230501-20230531/Extended_v2_ACMMonthlyAmortizedCost_20230501-20230531.parquet\").save()"
 				],
 				"execution_count": null
 			}
