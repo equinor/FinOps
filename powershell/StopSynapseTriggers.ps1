@@ -32,10 +32,9 @@ if ($triggers.Count -gt 0) {
             Write-Output ("Result of stopping trigger {0}: {1}" -f $t.Name, $result)
         }
         catch {
-            # Capture and display the error message
+            Write-Output ("Something went wrong with {0}" -f $t.Name)
             $errorMessage = $_.Exception.Message
-            Write-Host "Error: $errorMessage"
-            exit 1  # Indicate a failure to GitHub Actions
+            Write-Error "Error: $errorMessage"
         }
         
     }

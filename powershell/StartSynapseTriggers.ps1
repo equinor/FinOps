@@ -33,9 +33,9 @@ if ($triggers.Count -gt 0) {
         }
 
         catch {
-            Write-Output ("Something went wrong with {0}" -f $t.Name)
-            Write-Error $Error[0]
-            Write-Output $_
+            # Capture and display the error message
+            $errorMessage = $_.Exception.Message
+            Write-Error "Error: $errorMessage"
         }
     }
 
