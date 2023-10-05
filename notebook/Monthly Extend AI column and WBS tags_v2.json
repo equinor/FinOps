@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "d343d185-1e1b-4e85-a309-5134f16e9b45"
+				"spark.autotune.trackingId": "f0e23211-c844-435b-af9b-9b3879744f9d"
 			}
 		},
 		"metadata": {
@@ -66,7 +66,7 @@
 					"container = 'usage'\n",
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 647
+				"execution_count": 695
 			},
 			{
 				"cell_type": "code",
@@ -93,7 +93,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 648
+				"execution_count": 696
 			},
 			{
 				"cell_type": "code",
@@ -127,7 +127,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list, appList"
 				],
-				"execution_count": 649
+				"execution_count": 697
 			},
 			{
 				"cell_type": "code",
@@ -157,7 +157,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 650
+				"execution_count": 698
 			},
 			{
 				"cell_type": "code",
@@ -199,7 +199,7 @@
 					"    print(cost_df.columns)\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 651
+				"execution_count": 699
 			},
 			{
 				"cell_type": "code",
@@ -228,7 +228,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 652
+				"execution_count": 700
 			},
 			{
 				"cell_type": "code",
@@ -263,7 +263,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 653
+				"execution_count": 701
 			},
 			{
 				"cell_type": "code",
@@ -302,7 +302,7 @@
 					"\r\n",
 					"    return subscription_list"
 				],
-				"execution_count": 654
+				"execution_count": 702
 			},
 			{
 				"cell_type": "code",
@@ -325,7 +325,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list"
 				],
-				"execution_count": 655
+				"execution_count": 703
 			},
 			{
 				"cell_type": "code",
@@ -359,7 +359,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 656
+				"execution_count": 704
 			},
 			{
 				"cell_type": "code",
@@ -458,7 +458,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 657
+				"execution_count": 705
 			},
 			{
 				"cell_type": "code",
@@ -517,8 +517,12 @@
 					"\r\n",
 					"    # Tobias can take a look. \r\n",
 					"    # Using the following code to replace the code above. \r\n",
+					"\r\n",
 					"    print(cost_df.count())\r\n",
 					"    joined_df1 = cost_df.join(broadcast(map_app),condition1, how='inner')\r\n",
+					"    cost_df = cost_df.withColumn(\"AppID\", F.lit(None).cast(\"string\"))\r\n",
+					"    cost_df = cost_df.withColumn(\"ApplicationName\", F.lit(None).cast(\"string\"))\r\n",
+					"    cost_df = cost_df.withColumn('ApplicationName_upper', F.lit(None).cast(\"string\"))\r\n",
 					"    cost_df = cost_df.exceptAll(joined_df1)\r\n",
 					"    print(cost_df.count())\r\n",
 					"    joined_df2 = cost_df.join(broadcast(map_app),condition2, how='inner')\r\n",
@@ -526,9 +530,7 @@
 					"    print(cost_df.count())\r\n",
 					"    #cost_df = joined_df1.join(broadcast(map_app),condition2, how='left')    \r\n",
 					"    joined_df3 = joined_df1.union(joined_df2) \r\n",
-					"    cost_df = cost_df.withColumn(\"AppID\", F.lit(None).cast(\"string\"))\r\n",
-					"    cost_df = cost_df.withColumn(\"ApplicationName\", F.lit(None).cast(\"string\"))\r\n",
-					"    cost_df = cost_df.withColumn('ApplicationName_upper', F.lit(None).cast(\"string\"))\r\n",
+					" \r\n",
 					"    cost_df = cost_df.union(joined_df3)\r\n",
 					"    print(cost_df.count())\r\n",
 					"    display(cost_df.filter((F.col('CostAllocationType')=='CI')))\r\n",
@@ -606,7 +608,7 @@
 					"    cost_df.cache()\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 658
+				"execution_count": 706
 			},
 			{
 				"cell_type": "code",
@@ -640,7 +642,7 @@
 					"    \r\n",
 					"    return cost_df"
 				],
-				"execution_count": 659
+				"execution_count": 707
 			},
 			{
 				"cell_type": "code",
@@ -671,7 +673,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 660
+				"execution_count": 708
 			},
 			{
 				"cell_type": "code",
@@ -702,7 +704,7 @@
 					"    # IF not able to write to destination path, may use .option('overwriteSchema', 'true') after mode().\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": 661
+				"execution_count": 709
 			},
 			{
 				"cell_type": "code",
@@ -758,7 +760,7 @@
 					"    write_output_file(cost_df, costDestinationfilename)\n",
 					"    print(' ')"
 				],
-				"execution_count": 662
+				"execution_count": 710
 			},
 			{
 				"cell_type": "code",
