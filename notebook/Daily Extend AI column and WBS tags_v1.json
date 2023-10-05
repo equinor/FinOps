@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "655ae082-60c4-40d0-9829-1d9ed2e7709d"
+				"spark.autotune.trackingId": "0d3fbaaa-5731-4d9d-a341-4c676086703a"
 			}
 		},
 		"metadata": {
@@ -407,7 +407,7 @@
 					"    # Applying valid AppIDs as Active WBS'\r\n",
 					"    # If the CostAllocationCode is empty, we fill/replace the column ActiveWBS with Operational WBS in the AppList\r\n",
 					"    map_app = appList.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('AppID', 'OperationalWBS')\r\n",
-					"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.AppID, how='left')\r\n",
+					"    joined_df = cost_df.join(map_app, (cost_df.CostAllocationType == 'APPID') & (cost_df.CostAllocationCode == map_app.AppID), how='left')\r\n",
 					"    cost_df = joined_df.withColumn('ActiveWBS', F.when(F.col('ActiveWBS').isNull(), F.col('OperationalWBS')).otherwise(F.col('ActiveWBS')))\r\n",
 					"    cost_df = cost_df.drop('OperationalWBS')\r\n",
 					"\r\n",
@@ -416,7 +416,7 @@
 					"    map_app = appList.select('ApplicationName', 'OperationalWBS')\r\n",
 					"    # Apply join with case insensitivity\r\n",
 					"    map_app = map_app.withColumn('ApplicationName_upper',F.upper(F.col('ApplicationName')))\r\n",
-					"    joined_df = cost_df.join(map_app, cost_df.CostAllocationCode == map_app.ApplicationName_upper, how='left').drop('ApplicationName_upper')\r\n",
+					"    joined_df = cost_df.join(map_app, (cost_df.CostAllocationType == 'CI') & (cost_df.CostAllocationCode == map_app.ApplicationName_upper), how='left').drop('ApplicationName_upper')\r\n",
 					"    cost_df = joined_df.withColumn('ActiveWBS', F.when(F.col('ActiveWBS').isNull(), F.col('OperationalWBS')).otherwise(F.col('ActiveWBS')))\r\n",
 					"    \r\n",
 					"    # Alternative 1 remove \"AppID\" \r\n",
