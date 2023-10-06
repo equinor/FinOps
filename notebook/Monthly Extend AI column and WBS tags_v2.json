@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "14714155-f1a1-4a77-b4f8-14eeedb6722e"
+				"spark.autotune.trackingId": "6809ecd7-389a-486c-843e-5c8de494dd93"
 			}
 		},
 		"metadata": {
@@ -523,18 +523,17 @@
 					"\r\n",
 					"    # Fill empty AppID with AppID from ServiceNow\r\n",
 					"    cost_df = cost_df.withColumn('AppID',F.when(F.col('AppID').isNull(),F.col('ServiceNowAppID'))\\\r\n",
-					"                                          .otherwise(F.col('AppID'))) # Maybe use cost_df = cost_df.na.fill().\r\n",
+					"                                          .otherwise(F.col('AppID'))) \r\n",
 					"\r\n",
 					"    # Remove unused Columns\r\n",
 					"    cost_df = cost_df.drop('Application_Name_upper','ApplicationName','ServiceNowAppID','ServiceNowApplicationName_upper','ApplicationName_upper')\r\n",
 					"\r\n",
-					"    print('Application Name is not found when SubscriptionServiceNow-App is equal to Application_name and AppID is empty')\r\n",
+					"\r\n",
 					"    # Application Name will be \"Application not defined or not found\" when SubscriptionServiceNow-App is equal to Application_name as well as AppID is empty.\r\n",
 					"    # This indicates that application from subscription.json file can not be found in ServiceNow. One of Application example is DATAHUB - MARKETING AND SUPPLY, not found in ServiceNow.\r\n",
 					"    cost_df = cost_df.withColumn('Application_Name', F.when((F.upper(F.col('SubscriptionServiceNow-App'))==F.upper(F.col('Application_Name'))) & (F.col('AppID').isNull()),F.lit('Application not defined or not found'))\\\r\n",
 					"                                                    .otherwise(F.col('Application_Name')))\r\n",
 					"\r\n",
-					"    print('For anything that left ApplicationName will be \"Application not defined or not found\".')\r\n",
 					"    # For anything that left ApplicationName will be \"Application not defined or not found\" and For anything that left AppID will be 0.\r\n",
 					"    cost_df = cost_df.na.fill({'AppID': 0, 'Application_Name': 'Application not defined or not found'})\r\n",
 					"\r\n",
@@ -589,11 +588,8 @@
 					"    subscription_list = expand_subscription_tags(subscription_list)\r\n",
 					"    cost_df, subscription_list = merge_dataframes(cost_df, subscription_list)\r\n",
 					"    cost_df = replace_empty_cost_fields_with_subscription_details(cost_df, appList)\r\n",
-					"\r\n",
 					"    print('WBS population complete. Populating application names')\r\n",
-					"\r\n",
-					"    cost_df = get_application_names(cost_df, appList)\r\n",
-					"    \r\n",
+					"    cost_df = get_application_names(cost_df, appList)    \r\n",
 					"    print('App-name population complete')\r\n",
 					"\r\n",
 					"    return cost_df"
@@ -616,10 +612,7 @@
 				"source": [
 					"def write_output_file(cost_df, destinationFilename):\n",
 					"\n",
-					"    # Dropping some columns before writing the output\n",
 					"    cost_df = cost_df.drop('id', 'AdditionalInfo') \n",
-					"    print(f'Writing output file to: \"{destinationFilename}\"')\n",
-					"    #print(f'Dataframe length is: {cost_df.count()}')\n",
 					"    print('start to write to container')\n",
 					"    cost_df.write.format('parquet').mode('overwrite').option('path', destinationFilename).save()\n",
 					"    print('File write complete!')"
