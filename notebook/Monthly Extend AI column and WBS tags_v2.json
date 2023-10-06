@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "1a732e92-3aed-4701-a0e5-53a2638852a6"
+				"spark.autotune.trackingId": "5fa098b9-2590-4027-a5b0-a2cfec6c36cd"
 			}
 		},
 		"metadata": {
@@ -66,7 +66,7 @@
 					"container = 'usage'\n",
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 1
+				"execution_count": 71
 			},
 			{
 				"cell_type": "code",
@@ -93,7 +93,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 2
+				"execution_count": 72
 			},
 			{
 				"cell_type": "code",
@@ -127,7 +127,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list, appList"
 				],
-				"execution_count": 3
+				"execution_count": 73
 			},
 			{
 				"cell_type": "code",
@@ -157,7 +157,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 4
+				"execution_count": 74
 			},
 			{
 				"cell_type": "code",
@@ -199,7 +199,7 @@
 					"    # print(cost_df.columns)\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 5
+				"execution_count": 75
 			},
 			{
 				"cell_type": "code",
@@ -228,7 +228,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 6
+				"execution_count": 76
 			},
 			{
 				"cell_type": "code",
@@ -263,7 +263,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 7
+				"execution_count": 77
 			},
 			{
 				"cell_type": "code",
@@ -302,7 +302,7 @@
 					"\r\n",
 					"    return subscription_list"
 				],
-				"execution_count": 8
+				"execution_count": 78
 			},
 			{
 				"cell_type": "code",
@@ -325,7 +325,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list"
 				],
-				"execution_count": 9
+				"execution_count": 79
 			},
 			{
 				"cell_type": "code",
@@ -359,7 +359,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 10
+				"execution_count": 80
 			},
 			{
 				"cell_type": "code",
@@ -458,7 +458,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 11
+				"execution_count": 81
 			},
 			{
 				"cell_type": "code",
@@ -475,19 +475,7 @@
 				},
 				"source": [
 					"def get_application_names(cost_df, appList):\r\n",
-					"    # For Validation purpose and add codes for testing CostAllocationCode and CostAllocationType typo.\r\n",
-					"    # Scenairo 1: CostAllocationType is APPID and CostAllocation is PETRAL\r\n",
-					"    # Scenairo 2: CostAllocationType is CI and CostAllocation is 90009\r\n",
-					"    # Select the first row for testing\r\n",
-					"    #test_row = cost_df.limit(1)\r\n",
-					"    # Update values in the CostAllocationType and CostAllocationCode\r\n",
-					"    #test_row = test_row.withColumn('CostAllocationType',F.lit(\"APPID\"))\r\n",
-					"    #test_row = test_row.withColumn('CostAllocationCode',F.lit(\"PETRAL\"))\r\n",
-					"    #test_row = test_row.withColumn('CostAllocationType',F.lit(\"CI\"))\r\n",
-					"    #test_row = test_row.withColumn('CostAllocationCode',F.lit(\"90009\"))\r\n",
-					"    #test_row = test_row.withColumn('CostAllocationCode',F.lit(90009))\r\n",
-					"    # Create a new DataFrame with the updated row and union it with the Cost_df\r\n",
-					"    #cost_df = cost_df.union(test_row)\r\n",
+					"\r\n",
 					"\r\n",
 					"    # Masks for CI and AppID\r\n",
 					"    ci_mask = F.col('CostAllocationType') == 'CI'\r\n",
@@ -550,18 +538,10 @@
 					"    # For anything that left ApplicationName will be \"Application not defined or not found\" and For anything that left AppID will be 0.\r\n",
 					"    cost_df = cost_df.na.fill({'AppID': 0, 'Application_Name': 'Application not defined or not found'})\r\n",
 					"\r\n",
-					"    #display(cost_df)\r\n",
-					"\r\n",
-					"    # Those codes are used for the future.\r\n",
-					"    #display(cost_df.filter(cost_df.CostAllocationCode == \"PETRAL\"))\r\n",
-					"    #display(cost_df.filter(cost_df.CostAllocationCode == \"90009\"))\r\n",
-					"    #display(cost_df.filter(cost_df.CostAllocationCode == 90009))\r\n",
-					"    #display(cost_df.filter(cost_df.Application_Name == \"BIZTALK360\"))\r\n",
-					"\r\n",
 					"    return cost_df\r\n",
 					""
 				],
-				"execution_count": 27
+				"execution_count": 82
 			},
 			{
 				"cell_type": "code",
@@ -595,7 +575,7 @@
 					"    \r\n",
 					"    return cost_df"
 				],
-				"execution_count": 16
+				"execution_count": 83
 			},
 			{
 				"cell_type": "code",
@@ -626,7 +606,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 17
+				"execution_count": 84
 			},
 			{
 				"cell_type": "code",
@@ -657,7 +637,7 @@
 					"    # IF not able to write to destination path, may use .option('overwriteSchema', 'true') after mode().\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": 18
+				"execution_count": 85
 			},
 			{
 				"cell_type": "code",
@@ -713,7 +693,7 @@
 					"    write_output_file(cost_df, costDestinationfilename)\n",
 					"    print(' ')"
 				],
-				"execution_count": 28
+				"execution_count": 86
 			}
 		]
 	}
