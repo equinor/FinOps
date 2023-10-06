@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "5fa098b9-2590-4027-a5b0-a2cfec6c36cd"
+				"spark.autotune.trackingId": "adb8065c-c8c8-4ab5-8bfd-781da7c58245"
 			}
 		},
 		"metadata": {
@@ -560,14 +560,6 @@
 					"def expand_ai_column(cost_df):\r\n",
 					"\r\n",
 					"    warnings.simplefilter(action='ignore', category=FutureWarning)\r\n",
-					"\r\n",
-					"    # actualCostSourcefilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + actualCostPath + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\r\n",
-					"    # amortizedCostSourcefilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\r\n",
-					"\r\n",
-					"    # actualCostDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + actualCostPath + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\r\n",
-					"    # amortizedCostDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + amortizedCostPath + '/' + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\r\n",
-					"\r\n",
-					"    # cost_df = load_source(actualCostSourcefilename)\r\n",
 					"    cost_df = populate_columns(cost_df)\r\n",
 					"    cost_df = extend_additional_info(cost_df)\r\n",
 					"    cost_df = AHB_column(cost_df)\r\n",
@@ -656,8 +648,7 @@
 				"source": [
 					"print(f'fromDate: {fromDate}')\n",
 					"print(f'toDate: {toDate}')\n",
-					"#reportTypes = ['ActualCost', 'AmortizedCost']\n",
-					"reportTypes = ['AmortizedCost']\n",
+					"reportTypes = ['ActualCost', 'AmortizedCost']\n",
 					"year = toDate[:4]\n",
 					"month = toDate[4:6]\n",
 					"day = toDate[6:]\n",
