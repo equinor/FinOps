@@ -73,7 +73,7 @@
 			"type": "string",
 			"defaultValue": "sprkpool33large"
 		},
-		"NewServiceNow_pipelineStorageAccountParameter": {
+		"NewServiceNow_pipelineStorageAccountVariable": {
 			"type": "string",
 			"defaultValue": "s037costmgmt"
 		},
@@ -17801,7 +17801,7 @@
 							"parameters": {
 								"storageAccount": {
 									"value": {
-										"value": "@pipeline().parameters.storageAccount",
+										"value": "@variables('storageAccount')",
 										"type": "Expression"
 									},
 									"type": "string"
@@ -17827,10 +17827,10 @@
 					"elapsedTimeMetric": {},
 					"cancelAfter": {}
 				},
-				"parameters": {
+				"variables": {
 					"storageAccount": {
-						"type": "string",
-						"defaultValue": "[parameters('NewServiceNow_pipelineStorageAccountParameter')]"
+						"type": "String",
+						"defaultValue": "[parameters('NewServiceNow_pipelineStorageAccountVariable')]"
 					}
 				},
 				"folder": {
@@ -29047,7 +29047,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "c05a8755-70d9-4c7f-ad17-54fc23320e98"
+						"spark.autotune.trackingId": "4ce2494b-be9b-4a98-a8eb-7426e3f6f11d"
 					}
 				},
 				"metadata": {
@@ -29072,8 +29072,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
