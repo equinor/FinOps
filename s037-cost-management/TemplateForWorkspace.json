@@ -273,10 +273,6 @@
 			"type": "string",
 			"defaultValue": "https://graph.microsoft.com/v1.0/"
 		},
-		"NewServiceNow_linkedServiceConnectionString": {
-			"type": "secureString",
-			"metadata": "Secure string for 'linkedServiceConnectionString' of 'NewServiceNow'"
-		},
 		"Pricesheet API_linkedServiceUrl": {
 			"type": "string",
 			"defaultValue": "@{concat('https://consumption.azure.com/v3/enrollments/57950773/billingPeriods/',formatDateTime(utcNow(),'yyyyMM'),'/pricesheet')}"
@@ -304,10 +300,6 @@
 		"omniaacdcdlsprod_linkedServiceUrl": {
 			"type": "string",
 			"defaultValue": "https://omniaacdcdlsprod.dfs.core.windows.net"
-		},
-		"s037-cost-management-WorkspaceDefaultSqlServer_linkedServiceConnectionString": {
-			"type": "secureString",
-			"metadata": "Secure string for 'linkedServiceConnectionString' of 's037-cost-management-WorkspaceDefaultSqlServer'"
 		},
 		"s037-cost-management-WorkspaceDefaultStorage_linkedServiceUrl": {
 			"type": "string",
@@ -22570,7 +22562,7 @@
 				"typeProperties": {
 					"connectionString": {
 						"type": "SecureString",
-						"value": "[parameters('NewServiceNow_linkedServiceConnectionString')]"
+						"value": "[parameters('NewServiceNow_connectionString')]"
 					},
 					"servicePrincipalId": "4c1cded2-f7a7-4c00-8d65-0a3287cbd682",
 					"servicePrincipalKey": {
@@ -22852,7 +22844,7 @@
 				"typeProperties": {
 					"connectionString": {
 						"type": "SecureString",
-						"value": "[parameters('s037-cost-management-WorkspaceDefaultSqlServer_linkedServiceConnectionString')]"
+						"value": "[parameters('s037-cost-management-WorkspaceDefaultSqlServer_connectionString')]"
 					}
 				},
 				"connectVia": {
@@ -26093,6 +26085,46 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/SQL script 54')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "SELECT TOP (100) [InvoiceSectionName]\n,[AccountName]\n,[AccountOwnerId]\n,[SubscriptionId]\n,[SubscriptionName]\n,[ResourceGroup]\n,[Report_Date]\n,[SubscriptionWBS]\n,[SubscriptionServiceNow-App]\n,[ActiveWBSReason]\n,[ActiveWBS]\n,[AppID]\n,[ApplicationName]\n,[ai_ConsumedQuantity]\n,[ai_DatabaseName]\n,[AHB_CPUs]\n,[Instance_Name]\n,[CostAllocationType]\n,[CostAllocationCode]\n,[ai_VMApplicationName]\n,[ai_VMProperties]\n,[ai_VCPUs]\n,[ai_AHB]\n,[ai_vCores]\n,[ai_RINormalizationRatio]\n,[Azure_Hybrid_Benefit]\n,[IsRIUsage]\n,[ai_UsageType]\n,[ai_ImageType]\n,[ai_ServiceType]\n,[ai_VMName]\n,[PayGPrice]\n,[PlanName]\n,[ServiceFamily]\n,[CostAllocationRuleName]\n,[benefitId]\n,[benefitName]\n,[BillingPeriodEndDate]\n,[BillingProfileId]\n,[BillingProfileName]\n,[InvoiceSectionId]\n,[IsAzureCreditEligible]\n,[PartNumber]\n,[PricingModel]\n,[AvailabilityZone]\n,[BillingAccountId]\n,[BillingAccountName]\n,[BillingCurrencyCode]\n,[BillingPeriodStartDate]\n,[ProductOrderName]\n,[Term]\n,[PublisherType]\n,[PublisherName]\n,[ChargeType]\n,[Frequency]\n,[ServiceInfo2]\n,[ResourceName]\n,[ReservationId]\n,[ReservationName]\n,[UnitPrice]\n,[ProductOrderId]\n,[CostCenter]\n,[ConsumedService]\n,[ResourceId]\n,[Tags]\n,[OfferId]\n,[ServiceInfo1]\n,[MeterName]\n,[MeterRegion]\n,[UnitOfMeasure]\n,[Quantity]\n,[EffectivePrice]\n,[CostInBillingCurrency]\n,[ResourceLocation]\n,[Date]\n,[ProductName]\n,[MeterCategory]\n,[MeterSubCategory]\n,[MeterId]\n FROM [dbo].[tsc_ACMMonthlyAmortizedCost_overview_Oneyear]",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQL script 55')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "SELECT TOP (100) [SubscriptionId]\n,[ApplicationName]\n,[SubscriptionName]\n,[CostCenter]\n,[ResourceGroup]\n,[ResourceLocation]\n,[CostInKroner]\n,[SubscriptionServiceNow-App]\n,[ActiveWBS]\n,[CostAllocationType]\n,[Date]\n,[ResourceName]\n,[MeterName]\n,[MeterCategory]\n,[MeterSubCategory]\n,[Report_Date]\n,[TotalQuantity]\n FROM [dbo].[tsc_ACMMonthlyAmortizedCost_overview_Threeyears]",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/Saving Plan Usage - Actual Cost')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
@@ -26213,7 +26245,7 @@
 					"name": "SQLScriptsInProduction"
 				},
 				"content": {
-					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW tsc_ServiceNowApplication\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/applications/ServiceNowApplication.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW tsc_ServiceNowApplication\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/applications/ServiceNow-Application-List-Extended.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
 					"metadata": {
 						"language": "sql"
 					},
@@ -33482,7 +33514,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "d6a10d6a-5b53-43ed-9ae5-39e934eac7f6"
+						"spark.autotune.trackingId": "6a9326be-5ee3-42a8-b3dd-521d9af012e3"
 					}
 				},
 				"metadata": {
@@ -33552,7 +33584,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 13
 					},
 					{
 						"cell_type": "markdown",
@@ -33595,7 +33627,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 5
+						"execution_count": 14
 					},
 					{
 						"cell_type": "markdown",
@@ -33650,7 +33682,7 @@
 							"df_schema_extended = df_schema_extended.withColumn('Report_Date_Partition',lit('') )"
 						],
 						"outputs": [],
-						"execution_count": 6
+						"execution_count": 15
 					},
 					{
 						"cell_type": "code",
@@ -33670,7 +33702,7 @@
 							"len(df_schema_extended.columns)"
 						],
 						"outputs": [],
-						"execution_count": 7
+						"execution_count": 16
 					},
 					{
 						"cell_type": "code",
@@ -33692,7 +33724,7 @@
 							"#df_schema_extended = spark.createDataFrame(df_schema_extended_pd)"
 						],
 						"outputs": [],
-						"execution_count": 8
+						"execution_count": 17
 					},
 					{
 						"cell_type": "markdown",
@@ -33768,7 +33800,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 9
+						"execution_count": 18
 					},
 					{
 						"cell_type": "markdown",
@@ -33801,7 +33833,7 @@
 							"df = df.withColumn(\"Report_Date\", col(\"Report_Date\").cast(\"timestamp\"))"
 						],
 						"outputs": [],
-						"execution_count": 10
+						"execution_count": 19
 					},
 					{
 						"cell_type": "code",
@@ -33833,7 +33865,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 11
+						"execution_count": 20
 					},
 					{
 						"cell_type": "code",
@@ -33856,7 +33888,7 @@
 							"#display(df.filter((F.col('ApplicationName')).contains('Unknown')))"
 						],
 						"outputs": [],
-						"execution_count": 12
+						"execution_count": 21
 					},
 					{
 						"cell_type": "markdown",
@@ -33892,7 +33924,7 @@
 							"df.write.format('parquet').mode('overwrite').partitionBy('Report_Date_Partition').option('overwriteSchema', 'true').save(optimized_path)"
 						],
 						"outputs": [],
-						"execution_count": 13
+						"execution_count": 22
 					},
 					{
 						"cell_type": "markdown",
@@ -33925,7 +33957,7 @@
 							"spark.catalog.clearCache()"
 						],
 						"outputs": [],
-						"execution_count": 14
+						"execution_count": 23
 					}
 				]
 			},
@@ -33957,7 +33989,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "f3fcdbf0-469a-4fc5-80da-b05ab1e403f1"
+						"spark.autotune.trackingId": "af06cdaf-58f7-41b4-b467-6ea7730bd262"
 					}
 				},
 				"metadata": {
@@ -33982,7 +34014,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -34028,7 +34061,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 19
 					},
 					{
 						"cell_type": "markdown",
@@ -34071,7 +34104,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 30
+						"execution_count": 20
 					},
 					{
 						"cell_type": "markdown",
@@ -34127,7 +34160,7 @@
 							"df_schema_extended = df_schema_extended.withColumn('Report_Date_Partition',lit('') )"
 						],
 						"outputs": [],
-						"execution_count": 31
+						"execution_count": 21
 					},
 					{
 						"cell_type": "code",
@@ -34147,7 +34180,7 @@
 							"len(df_schema_extended.columns)"
 						],
 						"outputs": [],
-						"execution_count": 32
+						"execution_count": 22
 					},
 					{
 						"cell_type": "code",
@@ -34168,7 +34201,7 @@
 							"#df_schema_extended = spark.createDataFrame(df_schema_extended_pd)"
 						],
 						"outputs": [],
-						"execution_count": 33
+						"execution_count": 23
 					},
 					{
 						"cell_type": "markdown",
@@ -34243,7 +34276,7 @@
 							"                        print(len(df_temp.columns),len(df.columns))"
 						],
 						"outputs": [],
-						"execution_count": 34
+						"execution_count": 24
 					},
 					{
 						"cell_type": "markdown",
@@ -34289,7 +34322,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 35
+						"execution_count": 25
 					},
 					{
 						"cell_type": "code",
@@ -34313,7 +34346,7 @@
 							"#display(df.filter((F.col('ApplicationName')).contains('Unknown')))"
 						],
 						"outputs": [],
-						"execution_count": 36
+						"execution_count": 26
 					},
 					{
 						"cell_type": "markdown",
@@ -34346,10 +34379,10 @@
 						},
 						"source": [
 							"# Aggregate the data\r\n",
-							"df_agg = df.groupBy('SubscriptionId','ApplicationName','SubscriptionName','CostCenter','ResourceGroup','ResourceLocation','ResourceName','MeterName','MeterCategory','MeterSubCategory','Report_Date','Report_Date_Partition','SubscriptionServiceNow-App','ActiveWBS','CostAllocationType','Date').agg(F.sum('Quantity').alias('TotalQuantity'),F.sum('CostInBillingCurrency').alias('CostInKroner'))"
+							"df_agg = df.groupBy('SubscriptionId','ApplicationName','SubscriptionName','CostCenter','ResourceGroup','ResourceLocation','ResourceName','MeterName','MeterCategory','MeterSubCategory','Report_Date','Report_Date_Partition','SubscriptionServiceNow-App','ActiveWBS','CostAllocationType','AppID','Date').agg(F.sum('Quantity').alias('TotalQuantity'),F.sum('CostInBillingCurrency').alias('CostInKroner'))"
 						],
 						"outputs": [],
-						"execution_count": 37
+						"execution_count": 27
 					},
 					{
 						"cell_type": "code",
@@ -34369,7 +34402,7 @@
 							"df_agg = df_agg.withColumn(\"Report_Date_Partition\", col(\"Report_Date_Partition\").cast(\"timestamp\"))"
 						],
 						"outputs": [],
-						"execution_count": 38
+						"execution_count": 28
 					},
 					{
 						"cell_type": "code",
@@ -34390,7 +34423,7 @@
 							"df_agg = df_agg.withColumn(\"month_partition\", month(df_agg[\"Report_Date_Partition\"]))"
 						],
 						"outputs": [],
-						"execution_count": 39
+						"execution_count": 29
 					},
 					{
 						"cell_type": "markdown",
@@ -34424,7 +34457,7 @@
 							"print(\"The number of the rows in the aggregated dataframe:\", df_agg.count())"
 						],
 						"outputs": [],
-						"execution_count": 40
+						"execution_count": 30
 					},
 					{
 						"cell_type": "code",
@@ -34446,11 +34479,11 @@
 							" 'TotalQuantity',\r\n",
 							" 'CostInKroner',\r\n",
 							" 'year_partition',\r\n",
-							" 'month_partition','SubscriptionServiceNow-App','ActiveWBS','CostAllocationType','Date']\r\n",
+							" 'month_partition','SubscriptionServiceNow-App','ActiveWBS','CostAllocationType','AppID','Date']\r\n",
 							"df_agg = df_agg.select(*selected_columns)"
 						],
 						"outputs": [],
-						"execution_count": 41
+						"execution_count": 31
 					},
 					{
 						"cell_type": "code",
@@ -34470,7 +34503,7 @@
 							"df_agg.groupBy(\"ApplicationName\").count().orderBy(\"count\", ascending=False).show()"
 						],
 						"outputs": [],
-						"execution_count": 42
+						"execution_count": 32
 					},
 					{
 						"cell_type": "code",
@@ -34490,10 +34523,10 @@
 							"#df_agg.printSchema()\r\n",
 							"#print(\"The number of the rows in the aggregated dataframe:\", df_agg.count())\r\n",
 							"#display(df_agg)\r\n",
-							"#display(df_agg)"
+							"# display(df_agg)"
 						],
 						"outputs": [],
-						"execution_count": 43
+						"execution_count": 36
 					},
 					{
 						"cell_type": "markdown",
@@ -34532,7 +34565,7 @@
 							"#df_agg.write.format('parquet').mode('overwrite').partitionBy('Report_date).option('overwriteSchema', 'true').save(optimized_path)"
 						],
 						"outputs": [],
-						"execution_count": 44
+						"execution_count": 34
 					},
 					{
 						"cell_type": "markdown",
@@ -34565,7 +34598,7 @@
 							"spark.catalog.clearCache()"
 						],
 						"outputs": [],
-						"execution_count": 45
+						"execution_count": 35
 					}
 				]
 			},
