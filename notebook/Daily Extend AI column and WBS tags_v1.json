@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "dbb60b96-e6ed-4270-8578-a52247d0bd64"
+				"spark.autotune.trackingId": "720d4626-866e-43ac-a04c-7c324f3de938"
 			}
 		},
 		"metadata": {
@@ -61,12 +61,12 @@
 				},
 				"source": [
 					"# Input data\n",
-					"toDate = '20230531'\n",
-					"fromDate = '20230501'\n",
+					"toDate = '20231031'\n",
+					"fromDate = '20231001'\n",
 					"container = 'usage'\n",
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 33
+				"execution_count": 17
 			},
 			{
 				"cell_type": "code",
@@ -93,7 +93,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 34
+				"execution_count": 18
 			},
 			{
 				"cell_type": "code",
@@ -132,7 +132,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list, appList"
 				],
-				"execution_count": 35
+				"execution_count": 19
 			},
 			{
 				"cell_type": "code",
@@ -162,7 +162,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 36
+				"execution_count": 20
 			},
 			{
 				"cell_type": "code",
@@ -203,7 +203,7 @@
 					"        cost_df = cost_df.withColumn('ai_' + col, F.coalesce(F.col(f'AdditionalInfo.{col}'), F.lit(None)))\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 37
+				"execution_count": 21
 			},
 			{
 				"cell_type": "code",
@@ -232,7 +232,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 38
+				"execution_count": 22
 			},
 			{
 				"cell_type": "code",
@@ -267,7 +267,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 39
+				"execution_count": 23
 			},
 			{
 				"cell_type": "code",
@@ -304,7 +304,7 @@
 					"\r\n",
 					"    return subscription_list"
 				],
-				"execution_count": 40
+				"execution_count": 24
 			},
 			{
 				"cell_type": "code",
@@ -327,7 +327,7 @@
 					"\r\n",
 					"    return cost_df, subscription_list"
 				],
-				"execution_count": 41
+				"execution_count": 25
 			},
 			{
 				"cell_type": "code",
@@ -361,7 +361,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 42
+				"execution_count": 26
 			},
 			{
 				"cell_type": "code",
@@ -460,7 +460,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 43
+				"execution_count": 27
 			},
 			{
 				"cell_type": "code",
@@ -540,7 +540,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 44
+				"execution_count": 28
 			},
 			{
 				"cell_type": "code",
@@ -566,7 +566,7 @@
 					"    \r\n",
 					"    return cost_df"
 				],
-				"execution_count": 45
+				"execution_count": 29
 			},
 			{
 				"cell_type": "code",
@@ -594,7 +594,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 46
+				"execution_count": 30
 			},
 			{
 				"cell_type": "code",
@@ -617,7 +617,7 @@
 					"    cost_df.write.format('parquet').mode('overwrite').option('path', destinationFilename).save()\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": 47
+				"execution_count": 31
 			},
 			{
 				"cell_type": "code",
@@ -702,7 +702,7 @@
 					"    \n",
 					"    print(' ')"
 				],
-				"execution_count": 48
+				"execution_count": 32
 			}
 		]
 	}
