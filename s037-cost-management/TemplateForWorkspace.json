@@ -28171,7 +28171,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "de36a8ac-3df1-4499-9633-d752032dd1a3"
+						"spark.autotune.trackingId": "8f724411-5e98-4e46-adb8-80516a562570"
 					}
 				},
 				"metadata": {
@@ -28196,7 +28196,8 @@
 						"sparkVersion": "3.2",
 						"nodeCount": 3,
 						"cores": 8,
-						"memory": 56
+						"memory": 56,
+						"automaticScaleJobs": false
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -28222,39 +28223,18 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 13
+						"execution_count": 23
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"import pyspark.sql.types as T\r\n",
 							"from pyspark.sql.window import Window"
 						],
 						"outputs": [],
-						"execution_count": 14
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							},
-							"tags": [
-								"parameters"
-							]
-						},
-						"source": [
-							"storageAccount = 's037costmgmt'"
-						],
-						"outputs": [],
-						"execution_count": null
+						"execution_count": 24
 					},
 					{
 						"cell_type": "code",
@@ -28291,7 +28271,7 @@
 							"    return grouped_df"
 						],
 						"outputs": [],
-						"execution_count": 15
+						"execution_count": 25
 					},
 					{
 						"cell_type": "code",
@@ -28338,7 +28318,7 @@
 							"    return costs_by_dates"
 						],
 						"outputs": [],
-						"execution_count": 16
+						"execution_count": 26
 					},
 					{
 						"cell_type": "code",
@@ -28390,7 +28370,7 @@
 							"    return filtered_df"
 						],
 						"outputs": [],
-						"execution_count": 17
+						"execution_count": 27
 					},
 					{
 						"cell_type": "code",
@@ -28410,7 +28390,7 @@
 							"def merge_with_subscription(input_df, subscription_path):\r\n",
 							"\r\n",
 							"    # Reading in useful columns from the subscription.json file\r\n",
-							"    sub_df = spark.read.json(subscription_path).select('name', 'WBSOwner', 'productOwner')\r\n",
+							"    sub_df = spark.read.json(subscription_path).select('name', 'WBSOwner', 'productOwner', 'technicalOwner')\r\n",
 							"\r\n",
 							"    # Merging on subscription names\r\n",
 							"    merged_df = input_df.join(sub_df, on=input_df.SubscriptionName == sub_df.name, how='left')\r\n",
@@ -28421,7 +28401,7 @@
 							"    return merged_df"
 						],
 						"outputs": [],
-						"execution_count": 18
+						"execution_count": 30
 					},
 					{
 						"cell_type": "code",
@@ -28480,7 +28460,7 @@
 							"    print('Write Complete!')"
 						],
 						"outputs": [],
-						"execution_count": 19
+						"execution_count": 31
 					},
 					{
 						"cell_type": "code",
@@ -28500,7 +28480,7 @@
 							"# display(merged_df)"
 						],
 						"outputs": [],
-						"execution_count": 21
+						"execution_count": 32
 					},
 					{
 						"cell_type": "markdown",
@@ -28557,7 +28537,7 @@
 							"# plt.show()"
 						],
 						"outputs": [],
-						"execution_count": 6
+						"execution_count": 22
 					}
 				]
 			},
@@ -33989,7 +33969,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "af06cdaf-58f7-41b4-b467-6ea7730bd262"
+						"spark.autotune.trackingId": "0910420f-aab8-44d6-8dde-4b80273f2daa"
 					}
 				},
 				"metadata": {
@@ -34014,8 +33994,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -37413,6 +37392,29 @@
 			},
 			"dependsOn": [],
 			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/WriteAnomaliesToView')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "AnomalyDetection"
+				},
+				"content": {
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW Anomalies_Past_Three_Months\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_AnomalyDetection_3mnth.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
 		}
 	]
 }
