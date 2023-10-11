@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "9fe6f514-62ce-40b1-90bd-3d41ec8b6ff7"
+				"spark.autotune.trackingId": "2b118fa6-c77d-42b1-a534-393c82ce6917"
 			}
 		},
 		"metadata": {
@@ -72,7 +72,7 @@
 					"# Pipeline parameter\r\n",
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 23
+				"execution_count": 88
 			},
 			{
 				"cell_type": "code",
@@ -81,7 +81,7 @@
 					"import pyspark.sql.types as T\r\n",
 					"from pyspark.sql.window import Window"
 				],
-				"execution_count": 24
+				"execution_count": 89
 			},
 			{
 				"cell_type": "code",
@@ -100,7 +100,7 @@
 					"def preprocessing_anomaly_detection(df):\r\n",
 					"\r\n",
 					"    # Selecting just relevant columns for anomaly detection\r\n",
-					"    new_df = df.select('SubscriptionName', 'ResourceGroup', 'MeterCategory', 'ActiveWBS', 'Date', 'CostInBillingCurrency')\r\n",
+					"    new_df = df.select('SubscriptionName', 'ResourceGroup', 'Date', 'CostInBillingCurrency')\r\n",
 					"\r\n",
 					"    # Filtering out data older than 90 days to get only the latest historical data\r\n",
 					"    threshold = F.date_sub(F.current_date(), 90)\r\n",
@@ -109,15 +109,13 @@
 					"    # Grouping the data by each filtering level and getting the sum of all costs related to the filtering columns\r\n",
 					"    grouped_df = filtered_df.groupBy('SubscriptionName',\r\n",
 					"                                     'ResourceGroup',\r\n",
-					"                                     'MeterCategory',\r\n",
-					"                                     'ActiveWBS',\r\n",
 					"                                     'Date').agg(F.round(\r\n",
 					"                                                  F.sum(\r\n",
 					"                                                   F.col('CostInBillingCurrency')), 1).alias('TotalCost'))\r\n",
 					"\r\n",
 					"    return grouped_df"
 				],
-				"execution_count": 25
+				"execution_count": 90
 			},
 			{
 				"cell_type": "code",
@@ -136,12 +134,10 @@
 					"def anomaly_detection_classifier(df,\r\n",
 					"                                 filter_column_1,\r\n",
 					"                                 filter_column_2,\r\n",
-					"                                 filter_column_3,\r\n",
-					"                                 filter_column_4,\r\n",
 					"                                 window_size=30):\r\n",
 					"\r\n",
 					"    # Setting a partition window to divide the dataset in the filter options and order it by the Date\r\n",
-					"    windowSpec = Window.partitionBy(filter_column_1, filter_column_2, filter_column_3, filter_column_4).orderBy('Date').rowsBetween(-window_size, 0)\r\n",
+					"    windowSpec = Window.partitionBy(filter_column_1, filter_column_2).orderBy('Date').rowsBetween(-window_size, 0)\r\n",
 					"\r\n",
 					"    # Set a moving average that is set by the n previous days\r\n",
 					"    costs_by_dates = df.withColumn('MovingAverage', F.round(F.avg(F.col('TotalCost')).over(windowSpec), 1))\r\n",
@@ -163,7 +159,26 @@
 					"                                                                                 .otherwise(F.lit(0)))\r\n",
 					"    return costs_by_dates"
 				],
-				"execution_count": 26
+				"execution_count": 91
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# def determine_anomaly_incidents(df):\r\n",
+					""
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -181,12 +196,10 @@
 				"source": [
 					"def anomaly_notification_filtration(df,\r\n",
 					"                                    filter_column_1,\r\n",
-					"                                    filter_column_2,\r\n",
-					"                                    filter_column_3,\r\n",
-					"                                    filter_column_4):\r\n",
+					"                                    filter_column_2):\r\n",
 					"\r\n",
 					"    # Setting a new rolling window for which to track previous days anomalies\r\n",
-					"    window_spec = Window.partitionBy(filter_column_1, filter_column_2, filter_column_3, filter_column_4).orderBy('Date')\r\n",
+					"    window_spec = Window.partitionBy(filter_column_1, filter_column_2).orderBy('Date')\r\n",
 					"    \r\n",
 					"    # Applying a lag for yesterday and the day before in order to see if there are anomalies on previous days\r\n",
 					"    thres_df = df.withColumn('AboveThres1Day', F.lag(F.col('AboveThreshold'), 1).over(window_spec))\r\n",
@@ -214,7 +227,7 @@
 					"\r\n",
 					"    return filtered_df"
 				],
-				"execution_count": 27
+				"execution_count": 92
 			},
 			{
 				"cell_type": "code",
@@ -234,7 +247,7 @@
 					"def merge_with_subscription(input_df, subscription_path):\r\n",
 					"\r\n",
 					"    # Reading in useful columns from the subscription.json file\r\n",
-					"    sub_df = spark.read.json(subscription_path).select('name', 'WBSOwner', 'productOwner', 'technicalOwner')\r\n",
+					"    sub_df = spark.read.json(subscription_path).select('name', 'technicalOwner')\r\n",
 					"\r\n",
 					"    # Merging on subscription names\r\n",
 					"    merged_df = input_df.join(sub_df, on=input_df.SubscriptionName == sub_df.name, how='left')\r\n",
@@ -244,7 +257,7 @@
 					"\r\n",
 					"    return merged_df"
 				],
-				"execution_count": 30
+				"execution_count": 93
 			},
 			{
 				"cell_type": "code",
@@ -273,24 +286,18 @@
 					"\r\n",
 					"filter_1 = 'SubscriptionName'\r\n",
 					"filter_2 = 'ResourceGroup'\r\n",
-					"filter_3 = 'MeterCategory'\r\n",
-					"filter_4 = 'ActiveWBS'\r\n",
 					"\r\n",
 					"\r\n",
 					"print(\"Running the Anomaly Detection Classifier for Subscription-partitioned data\")\r\n",
 					"anomaly_df =  anomaly_detection_classifier(df=preproc_data,\r\n",
 					"                                           filter_column_1=filter_1,\r\n",
 					"                                           filter_column_2=filter_2,\r\n",
-					"                                           filter_column_3=filter_3,\r\n",
-					"                                           filter_column_4=filter_4,\r\n",
-					"                                           window_size=60)\r\n",
+					"                                           window_size=15)\r\n",
 					"\r\n",
 					"\r\n",
 					"filtered_df = anomaly_notification_filtration(anomaly_df,\r\n",
 					"                                              filter_column_1=filter_1,\r\n",
-					"                                              filter_column_2=filter_2,\r\n",
-					"                                              filter_column_3=filter_3,\r\n",
-					"                                              filter_column_4=filter_4)\r\n",
+					"                                              filter_column_2=filter_2)\r\n",
 					"if filtered_df.count() == 0:\r\n",
 					"    print('No Anomalies today!')\r\n",
 					"else:\r\n",
@@ -299,10 +306,111 @@
 					"\r\n",
 					"\r\n",
 					"    print(f\"Writing classification data to this path: {destination_path}\")\r\n",
-					"    merged_df.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
+					"    #merged_df.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
 					"    print('Write Complete!')"
 				],
-				"execution_count": 31
+				"execution_count": 94
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(merged_df)"
+				],
+				"execution_count": 95
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"dist = anomaly_df.filter((F.col('TotalCost') > 1000) & (F.col('AboveThreshold') == 1)).select('SubscriptionName', 'ResourceGroup').distinct()\r\n",
+					"display(dist)"
+				],
+				"execution_count": 96
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"temp = anomaly_df.filter((F.col('AboveThreshold') == 1) & (F.col('TotalCost') > 10000))\r\n",
+					"tempcopy = temp.alias('tempcopy')\r\n",
+					"\r\n",
+					"newtemp = temp.withColumn('ValidAnomaly', lambda row: tempcopy.filter())\r\n",
+					"updated_df = temp.orderBy('SubscriptionName', 'ResourceGroup', 'Date')\r\n",
+					"display(updated_df)"
+				],
+				"execution_count": 110
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(anomaly_df.filter((F.col('TotalCost') > 10000) & (F.col('AboveThreshold') == 1)))"
+				],
+				"execution_count": 102
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(anomaly_df.filter((F.col('SubscriptionName') == 'S268-Prod-Geology-Geophysics') & (F.col('ResourceGroup') == 'S268-WE-CC-1')))"
+				],
+				"execution_count": 97
 			},
 			{
 				"cell_type": "code",
@@ -321,7 +429,7 @@
 				"source": [
 					"# display(merged_df)"
 				],
-				"execution_count": 32
+				"execution_count": 98
 			},
 			{
 				"cell_type": "markdown",
@@ -377,7 +485,7 @@
 					"# plt.legend()\r\n",
 					"# plt.show()"
 				],
-				"execution_count": 22
+				"execution_count": 99
 			}
 		]
 	}
