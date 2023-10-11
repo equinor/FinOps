@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "de36a8ac-3df1-4499-9633-d752032dd1a3"
+				"spark.autotune.trackingId": "b25ed3d9-9e25-4282-9b4e-c1791750a323"
 			}
 		},
 		"metadata": {
@@ -72,7 +72,7 @@
 					"# Pipeline parameter\r\n",
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 13
+				"execution_count": 23
 			},
 			{
 				"cell_type": "code",
@@ -81,28 +81,7 @@
 					"import pyspark.sql.types as T\r\n",
 					"from pyspark.sql.window import Window"
 				],
-				"execution_count": 14
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"tags": [
-						"parameters"
-					]
-				},
-				"source": [
-					"storageAccount = 's037costmgmt'"
-				],
-				"execution_count": null
+				"execution_count": 24
 			},
 			{
 				"cell_type": "code",
@@ -138,7 +117,7 @@
 					"\r\n",
 					"    return grouped_df"
 				],
-				"execution_count": 15
+				"execution_count": 25
 			},
 			{
 				"cell_type": "code",
@@ -184,7 +163,7 @@
 					"                                                                                 .otherwise(F.lit(0)))\r\n",
 					"    return costs_by_dates"
 				],
-				"execution_count": 16
+				"execution_count": 26
 			},
 			{
 				"cell_type": "code",
@@ -235,7 +214,7 @@
 					"\r\n",
 					"    return filtered_df"
 				],
-				"execution_count": 17
+				"execution_count": 27
 			},
 			{
 				"cell_type": "code",
@@ -255,7 +234,7 @@
 					"def merge_with_subscription(input_df, subscription_path):\r\n",
 					"\r\n",
 					"    # Reading in useful columns from the subscription.json file\r\n",
-					"    sub_df = spark.read.json(subscription_path).select('name', 'WBSOwner', 'productOwner')\r\n",
+					"    sub_df = spark.read.json(subscription_path).select('name', 'WBSOwner', 'productOwner', 'technicalOwner')\r\n",
 					"\r\n",
 					"    # Merging on subscription names\r\n",
 					"    merged_df = input_df.join(sub_df, on=input_df.SubscriptionName == sub_df.name, how='left')\r\n",
@@ -265,7 +244,7 @@
 					"\r\n",
 					"    return merged_df"
 				],
-				"execution_count": 18
+				"execution_count": 30
 			},
 			{
 				"cell_type": "code",
@@ -323,7 +302,7 @@
 					"    merged_df.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
 					"    print('Write Complete!')"
 				],
-				"execution_count": 19
+				"execution_count": 31
 			},
 			{
 				"cell_type": "code",
@@ -342,7 +321,7 @@
 				"source": [
 					"# display(merged_df)"
 				],
-				"execution_count": 21
+				"execution_count": 32
 			},
 			{
 				"cell_type": "markdown",
@@ -398,7 +377,7 @@
 					"# plt.legend()\r\n",
 					"# plt.show()"
 				],
-				"execution_count": 6
+				"execution_count": 22
 			}
 		]
 	}
