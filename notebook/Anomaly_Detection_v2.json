@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "2b118fa6-c77d-42b1-a534-393c82ce6917"
+				"spark.autotune.trackingId": "b8e82d20-e5d9-4ba3-8c8e-aac5e4b45feb"
 			}
 		},
 		"metadata": {
@@ -72,7 +72,7 @@
 					"# Pipeline parameter\r\n",
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 88
+				"execution_count": 50
 			},
 			{
 				"cell_type": "code",
@@ -81,7 +81,7 @@
 					"import pyspark.sql.types as T\r\n",
 					"from pyspark.sql.window import Window"
 				],
-				"execution_count": 89
+				"execution_count": 51
 			},
 			{
 				"cell_type": "code",
@@ -115,7 +115,7 @@
 					"\r\n",
 					"    return grouped_df"
 				],
-				"execution_count": 90
+				"execution_count": 52
 			},
 			{
 				"cell_type": "code",
@@ -159,26 +159,7 @@
 					"                                                                                 .otherwise(F.lit(0)))\r\n",
 					"    return costs_by_dates"
 				],
-				"execution_count": 91
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# def determine_anomaly_incidents(df):\r\n",
-					""
-				],
-				"execution_count": null
+				"execution_count": 53
 			},
 			{
 				"cell_type": "code",
@@ -198,36 +179,32 @@
 					"                                    filter_column_1,\r\n",
 					"                                    filter_column_2):\r\n",
 					"\r\n",
-					"    # Setting a new rolling window for which to track previous days anomalies\r\n",
-					"    window_spec = Window.partitionBy(filter_column_1, filter_column_2).orderBy('Date')\r\n",
-					"    \r\n",
-					"    # Applying a lag for yesterday and the day before in order to see if there are anomalies on previous days\r\n",
-					"    thres_df = df.withColumn('AboveThres1Day', F.lag(F.col('AboveThreshold'), 1).over(window_spec))\r\n",
-					"    thres_df = thres_df.withColumn('AboveThresFor2Days', F.lag(F.col('AboveThreshold'), 2).over(window_spec))\r\n",
-					"    \r\n",
-					"    # The masks that will determine which anomalies we will report\r\n",
-					"    # If an anomaly occured for three days straight\r\n",
-					"    thres_mask = (F.col('AboveThreshold') == 1) & (F.col('AboveThres1Day') == 1) & (F.col('AboveThresFor2Days') == 1)\r\n",
-					"    # If the daily cost where anomalies occured is 10.000 NOK or more\r\n",
-					"    cost_mask = F.col('TotalCost') >= 10000\r\n",
-					"    # If the date is on yesterdays date (the most updated data we recieve contains yesterdays costs)\r\n",
-					"    date_mask = F.col('Date') >= F.date_sub(F.current_date(), 1)\r\n",
+					"    # Only consider cost items that is above threshold\r\n",
+					"    thres_df = df.filter(F.col('AboveThreshold') == 1)\r\n",
 					"\r\n",
-					"    # For Testing\r\n",
-					"    thres_df = thres_df.withColumn('NotifyAnomaly', F.when(thres_mask & cost_mask, F.lit(True)).otherwise(F.lit(False)))\r\n",
+					"    # Set rolling window to capture date of previous anomaly in resource group\r\n",
+					"    window_spec = Window.partitionBy('SubscriptionName', 'ResourceGroup').orderBy('Date')\r\n",
+					"    thres_df = thres_df.withColumn('PrevDate', F.lag('Date').over(window_spec))\r\n",
 					"\r\n",
-					"    # # For Production\r\n",
-					"    # thres_df = thres_df.withColumn('NotifyAnomaly', F.when(thres_mask & date_mask & cost_mask, F.lit(True)).otherwise(F.lit(False)))\r\n",
+					"    # Compute number of days between anomalies in resource group\r\n",
+					"    thres_df = thres_df.withColumn('DateDiff', F.datediff(F.col('Date'), F.col('PrevDate')))\r\n",
 					"\r\n",
-					"    # Dropping columns that are unimportant\r\n",
-					"    dropped_df = thres_df.drop('Scaler', 'AboveThreshold', 'AboveThres1Day', 'AboveThresFor2Days')\r\n",
+					"    # Notify anomaly if anomalies haven't occured on subsequent days\r\n",
+					"    notify_mask = (F.col('DateDiff').isNull()) | (F.col('DateDiff') > 1)\r\n",
+					"    thres_df = thres_df.withColumn('NotifyAnomaly', F.when( notify_mask, F.lit(True)).otherwise(F.lit(False)))\r\n",
+					"\r\n",
+					"    # Only use cost items exceeding 10.000 NOK\r\n",
+					"    thres_df = thres_df.filter(F.col('TotalCost') >= 10000)\r\n",
+					"\r\n",
+					"    # Dropping insignificant columns\r\n",
+					"    dropped_df = thres_df.drop('Scaler', 'PrevDate', 'DateDiff')\r\n",
 					"\r\n",
 					"    # Filtering only the relevant data\r\n",
 					"    filtered_df = dropped_df.filter(F.col('NotifyAnomaly') == True)\r\n",
 					"\r\n",
 					"    return filtered_df"
 				],
-				"execution_count": 92
+				"execution_count": 54
 			},
 			{
 				"cell_type": "code",
@@ -257,7 +234,7 @@
 					"\r\n",
 					"    return merged_df"
 				],
-				"execution_count": 93
+				"execution_count": 55
 			},
 			{
 				"cell_type": "code",
@@ -292,7 +269,7 @@
 					"anomaly_df =  anomaly_detection_classifier(df=preproc_data,\r\n",
 					"                                           filter_column_1=filter_1,\r\n",
 					"                                           filter_column_2=filter_2,\r\n",
-					"                                           window_size=15)\r\n",
+					"                                           window_size=60)\r\n",
 					"\r\n",
 					"\r\n",
 					"filtered_df = anomaly_notification_filtration(anomaly_df,\r\n",
@@ -306,10 +283,10 @@
 					"\r\n",
 					"\r\n",
 					"    print(f\"Writing classification data to this path: {destination_path}\")\r\n",
-					"    #merged_df.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
+					"    merged_df.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
 					"    print('Write Complete!')"
 				],
-				"execution_count": 94
+				"execution_count": 56
 			},
 			{
 				"cell_type": "code",
@@ -326,9 +303,9 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(merged_df)"
+					"display(merged_df.orderBy('SubscriptionName', 'ResourceGroup'))"
 				],
-				"execution_count": 95
+				"execution_count": 57
 			},
 			{
 				"cell_type": "code",
@@ -345,91 +322,9 @@
 					"collapsed": false
 				},
 				"source": [
-					"dist = anomaly_df.filter((F.col('TotalCost') > 1000) & (F.col('AboveThreshold') == 1)).select('SubscriptionName', 'ResourceGroup').distinct()\r\n",
-					"display(dist)"
+					"display(anomaly_df.filter((F.col('SubscriptionName') == 'S034-Geology-Geophysics') & (F.col('ResourceGroup') == 'S034-WE-CC-1')))"
 				],
-				"execution_count": 96
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"temp = anomaly_df.filter((F.col('AboveThreshold') == 1) & (F.col('TotalCost') > 10000))\r\n",
-					"tempcopy = temp.alias('tempcopy')\r\n",
-					"\r\n",
-					"newtemp = temp.withColumn('ValidAnomaly', lambda row: tempcopy.filter())\r\n",
-					"updated_df = temp.orderBy('SubscriptionName', 'ResourceGroup', 'Date')\r\n",
-					"display(updated_df)"
-				],
-				"execution_count": 110
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(anomaly_df.filter((F.col('TotalCost') > 10000) & (F.col('AboveThreshold') == 1)))"
-				],
-				"execution_count": 102
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(anomaly_df.filter((F.col('SubscriptionName') == 'S268-Prod-Geology-Geophysics') & (F.col('ResourceGroup') == 'S268-WE-CC-1')))"
-				],
-				"execution_count": 97
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"# display(merged_df)"
-				],
-				"execution_count": 98
+				"execution_count": 60
 			},
 			{
 				"cell_type": "markdown",
@@ -485,7 +380,7 @@
 					"# plt.legend()\r\n",
 					"# plt.show()"
 				],
-				"execution_count": 99
+				"execution_count": 59
 			}
 		]
 	}
