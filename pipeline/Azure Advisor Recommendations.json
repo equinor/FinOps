@@ -3,29 +3,9 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "SP Authentication",
-				"type": "ExecutePipeline",
-				"dependsOn": [],
-				"userProperties": [],
-				"typeProperties": {
-					"pipeline": {
-						"referenceName": "Authenticate FinOps Service Principal",
-						"type": "PipelineReference"
-					},
-					"waitOnCompletion": true
-				}
-			},
-			{
 				"name": "Get Azure Subscriptions",
 				"type": "WebActivity",
-				"dependsOn": [
-					{
-						"activity": "SP Authentication",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
+				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -35,15 +15,366 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"url": "GET https://management.azure.com/subscriptions?api-version=2022-12-01",
+					"url": "https://management.azure.com/subscriptions?api-version=2022-12-01",
 					"connectVia": {
 						"referenceName": "AutoResolveIntegrationRuntime",
 						"type": "IntegrationRuntimeReference"
 					},
-					"method": "GET"
+					"method": "GET",
+					"authentication": {
+						"type": "ServicePrincipal",
+						"userTenant": "3aa4a235-b6e2-48d5-9195-7fcf05b459b0",
+						"username": "4c1cded2-f7a7-4c00-8d65-0a3287cbd682",
+						"resource": "https://management.azure.com",
+						"password": {
+							"type": "AzureKeyVaultSecret",
+							"store": {
+								"referenceName": "ACM_Toolkit_kv",
+								"type": "LinkedServiceReference"
+							},
+							"secretName": "sp-password"
+						}
+					}
+				}
+			},
+			{
+				"name": "Get advisor cost recommendations",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Get Azure Subscriptions",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get Azure Subscriptions').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Set subscription Id",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "SubscriptionId",
+								"value": {
+									"value": "@item().subscriptionId",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "Get subscription cost recommendations",
+							"type": "WebActivity",
+							"dependsOn": [
+								{
+									"activity": "Set subscription Id",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"url": {
+									"value": "@concat('https://management.azure.com/subscriptions/', variables('SubscriptionId'),'/providers/Microsoft.Advisor/recommendations?api-version=2017-04-19')",
+									"type": "Expression"
+								},
+								"connectVia": {
+									"referenceName": "AutoResolveIntegrationRuntime",
+									"type": "IntegrationRuntimeReference"
+								},
+								"method": "GET",
+								"authentication": {
+									"type": "ServicePrincipal",
+									"userTenant": "3aa4a235-b6e2-48d5-9195-7fcf05b459b0",
+									"username": "4c1cded2-f7a7-4c00-8d65-0a3287cbd682",
+									"resource": "https://management.azure.com",
+									"password": {
+										"type": "AzureKeyVaultSecret",
+										"store": {
+											"referenceName": "ACM_Toolkit_kv",
+											"type": "LinkedServiceReference"
+										},
+										"secretName": "sp-password"
+									}
+								}
+							}
+						},
+						{
+							"name": "Azure Advisor Subscription Recommendations",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "Get subscription cost recommendations",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "RestSource",
+									"httpRequestTimeout": "00:01:40",
+									"requestInterval": "00.00:00:00.010",
+									"requestMethod": "GET",
+									"paginationRules": {
+										"supportRFC5988": "true"
+									}
+								},
+								"sink": {
+									"type": "ParquetSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "ParquetWriteSettings"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"mappings": [
+										{
+											"source": {
+												"path": "['properties']['category']"
+											},
+											"sink": {
+												"name": "category",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"path": "['properties']['impact']"
+											},
+											"sink": {
+												"name": "impact",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"path": "['properties']['impactField']"
+											},
+											"sink": {
+												"name": "impactField",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"path": "['properties']['impactedValue']"
+											},
+											"sink": {
+												"name": "impactedValue",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"path": "['properties']['lastUpdated']"
+											},
+											"sink": {
+												"name": "lastUpdated",
+												"type": "DateTimeOffset"
+											}
+										},
+										{
+											"source": {
+												"path": "['properties']['recommendationTypeId']"
+											},
+											"sink": {
+												"name": "recommendationTypeId",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"path": "['properties']['shortDescription']['problem']"
+											},
+											"sink": {
+												"name": "problem",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"path": "['properties']['shortDescription']['solution']"
+											},
+											"sink": {
+												"name": "solution",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"path": "['properties']['extendedProperties']['subId']"
+											},
+											"sink": {
+												"name": "subId",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"path": "['properties']['extendedProperties']['sku']"
+											},
+											"sink": {
+												"name": "sku",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"path": "['properties']['extendedProperties']['scope']"
+											},
+											"sink": {
+												"name": "scope",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"path": "['properties']['extendedProperties']['commitment']"
+											},
+											"sink": {
+												"name": "commitment",
+												"type": "Double"
+											}
+										},
+										{
+											"source": {
+												"path": "['properties']['extendedProperties']['annualSavingsAmount']"
+											},
+											"sink": {
+												"name": "annualSavingsAmount",
+												"type": "Int32"
+											}
+										},
+										{
+											"source": {
+												"path": "['properties']['extendedProperties']['savingsAmount']"
+											},
+											"sink": {
+												"name": "savingsAmount",
+												"type": "Int32"
+											}
+										},
+										{
+											"source": {
+												"path": "['properties']['extendedProperties']['savingsCurrency']"
+											},
+											"sink": {
+												"name": "savingsCurrency",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"path": "['properties']['extendedProperties']['term']"
+											},
+											"sink": {
+												"name": "term",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"path": "['properties']['extendedProperties']['lookbackPeriod']"
+											},
+											"sink": {
+												"name": "lookbackPeriod",
+												"type": "Int32"
+											}
+										},
+										{
+											"source": {
+												"path": "['properties']['extendedProperties']['qty']"
+											},
+											"sink": {
+												"name": "qty",
+												"type": "Int32"
+											}
+										},
+										{
+											"source": {
+												"path": "['id']"
+											},
+											"sink": {
+												"name": "id",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"path": "['name']"
+											},
+											"sink": {
+												"name": "name",
+												"type": "String"
+											}
+										}
+									],
+									"collectionReference": "$['value']",
+									"mapComplexValuesToString": false
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "AzureAdvisorRecommendationSource",
+									"type": "DatasetReference",
+									"parameters": {
+										"subscriptionId": {
+											"value": "@variables('SubscriptionId')",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "AzureAdvisorRecommendationsSink",
+									"type": "DatasetReference"
+								}
+							]
+						}
+					]
 				}
 			}
 		],
+		"variables": {
+			"SubscriptionId": {
+				"type": "String"
+			},
+			"recommendations": {
+				"type": "Array"
+			}
+		},
 		"folder": {
 			"name": "PipelinesInProduction/Management API (New)"
 		},
