@@ -1,0 +1,52 @@
+{
+	"name": "Azure Advisor Recommendations",
+	"properties": {
+		"activities": [
+			{
+				"name": "SP Authentication",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Authenticate FinOps Service Principal",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Get Azure Subscriptions",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "SP Authentication",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": "GET https://management.azure.com/subscriptions?api-version=2022-12-01",
+					"connectVia": {
+						"referenceName": "AutoResolveIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
+					},
+					"method": "GET"
+				}
+			}
+		],
+		"folder": {
+			"name": "PipelinesInProduction/Management API (New)"
+		},
+		"annotations": []
+	}
+}
