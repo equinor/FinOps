@@ -56,78 +56,9 @@
 					},
 					"activities": [
 						{
-							"name": "Set subscription Id",
-							"type": "SetVariable",
-							"dependsOn": [],
-							"policy": {
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"variableName": "SubscriptionId",
-								"value": {
-									"value": "@item().subscriptionId",
-									"type": "Expression"
-								}
-							}
-						},
-						{
-							"name": "Get subscription cost recommendations",
-							"type": "WebActivity",
-							"dependsOn": [
-								{
-									"activity": "Set subscription Id",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
-							"policy": {
-								"timeout": "0.12:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"url": {
-									"value": "@concat('https://management.azure.com/subscriptions/', variables('SubscriptionId'),'/providers/Microsoft.Advisor/recommendations?api-version=2017-04-19')",
-									"type": "Expression"
-								},
-								"connectVia": {
-									"referenceName": "AutoResolveIntegrationRuntime",
-									"type": "IntegrationRuntimeReference"
-								},
-								"method": "GET",
-								"authentication": {
-									"type": "ServicePrincipal",
-									"userTenant": "3aa4a235-b6e2-48d5-9195-7fcf05b459b0",
-									"username": "4c1cded2-f7a7-4c00-8d65-0a3287cbd682",
-									"resource": "https://management.azure.com",
-									"password": {
-										"type": "AzureKeyVaultSecret",
-										"store": {
-											"referenceName": "ACM_Toolkit_kv",
-											"type": "LinkedServiceReference"
-										},
-										"secretName": "sp-password"
-									}
-								}
-							}
-						},
-						{
 							"name": "Azure Advisor Subscription Recommendations",
 							"type": "Copy",
-							"dependsOn": [
-								{
-									"activity": "Get subscription cost recommendations",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
+							"dependsOn": [],
 							"policy": {
 								"timeout": "0.12:00:00",
 								"retry": 0,
@@ -350,7 +281,7 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"subscriptionId": {
-											"value": "@variables('SubscriptionId')",
+											"value": "@item().subscriptionId",
 											"type": "Expression"
 										}
 									}
