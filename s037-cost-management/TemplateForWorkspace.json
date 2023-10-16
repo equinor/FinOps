@@ -41,6 +41,10 @@
 			"type": "string",
 			"defaultValue": "s037costmgmt"
 		},
+		"Azure Advisor Recommendations_pipelineStorageAccountParameter": {
+			"type": "string",
+			"defaultValue": "s037costmgmt"
+		},
 		"Convert Monthly CSV Cost files to Parquet_pipelineSparkPoolNameRef": {
 			"type": "string",
 			"defaultValue": "sprkpool33large"
@@ -124,6 +128,14 @@
 		"AzureAD_Users_dataSetLinkedServiceName": {
 			"type": "string",
 			"defaultValue": "MicrosoftGraphRESTAPI"
+		},
+		"AzureAdvisorRecommendationSource_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "AzureManagementAPI"
+		},
+		"AzureAdvisorRecommendationsSink_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
 		},
 		"CSV_Source_File_dataSetLinkedServiceName": {
 			"type": "string",
@@ -261,6 +273,10 @@
 			"type": "string",
 			"defaultValue": "https://s037costmgmt.dfs.core.windows.net/"
 		},
+		"AzureManagementAPI_linkedServiceUrl": {
+			"type": "string",
+			"defaultValue": "https://management.azure.com/"
+		},
 		"HUB Storage Account_linkedServiceUrl": {
 			"type": "string",
 			"defaultValue": "https://hubautomation.dfs.core.windows.net/"
@@ -318,6 +334,18 @@
 			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
 		},
 		"AdHoc Extend AI column and WBS tags_notebookSparkPoolEndpointRef": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"AdvisorCostRecommendations_notebookSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"AdvisorCostRecommendations_notebookSparkPoolIdRef": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"AdvisorCostRecommendations_notebookSparkPoolEndpointRef": {
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
@@ -2746,6 +2774,87 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/Authenticate FinOps Service Principal')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get SP client secret",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": true,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": "https://acm-toolkit-kv.vault.azure.net/secrets/sp-password/127d0505066d4ae6913e286bab8cc79c?api-version=7.0",
+							"connectVia": {
+								"referenceName": "AutoResolveIntegrationRuntime",
+								"type": "IntegrationRuntimeReference"
+							},
+							"method": "GET",
+							"headers": {},
+							"authentication": {
+								"type": "MSI",
+								"resource": "https://vault.azure.net"
+							}
+						}
+					},
+					{
+						"name": "Get client credentials token",
+						"type": "WebActivity",
+						"dependsOn": [
+							{
+								"activity": "Get SP client secret",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": "https://login.microsoftonline.com/3aa4a235-b6e2-48d5-9195-7fcf05b459b0/oauth2/token",
+							"connectVia": {
+								"referenceName": "AutoResolveIntegrationRuntime",
+								"type": "IntegrationRuntimeReference"
+							},
+							"method": "POST",
+							"headers": {
+								"Content-Type": "application/x-www-form-urlencoded"
+							},
+							"body": {
+								"value": "@concat('client_id=4c1cded2-f7a7-4c00-8d65-0a3287cbd682&client_secret=',activity('Get SP client secret').output.value,'&grant_type=client_credentials&resource=https://management.azure.com&scope=./default')",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"folder": {
+					"name": "PipelinesInProduction/Management API (New)"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/Azure AD Users_v1')]",
 			"type": "Microsoft.Synapse/workspaces/pipelines",
 			"apiVersion": "2019-06-01-preview",
@@ -3036,6 +3145,406 @@
 				"[concat(variables('workspaceId'), '/notebooks/usersWithManagerSnapshot_v1')]",
 				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('Azure AD Users_v1_pipelineSparkPoolNameRef'))]",
 				"[concat(variables('workspaceId'), '/notebooks/usersWithBusinessAreaSnapshot_v1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Azure Advisor Recommendations')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get Azure Subscriptions",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": "https://management.azure.com/subscriptions?api-version=2022-12-01",
+							"connectVia": {
+								"referenceName": "AutoResolveIntegrationRuntime",
+								"type": "IntegrationRuntimeReference"
+							},
+							"method": "GET",
+							"headers": {},
+							"authentication": {
+								"type": "ServicePrincipal",
+								"userTenant": "3aa4a235-b6e2-48d5-9195-7fcf05b459b0",
+								"username": "4c1cded2-f7a7-4c00-8d65-0a3287cbd682",
+								"resource": "https://management.azure.com",
+								"password": {
+									"type": "AzureKeyVaultSecret",
+									"store": {
+										"referenceName": "ACM_Toolkit_kv",
+										"type": "LinkedServiceReference"
+									},
+									"secretName": "sp-password"
+								}
+							}
+						}
+					},
+					{
+						"name": "Get advisor cost recommendations",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get Azure Subscriptions",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get Azure Subscriptions').output.value",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "Azure Advisor Subscription Recommendations",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "RestSource",
+											"additionalColumns": [
+												{
+													"name": "subscriptionId",
+													"value": {
+														"value": "@item().subscriptionId",
+														"type": "Expression"
+													}
+												}
+											],
+											"httpRequestTimeout": "00:01:40",
+											"requestInterval": "00.00:00:00.010",
+											"requestMethod": "GET",
+											"paginationRules": {
+												"supportRFC5988": "true"
+											}
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"mappings": [
+												{
+													"source": {
+														"path": "['properties']['category']"
+													},
+													"sink": {
+														"name": "category",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['properties']['impact']"
+													},
+													"sink": {
+														"name": "impact",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['properties']['impactField']"
+													},
+													"sink": {
+														"name": "impactField",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['properties']['impactedValue']"
+													},
+													"sink": {
+														"name": "impactedValue",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['properties']['lastUpdated']"
+													},
+													"sink": {
+														"name": "lastUpdated",
+														"type": "DateTimeOffset"
+													}
+												},
+												{
+													"source": {
+														"path": "['properties']['recommendationTypeId']"
+													},
+													"sink": {
+														"name": "recommendationTypeId",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['properties']['shortDescription']['problem']"
+													},
+													"sink": {
+														"name": "problem",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['properties']['shortDescription']['solution']"
+													},
+													"sink": {
+														"name": "solution",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['properties']['extendedProperties']['subId']"
+													},
+													"sink": {
+														"name": "subId",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['properties']['extendedProperties']['sku']"
+													},
+													"sink": {
+														"name": "sku",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['properties']['extendedProperties']['scope']"
+													},
+													"sink": {
+														"name": "scope",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['properties']['extendedProperties']['commitment']"
+													},
+													"sink": {
+														"name": "commitment",
+														"type": "Double"
+													}
+												},
+												{
+													"source": {
+														"path": "['properties']['extendedProperties']['annualSavingsAmount']"
+													},
+													"sink": {
+														"name": "annualSavingsAmount",
+														"type": "Int32"
+													}
+												},
+												{
+													"source": {
+														"path": "['properties']['extendedProperties']['savingsAmount']"
+													},
+													"sink": {
+														"name": "savingsAmount",
+														"type": "Int32"
+													}
+												},
+												{
+													"source": {
+														"path": "['properties']['extendedProperties']['savingsCurrency']"
+													},
+													"sink": {
+														"name": "savingsCurrency",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['properties']['extendedProperties']['term']"
+													},
+													"sink": {
+														"name": "term",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['properties']['extendedProperties']['lookbackPeriod']"
+													},
+													"sink": {
+														"name": "lookbackPeriod",
+														"type": "Int32"
+													}
+												},
+												{
+													"source": {
+														"path": "['properties']['extendedProperties']['qty']"
+													},
+													"sink": {
+														"name": "qty",
+														"type": "Int32"
+													}
+												},
+												{
+													"source": {
+														"path": "['id']"
+													},
+													"sink": {
+														"name": "id",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['name']"
+													},
+													"sink": {
+														"name": "name",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "$['subscriptionId']"
+													},
+													"sink": {
+														"name": "subscriptionId",
+														"type": "String"
+													}
+												}
+											],
+											"collectionReference": "$['value']",
+											"mapComplexValuesToString": false
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "AzureAdvisorRecommendationSource",
+											"type": "DatasetReference",
+											"parameters": {
+												"subscriptionId": {
+													"value": "@item().subscriptionId",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "AzureAdvisorRecommendationsSink",
+											"type": "DatasetReference",
+											"parameters": {
+												"subscriptionId": {
+													"value": "@item().subscriptionId",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					},
+					{
+						"name": "Write recommendations to aggregate file",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "Get advisor cost recommendations",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "AdvisorCostRecommendations",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@pipeline().parameters.storageAccount",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"numExecutors": null
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"parameters": {
+					"storageAccount": {
+						"type": "string",
+						"defaultValue": "[parameters('Azure Advisor Recommendations_pipelineStorageAccountParameter')]"
+					}
+				},
+				"variables": {
+					"SubscriptionId": {
+						"type": "String"
+					},
+					"recommendations": {
+						"type": "Array"
+					}
+				},
+				"folder": {
+					"name": "PipelinesInProduction/Management API (New)"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]",
+				"[concat(variables('workspaceId'), '/notebooks/AdvisorCostRecommendations')]",
+				"[concat(variables('workspaceId'), '/linkedServices/ACM_Toolkit_kv')]",
+				"[concat(variables('workspaceId'), '/datasets/AzureAdvisorRecommendationSource')]",
+				"[concat(variables('workspaceId'), '/datasets/AzureAdvisorRecommendationsSink')]"
 			]
 		},
 		{
@@ -20046,6 +20555,68 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/AzureAdvisorRecommendationSource')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('AzureAdvisorRecommendationSource_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"subscriptionId": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "RestResource",
+				"typeProperties": {
+					"relativeUrl": {
+						"value": "@concat('subscriptions/',dataset().subscriptionId,'/providers/Microsoft.Advisor/recommendations?api-version=2017-04-19')",
+						"type": "Expression"
+					}
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('AzureAdvisorRecommendationSource_dataSetLinkedServiceName'))]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/AzureAdvisorRecommendationsSink')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('AzureAdvisorRecommendationsSink_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"subscriptionId": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@concat('advisor-recommendations-subscription-',dataset().subscriptionId,'.parquet')",
+							"type": "Expression"
+						},
+						"folderPath": "recommendations",
+						"fileSystem": "usage"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('AzureAdvisorRecommendationsSink_dataSetLinkedServiceName'))]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/CSV_Source_File')]",
 			"type": "Microsoft.Synapse/workspaces/datasets",
 			"apiVersion": "2019-06-01-preview",
@@ -22507,6 +23078,40 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/AzureManagementAPI')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "RestService",
+				"typeProperties": {
+					"url": "[parameters('AzureManagementAPI_linkedServiceUrl')]",
+					"enableServerCertificateValidation": true,
+					"authenticationType": "AadServicePrincipal",
+					"servicePrincipalId": "4c1cded2-f7a7-4c00-8d65-0a3287cbd682",
+					"servicePrincipalKey": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "ACM_Toolkit_kv",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "sp-password"
+					},
+					"tenant": "3aa4a235-b6e2-48d5-9195-7fcf05b459b0",
+					"aadResourceId": "https://management.azure.com",
+					"azureCloudType": "AzurePublic"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]",
+				"[concat(variables('workspaceId'), '/linkedServices/ACM_Toolkit_kv')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/HUB Storage Account')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
@@ -23014,6 +23619,13 @@
 							"type": "PipelineReference"
 						},
 						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "Azure Advisor Recommendations",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
 					}
 				],
 				"type": "ScheduleTrigger",
@@ -23035,7 +23647,8 @@
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('workspaceId'), '/pipelines/NewServiceNow')]"
+				"[concat(variables('workspaceId'), '/pipelines/NewServiceNow')]",
+				"[concat(variables('workspaceId'), '/pipelines/Azure Advisor Recommendations')]"
 			]
 		},
 		{
@@ -23458,6 +24071,29 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/linkedServices/', parameters('Remove First Two Lines_sourceDataflowLinkedServiceNameRef'))]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/FinopsSpCredentials')]",
+			"type": "Microsoft.Synapse/workspaces/credentials",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"type": "ServicePrincipal",
+				"typeProperties": {
+					"tenant": "3aa4a235-b6e2-48d5-9195-7fcf05b459b0",
+					"servicePrincipalId": "4c1cded2-f7a7-4c00-8d65-0a3287cbd682",
+					"servicePrincipalKey": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "ACM_Toolkit_kv",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "sp-password"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/ACM_Toolkit_kv')]"
 			]
 		},
 		{
@@ -27996,6 +28632,160 @@
 						],
 						"outputs": [],
 						"execution_count": null
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/AdvisorCostRecommendations')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "NotebookInProduction/AzureAdvisor"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "[parameters('AdvisorCostRecommendations_notebookSparkPoolNameRef')]",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "112g",
+					"driverCores": 16,
+					"executorMemory": "112g",
+					"executorCores": 16,
+					"numExecutors": 1,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "5",
+						"spark.autotune.trackingId": "7230a50a-d920-4cc8-bd07-87b6bc1aeff6"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "[parameters('AdvisorCostRecommendations_notebookSparkPoolIdRef')]",
+						"name": "[parameters('AdvisorCostRecommendations_notebookSparkPoolNameRef')]",
+						"type": "Spark",
+						"endpoint": "[parameters('AdvisorCostRecommendations_notebookSparkPoolEndpointRef')]",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 16,
+						"memory": 112
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"# Parameters\r\n",
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": 15
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"import pyspark.sql.functions as F"
+						],
+						"outputs": [],
+						"execution_count": 16
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"collapsed": false
+						},
+						"source": [
+							"# Load source\r\n",
+							"source_path = \"abfss://usage@\" + storageAccount + \".dfs.core.windows.net/recommendations/advisor-recommendations-subscription-*.parquet\"\r\n",
+							"recommendation_df = spark.read.format('parquet').load(source_path)"
+						],
+						"outputs": [],
+						"execution_count": 17
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Only persist cost recommendations\r\n",
+							"recommendation_df = recommendation_df.filter(F.col('category') == 'Cost')"
+						],
+						"outputs": [],
+						"execution_count": 18
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Store combined cost recommendation data in a collective file \r\n",
+							"optimized_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/recommendations/cost-recommendations.parquet\"\r\n",
+							"recommendation_df.write.format('parquet').mode('overwrite').save(optimized_path)"
+						],
+						"outputs": [],
+						"execution_count": 19
 					}
 				]
 			},
@@ -37874,29 +38664,6 @@
 			},
 			"dependsOn": [],
 			"location": "northeurope"
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/FinopsSpCredentials')]",
-			"type": "Microsoft.Synapse/workspaces/credentials",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"type": "ServicePrincipal",
-				"typeProperties": {
-					"tenant": "3aa4a235-b6e2-48d5-9195-7fcf05b459b0",
-					"servicePrincipalId": "4c1cded2-f7a7-4c00-8d65-0a3287cbd682",
-					"servicePrincipalKey": {
-						"type": "AzureKeyVaultSecret",
-						"store": {
-							"referenceName": "ACM_Toolkit_kv",
-							"type": "LinkedServiceReference"
-						},
-						"secretName": "sp-password"
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/linkedServices/ACM_Toolkit_kv')]"
-			]
 		}
 	]
 }
