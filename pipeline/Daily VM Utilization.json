@@ -1,0 +1,91 @@
+{
+	"name": "Daily VM Utilization",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get VM utilization time series",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "RestSource",
+						"httpRequestTimeout": "00:01:40",
+						"requestInterval": "00.00:00:00.010",
+						"requestMethod": "GET",
+						"paginationRules": {
+							"supportRFC5988": "true"
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"path": "['timeseries'][0]['data'][0]['timeStamp']"
+								},
+								"sink": {
+									"name": "timeStamp"
+								}
+							},
+							{
+								"source": {
+									"path": "['timeseries'][0]['data'][0]['average']"
+								},
+								"sink": {
+									"name": "average"
+								}
+							}
+						],
+						"collectionReference": "$['value']",
+						"mapComplexValuesToString": false
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "SubscriptionVMUtilization",
+						"type": "DatasetReference",
+						"parameters": {
+							"subscriptionId": "061f6daa-2afe-427d-b3a5-a1919906d96f",
+							"startDate": "2023-10-14",
+							"endDate": "2023-10-15",
+							"location": "norwayeast",
+							"resourceId": "'*'"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "VMUtilizationTimeseriesSink",
+						"type": "DatasetReference",
+						"parameters": {
+							"subscriptionId": "061f6daa-2afe-427d-b3a5-a1919906d96f",
+							"date": "2023-10-14"
+						}
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "PipelinesInProduction/Management API (New)"
+		},
+		"annotations": []
+	}
+}
