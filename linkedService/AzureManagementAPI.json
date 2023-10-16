@@ -1,0 +1,28 @@
+{
+	"name": "AzureManagementAPI",
+	"properties": {
+		"annotations": [],
+		"type": "RestService",
+		"typeProperties": {
+			"url": "https://management.azure.com/",
+			"enableServerCertificateValidation": true,
+			"authenticationType": "AadServicePrincipal",
+			"servicePrincipalId": "4c1cded2-f7a7-4c00-8d65-0a3287cbd682",
+			"servicePrincipalKey": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ACM_Toolkit_kv",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "sp-password"
+			},
+			"tenant": "3aa4a235-b6e2-48d5-9195-7fcf05b459b0",
+			"aadResourceId": "https://management.azure.com",
+			"azureCloudType": "AzurePublic"
+		},
+		"connectVia": {
+			"referenceName": "AutoResolveIntegrationRuntime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

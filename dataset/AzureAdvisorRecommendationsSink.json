@@ -1,0 +1,29 @@
+{
+	"name": "AzureAdvisorRecommendationsSink",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "s037-cost-management-WorkspaceDefaultStorage",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"subscriptionId": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@concat('advisor-recommendations-subscription-',dataset().subscriptionId,'.parquet')",
+					"type": "Expression"
+				},
+				"folderPath": "recommendations",
+				"fileSystem": "usage"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	}
+}

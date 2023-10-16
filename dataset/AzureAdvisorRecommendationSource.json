@@ -1,0 +1,23 @@
+{
+	"name": "AzureAdvisorRecommendationSource",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureManagementAPI",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"subscriptionId": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "RestResource",
+		"typeProperties": {
+			"relativeUrl": {
+				"value": "@concat('subscriptions/',dataset().subscriptionId,'/providers/Microsoft.Advisor/recommendations?api-version=2017-04-19')",
+				"type": "Expression"
+			}
+		},
+		"schema": []
+	}
+}
