@@ -1,0 +1,22 @@
+{
+	"name": "AzureManagementAPIMetricsReader",
+	"properties": {
+		"description": "Azure Management API Client using the Azure-Cost-Management-Metrics-Reader service principal for authentication",
+		"annotations": [],
+		"type": "RestService",
+		"typeProperties": {
+			"url": "https://management.azure.com/",
+			"enableServerCertificateValidation": false,
+			"authenticationType": "AadServicePrincipal",
+			"aadResourceId": "https://management.azure.com",
+			"credential": {
+				"referenceName": "FinOps-metrics-reader-credentials",
+				"type": "CredentialReference"
+			}
+		},
+		"connectVia": {
+			"referenceName": "AutoResolveIntegrationRuntime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}
