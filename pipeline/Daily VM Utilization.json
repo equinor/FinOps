@@ -3,8 +3,8 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Get VM utilization time series",
-				"type": "Copy",
+				"name": "Get Azure Subscriptions",
+				"type": "WebActivity",
 				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
@@ -15,74 +15,210 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"source": {
-						"type": "RestSource",
-						"httpRequestTimeout": "00:01:40",
-						"requestInterval": "00.00:00:00.010",
-						"requestMethod": "GET",
-						"paginationRules": {
-							"supportRFC5988": "true"
-						}
+					"url": "https://management.azure.com/subscriptions?api-version=2022-12-01",
+					"connectVia": {
+						"referenceName": "AutoResolveIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
 					},
-					"sink": {
-						"type": "ParquetSink",
-						"storeSettings": {
-							"type": "AzureBlobFSWriteSettings"
-						},
-						"formatSettings": {
-							"type": "ParquetWriteSettings"
-						}
-					},
-					"enableStaging": false,
-					"translator": {
-						"type": "TabularTranslator",
-						"mappings": [
-							{
-								"source": {
-									"path": "['timeStamp']"
-								},
-								"sink": {
-									"name": "timeStamp"
-								}
+					"method": "GET",
+					"authentication": {
+						"type": "ServicePrincipal",
+						"userTenant": "3aa4a235-b6e2-48d5-9195-7fcf05b459b0",
+						"username": "c282b841-bb78-4904-aba9-4aebf02ccb71",
+						"resource": "https://management.azure.com",
+						"password": {
+							"type": "AzureKeyVaultSecret",
+							"store": {
+								"referenceName": "ACM_Toolkit_kv",
+								"type": "LinkedServiceReference"
 							},
-							{
-								"source": {
-									"path": "['average']"
-								},
-								"sink": {
-									"name": "average"
-								}
-							}
-						],
-						"collectionReference": "$['value'][0]['timeseries'][0]['data']",
-						"mapComplexValuesToString": false
-					}
-				},
-				"inputs": [
-					{
-						"referenceName": "SubscriptionVMUtilization",
-						"type": "DatasetReference",
-						"parameters": {
-							"subscriptionId": "061f6daa-2afe-427d-b3a5-a1919906d96f",
-							"startDate": "2023-10-14",
-							"endDate": "2023-10-15",
-							"location": "norwayeast",
-							"resourceId": "'*'"
+							"secretName": "Azure-Cost-Management-Metrics-Reader-secret"
 						}
+					}
+				}
+			},
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Get Azure Subscriptions",
+						"dependencyConditions": [
+							"Succeeded"
+						]
 					}
 				],
-				"outputs": [
-					{
-						"referenceName": "VMUtilizationTimeseriesSink",
-						"type": "DatasetReference",
-						"parameters": {
-							"subscriptionId": "061f6daa-2afe-427d-b3a5-a1919906d96f",
-							"date": "2023-10-14"
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get Azure Subscriptions').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Fetch and store VM utilization data",
+							"type": "SynapseNotebook",
+							"state": "Inactive",
+							"onInactiveMarkAs": "Succeeded",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"notebook": {
+									"referenceName": "VM-Utilization",
+									"type": "NotebookReference"
+								},
+								"parameters": {
+									"subscriptionId": {
+										"value": {
+											"value": "@item().subscriptionId",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"startDate": {
+										"value": {
+											"value": "@formatDateTime(addDays(utcNow(), -1), 'yyyy-MM-dd')",
+											"type": "Expression"
+										}
+									},
+									"endDate": {
+										"value": {
+											"value": "@formatDateTime(utcNow(),'yyyy-MM-dd')",
+											"type": "Expression"
+										},
+										"type": "string"
+									}
+								},
+								"snapshot": true
+							}
+						},
+						{
+							"name": "Fetch subscription resources",
+							"type": "WebActivity",
+							"state": "Inactive",
+							"onInactiveMarkAs": "Succeeded",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"url": {
+									"value": "@concat('https://management.azure.com/subscriptions/', item().subscriptionId,'/resources?api-version=2021-04-01&$filter=resourceType eq',variables('resourceType'))",
+									"type": "Expression"
+								},
+								"connectVia": {
+									"referenceName": "AutoResolveIntegrationRuntime",
+									"type": "IntegrationRuntimeReference"
+								},
+								"method": "GET",
+								"authentication": {
+									"type": "ServicePrincipal",
+									"userTenant": "3aa4a235-b6e2-48d5-9195-7fcf05b459b0",
+									"username": "c282b841-bb78-4904-aba9-4aebf02ccb71",
+									"resource": "https://management.azure.com",
+									"password": {
+										"type": "AzureKeyVaultSecret",
+										"store": {
+											"referenceName": "ACM_Toolkit_kv",
+											"type": "LinkedServiceReference"
+										},
+										"secretName": "Azure-Cost-Management-Metrics-Reader-secret"
+									}
+								}
+							}
+						},
+						{
+							"name": "Copy data1",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "RestSource",
+									"httpRequestTimeout": "00:01:40",
+									"requestInterval": "00.00:00:00.010",
+									"requestMethod": "GET",
+									"paginationRules": {
+										"supportRFC5988": "true"
+									}
+								},
+								"sink": {
+									"type": "DelimitedTextSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "DelimitedTextWriteSettings",
+										"quoteAllText": true,
+										"fileExtension": ".txt"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"mappings": [
+										{
+											"source": {
+												"path": "['location']"
+											},
+											"sink": {
+												"name": "location",
+												"type": "String"
+											}
+										}
+									],
+									"collectionReference": "$['value']"
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "AzureSubscriptionResources",
+									"type": "DatasetReference",
+									"parameters": {
+										"subscriptionId": {
+											"value": "@item().subscriptionId",
+											"type": "Expression"
+										},
+										"resourceType": "'Microsoft.Compute/virtualMachines'"
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "SubscriptionResourceLocations",
+									"type": "DatasetReference"
+								}
+							]
 						}
-					}
-				]
+					]
+				}
 			}
 		],
+		"variables": {
+			"resourceType": {
+				"type": "String",
+				"defaultValue": "'Microsoft.Compute/virtualMachines'"
+			}
+		},
 		"folder": {
 			"name": "PipelinesInProduction/Management API (New)"
 		},
