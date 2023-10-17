@@ -60,7 +60,14 @@
 							"type": "SynapseNotebook",
 							"state": "Inactive",
 							"onInactiveMarkAs": "Succeeded",
-							"dependsOn": [],
+							"dependsOn": [
+								{
+									"activity": "Get resource locations in subscription",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
 							"policy": {
 								"timeout": "0.12:00:00",
 								"retry": 0,
@@ -140,7 +147,7 @@
 							}
 						},
 						{
-							"name": "Copy data1",
+							"name": "Get resource locations in subscription",
 							"type": "Copy",
 							"dependsOn": [],
 							"policy": {
@@ -156,10 +163,7 @@
 									"type": "RestSource",
 									"httpRequestTimeout": "00:01:40",
 									"requestInterval": "00.00:00:00.010",
-									"requestMethod": "GET",
-									"paginationRules": {
-										"supportRFC5988": "true"
-									}
+									"requestMethod": "GET"
 								},
 								"sink": {
 									"type": "DelimitedTextSink",
@@ -205,7 +209,13 @@
 							"outputs": [
 								{
 									"referenceName": "SubscriptionResourceLocations",
-									"type": "DatasetReference"
+									"type": "DatasetReference",
+									"parameters": {
+										"subscriptionId": {
+											"value": "@item().subscriptionId",
+											"type": "Expression"
+										}
+									}
 								}
 							]
 						}
