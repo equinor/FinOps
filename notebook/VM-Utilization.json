@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "3cace58d-a433-4cc8-af24-cfdcc853bd55"
+				"spark.autotune.trackingId": "c2d93648-4b2e-4239-b51d-9564c034b856"
 			}
 		},
 		"metadata": {
@@ -74,7 +74,7 @@
 					"startDate = '2023-10-14'\r\n",
 					"endDate = '2023-10-15'"
 				],
-				"execution_count": 17
+				"execution_count": 30
 			},
 			{
 				"cell_type": "code",
@@ -93,9 +93,10 @@
 					"# Constants\r\n",
 					"KEY_VAULT_NAME = 'acm-toolkit-kv'\r\n",
 					"SCOPE = 'https://management.azure.com/.default'\r\n",
-					"BASE_URL = 'https://management.azure.com/'"
+					"BASE_URL = 'https://management.azure.com/'\r\n",
+					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'"
 				],
-				"execution_count": 18
+				"execution_count": 31
 			},
 			{
 				"cell_type": "code",
@@ -118,7 +119,7 @@
 					"import pyspark.sql.functions as F\r\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 19
+				"execution_count": 32
 			},
 			{
 				"cell_type": "code",
@@ -162,7 +163,7 @@
 					"    T.StructField(\"virtualMachineName\", T.StringType(), True)\r\n",
 					"])"
 				],
-				"execution_count": 20
+				"execution_count": 33
 			},
 			{
 				"cell_type": "code",
@@ -185,7 +186,7 @@
 					"    unique_locations = [str(value) for value in location_list]\r\n",
 					"    return unique_locations"
 				],
-				"execution_count": 21
+				"execution_count": 34
 			},
 			{
 				"cell_type": "code",
@@ -202,9 +203,9 @@
 				},
 				"source": [
 					"def get_access_token():\r\n",
-					"    tenant_id = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'tenantID')\r\n",
-					"    client_id = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'Azure-Cost-Management-Metrics-Reader-Client-Id')\r\n",
-					"    client_secret = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'Azure-Cost-Management-Metrics-Reader-secret')\r\n",
+					"    tenant_id = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'tenantID', LINKED_SERVICE_NAME)\r\n",
+					"    client_id = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'Azure-Cost-Management-Metrics-Reader-Client-Id', LINKED_SERVICE_NAME)\r\n",
+					"    client_secret = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'Azure-Cost-Management-Metrics-Reader-secret', LINKED_SERVICE_NAME)\r\n",
 					"\r\n",
 					"    credential = ClientSecretCredential(\r\n",
 					"        authority=KnownAuthorities.AZURE_PUBLIC_CLOUD,\r\n",
@@ -216,7 +217,7 @@
 					"    token = credential.get_token(SCOPE)\r\n",
 					"    return token.token"
 				],
-				"execution_count": 22
+				"execution_count": 35
 			},
 			{
 				"cell_type": "code",
@@ -254,7 +255,7 @@
 					"\r\n",
 					"    return url"
 				],
-				"execution_count": 23
+				"execution_count": 36
 			},
 			{
 				"cell_type": "code",
@@ -293,7 +294,7 @@
 					"    \r\n",
 					"    return result"
 				],
-				"execution_count": 24
+				"execution_count": 37
 			},
 			{
 				"cell_type": "code",
@@ -328,7 +329,7 @@
 					"    df = df.drop('resourceReference', 'refComponents')\r\n",
 					"    return df"
 				],
-				"execution_count": 27
+				"execution_count": 38
 			},
 			{
 				"cell_type": "code",
@@ -367,7 +368,7 @@
 					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/metrics/vm-utilization-by-subscription/{subscriptionId}/{startDate}.parquet\"\r\n",
 					"df.write.format('parquet').mode('overwrite').save(target_path)"
 				],
-				"execution_count": 28
+				"execution_count": 39
 			}
 		]
 	}
