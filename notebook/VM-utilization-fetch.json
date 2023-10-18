@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "39ccd371-8f90-4060-a874-4db0ac2e36ec"
+				"spark.autotune.trackingId": "dd5388d9-faa6-460b-9cae-a3e765cff61b"
 			}
 		},
 		"metadata": {
@@ -72,7 +72,7 @@
 					"import pyspark.sql.functions as F\r\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 225
+				"execution_count": 1
 			},
 			{
 				"cell_type": "code",
@@ -101,7 +101,7 @@
 					"month = datesplit[1]\r\n",
 					"day = datesplit[2]"
 				],
-				"execution_count": 226
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -123,7 +123,7 @@
 					"BASE_URL = 'https://management.azure.com/'\r\n",
 					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'"
 				],
-				"execution_count": 227
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -148,7 +148,7 @@
 					"month = datesplit[1]\r\n",
 					"day = datesplit[2]"
 				],
-				"execution_count": 228
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -192,7 +192,7 @@
 					"    T.StructField(\"virtualMachineName\", T.StringType(), True)\r\n",
 					"])"
 				],
-				"execution_count": 229
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -215,7 +215,7 @@
 					"    unique_locations = [str(value) for value in location_list]\r\n",
 					"    return unique_locations"
 				],
-				"execution_count": 230
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -246,7 +246,7 @@
 					"    token = credential.get_token(SCOPE)\r\n",
 					"    return token.token"
 				],
-				"execution_count": 231
+				"execution_count": 7
 			},
 			{
 				"cell_type": "code",
@@ -284,7 +284,7 @@
 					"\r\n",
 					"    return url"
 				],
-				"execution_count": 232
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -323,7 +323,7 @@
 					"    \r\n",
 					"    return result"
 				],
-				"execution_count": 233
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -358,7 +358,7 @@
 					"    df = df.drop('resourceReference', 'refComponents')\r\n",
 					"    return df"
 				],
-				"execution_count": 234
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -397,7 +397,7 @@
 					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/metrics/vm-utilization-by-subscription/{subscriptionId}/{year}/{month}/{day}/vm_cpu_avg.parquet\"\r\n",
 					"df.write.format('parquet').mode('overwrite').save(target_path)"
 				],
-				"execution_count": 235
+				"execution_count": 11
 			}
 		]
 	}
