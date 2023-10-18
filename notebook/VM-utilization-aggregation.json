@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "a7b7a713-e817-45d0-b558-b28d4f844dd3"
+				"spark.autotune.trackingId": "48feb173-9ab8-47b0-b177-a06254c6d7b6"
 			}
 		},
 		"metadata": {
@@ -51,6 +51,20 @@
 			"sessionKeepAliveTimeout": 30
 		},
 		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Script Initialization\r\n",
+					"##### Set parameters, variables and scehma"
+				]
+			},
 			{
 				"cell_type": "code",
 				"metadata": {
@@ -140,6 +154,19 @@
 				"execution_count": 66
 			},
 			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Extract data from source"
+				]
+			},
+			{
 				"cell_type": "code",
 				"metadata": {
 					"jupyter": {
@@ -195,6 +222,19 @@
 				"execution_count": null
 			},
 			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Transform source data"
+				]
+			},
+			{
 				"cell_type": "code",
 				"metadata": {
 					"jupyter": {
@@ -215,6 +255,19 @@
 					"df = df.groupBy('subscriptionId', 'resourceGroupName', 'virtualMachineName', 'Report_Date').agg(F.avg('cpu_average'))"
 				],
 				"execution_count": 24
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Load transformed data to container"
+				]
 			},
 			{
 				"cell_type": "code",
