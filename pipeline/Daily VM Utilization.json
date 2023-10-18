@@ -58,8 +58,6 @@
 						{
 							"name": "Fetch and store VM utilization data",
 							"type": "SynapseNotebook",
-							"state": "Inactive",
-							"onInactiveMarkAs": "Succeeded",
 							"dependsOn": [
 								{
 									"activity": "Get resource locations in subscription",
@@ -78,7 +76,7 @@
 							"userProperties": [],
 							"typeProperties": {
 								"notebook": {
-									"referenceName": "VM-Utilization",
+									"referenceName": "VM-utilization-fetch",
 									"type": "NotebookReference"
 								},
 								"parameters": {
@@ -93,7 +91,8 @@
 										"value": {
 											"value": "@formatDateTime(addDays(utcNow(), -1), 'yyyy-MM-dd')",
 											"type": "Expression"
-										}
+										},
+										"type": "string"
 									},
 									"endDate": {
 										"value": {
@@ -101,49 +100,22 @@
 											"type": "Expression"
 										},
 										"type": "string"
-									}
-								},
-								"snapshot": true
-							}
-						},
-						{
-							"name": "Fetch subscription resources",
-							"type": "WebActivity",
-							"state": "Inactive",
-							"onInactiveMarkAs": "Succeeded",
-							"dependsOn": [],
-							"policy": {
-								"timeout": "0.12:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"url": {
-									"value": "@concat('https://management.azure.com/subscriptions/', item().subscriptionId,'/resources?api-version=2021-04-01&$filter=resourceType eq',variables('resourceType'))",
-									"type": "Expression"
-								},
-								"connectVia": {
-									"referenceName": "AutoResolveIntegrationRuntime",
-									"type": "IntegrationRuntimeReference"
-								},
-								"method": "GET",
-								"authentication": {
-									"type": "ServicePrincipal",
-									"userTenant": "3aa4a235-b6e2-48d5-9195-7fcf05b459b0",
-									"username": "c282b841-bb78-4904-aba9-4aebf02ccb71",
-									"resource": "https://management.azure.com",
-									"password": {
-										"type": "AzureKeyVaultSecret",
-										"store": {
-											"referenceName": "ACM_Toolkit_kv",
-											"type": "LinkedServiceReference"
+									},
+									"storageAccount": {
+										"value": {
+											"value": "@pipeline().parameters.storageAccount",
+											"type": "Expression"
 										},
-										"secretName": "Azure-Cost-Management-Metrics-Reader-secret"
+										"type": "string"
 									}
-								}
+								},
+								"snapshot": true,
+								"conf": {
+									"spark.dynamicAllocation.enabled": null,
+									"spark.dynamicAllocation.minExecutors": null,
+									"spark.dynamicAllocation.maxExecutors": null
+								},
+								"numExecutors": null
 							}
 						},
 						{
@@ -223,6 +195,12 @@
 				}
 			}
 		],
+		"parameters": {
+			"storageAccount": {
+				"type": "string",
+				"defaultValue": "s037costmgmt"
+			}
+		},
 		"variables": {
 			"resourceType": {
 				"type": "String",
