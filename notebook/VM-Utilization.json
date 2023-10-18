@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "8d0305a3-ede9-4e8e-95ff-652aee6653d8"
+				"spark.autotune.trackingId": "098a7afa-cc5a-4b5d-b7c1-c1a4d78697d8"
 			}
 		},
 		"metadata": {
@@ -74,7 +74,28 @@
 					"startDate = '2023-10-14'\r\n",
 					"endDate = '2023-10-15'"
 				],
-				"execution_count": 221
+				"execution_count": 1
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Constants\r\n",
+					"KEY_VAULT_NAME = 'acm-toolkit-kv'\r\n",
+					"SCOPE = 'https://management.azure.com/.default'\r\n",
+					"BASE_URL = 'https://management.azure.com/'"
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -97,7 +118,7 @@
 					"import pyspark.sql.functions as F\r\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 222
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -113,10 +134,7 @@
 					}
 				},
 				"source": [
-					"# Constants\r\n",
-					"KEY_VAULT_NAME = 'acm-toolkit-kv'\r\n",
-					"SCOPE = 'https://management.azure.com/.default'\r\n",
-					"BASE_URL = 'https://management.azure.com/'\r\n",
+					"# Set Pyspark schema\r\n",
 					"\r\n",
 					"api_schema = T.StructType([\r\n",
 					"    T.StructField(\"metadatavalues\", T.ArrayType(\r\n",
@@ -144,7 +162,7 @@
 					"    T.StructField(\"virtualMachineName\", T.StringType(), True)\r\n",
 					"])"
 				],
-				"execution_count": 223
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -167,7 +185,7 @@
 					"    unique_locations = [str(value) for value in location_list]\r\n",
 					"    return unique_locations"
 				],
-				"execution_count": 224
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -198,7 +216,7 @@
 					"    token = credential.get_token(SCOPE)\r\n",
 					"    return token.token"
 				],
-				"execution_count": 225
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -236,7 +254,7 @@
 					"\r\n",
 					"    return url"
 				],
-				"execution_count": 226
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -275,7 +293,7 @@
 					"    \r\n",
 					"    return result"
 				],
-				"execution_count": 227
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -308,7 +326,7 @@
 					"    df = df.drop('resourceReference', 'refComponents')\r\n",
 					"    return df"
 				],
-				"execution_count": 228
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -332,26 +350,22 @@
 					"# Get service principal access token\r\n",
 					"access_token = get_access_token()\r\n",
 					"\r\n",
+					"df = spark.createDataFrame([], schema=parquet_schema)\r\n",
+					"\r\n",
 					"for location in locations:\r\n",
 					"    # Fetch virtual machine utilization metrics in given location\r\n",
 					"    metrics = fetch_metrics(access_token, location)\r\n",
 					"\r\n",
 					"    # Transform metrics json data to dataframe\r\n",
-					"    df = transform_to_df(metrics)\r\n",
+					"    metrics_df = transform_to_df(metrics)\r\n",
+					"    \r\n",
+					"    # Merge metrics from current location with target\r\n",
+					"    df = df.union(metrics_df)\r\n",
 					"\r\n",
-					"    # Get existing metric data\r\n",
-					"    target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/metrics/vm-utilization-by-subscription/{subscriptionId}/{startDate}.parquet\"\r\n",
-					"    existing_df = spark.createDataFrame([], schema=parquet_schema)\r\n",
-					"    if (os.path.exists(target_path)):\r\n",
-					"        existing_df = spark.read.option(\"mergeSchema\", \"true\").parquet(target_path, schema=parquet_schema)\r\n",
-					"        \r\n",
-					"    display(existing_df)\r\n",
-					"\r\n",
-					"    # # Merge with new data and write back to file\r\n",
-					"    # merged_df = df.union(existing_df)\r\n",
-					"    # merged_df.write.format('parquet').mode('append').save(target_path)"
+					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/metrics/vm-utilization-by-subscription/{subscriptionId}/{startDate}.parquet\"\r\n",
+					"df.write.format('parquet').mode('overwrite').save(target_path)"
 				],
-				"execution_count": 229
+				"execution_count": 14
 			}
 		]
 	}
