@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "fddbe667-2d27-4762-b66d-7ff8e7d3ce79"
+				"spark.autotune.trackingId": "e7ace5ae-4b0a-4687-a86d-ec8d6105ef6f"
 			}
 		},
 		"metadata": {
@@ -62,6 +62,30 @@
 						"transient": {
 							"deleting": false
 						}
+					}
+				},
+				"source": [
+					"import os\r\n",
+					"from datetime import datetime, timedelta\r\n",
+					"from azure.identity import ClientSecretCredential, KnownAuthorities\r\n",
+					"from notebookutils import mssparkutils\r\n",
+					"import requests\r\n",
+					"import pyspark.sql.functions as F\r\n",
+					"import pyspark.sql.types as T"
+				],
+				"execution_count": 225
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
 					},
 					"tags": [
 						"parameters"
@@ -71,10 +95,14 @@
 					"# Parameters\r\n",
 					"storageAccount = 's037costmgmt'\r\n",
 					"subscriptionId = '061f6daa-2afe-427d-b3a5-a1919906d96f'\r\n",
-					"startDate = '2023-10-14'\r\n",
-					"endDate = '2023-10-15'"
+					"startDate = '2023-10-17'\r\n",
+					"\r\n",
+					"datesplit = startDate.split('-')\r\n",
+					"year = datesplit[0]\r\n",
+					"month = datesplit[1]\r\n",
+					"day = datesplit[2]"
 				],
-				"execution_count": 30
+				"execution_count": 226
 			},
 			{
 				"cell_type": "code",
@@ -96,7 +124,7 @@
 					"BASE_URL = 'https://management.azure.com/'\r\n",
 					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'"
 				],
-				"execution_count": 31
+				"execution_count": 227
 			},
 			{
 				"cell_type": "code",
@@ -112,14 +140,16 @@
 					}
 				},
 				"source": [
-					"import os\r\n",
-					"from azure.identity import ClientSecretCredential, KnownAuthorities\r\n",
-					"from notebookutils import mssparkutils\r\n",
-					"import requests\r\n",
-					"import pyspark.sql.functions as F\r\n",
-					"import pyspark.sql.types as T"
+					"# Date variables\r\n",
+					"nextDay = datetime.strptime(startDate, '%Y-%m-%d') + timedelta(days=1)\r\n",
+					"endDate = nextDay.strftime('%Y-%m-%d')\r\n",
+					"\r\n",
+					"datesplit = startDate.split('-')\r\n",
+					"year = datesplit[0]\r\n",
+					"month = datesplit[1]\r\n",
+					"day = datesplit[2]"
 				],
-				"execution_count": 32
+				"execution_count": 228
 			},
 			{
 				"cell_type": "code",
@@ -163,7 +193,7 @@
 					"    T.StructField(\"virtualMachineName\", T.StringType(), True)\r\n",
 					"])"
 				],
-				"execution_count": 33
+				"execution_count": 229
 			},
 			{
 				"cell_type": "code",
@@ -186,7 +216,7 @@
 					"    unique_locations = [str(value) for value in location_list]\r\n",
 					"    return unique_locations"
 				],
-				"execution_count": 34
+				"execution_count": 230
 			},
 			{
 				"cell_type": "code",
@@ -217,7 +247,7 @@
 					"    token = credential.get_token(SCOPE)\r\n",
 					"    return token.token"
 				],
-				"execution_count": 35
+				"execution_count": 231
 			},
 			{
 				"cell_type": "code",
@@ -255,7 +285,7 @@
 					"\r\n",
 					"    return url"
 				],
-				"execution_count": 36
+				"execution_count": 232
 			},
 			{
 				"cell_type": "code",
@@ -294,7 +324,7 @@
 					"    \r\n",
 					"    return result"
 				],
-				"execution_count": 37
+				"execution_count": 233
 			},
 			{
 				"cell_type": "code",
@@ -329,7 +359,7 @@
 					"    df = df.drop('resourceReference', 'refComponents')\r\n",
 					"    return df"
 				],
-				"execution_count": 38
+				"execution_count": 234
 			},
 			{
 				"cell_type": "code",
@@ -365,10 +395,10 @@
 					"    # Merge metrics from current location with target\r\n",
 					"    df = df.union(metrics_df)\r\n",
 					"\r\n",
-					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/metrics/vm-utilization-by-subscription/{subscriptionId}/{startDate}.parquet\"\r\n",
+					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/metrics/vm-utilization-by-subscription/{subscriptionId}/{year}/{month}/{day}/vm_cpu_avg.parquet\"\r\n",
 					"df.write.format('parquet').mode('overwrite').save(target_path)"
 				],
-				"execution_count": 39
+				"execution_count": 235
 			}
 		]
 	}
