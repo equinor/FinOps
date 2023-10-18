@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "f28a5376-f017-4af1-81dd-591242c2e3e9"
+				"spark.autotune.trackingId": "a7b7a713-e817-45d0-b558-b28d4f844dd3"
 			}
 		},
 		"metadata": {
@@ -28,7 +28,7 @@
 			"enableDebugMode": false,
 			"kernelspec": {
 				"name": "synapse_pyspark",
-				"display_name": "python"
+				"display_name": "Synapse PySpark"
 			},
 			"language_info": {
 				"name": "python"
@@ -65,16 +65,176 @@
 					}
 				},
 				"source": [
-					""
+					"from datetime import datetime, timedelta\r\n",
+					"import os\r\n",
+					"import pyspark.sql.functions as F\r\n",
+					"import pyspark.sql.types as T"
+				],
+				"execution_count": 60
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"# Parameters\r\n",
+					"storageAccount = 's037costmgmt'\r\n",
+					"currentDate = '2023-10-18'"
+				],
+				"execution_count": 61
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Date variables\r\n",
+					"startDate = datetime.strptime(currentDate, '%Y-%m-%d') - timedelta(days=90)"
+				],
+				"execution_count": 62
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Set Pyspark schema\r\n",
+					"schema = T.StructType([\r\n",
+					"    T.StructField(\"timestamp\", T.TimestampType(), True),\r\n",
+					"    T.StructField(\"cpu_average\", T.DoubleType(), True),\r\n",
+					"    T.StructField(\"subscriptionId\", T.StringType(), True),\r\n",
+					"    T.StructField(\"resourceGroupName\", T.StringType(), True),\r\n",
+					"    T.StructField(\"virtualMachineName\", T.StringType(), True)\r\n",
+					"])"
+				],
+				"execution_count": 66
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Find file paths for aggregation\r\n",
+					"def compute_file_paths(start_date, file_paths=[]):\r\n",
+					"    date_iter = start_date\r\n",
+					"    while (date_iter < datetime.strptime(currentDate, '%Y-%m-%d')):\r\n",
+					"        data_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/metrics/vm-utilization-by-subscription/*/{date_iter.year}/{date_iter.month}/{date_iter.day}/vm_cpu_avg.parquet\"\r\n",
+					"        file_paths.append(data_path)\r\n",
+					"        date_iter += timedelta(days=1)\r\n",
+					"    return file_paths"
+				],
+				"execution_count": 64
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"# Load filedata to dataframe\r\n",
+					"def load_to_df(start_date):\r\n",
+					"    df = spark.createDataFrame([], schema=schema)\r\n",
+					"    file_paths = compute_file_paths(start_date)\r\n",
+					"    for file_path in file_paths:\r\n",
+					"        try:\r\n",
+					"            file_df = spark.read.parquet(file_path)\r\n",
+					"            print(f\"Success reading file {file_path}\")\r\n",
+					"            df = df.union(file_df)\r\n",
+					"        except Exception as e:\r\n",
+					"            print(f\"Error reading file {file_path}: {str(e)}\")\r\n",
+					"    return df"
 				],
 				"execution_count": null
 			},
 			{
 				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
 				"source": [
-					"source_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/metrics/vm-utilization-by-subscription/{subscriptionId}/{year}/{month}/{day}/vm_cpu_avg.parquet\""
+					"# Compute average CPU for each VM \r\n",
+					"df = load_to_df(startDate)\r\n",
+					"df = df.withColumn('Report_Date', F.to_date(\"timestamp\"))\r\n",
+					"df = df.filter(F.col('cpu_average').isNotNull())\r\n",
+					"df = df.groupBy('subscriptionId', 'resourceGroupName', 'virtualMachineName', 'Report_Date').agg(F.avg('cpu_average'))"
 				],
-				"execution_count": null
+				"execution_count": 24
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Write 3 month aggregation to ADLS\r\n",
+					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/metrics/vm-utilization-aggregates/vm_cpu_agg_past_3_months.parquet\"\r\n",
+					"df.write.format('parquet').mode('overwrite').save(target_path)"
+				],
+				"execution_count": 26
 			}
 		]
 	}
