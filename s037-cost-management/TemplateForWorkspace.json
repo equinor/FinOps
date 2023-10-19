@@ -24006,34 +24006,6 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/Daily Usage Data Sync')]",
-			"type": "Microsoft.Synapse/workspaces/triggers",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Stopped",
-				"pipelines": [],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Day",
-						"interval": 1,
-						"startTime": "2022-08-23T08:22:00Z",
-						"timeZone": "UTC",
-						"schedule": {
-							"minutes": [
-								0
-							],
-							"hours": [
-								6
-							]
-						}
-					}
-				}
-			},
-			"dependsOn": []
-		},
-		{
 			"name": "[concat(parameters('workspaceName'), '/Daily at 12am')]",
 			"type": "Microsoft.Synapse/workspaces/triggers",
 			"apiVersion": "2019-06-01-preview",
@@ -24210,27 +24182,6 @@
 				"[concat(variables('workspaceId'), '/pipelines/Update PBI Datasets and Run AnomalyDetection_v1')]",
 				"[concat(variables('workspaceId'), '/pipelines/Daily VM Utilization')]"
 			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/Detect file change')]",
-			"type": "Microsoft.Synapse/workspaces/triggers",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Stopped",
-				"pipelines": [],
-				"type": "BlobEventsTrigger",
-				"typeProperties": {
-					"blobPathBeginsWith": "/usage/blobs/exports/daily/ACMDailyAmortizedCost/20221101-20221130",
-					"blobPathEndsWith": "*.csv",
-					"ignoreEmptyBlobs": true,
-					"scope": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt",
-					"events": [
-						"Microsoft.Storage.BlobCreated"
-					]
-				}
-			},
-			"dependsOn": []
 		},
 		{
 			"name": "[concat(parameters('workspaceName'), '/Total Amortized Cost Trigger - OnceAMonthAt12')]",
@@ -25467,6 +25418,29 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/CreateAnomalyView')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "AnomalyDetection"
+				},
+				"content": {
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW Anomalies_Past_Three_Months\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_AnomalyDetection_3mnth.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/CreateCalendarView')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
@@ -25476,6 +25450,52 @@
 				},
 				"content": {
 					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW Calendar_New\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/Calendar/delta/Calendar.delta/',\n        FORMAT = 'DELTA'\n    ) AS [result]\n\nGO\nSELECT TOP 10 * FROM Calendar_New",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/CreateVMUtilizationDailyMetricsView')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "VMUtilization"
+				},
+				"content": {
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW VM_Utilization_Daily_Metrics_Past_Three_Months\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/metrics/vm-utilization-aggregates/vm_cpu_agg_daily_past_3_months.parquet/',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/CreateVMUtilizationHourlyMetricsView')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "VMUtilization"
+				},
+				"content": {
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW VM_Utilization_Hourly_Metrics_Past_Three_Months\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/metrics/vm-utilization-aggregates/vm_cpu_agg_hourly_past_3_months.parquet/',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
 					"metadata": {
 						"language": "sql"
 					},
@@ -27147,26 +27167,6 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/ScriptToVerifyCost')]",
-			"type": "Microsoft.Synapse/workspaces/sqlscripts",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"content": {
-					"query": "SELECT TOP (100) [ResourceName]\n,[MeterCategory]\n,[ServiceFamily]\n,[ReservationName]\n,[BillingPeriodStartDate]\n,[BillingPeriodEndDate]\n,[PricingModel]\n,[PayGPrice]\n,[Quantity]\n,[UnitOfMeasure]\n,[EffectivePrice]\n,[CostInBillingCurrency]\n FROM [dbo].[tsc_ACMMonthlyAmortizedCost_overview_Oneyear]",
-					"metadata": {
-						"language": "sql"
-					},
-					"currentConnection": {
-						"databaseName": "costmgmt",
-						"poolName": "Built-in"
-					},
-					"resultLimit": 5000
-				},
-				"type": "SqlQuery"
-			},
-			"dependsOn": []
-		},
-		{
 			"name": "[concat(parameters('workspaceName'), '/ServiceNowApplication')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
@@ -28311,29 +28311,6 @@
 						"poolName": "Built-in"
 					},
 					"resultLimit": -1
-				},
-				"type": "SqlQuery"
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/WriteAnomaliesToView')]",
-			"type": "Microsoft.Synapse/workspaces/sqlscripts",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"folder": {
-					"name": "AnomalyDetection"
-				},
-				"content": {
-					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW Anomalies_Past_Three_Months\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_AnomalyDetection_3mnth.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
-					"metadata": {
-						"language": "sql"
-					},
-					"currentConnection": {
-						"databaseName": "costmgmt",
-						"poolName": "Built-in"
-					},
-					"resultLimit": 5000
 				},
 				"type": "SqlQuery"
 			},
@@ -37801,7 +37778,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "10ce2825-0fbd-4cc9-8753-e84ab5d8cf4e"
+						"spark.autotune.trackingId": "caa358f1-12f8-4c66-b2f7-14850e569489"
 					}
 				},
 				"metadata": {
@@ -37826,7 +37803,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -37865,7 +37843,7 @@
 							"import pyspark.sql.types as T"
 						],
 						"outputs": [],
-						"execution_count": 1
+						"execution_count": 25
 					},
 					{
 						"cell_type": "code",
@@ -37889,7 +37867,7 @@
 							"currentDate = '2023-10-19'"
 						],
 						"outputs": [],
-						"execution_count": 2
+						"execution_count": 26
 					},
 					{
 						"cell_type": "code",
@@ -37909,7 +37887,7 @@
 							"startDate = datetime.strptime(currentDate, '%Y-%m-%d') - timedelta(days=90)"
 						],
 						"outputs": [],
-						"execution_count": 3
+						"execution_count": 27
 					},
 					{
 						"cell_type": "code",
@@ -37935,7 +37913,7 @@
 							"])"
 						],
 						"outputs": [],
-						"execution_count": 4
+						"execution_count": 28
 					},
 					{
 						"cell_type": "markdown",
@@ -37974,7 +37952,7 @@
 							"    return file_paths"
 						],
 						"outputs": [],
-						"execution_count": 5
+						"execution_count": 29
 					},
 					{
 						"cell_type": "code",
@@ -38005,7 +37983,7 @@
 							"    return df"
 						],
 						"outputs": [],
-						"execution_count": 6
+						"execution_count": 30
 					},
 					{
 						"cell_type": "markdown",
@@ -38034,14 +38012,21 @@
 							}
 						},
 						"source": [
-							"# Compute average CPU for each VM \r\n",
-							"df = load_to_df(startDate)\r\n",
-							"df = df.withColumn('Report_Date', F.to_date(\"timestamp\"))\r\n",
-							"df = df.filter(F.col('cpu_average').isNotNull())\r\n",
-							"df = df.groupBy('subscriptionId', 'resourceGroupName', 'virtualMachineName', 'Report_Date').agg(F.avg('cpu_average').alias('cpu_avg'))"
+							"metrics_df = load_to_df(startDate)\r\n",
+							"metrics_df = metrics_df.withColumn('Report_Date', F.to_date(\"timestamp\"))\r\n",
+							"\r\n",
+							"hourly_df = metrics_df.alias('hourly_df')\r\n",
+							"daily_df = metrics_df.alias('daily_df')\r\n",
+							"\r\n",
+							"# Compute daily CPU average\r\n",
+							"daily_df = daily_df.filter(F.col('cpu_average').isNotNull())\r\n",
+							"daily_df = daily_df.groupBy('subscriptionId', 'resourceGroupName', 'virtualMachineName', 'Report_Date').agg(F.avg('cpu_average').alias('cpu_avg'))\r\n",
+							"\r\n",
+							"# Set null values in hourly CPU average to 0\r\n",
+							"hourly_df = hourly_df.withColumn('cpu_average', F.when(F.col('cpu_average').isNull(), F.lit(0)).otherwise(F.col('cpu_average')))"
 						],
 						"outputs": [],
-						"execution_count": 7
+						"execution_count": 31
 					},
 					{
 						"cell_type": "markdown",
@@ -38071,11 +38056,14 @@
 						},
 						"source": [
 							"# Write 3 month aggregation to ADLS\r\n",
-							"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/metrics/vm-utilization-aggregates/vm_cpu_agg_past_3_months.parquet\"\r\n",
-							"df.write.format('parquet').mode('overwrite').save(target_path)"
+							"daily_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/metrics/vm-utilization-aggregates/vm_cpu_agg_daily_past_3_months.parquet\"\r\n",
+							"daily_df.write.format('parquet').mode('overwrite').save(daily_path)\r\n",
+							"\r\n",
+							"hourly_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/metrics/vm-utilization-aggregates/vm_cpu_agg_hourly_past_3_months.parquet\"\r\n",
+							"hourly_df.write.format('parquet').mode('overwrite').save(hourly_path)"
 						],
 						"outputs": [],
-						"execution_count": 8
+						"execution_count": 32
 					}
 				]
 			},
@@ -38568,7 +38556,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "f2ec7721-0daf-42d0-8395-d2b41a8d2926"
+						"spark.autotune.trackingId": "623bee09-dcec-46e5-8fd7-b23ed08521c8"
 					}
 				},
 				"metadata": {
@@ -38593,8 +38581,7 @@
 						"sparkVersion": "3.2",
 						"nodeCount": 3,
 						"cores": 8,
-						"memory": 56,
-						"automaticScaleJobs": false
+						"memory": 56
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -38615,7 +38602,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"from datetime import datetime, timedelta\r\n",
 							"from azure.identity import ClientSecretCredential, KnownAuthorities\r\n",
