@@ -1,0 +1,29 @@
+{
+	"name": "AzureManagementAPIMetricsReader",
+	"properties": {
+		"description": "Azure Management API Client using the Azure-Cost-Management-Metrics-Reader service principal for authentication",
+		"annotations": [],
+		"type": "RestService",
+		"typeProperties": {
+			"url": "https://management.azure.com/",
+			"enableServerCertificateValidation": false,
+			"authenticationType": "AadServicePrincipal",
+			"servicePrincipalId": "c282b841-bb78-4904-aba9-4aebf02ccb71",
+			"servicePrincipalKey": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ACM_Toolkit_kv",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "Azure-Cost-Management-Metrics-Reader-secret"
+			},
+			"tenant": "3aa4a235-b6e2-48d5-9195-7fcf05b459b0",
+			"aadResourceId": "https://management.azure.com",
+			"azureCloudType": "AzurePublic"
+		},
+		"connectVia": {
+			"referenceName": "AutoResolveIntegrationRuntime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

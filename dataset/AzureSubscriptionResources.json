@@ -1,0 +1,27 @@
+{
+	"name": "AzureSubscriptionResources",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureManagementAPIMetricsReader",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"subscriptionId": {
+				"type": "string"
+			},
+			"resourceType": {
+				"type": "string",
+				"defaultValue": "'Microsoft.Compute/virtualMachines'"
+			}
+		},
+		"annotations": [],
+		"type": "RestResource",
+		"typeProperties": {
+			"relativeUrl": {
+				"value": "@concat('subscriptions/', dataset().subscriptionId,'/resources?api-version=2021-04-01&$filter=resourceType eq',dataset().resourceType)",
+				"type": "Expression"
+			}
+		},
+		"schema": []
+	}
+}
