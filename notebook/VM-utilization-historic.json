@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "2909a696-31fc-46ee-8fe0-2328f4bbb6bb"
+				"spark.autotune.trackingId": "a1f872e2-ff98-439f-b289-2e51af2e6b3e"
 			}
 		},
 		"metadata": {
@@ -61,7 +61,7 @@
 					"import pyspark.sql.functions as F\r\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 25
+				"execution_count": 175
 			},
 			{
 				"cell_type": "code",
@@ -79,10 +79,9 @@
 				"source": [
 					"# Parameters\r\n",
 					"storageAccount = 's037costmgmt'\r\n",
-					"startDate = '2023-10-17'\r\n",
-					"endDate = '2023-10-17'"
+					"startDate = '2023-10-01'"
 				],
-				"execution_count": 26
+				"execution_count": 176
 			},
 			{
 				"cell_type": "code",
@@ -104,7 +103,7 @@
 					"BASE_URL = 'https://management.azure.com/'\r\n",
 					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'"
 				],
-				"execution_count": 27
+				"execution_count": 177
 			},
 			{
 				"cell_type": "code",
@@ -152,7 +151,7 @@
 					"    T.StructField(\"subscriptionId\", T.StringType(), True)\r\n",
 					"])"
 				],
-				"execution_count": 28
+				"execution_count": 178
 			},
 			{
 				"cell_type": "code",
@@ -175,7 +174,7 @@
 					"    unique_locations = [str(value) for value in location_list]\r\n",
 					"    return unique_locations"
 				],
-				"execution_count": 29
+				"execution_count": 179
 			},
 			{
 				"cell_type": "code",
@@ -206,7 +205,7 @@
 					"    token = credential.get_token(SCOPE)\r\n",
 					"    return token.token"
 				],
-				"execution_count": 30
+				"execution_count": 180
 			},
 			{
 				"cell_type": "code",
@@ -244,7 +243,7 @@
 					"\r\n",
 					"    return url"
 				],
-				"execution_count": 31
+				"execution_count": 181
 			},
 			{
 				"cell_type": "code",
@@ -262,8 +261,9 @@
 				"source": [
 					"def fetch_metrics(access_token, location, start_date):\r\n",
 					"    # Compute end date for endpoint query\r\n",
-					"    next_day = datetime.strptime(startDate, '%Y-%m-%d') + timedelta(days=1)\r\n",
+					"    next_day = start_date + timedelta(days=1)\r\n",
 					"    end_date = next_day.strftime('%Y-%m-%d')\r\n",
+					"    start_date = start_date.strftime('%Y-%m-%d')\r\n",
 					"\r\n",
 					"    # Build Azure management API metric endpoint\r\n",
 					"    api_endpoint = build_metrics_endpoint(\r\n",
@@ -285,7 +285,7 @@
 					"    result = response.json()\r\n",
 					"    return result"
 				],
-				"execution_count": 32
+				"execution_count": 182
 			},
 			{
 				"cell_type": "code",
@@ -312,7 +312,7 @@
 					"    result = response.json()\r\n",
 					"    return result"
 				],
-				"execution_count": 33
+				"execution_count": 183
 			},
 			{
 				"cell_type": "code",
@@ -328,7 +328,7 @@
 					}
 				},
 				"source": [
-					"def transform_to_df(json_result):\r\n",
+					"def transform_metrics_to_df(json_result):\r\n",
 					"    df = spark.createDataFrame(json_result[\"value\"][0]['timeseries'], schema=api_schema)\r\n",
 					"\r\n",
 					"    df = df.withColumn('resourceReference', F.col('metadatavalues')[0].value.alias('resourceReference'))\r\n",
@@ -346,7 +346,29 @@
 					"    df = df.drop('resourceReference', 'refComponents')\r\n",
 					"    return df"
 				],
-				"execution_count": 34
+				"execution_count": 184
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def transform_subscriptions_to_list(json_result):\r\n",
+					"    df = spark.createDataFrame(json_result[\"value\"], schema=subscription_schema)\r\n",
+					"    df = df.select('subscriptionId').distinct()\r\n",
+					"    sub_list = [row['subscriptionId'] for row in df.collect()]\r\n",
+					"    return sub_list"
+				],
+				"execution_count": 185
 			},
 			{
 				"cell_type": "code",
@@ -363,33 +385,49 @@
 					"collapsed": false
 				},
 				"source": [
-					"# Get all locations that the given subscription has residing VMs\r\n",
-					"# location_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/metrics/vm-utilization-by-subscription/{subscriptionId}/locations.csv\"\r\n",
-					"# locations = read_subscription_locations(location_path)\r\n",
-					"\r\n",
 					"# Get service principal access token\r\n",
 					"access_token = get_access_token()\r\n",
 					"\r\n",
-					"# df = spark.createDataFrame([], schema=parquet_schema)\r\n",
-					"\r\n",
-					"# for location in locations:\r\n",
-					"#     # Fetch virtual machine utilization metrics in given location\r\n",
-					"#     metrics = fetch_metrics(access_token, location)\r\n",
-					"\r\n",
-					"#     # Transform metrics json data to dataframe\r\n",
-					"#     metrics_df = transform_to_df(metrics)\r\n",
-					"    \r\n",
-					"#     # Merge metrics from current location with target\r\n",
-					"#     df = df.union(metrics_df)\r\n",
-					"\r\n",
-					"# target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/metrics/vm-utilization-by-subscription/{subscriptionId}/{year}/{month}/{day}/vm_cpu_avg.parquet\"\r\n",
-					"# df.write.format('parquet').mode('overwrite').save(target_path)\r\n",
-					"\r\n",
+					"# Get subscriptions\r\n",
 					"subscriptions = fetch_subscriptions(access_token)\r\n",
-					"df = spark.createDataFrame(subscriptions[\"value\"], schema=subscription_schema)\r\n",
-					"display(df)"
+					"sub_list = transform_subscriptions_to_list(subscriptions)\r\n",
+					"\r\n",
+					"# Set termination date to today\r\n",
+					"end_date = datetime.strptime(str(datetime.now().date()), '%Y-%m-%d')\r\n",
+					"\r\n",
+					"for subscriptionId in sub_list:\r\n",
+					"    #Get all locations that the given subscription has residing VMs\r\n",
+					"    location_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/metrics/vm-utilization-by-subscription/{subscriptionId}/locations.csv\"\r\n",
+					"    locations = read_subscription_locations(location_path)\r\n",
+					"\r\n",
+					"    date_iter = datetime.strptime(startDate, '%Y-%m-%d')\r\n",
+					"\r\n",
+					"    while(date_iter < end_date):\r\n",
+					"        try:\r\n",
+					"            df = spark.createDataFrame([], schema=parquet_schema)\r\n",
+					"\r\n",
+					"            for location in locations:\r\n",
+					"                # Fetch virtual machine utilization metrics in given location\r\n",
+					"                metrics = fetch_metrics(access_token, location, date_iter.date())\r\n",
+					"\r\n",
+					"                # Transform metrics json data to dataframe\r\n",
+					"                metrics_df = transform_metrics_to_df(metrics)\r\n",
+					"                \r\n",
+					"                # Merge metrics from current location with target\r\n",
+					"                df = df.union(metrics_df)\r\n",
+					"\r\n",
+					"            target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/metrics/vm-utilization-by-subscription/{subscriptionId}/{date_iter.year}/{str(date_iter.month).zfill(2)}/{str(date_iter.day).zfill(2)}/vm_cpu_avg.parquet\"\r\n",
+					"            df.write.format('parquet').mode('overwrite').save(target_path)\r\n",
+					"\r\n",
+					"            print(f\"Successfully loaded metrics for {date_iter}\")\r\n",
+					"            print(f\"path: {target_path}\")\r\n",
+					"            \r\n",
+					"        except Exception as e:\r\n",
+					"            print(f\"Error: {e}\")\r\n",
+					"\r\n",
+					"        date_iter += timedelta(days=1)"
 				],
-				"execution_count": 35
+				"execution_count": 186
 			}
 		]
 	}
