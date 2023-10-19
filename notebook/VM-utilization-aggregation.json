@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "10ce2825-0fbd-4cc9-8753-e84ab5d8cf4e"
+				"spark.autotune.trackingId": "bcc89bfc-647a-4caa-94d7-bba1a0eb84ec"
 			}
 		},
 		"metadata": {
@@ -84,7 +84,7 @@
 					"import pyspark.sql.functions as F\r\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 1
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -107,7 +107,7 @@
 					"storageAccount = 's037costmgmt'\r\n",
 					"currentDate = '2023-10-19'"
 				],
-				"execution_count": 2
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -126,7 +126,7 @@
 					"# Date variables\r\n",
 					"startDate = datetime.strptime(currentDate, '%Y-%m-%d') - timedelta(days=90)"
 				],
-				"execution_count": 3
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -151,7 +151,7 @@
 					"    T.StructField(\"virtualMachineName\", T.StringType(), True)\r\n",
 					"])"
 				],
-				"execution_count": 4
+				"execution_count": 12
 			},
 			{
 				"cell_type": "markdown",
@@ -189,7 +189,7 @@
 					"        date_iter += timedelta(days=1)\r\n",
 					"    return file_paths"
 				],
-				"execution_count": 5
+				"execution_count": 13
 			},
 			{
 				"cell_type": "code",
@@ -219,7 +219,7 @@
 					"            print(f\"Error reading file {file_path}: {str(e)}\")\r\n",
 					"    return df"
 				],
-				"execution_count": 6
+				"execution_count": 14
 			},
 			{
 				"cell_type": "markdown",
@@ -248,13 +248,20 @@
 					}
 				},
 				"source": [
-					"# Compute average CPU for each VM \r\n",
-					"df = load_to_df(startDate)\r\n",
-					"df = df.withColumn('Report_Date', F.to_date(\"timestamp\"))\r\n",
-					"df = df.filter(F.col('cpu_average').isNotNull())\r\n",
-					"df = df.groupBy('subscriptionId', 'resourceGroupName', 'virtualMachineName', 'Report_Date').agg(F.avg('cpu_average').alias('cpu_avg'))"
+					"metrics_df = load_to_df(startDate)\r\n",
+					"metrics_df = metrics_df.withColumn('Report_Date', F.to_date(\"timestamp\"))\r\n",
+					"\r\n",
+					"hourly_df = metrics_df.alias('hourly_df')\r\n",
+					"daily_df = metrics_df.alias('daily_df')\r\n",
+					"\r\n",
+					"# Compute daily CPU average\r\n",
+					"daily_df = daily_df.filter(F.col('cpu_average').isNotNull())\r\n",
+					"daily_df = daily_df.groupBy('subscriptionId', 'resourceGroupName', 'virtualMachineName', 'Report_Date').agg(F.avg('cpu_average').alias('cpu_avg'))\r\n",
+					"\r\n",
+					"# Set null values in hourly CPU average to 0\r\n",
+					"hourly_df = hourly_df.withColumn('cpu_avgerage', F.when(F.col('cpu_average').isNull(), F.lit(0)).otherwise(F.col('cpu_average')))"
 				],
-				"execution_count": 7
+				"execution_count": 15
 			},
 			{
 				"cell_type": "markdown",
@@ -284,10 +291,13 @@
 				},
 				"source": [
 					"# Write 3 month aggregation to ADLS\r\n",
-					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/metrics/vm-utilization-aggregates/vm_cpu_agg_past_3_months.parquet\"\r\n",
-					"df.write.format('parquet').mode('overwrite').save(target_path)"
+					"daily_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/metrics/vm-utilization-aggregates/vm_cpu_agg_daily_past_3_months.parquet\"\r\n",
+					"daily_df.write.format('parquet').mode('overwrite').save(daily_path)\r\n",
+					"\r\n",
+					"hourly_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/metrics/vm-utilization-aggregates/vm_cpu_agg_hourly_past_3_months.parquet\"\r\n",
+					"hourly_df.write.format('parquet').mode('overwrite').save(hourly_path)"
 				],
-				"execution_count": 8
+				"execution_count": 16
 			}
 		]
 	}
