@@ -3467,6 +3467,33 @@
 												},
 												{
 													"source": {
+														"path": "['properties']['extendedProperties']['reservedResourceType']"
+													},
+													"sink": {
+														"name": "reservedResourceType",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['properties']['extendedProperties']['region']"
+													},
+													"sink": {
+														"name": "region",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['properties']['extendedProperties']['targetResourceCount']"
+													},
+													"sink": {
+														"name": "targetResourceCount",
+														"type": "Int32"
+													}
+												},
+												{
+													"source": {
 														"path": "['id']"
 													},
 													"sink": {
@@ -25418,6 +25445,29 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/CreateAdvisorRecommendationsView')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "AdvisorRecommendations"
+				},
+				"content": {
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW Advisor_Recommendations\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/recommendations/cost-recommendations.parquet/',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/CreateAnomalyView')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
@@ -37778,7 +37828,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "caa358f1-12f8-4c66-b2f7-14850e569489"
+						"spark.autotune.trackingId": "c38bcc6c-0d84-4dbd-a5d9-3a649e5344d4"
 					}
 				},
 				"metadata": {
@@ -37803,8 +37853,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
