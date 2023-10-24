@@ -1,8 +1,8 @@
 {
-	"name": "Prod_ServiceNowApplication",
+	"name": "servicenow-application-processing",
 	"properties": {
 		"folder": {
-			"name": "NotebookInProduction"
+			"name": "NotebookInProduction/ServiceNow"
 		},
 		"nbformat": 4,
 		"nbformat_minor": 2,
@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "9a4ba814-32f9-45ec-b039-a486bae5f8a6"
+				"spark.autotune.trackingId": "94063252-1f64-4ddc-b187-6be97d3990df"
 			}
 		},
 		"metadata": {
@@ -53,6 +53,19 @@
 		},
 		"cells": [
 			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Script initialization"
+				]
+			},
+			{
 				"cell_type": "code",
 				"metadata": {
 					"jupyter": {
@@ -71,27 +84,16 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# Import Libraries"
-				]
+				"execution_count": 98
 			},
 			{
 				"cell_type": "code",
 				"source": [
-					"import pandas as pd "
+					"import pandas as pd \r\n",
+					"from pyspark.sql import SparkSession\r\n",
+					"import pyspark.sql.functions as F"
 				],
-				"execution_count": 23
+				"execution_count": 99
 			},
 			{
 				"cell_type": "markdown",
@@ -103,7 +105,7 @@
 					}
 				},
 				"source": [
-					"# Load the data"
+					"# Extract data from source"
 				]
 			},
 			{
@@ -120,31 +122,10 @@
 					}
 				},
 				"source": [
-					"# Define path\r\n",
-					"path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/applications/NewServiceNowDataset.csv\"\r\n",
-					"\r\n",
-					"# Load the data\r\n",
-					"df_application = pd.read_csv(path)"
+					"source_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/applications/NewServiceNowDataset.csv\"\r\n",
+					"application_df = spark.read.csv(source_path, header=True, inferSchema=True)"
 				],
-				"execution_count": 24
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"#df_application[df_application['ApplicationName'].str.contains('WEATHER PORTAL')]"
-				],
-				"execution_count": 25
+				"execution_count": 100
 			},
 			{
 				"cell_type": "markdown",
@@ -174,32 +155,9 @@
 				},
 				"source": [
 					"# According to the feedback from BPA team (Daniel Lee), we have to filter out all those records that have \"Ignored\" in OperationalStatus field.\r\n",
-					"df = df_application[~(df_application.OperationalStatus=='Ignored')]\r\n",
-					"#df = df_application[(~(df_application.OperationalStatus=='Retired')) & (~(df_application.OperationalStatus=='Ignored'))]"
+					"df = application_df.where(application_df.OperationalStatus != 'Ignored')"
 				],
-				"execution_count": 26
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"# The out commented lines of codes are used to bug-fix.\r\n",
-					"#df_application.describe(include='all')\r\n",
-					"#display(df[df.ApplicationName.duplicated(keep=False)])\r\n",
-					"#display(df[df.AppID==0])"
-				],
-				"execution_count": 27
+				"execution_count": 101
 			},
 			{
 				"cell_type": "markdown",
@@ -229,14 +187,17 @@
 				},
 				"source": [
 					"# Transform string fields into integer format, and if there are empty entries, set them to 0\r\n",
-					"df[['AppID', 'IsOmniaSubscription','ProductOwnerNo','OperationalUnitManagerNo']] = df[['AppID', 'IsOmniaSubscription','ProductOwnerNo','OperationalUnitManagerNo']].fillna(0).astype('int64')\r\n",
+					"df = df.withColumn('AppID', F.col('AppID').cast(\"int\")).fillna(0, subset=['AppID'])\r\n",
+					"df = df.withColumn('IsOmniaSubscription', F.col('IsOmniaSubscription').cast(\"int\")).fillna(0, subset=['IsOmniaSubscription'])\r\n",
+					"df = df.withColumn('ProductOwnerNo', F.col('ProductOwnerNo').cast(\"int\")).fillna(0, subset=['ProductOwnerNo'])\r\n",
+					"df = df.withColumn('OperationalUnitManagerNo', F.col('OperationalUnitManagerNo').cast(\"int\")).fillna(0, subset=['OperationalUnitManagerNo'])\r\n",
 					"\r\n",
 					"# Transform string fields into date format\r\n",
-					"df.Created = pd.to_datetime(df.Created)\r\n",
-					"df.Updated = pd.to_datetime(df.Updated)\r\n",
-					"df.EndOfLifeDate = pd.to_datetime(df.EndOfLifeDate)"
+					"df = df.withColumn('Created', F.to_timestamp('Created'))\r\n",
+					"df = df.withColumn('Updated', F.to_timestamp('Updated'))\r\n",
+					"df = df.withColumn('EndOfLifeDate', F.to_timestamp('EndOfLifeDate'))"
 				],
-				"execution_count": 28
+				"execution_count": 102
 			},
 			{
 				"cell_type": "code",
@@ -249,25 +210,16 @@
 						"transient": {
 							"deleting": false
 						}
-					}
+					},
+					"collapsed": false
 				},
 				"source": [
-					"df['AppID'] = df['AppID'].fillna(0)"
+					"# Mitigate email part from shortname string such that only employee initials remains\r\n",
+					"df = df.withColumn(\"ProductOwnerUserName\", F.split(df[\"ProductOwnerShortName\"], \"@\").getItem(0))\r\n",
+					"df = df.withColumn(\"OperationalManagerUserName\", F.split(df[\"OperationalManagerShortName\"], \"@\").getItem(0))\r\n",
+					"df = df.drop('ProductOwnerShortName', 'OperationalManagerShortName')"
 				],
-				"execution_count": 29
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					""
-				]
+				"execution_count": 103
 			},
 			{
 				"cell_type": "code",
@@ -280,16 +232,16 @@
 						"transient": {
 							"deleting": false
 						}
-					}
+					},
+					"collapsed": false
 				},
 				"source": [
-					"# Collect the UserName from the shortname column due to GDPR.\r\n",
-					"df['ProductOwnerUserName'] = df['ProductOwnerShortName'].str.split('@').str[0] \r\n",
-					"df['OperationalManagerUserName'] = df['OperationalManagerShortName'].str.split('@').str[0] \r\n",
-					"# Remove the shortname columns due to GDPR \r\n",
-					"df = df.drop(['ProductOwnerShortName', 'OperationalManagerShortName'], axis=1)"
+					"# Split org unit string into three substrings\r\n",
+					"split_col = F.split(F.col('OperationalUnitOrgUnit'), \" \")\r\n",
+					"df = df.withColumn(\"OrgUnitLevel0\", split_col.getItem(0))\r\n",
+					"df = df.withColumn(\"OrgUnitLevel1\", F.concat(split_col.getItem(0), F.lit(\" \"), split_col.getItem(1)))"
 				],
-				"execution_count": 30
+				"execution_count": 104
 			},
 			{
 				"cell_type": "markdown",
@@ -318,16 +270,13 @@
 					}
 				},
 				"source": [
-					"from pyspark.sql import SparkSession\r\n",
-					"spark = SparkSession.builder.getOrCreate()\r\n",
-					"\r\n",
 					"# Define optimized path to save the data\r\n",
 					"optimized_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet\"\r\n",
 					"\r\n",
 					"#Save the data with partitioned by time\r\n",
-					"spark.createDataFrame(df).write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
+					"df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
 				],
-				"execution_count": 31
+				"execution_count": 105
 			}
 		]
 	}

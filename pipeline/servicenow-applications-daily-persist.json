@@ -1,9 +1,9 @@
 {
-	"name": "NewServiceNow",
+	"name": "servicenow-applications-daily-persist",
 	"properties": {
 		"activities": [
 			{
-				"name": "NewServiceNowPipeline",
+				"name": "Query ServiceNow applications from DB",
 				"type": "Copy",
 				"dependsOn": [],
 				"policy": {
@@ -309,11 +309,11 @@
 				]
 			},
 			{
-				"name": "NewServiceNowNotebook",
+				"name": "Run ServiceNow applications ETL",
 				"type": "SynapseNotebook",
 				"dependsOn": [
 					{
-						"activity": "NewServiceNowPipeline",
+						"activity": "Query ServiceNow applications from DB",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -329,7 +329,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"notebook": {
-						"referenceName": "Prod_ServiceNowApplication",
+						"referenceName": "servicenow-application-processing",
 						"type": "NotebookReference"
 					},
 					"parameters": {
@@ -364,7 +364,7 @@
 			}
 		},
 		"folder": {
-			"name": "PipelinesInProduction/ServiceNowPipeline"
+			"name": "PipelinesInProduction/ServiceNow"
 		},
 		"annotations": []
 	}
