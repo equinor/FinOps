@@ -1,0 +1,20 @@
+{
+	"name": "Resources by ConsumedService",
+	"properties": {
+		"folder": {
+			"name": "FinOps/Focus"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    TOP 100 *\n    --,ResourceType\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/20230901-20230930/ACMMonthlyActualCost_3e81fc63-88df-4871-9972-3da13e27b6cd.csv',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW=TRUE\n    ) AS [result]\n    where ConsumedService = 'Virtual Network'\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}
