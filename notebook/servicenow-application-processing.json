@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "2cbde306-8e30-433a-9181-db513e7582d2"
+				"spark.autotune.trackingId": "94063252-1f64-4ddc-b187-6be97d3990df"
 			}
 		},
 		"metadata": {
@@ -84,7 +84,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 73
+				"execution_count": 98
 			},
 			{
 				"cell_type": "code",
@@ -93,7 +93,7 @@
 					"from pyspark.sql import SparkSession\r\n",
 					"import pyspark.sql.functions as F"
 				],
-				"execution_count": 74
+				"execution_count": 99
 			},
 			{
 				"cell_type": "markdown",
@@ -125,7 +125,7 @@
 					"source_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/applications/NewServiceNowDataset.csv\"\r\n",
 					"application_df = spark.read.csv(source_path, header=True, inferSchema=True)"
 				],
-				"execution_count": 75
+				"execution_count": 100
 			},
 			{
 				"cell_type": "markdown",
@@ -157,7 +157,7 @@
 					"# According to the feedback from BPA team (Daniel Lee), we have to filter out all those records that have \"Ignored\" in OperationalStatus field.\r\n",
 					"df = application_df.where(application_df.OperationalStatus != 'Ignored')"
 				],
-				"execution_count": 76
+				"execution_count": 101
 			},
 			{
 				"cell_type": "markdown",
@@ -197,7 +197,7 @@
 					"df = df.withColumn('Updated', F.to_timestamp('Updated'))\r\n",
 					"df = df.withColumn('EndOfLifeDate', F.to_timestamp('EndOfLifeDate'))"
 				],
-				"execution_count": 77
+				"execution_count": 102
 			},
 			{
 				"cell_type": "code",
@@ -219,7 +219,7 @@
 					"df = df.withColumn(\"OperationalManagerUserName\", F.split(df[\"OperationalManagerShortName\"], \"@\").getItem(0))\r\n",
 					"df = df.drop('ProductOwnerShortName', 'OperationalManagerShortName')"
 				],
-				"execution_count": 78
+				"execution_count": 103
 			},
 			{
 				"cell_type": "code",
@@ -238,15 +238,10 @@
 				"source": [
 					"# Split org unit string into three substrings\r\n",
 					"split_col = F.split(F.col('OperationalUnitOrgUnit'), \" \")\r\n",
-					"df = df.withColumn(\"orgUnitLevel1\", split_col.getItem(0))\r\n",
-					"df = df.withColumn(\"orgUnitLevel2\", split_col.getItem(1))\r\n",
-					"\r\n",
-					"# Last substring contain all remaining index values\r\n",
-					"concat_remaining_substrings = F.expr(\"concat_ws(' ', slice(split(OperationalUnitOrgUnit, ' '), 3, size(split(OperationalUnitOrgUnit, ' '))))\")\r\n",
-					"df = df.withColumn(\"orgUnitLevel3\", concat_remaining_substrings)\r\n",
-					"df = df.withColumn(\"orgUnitLevel3\", F.when(F.col(\"orgUnitLevel3\") != \"\", F.col(\"orgUnitLevel3\")).otherwise(None))"
+					"df = df.withColumn(\"OrgUnitLevel0\", split_col.getItem(0))\r\n",
+					"df = df.withColumn(\"OrgUnitLevel1\", F.concat(split_col.getItem(0), F.lit(\" \"), split_col.getItem(1)))"
 				],
-				"execution_count": 79
+				"execution_count": 104
 			},
 			{
 				"cell_type": "markdown",
@@ -281,7 +276,7 @@
 					"#Save the data with partitioned by time\r\n",
 					"df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
 				],
-				"execution_count": 80
+				"execution_count": 105
 			}
 		]
 	}
