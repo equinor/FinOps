@@ -25472,6 +25472,29 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/CreateServiceNowApplicationView')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "SQLScriptsInProduction"
+				},
+				"content": {
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW tsc_ServiceNowApplication\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/applications/ServiceNow-Application-List-Extended.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/CreateVMUtilizationDailyMetricsView')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
@@ -27192,29 +27215,6 @@
 						"poolName": "Built-in"
 					},
 					"resultLimit": -1
-				},
-				"type": "SqlQuery"
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/ServiceNowApplication')]",
-			"type": "Microsoft.Synapse/workspaces/sqlscripts",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"folder": {
-					"name": "SQLScriptsInProduction"
-				},
-				"content": {
-					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW tsc_ServiceNowApplication\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/applications/ServiceNow-Application-List-Extended.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
-					"metadata": {
-						"language": "sql"
-					},
-					"currentConnection": {
-						"databaseName": "costmgmt",
-						"poolName": "Built-in"
-					},
-					"resultLimit": 5000
 				},
 				"type": "SqlQuery"
 			},
@@ -39015,7 +39015,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "94063252-1f64-4ddc-b187-6be97d3990df"
+						"spark.autotune.trackingId": "6bf4de8b-70a9-4704-b2a9-9376850e0138"
 					}
 				},
 				"metadata": {
@@ -39078,7 +39078,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 98
+						"execution_count": 11
 					},
 					{
 						"cell_type": "code",
@@ -39088,7 +39088,7 @@
 							"import pyspark.sql.functions as F"
 						],
 						"outputs": [],
-						"execution_count": 99
+						"execution_count": 12
 					},
 					{
 						"cell_type": "markdown",
@@ -39121,7 +39121,7 @@
 							"application_df = spark.read.csv(source_path, header=True, inferSchema=True)"
 						],
 						"outputs": [],
-						"execution_count": 100
+						"execution_count": 13
 					},
 					{
 						"cell_type": "markdown",
@@ -39154,7 +39154,7 @@
 							"df = application_df.where(application_df.OperationalStatus != 'Ignored')"
 						],
 						"outputs": [],
-						"execution_count": 101
+						"execution_count": 14
 					},
 					{
 						"cell_type": "markdown",
@@ -39195,7 +39195,7 @@
 							"df = df.withColumn('EndOfLifeDate', F.to_timestamp('EndOfLifeDate'))"
 						],
 						"outputs": [],
-						"execution_count": 102
+						"execution_count": 15
 					},
 					{
 						"cell_type": "code",
@@ -39218,7 +39218,7 @@
 							"df = df.drop('ProductOwnerShortName', 'OperationalManagerShortName')"
 						],
 						"outputs": [],
-						"execution_count": 103
+						"execution_count": 16
 					},
 					{
 						"cell_type": "code",
@@ -39238,10 +39238,11 @@
 							"# Split org unit string into three substrings\r\n",
 							"split_col = F.split(F.col('OperationalUnitOrgUnit'), \" \")\r\n",
 							"df = df.withColumn(\"OrgUnitLevel0\", split_col.getItem(0))\r\n",
-							"df = df.withColumn(\"OrgUnitLevel1\", F.concat(split_col.getItem(0), F.lit(\" \"), split_col.getItem(1)))"
+							"df = df.withColumn(\"OrgUnitLevel1\", F.concat(split_col.getItem(0), F.lit(\" \"), split_col.getItem(1)))\r\n",
+							"df = df.withColumn(\"OrgUnitLevel2\", F.concat(split_col.getItem(0), F.lit(\" \"), split_col.getItem(1), F.lit(\" \"), split_col.getItem(2)))"
 						],
 						"outputs": [],
-						"execution_count": 104
+						"execution_count": 17
 					},
 					{
 						"cell_type": "markdown",
@@ -39277,7 +39278,7 @@
 							"df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
 						],
 						"outputs": [],
-						"execution_count": 105
+						"execution_count": 18
 					}
 				]
 			},
