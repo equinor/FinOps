@@ -1,81 +1,9 @@
 {
-	"name": "Amortized_Monthly_Cost_Update",
+	"name": "Process subscription json",
 	"properties": {
 		"activities": [
 			{
-				"name": "Amortized_Monthly_Cost_OneYear",
-				"description": "This is dataset for one year period and contain granular information.",
-				"type": "SynapseNotebook",
-				"dependsOn": [],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"notebook": {
-						"referenceName": "Prod_Extended_Amortized_Cost-Oneyear",
-						"type": "NotebookReference"
-					},
-					"parameters": {
-						"storageAccount": {
-							"value": {
-								"value": "@pipeline().parameters.storageAccount",
-								"type": "Expression"
-							},
-							"type": "string"
-						}
-					},
-					"snapshot": true,
-					"conf": {
-						"spark.dynamicAllocation.enabled": null,
-						"spark.dynamicAllocation.minExecutors": null,
-						"spark.dynamicAllocation.maxExecutors": null
-					},
-					"numExecutors": null
-				}
-			},
-			{
-				"name": "Amortized_Monthly_Cost_ThreeYears",
-				"description": "This is dataset that has three years period and contains aggregated information.",
-				"type": "SynapseNotebook",
-				"dependsOn": [],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"notebook": {
-						"referenceName": "Prod_Extended_Amortized_Cost-Threeyears",
-						"type": "NotebookReference"
-					},
-					"parameters": {
-						"storageAccount": {
-							"value": {
-								"value": "@pipeline().parameters.storageAccount",
-								"type": "Expression"
-							},
-							"type": "string"
-						}
-					},
-					"snapshot": true,
-					"conf": {
-						"spark.dynamicAllocation.enabled": null,
-						"spark.dynamicAllocation.minExecutors": null,
-						"spark.dynamicAllocation.maxExecutors": null
-					},
-					"numExecutors": null
-				}
-			},
-			{
-				"name": "Subscription",
+				"name": "Subscription json ETL",
 				"description": "This data is collected from Solum team.",
 				"type": "SynapseNotebook",
 				"dependsOn": [],
