@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "e0ac3185-4801-4194-a8aa-ac8301643330"
+				"spark.autotune.trackingId": "c51c218a-b49f-49c1-921c-5120c2e15377"
 			}
 		},
 		"metadata": {
@@ -426,27 +426,6 @@
 					}
 				},
 				"source": [
-					"import pandas as pd\r\n",
-					"df_top10_subscription = pd.DataFrame(df_subscription.groupby(['WBSOwner'])['Subscription_id'].count()).reset_index().rename(columns = {'Subscription_id':'Subscription_counts'})\r\n",
-					"df_top10_subscription = df_top10_subscription.sort_values(by=['Subscription_counts'],axis=0, ascending=False).reset_index().drop(['index'],axis=1)\r\n",
-					"df_top10_subscription = df_top10_subscription[0:10]"
-				],
-				"execution_count": 59
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
 					"# WBS owner, technicalOwner, productOwner\r\n",
 					"df_subscription['WBSOwner'] = df_subscription['WBSOwner'].str.split('@').str[0]\r\n",
 					"df_subscription['productOwner'] = df_subscription['productOwner'].str.split('@').str[0]\r\n",
@@ -456,44 +435,6 @@
 					"#df_subscription = df_subscription.drop(['WBSOwner', 'productOwner','technicalOwner'], axis=1)"
 				],
 				"execution_count": 60
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"#display(df_top10_subscription)"
-				],
-				"execution_count": 61
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"#display(df_subscription)"
-				],
-				"execution_count": 62
 			},
 			{
 				"cell_type": "code",
