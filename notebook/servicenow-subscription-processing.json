@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "ba78527d-2ffc-4e72-93a0-961b4811e5b7"
+				"spark.autotune.trackingId": "e4f5126a-0e15-4d90-873a-64f14e0a0417"
 			}
 		},
 		"metadata": {
@@ -69,7 +69,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 2
+				"execution_count": 55
 			},
 			{
 				"cell_type": "code",
@@ -85,9 +85,37 @@
 					}
 				},
 				"source": [
-					"import pyspark.sql.functions as F"
+					"import pyspark.sql.functions as F\r\n",
+					"import calendar\r\n",
+					"import datetime"
 				],
-				"execution_count": 3
+				"execution_count": 56
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def get_today_formatted():\r\n",
+					"    today = datetime.date.today()\r\n",
+					"    formattedDate = f\"{today.year}-{str(today.month).zfill(2)}-{str(today.day).zfill(2)}\"\r\n",
+					"    return formattedDate\r\n",
+					"\r\n",
+					"def is_last_day_of_month():\r\n",
+					"    today = datetime.date.today()\r\n",
+					"    last_day_of_month = calendar.monthrange(today.year, today.month)[1]\r\n",
+					"    return today.day == last_day_of_month"
+				],
+				"execution_count": 57
 			},
 			{
 				"cell_type": "markdown",
@@ -119,7 +147,7 @@
 					"source_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/latest.csv\"\r\n",
 					"subscription_df = spark.read.csv(source_path, header=True, inferSchema=True)"
 				],
-				"execution_count": 5
+				"execution_count": 58
 			},
 			{
 				"cell_type": "markdown",
@@ -150,7 +178,7 @@
 				"source": [
 					"subscription_df = subscription_df.where(subscription_df.OperationalStatus != 'Ignored')"
 				],
-				"execution_count": 7
+				"execution_count": 59
 			},
 			{
 				"cell_type": "code",
@@ -170,7 +198,7 @@
 					"subscription_df = subscription_df.withColumn(\"TechnicalOwnerUserName\", F.split(subscription_df[\"TechnicalOwnerEmail\"], \"@\").getItem(0))\r\n",
 					"subscription_df.drop(\"ProductOwnerEmail\", \"TechnicalOwnerEmail\")"
 				],
-				"execution_count": 10
+				"execution_count": 60
 			},
 			{
 				"cell_type": "code",
@@ -189,7 +217,7 @@
 					"# Extract subscription id form Azure subscription URL\r\n",
 					"subscription_df = subscription_df.withColumn('SubscriptionId', F.regexp_extract(subscription_df['SubscriptionURL'], r'subscriptions/([a-f\\d-]+)', 1))"
 				],
-				"execution_count": 12
+				"execution_count": 61
 			},
 			{
 				"cell_type": "markdown",
@@ -221,7 +249,30 @@
 					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/latest-optimized.parquet\"\r\n",
 					"subscription_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 				],
-				"execution_count": null
+				"execution_count": 62
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Store snapshot of subscriptions if last day of month\r\n",
+					"if (is_last_day_of_month()):\r\n",
+					"    formattedDate = get_today_formatted()\r\n",
+					"    target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/{formattedDate}-optimized.parquet\"\r\n",
+					"    subscription_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)\r\n",
+					""
+				],
+				"execution_count": 63
 			}
 		]
 	}
