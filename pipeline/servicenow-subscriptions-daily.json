@@ -1,9 +1,9 @@
 {
-	"name": "servicenow-applications-daily-persist",
+	"name": "servicenow-subscriptions-daily",
 	"properties": {
 		"activities": [
 			{
-				"name": "Query ServiceNow applications from DB",
+				"name": "Query ServiceNow subscriptions from DB",
 				"type": "Copy",
 				"dependsOn": [],
 				"policy": {
@@ -37,108 +37,35 @@
 						"mappings": [
 							{
 								"source": {
-									"name": "ID",
-									"type": "String",
-									"physicalType": "char"
-								},
-								"sink": {
-									"name": "ID",
-									"type": "String",
-									"physicalType": "String"
-								}
-							},
-							{
-								"source": {
-									"name": "ApplicationName",
+									"name": "Name",
 									"type": "String",
 									"physicalType": "nvarchar"
 								},
 								"sink": {
-									"name": "ApplicationName",
-									"type": "String",
+									"name": "SubscriptionName",
 									"physicalType": "String"
 								}
 							},
 							{
 								"source": {
-									"name": "AppID",
-									"type": "Int64",
-									"physicalType": "bigint"
-								},
-								"sink": {
-									"name": "AppID",
-									"type": "String",
-									"physicalType": "String"
-								}
-							},
-							{
-								"source": {
-									"name": "ServiceOffering.Name",
+									"name": "SubscriptionURL",
 									"type": "String",
 									"physicalType": "nvarchar"
 								},
 								"sink": {
-									"name": "ServiceOffering.Name",
+									"name": "SubscriptionURL",
 									"type": "String",
 									"physicalType": "String"
 								}
 							},
 							{
 								"source": {
-									"name": "Updated",
-									"type": "DateTime",
-									"physicalType": "datetime"
-								},
-								"sink": {
-									"name": "Updated",
-									"type": "String",
-									"physicalType": "String"
-								}
-							},
-							{
-								"source": {
-									"name": "Created",
-									"type": "DateTime",
-									"physicalType": "datetime"
-								},
-								"sink": {
-									"name": "Created",
-									"type": "String",
-									"physicalType": "String"
-								}
-							},
-							{
-								"source": {
-									"name": "LifeCycleState",
+									"name": "SubscriptionType",
 									"type": "String",
 									"physicalType": "nvarchar"
 								},
 								"sink": {
-									"name": "LifeCycleState",
-									"type": "String",
-									"physicalType": "String"
-								}
-							},
-							{
-								"source": {
-									"name": "EndOfLifeDate",
-									"type": "DateTime",
-									"physicalType": "datetime"
-								},
-								"sink": {
-									"name": "EndOfLifeDate",
-									"type": "String",
-									"physicalType": "String"
-								}
-							},
-							{
-								"source": {
-									"name": "OperationalStatus",
-									"type": "String",
-									"physicalType": "nvarchar"
-								},
-								"sink": {
-									"name": "OperationalStatus",
+									"name": "SubscriptionType",
 									"type": "String",
 									"physicalType": "String"
 								}
@@ -157,132 +84,107 @@
 							},
 							{
 								"source": {
-									"name": "ProductOwnerNo",
+									"name": "OperationalStatus",
 									"type": "String",
 									"physicalType": "nvarchar"
 								},
 								"sink": {
-									"name": "ProductOwnerNo",
+									"name": "OperationalStatus",
 									"type": "String",
 									"physicalType": "String"
 								}
 							},
 							{
 								"source": {
-									"name": "ProductOwnerShortName",
+									"name": "LifecycleStatus",
 									"type": "String",
 									"physicalType": "nvarchar"
 								},
 								"sink": {
-									"name": "ProductOwnerShortName",
+									"name": "LifecycleStatus",
 									"type": "String",
 									"physicalType": "String"
 								}
 							},
 							{
 								"source": {
-									"name": "UserRepresentative",
+									"name": "Application",
 									"type": "String",
 									"physicalType": "nvarchar"
 								},
 								"sink": {
-									"name": "UserRepresentative",
+									"name": "ApplicationName",
+									"physicalType": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "ProductOwnerEmployeeId",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "ProductOwnerEmployeeId",
 									"type": "String",
 									"physicalType": "String"
 								}
 							},
 							{
 								"source": {
-									"name": "BusinessProcessArea",
+									"name": "ProductOwnerEmail",
 									"type": "String",
 									"physicalType": "nvarchar"
 								},
 								"sink": {
-									"name": "BusinessProcessArea",
+									"name": "ProductOwnerEmail",
 									"type": "String",
 									"physicalType": "String"
 								}
 							},
 							{
 								"source": {
-									"name": "OmniaSubscriptions",
+									"name": "TechnicalOwnerEmployeeId",
 									"type": "String",
 									"physicalType": "nvarchar"
 								},
 								"sink": {
-									"name": "OmniaSubscriptions",
+									"name": "TechnicalOwnerEmployeeId",
 									"type": "String",
 									"physicalType": "String"
 								}
 							},
 							{
 								"source": {
-									"name": "IsOmniaSubscription",
-									"type": "Boolean",
-									"physicalType": "bit"
+									"name": "TechnicalOwnerEmail",
+									"type": "String",
+									"physicalType": "nvarchar"
 								},
 								"sink": {
-									"name": "IsOmniaSubscription",
+									"name": "TechnicalOwnerEmail",
 									"type": "String",
 									"physicalType": "String"
 								}
 							},
 							{
 								"source": {
-									"name": "OperationalUnitManagerNo",
-									"type": "String",
-									"physicalType": "nvarchar"
+									"name": "Created",
+									"type": "DateTime",
+									"physicalType": "datetime"
 								},
 								"sink": {
-									"name": "OperationalUnitManagerNo",
+									"name": "Created",
 									"type": "String",
 									"physicalType": "String"
 								}
 							},
 							{
 								"source": {
-									"name": "OperationalManagerShortName",
-									"type": "String",
-									"physicalType": "nvarchar"
+									"name": "Updated",
+									"type": "DateTime",
+									"physicalType": "datetime"
 								},
 								"sink": {
-									"name": "OperationalManagerShortName",
-									"type": "String",
-									"physicalType": "String"
-								}
-							},
-							{
-								"source": {
-									"name": "Product",
-									"type": "String",
-									"physicalType": "nvarchar"
-								},
-								"sink": {
-									"name": "Product",
-									"type": "String",
-									"physicalType": "String"
-								}
-							},
-							{
-								"source": {
-									"name": "OperationalUnit",
-									"type": "String",
-									"physicalType": "nvarchar"
-								},
-								"sink": {
-									"name": "OperationalUnit",
-									"type": "String",
-									"physicalType": "String"
-								}
-							},
-							{
-								"source": {
-									"name": "OperationalUnitOrgUnit",
-									"type": "String",
-									"physicalType": "nvarchar"
-								},
-								"sink": {
-									"name": "OperationalUnitOrgUnit",
+									"name": "Updated",
 									"type": "String",
 									"physicalType": "String"
 								}
@@ -297,23 +199,23 @@
 				},
 				"inputs": [
 					{
-						"referenceName": "ServiceNowApplicationsDataset",
+						"referenceName": "ServiceNowSubscriptionsDataset",
 						"type": "DatasetReference"
 					}
 				],
 				"outputs": [
 					{
-						"referenceName": "NewServiceNowSinkDataset",
+						"referenceName": "ServiceNowSubscriptionsDatasetSink",
 						"type": "DatasetReference"
 					}
 				]
 			},
 			{
-				"name": "Run ServiceNow applications ETL",
+				"name": "Run ServiceNow Subscription ETL",
 				"type": "SynapseNotebook",
 				"dependsOn": [
 					{
-						"activity": "Query ServiceNow applications from DB",
+						"activity": "Query ServiceNow subscriptions from DB",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -329,37 +231,31 @@
 				"userProperties": [],
 				"typeProperties": {
 					"notebook": {
-						"referenceName": "servicenow-application-processing",
+						"referenceName": "servicenow-subscription-processing",
 						"type": "NotebookReference"
 					},
 					"parameters": {
 						"storageAccount": {
 							"value": {
-								"value": "@variables('storageAccount')",
+								"value": "@pipeline().parameters.storageAccount",
 								"type": "Expression"
 							},
 							"type": "string"
 						}
 					},
 					"snapshot": true,
-					"sparkPool": {
-						"referenceName": "sprkpool33large",
-						"type": "BigDataPoolReference"
-					},
-					"executorSize": "Large",
 					"conf": {
 						"spark.dynamicAllocation.enabled": null,
 						"spark.dynamicAllocation.minExecutors": null,
 						"spark.dynamicAllocation.maxExecutors": null
 					},
-					"driverSize": "Large",
 					"numExecutors": null
 				}
 			}
 		],
-		"variables": {
+		"parameters": {
 			"storageAccount": {
-				"type": "String",
+				"type": "string",
 				"defaultValue": "s037costmgmt"
 			}
 		},
