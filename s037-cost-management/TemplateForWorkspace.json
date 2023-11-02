@@ -113,6 +113,10 @@
 			"type": "string",
 			"defaultValue": "s037costmgmt"
 		},
+		"servicenow-subscriptions-daily_pipelineStorageAccountParameter": {
+			"type": "string",
+			"defaultValue": "s037costmgmt"
+		},
 		"Adhoc_CSV_Source_dataSetLinkedServiceName": {
 			"type": "string",
 			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
@@ -148,10 +152,6 @@
 		"NewServiceNowSinkDataset_dataSetLinkedServiceName": {
 			"type": "string",
 			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
-		},
-		"NewServiceNowSourceDataset_dataSetLinkedServiceName": {
-			"type": "string",
-			"defaultValue": "NewServiceNow"
 		},
 		"New_API_Format_Parquet_dataSetLinkedServiceName": {
 			"type": "string",
@@ -217,9 +217,21 @@
 			"type": "string",
 			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
 		},
+		"ServiceNowApplicationsDataset_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "NewServiceNow"
+		},
 		"ServiceNowLinkedService_Application_View_dataSetLinkedServiceName": {
 			"type": "string",
 			"defaultValue": "ServiceNowLinkedService"
+		},
+		"ServiceNowSubscriptionsDataset_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "NewServiceNow"
+		},
+		"ServiceNowSubscriptionsDatasetSink_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
 		},
 		"SubscriptionResourceLocations_dataSetLinkedServiceName": {
 			"type": "string",
@@ -657,6 +669,18 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
+		"daily-cost-extend_notebookSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"daily-cost-extend_notebookSparkPoolIdRef": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"daily-cost-extend_notebookSparkPoolEndpointRef": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
 		"servicenow-application-processing_notebookSparkPoolNameRef": {
 			"type": "string",
 			"defaultValue": "sprkpool33large"
@@ -666,6 +690,18 @@
 			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
 		},
 		"servicenow-application-processing_notebookSparkPoolEndpointRef": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"servicenow-subscription-processing_notebookSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"servicenow-subscription-processing_notebookSparkPoolIdRef": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"servicenow-subscription-processing_notebookSparkPoolEndpointRef": {
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
@@ -705,30 +741,6 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
 		},
-		"sparkpool32_delayInMinutes": {
-			"type": "int",
-			"defaultValue": 15
-		},
-		"sparkpool32_maxNodeCount": {
-			"type": "int",
-			"defaultValue": 5
-		},
-		"sparkpool32_minNodeCount": {
-			"type": "int",
-			"defaultValue": 3
-		},
-		"sparkpool32_nodeCount": {
-			"type": "int",
-			"defaultValue": 0
-		},
-		"sparkpool32_nodeSize": {
-			"type": "string",
-			"defaultValue": "Medium"
-		},
-		"sparkpool32_sparkVersion": {
-			"type": "string",
-			"defaultValue": "3.2"
-		},
 		"sprkpool33large_delayInMinutes": {
 			"type": "int",
 			"defaultValue": 10
@@ -752,6 +764,30 @@
 		"sprkpool33large_sparkVersion": {
 			"type": "string",
 			"defaultValue": "3.3"
+		},
+		"sparkpool32_delayInMinutes": {
+			"type": "int",
+			"defaultValue": 15
+		},
+		"sparkpool32_maxNodeCount": {
+			"type": "int",
+			"defaultValue": 5
+		},
+		"sparkpool32_minNodeCount": {
+			"type": "int",
+			"defaultValue": 3
+		},
+		"sparkpool32_nodeCount": {
+			"type": "int",
+			"defaultValue": 0
+		},
+		"sparkpool32_nodeSize": {
+			"type": "string",
+			"defaultValue": "Medium"
+		},
+		"sparkpool32_sparkVersion": {
+			"type": "string",
+			"defaultValue": "3.2"
 		}
 	},
 	"variables": {
@@ -8675,6 +8711,9 @@
 												"type": "AzureBlobFSReadSettings",
 												"recursive": false,
 												"enablePartitionDiscovery": false
+											},
+											"formatSettings": {
+												"type": "ParquetReadSettings"
 											}
 										},
 										"sink": {
@@ -8760,7 +8799,7 @@
 						"userProperties": [],
 						"typeProperties": {
 							"notebook": {
-								"referenceName": "Daily Extend AI column and WBS tags_v1",
+								"referenceName": "daily-cost-extend",
 								"type": "NotebookReference"
 							},
 							"parameters": {
@@ -8986,7 +9025,7 @@
 				"[concat(variables('workspaceId'), '/datasets/ds_test_delete_files')]",
 				"[concat(variables('workspaceId'), '/datasets/ds_CSV_File')]",
 				"[concat(variables('workspaceId'), '/datasets/ds_Daily_Parquet_File')]",
-				"[concat(variables('workspaceId'), '/notebooks/Daily Extend AI column and WBS tags_v1')]",
+				"[concat(variables('workspaceId'), '/notebooks/daily-cost-extend')]",
 				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('Daily Cleanup_pipelineSparkPoolNameRef'))]",
 				"[concat(variables('workspaceId'), '/datasets/ds_Test_delete_file')]",
 				"[concat(variables('workspaceId'), '/datasets/Monthly_Parquet')]"
@@ -19963,7 +20002,7 @@
 						},
 						"inputs": [
 							{
-								"referenceName": "NewServiceNowSourceDataset",
+								"referenceName": "ServiceNowApplicationsDataset",
 								"type": "DatasetReference",
 								"parameters": {}
 							}
@@ -20040,10 +20079,289 @@
 				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('workspaceId'), '/datasets/NewServiceNowSourceDataset')]",
+				"[concat(variables('workspaceId'), '/datasets/ServiceNowApplicationsDataset')]",
 				"[concat(variables('workspaceId'), '/datasets/NewServiceNowSinkDataset')]",
 				"[concat(variables('workspaceId'), '/notebooks/servicenow-application-processing')]",
 				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('servicenow-applications-daily-persist_pipelineSparkPoolNameRef'))]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/servicenow-subscriptions-daily')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Query ServiceNow subscriptions from DB",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "Name",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "SubscriptionName",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "SubscriptionURL",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "SubscriptionURL",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "SubscriptionType",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "SubscriptionType",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "OperationalWBS",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "OperationalWBS",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "OperationalStatus",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "OperationalStatus",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "LifecycleStatus",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "LifecycleStatus",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "Application",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "ApplicationName",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "ProductOwnerEmployeeId",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "ProductOwnerEmployeeId",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "ProductOwnerEmail",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "ProductOwnerEmail",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "TechnicalOwnerEmployeeId",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "TechnicalOwnerEmployeeId",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "TechnicalOwnerEmail",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "TechnicalOwnerEmail",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "Created",
+											"type": "DateTime",
+											"physicalType": "datetime"
+										},
+										"sink": {
+											"name": "Created",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "Updated",
+											"type": "DateTime",
+											"physicalType": "datetime"
+										},
+										"sink": {
+											"name": "Updated",
+											"type": "String",
+											"physicalType": "String"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "ServiceNowSubscriptionsDataset",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ServiceNowSubscriptionsDatasetSink",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "Run ServiceNow Subscription ETL",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "Query ServiceNow subscriptions from DB",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "servicenow-subscription-processing",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@pipeline().parameters.storageAccount",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"numExecutors": null
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"storageAccount": {
+						"type": "string",
+						"defaultValue": "[parameters('servicenow-subscriptions-daily_pipelineStorageAccountParameter')]"
+					}
+				},
+				"folder": {
+					"name": "PipelinesInProduction/ServiceNow"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/ServiceNowSubscriptionsDataset')]",
+				"[concat(variables('workspaceId'), '/datasets/ServiceNowSubscriptionsDatasetSink')]",
+				"[concat(variables('workspaceId'), '/notebooks/servicenow-subscription-processing')]"
 			]
 		},
 		{
@@ -20733,30 +21051,6 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/linkedServices/', parameters('NewServiceNowSinkDataset_dataSetLinkedServiceName'))]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/NewServiceNowSourceDataset')]",
-			"type": "Microsoft.Synapse/workspaces/datasets",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "[parameters('NewServiceNowSourceDataset_dataSetLinkedServiceName')]",
-					"type": "LinkedServiceReference"
-				},
-				"folder": {
-					"name": "DatasetInProduction/ServiceNowDataset"
-				},
-				"annotations": [],
-				"type": "AzureSqlTable",
-				"schema": [],
-				"typeProperties": {
-					"schema": "v_SN_FinOps",
-					"table": "v_FinOpsPOC"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/linkedServices/', parameters('NewServiceNowSourceDataset_dataSetLinkedServiceName'))]"
 			]
 		},
 		{
@@ -21965,6 +22259,30 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/ServiceNowApplicationsDataset')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('ServiceNowApplicationsDataset_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "DatasetInProduction/ServiceNowDataset"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": "v_SN_FinOps",
+					"table": "v_FinOpsPOC"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('ServiceNowApplicationsDataset_dataSetLinkedServiceName'))]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/ServiceNowLinkedService_Application_View')]",
 			"type": "Microsoft.Synapse/workspaces/datasets",
 			"apiVersion": "2019-06-01-preview",
@@ -21985,6 +22303,56 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/linkedServices/', parameters('ServiceNowLinkedService_Application_View_dataSetLinkedServiceName'))]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ServiceNowSubscriptionsDataset')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('ServiceNowSubscriptionsDataset_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": "v_SN_FinOps",
+					"table": "v_FinOpsSubscriptions"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('ServiceNowSubscriptionsDataset_dataSetLinkedServiceName'))]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ServiceNowSubscriptionsDatasetSink')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('ServiceNowSubscriptionsDatasetSink_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "servicenow/latest.csv",
+						"folderPath": "subscriptions",
+						"fileSystem": "usage"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('ServiceNowSubscriptionsDatasetSink_dataSetLinkedServiceName'))]"
 			]
 		},
 		{
@@ -23396,6 +23764,15 @@
 							"type": "PipelineReference"
 						},
 						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "Process subscription json",
+							"type": "PipelineReference"
+						},
+						"parameters": {
+							"storageAccount": "s037costmgmt"
+						}
 					}
 				],
 				"type": "ScheduleTrigger",
@@ -23421,7 +23798,8 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/pipelines/Convert Monthly CSV Cost files to Parquet')]",
-				"[concat(variables('workspaceId'), '/pipelines/Azure AD Users_v1')]"
+				"[concat(variables('workspaceId'), '/pipelines/Azure AD Users_v1')]",
+				"[concat(variables('workspaceId'), '/pipelines/Process subscription json')]"
 			]
 		},
 		{
@@ -23525,6 +23903,13 @@
 							"type": "PipelineReference"
 						},
 						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "servicenow-subscriptions-daily",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
 					}
 				],
 				"type": "ScheduleTrigger",
@@ -23547,7 +23932,8 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/pipelines/Prepare Daily HUB File')]",
-				"[concat(variables('workspaceId'), '/pipelines/servicenow-applications-daily-persist')]"
+				"[concat(variables('workspaceId'), '/pipelines/servicenow-applications-daily-persist')]",
+				"[concat(variables('workspaceId'), '/pipelines/servicenow-subscriptions-daily')]"
 			]
 		},
 		{
@@ -37852,6 +38238,700 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/daily-cost-extend')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "NotebookInProduction/Cost Extension"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "[parameters('daily-cost-extend_notebookSparkPoolNameRef')]",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "112g",
+					"driverCores": 16,
+					"executorMemory": "112g",
+					"executorCores": 16,
+					"numExecutors": 1,
+					"runAsWorkspaceSystemIdentity": false,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "4",
+						"spark.autotune.trackingId": "f0310f2b-7b2a-40c3-803b-1eba6d3e80f6"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "[parameters('daily-cost-extend_notebookSparkPoolIdRef')]",
+						"name": "[parameters('daily-cost-extend_notebookSparkPoolNameRef')]",
+						"type": "Spark",
+						"endpoint": "[parameters('daily-cost-extend_notebookSparkPoolEndpointRef')]",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 16,
+						"memory": 112
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"# Input data\n",
+							"toDate = '20231130'\n",
+							"fromDate = '20231101'\n",
+							"container = 'usage'\n",
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": 106
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"import pandas as pd\n",
+							"import pyspark.pandas as ps\n",
+							"import json\n",
+							"import numpy as np\n",
+							"from datetime import datetime\n",
+							"import calendar\n",
+							"import warnings\n",
+							"\n",
+							"import pyspark.sql.functions as F\n",
+							"import pyspark.sql.types as T"
+						],
+						"outputs": [],
+						"execution_count": 107
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"def get_last_day_prev_month():\r\n",
+							"    current_month = int(toDate[4:6])\r\n",
+							"    current_year = int(toDate[:4])\r\n",
+							"\r\n",
+							"    previous_month = (current_month - 1) if current_month > 1 else 12\r\n",
+							"    previous_year = current_year if current_month > 1 else (current_year - 1)\r\n",
+							"\r\n",
+							"    # Calculating the last day of the month\r\n",
+							"    last_day = calendar.monthrange(previous_year, previous_month)[1]\r\n",
+							"\r\n",
+							"    # Creating a string date for last month\r\n",
+							"    return f\"{previous_year}-{str(previous_month).zfill(2)}-{str(last_day).zfill(2)}\""
+						],
+						"outputs": [],
+						"execution_count": 108
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"def load_cost_file(cost_path):\r\n",
+							"    csv_options = {'header' : True,\r\n",
+							"                   'delimiter' : ',',\r\n",
+							"                   'quote' : '\"',\r\n",
+							"                   'escape' : '\"'}\r\n",
+							"\r\n",
+							"    print(f'Loading Cost file list - {cost_path}')\r\n",
+							"    cost_df = spark.read.options(**csv_options).csv(cost_path)\r\n",
+							"    print(f\"Cost file contains: {cost_df.count()} rows\")\r\n",
+							"    return cost_df\r\n",
+							"\r\n",
+							"def load_subscription_file(subscription_path):\r\n",
+							"    print(f'Loading ServiceNow subscriptions - {subscription_path}...')\r\n",
+							"    subscription_df = spark.read.format('parquet').load(subscription_path)\r\n",
+							"    print(f\"Subscription file contains: {subscription_df.count()} rows\")\r\n",
+							"    return subscription_df\r\n",
+							"\r\n",
+							"def load_application_file(application_path):\r\n",
+							"    print(f'Loading ServiceNow applications - {application_path}...')\r\n",
+							"    application_df = spark.read.format('parquet').load(application_path)\r\n",
+							"    application_df = application_df.withColumn('AppID', F.col('AppID').cast(\"int\"))\r\n",
+							"    print(f'App list contains: {application_df.count()}')\r\n",
+							"    return application_df"
+						],
+						"outputs": [],
+						"execution_count": 109
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"def populate_cost_columns(cost_df):\r\n",
+							"\r\n",
+							"    # Populating the Azure Hybrid Benefit Column\r\n",
+							"    cost_df = cost_df.withColumn('Azure_Hybrid_Benefit', F.when(F.col('MeterSubCategory').contains('Windows'), \"Not Enabled\")\\\r\n",
+							"                                                         .when(F.col('ServiceInfo2') == 'Windows Server BYOL', \"Enabled\")\\\r\n",
+							"                                                         .otherwise('Not Supported'))\r\n",
+							"\r\n",
+							"    # Populating the isRIUsage Column\r\n",
+							"    cost_df = cost_df.withColumn('IsRIUsage',\r\n",
+							"                                 F.when(F.col('ReservationId').isNull(), 'On Demand Usage')\\\r\n",
+							"                                  .otherwise('RI Usage'))\r\n",
+							"\r\n",
+							"    return cost_df"
+						],
+						"outputs": [],
+						"execution_count": 110
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"def extend_cost_additional_info(cost_df):\r\n",
+							"    # Extend AdditionalInfo Column\r\n",
+							"    cost_df = cost_df.withColumn('AdditionalInfo', F.from_json('AdditionalInfo', 'map<string,string>', options={'inferSchema': 'true'}))\r\n",
+							"\r\n",
+							"    # Creating an ID column\r\n",
+							"    cost_df = cost_df.withColumn('id', F.monotonically_increasing_id())\r\n",
+							"\r\n",
+							"    # Creating a list of columns we want to keep\r\n",
+							"    cols_to_keep = [\"UsageType\", \r\n",
+							"                    \"ImageType\",\r\n",
+							"                    \"ServiceType\",\r\n",
+							"                    \"VMName\",\r\n",
+							"                    \"VMApplicationName\",\r\n",
+							"                    \"VMProperties\",\r\n",
+							"                    \"VCPUs\",\r\n",
+							"                    \"AHB\",\r\n",
+							"                    \"vCores\",\r\n",
+							"                    \"RINormalizationRatio\",\r\n",
+							"                    \"ConsumedQuantity\",\r\n",
+							"                    \"DatabaseName\"]\r\n",
+							"\r\n",
+							"    for col in cols_to_keep:\r\n",
+							"        cost_df = cost_df.withColumn('ai_' + col, F.coalesce(F.col(f'AdditionalInfo.{col}'), F.lit(None)))\r\n",
+							"    return cost_df"
+						],
+						"outputs": [],
+						"execution_count": 111
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"def cost_AHB_column(cost_df):\r\n",
+							"\r\n",
+							"    cost_df = cost_df.withColumn('ai_VCPUs', F.col('ai_VCPUs').cast('int'))\r\n",
+							"    cost_df = cost_df.na.fill({'ai_VCPUs' : 0})\r\n",
+							"    cost_df = cost_df.withColumn('AHB_CPUs', F.when(F.col('ai_VCPUs') == 0, 0)\\\r\n",
+							"                                              .when(F.col('ai_VCPUs') < 8, 8)\\\r\n",
+							"                                              .when(F.col('ai_VCPUs') < 16, 16)\\\r\n",
+							"                                              .when(F.col('ai_VCPUs') == 20, 24)\\\r\n",
+							"                                              .when(F.col('ai_VCPUs') > 20, F.col('ai_VCPUs'))\\\r\n",
+							"                                              .otherwise(0))\r\n",
+							"\r\n",
+							"    return cost_df"
+						],
+						"outputs": [],
+						"execution_count": 112
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"def cost_set_instance_name(cost_df):\r\n",
+							"    cost_df = cost_df.withColumn('Instance_Name', F.when(F.col('ai_VMName').isNull(), F.col('ResourceName'))\\\r\n",
+							"                                                   .when(F.col('ai_VMName').isNotNull(), F.col('ai_VMName'))\\\r\n",
+							"                                                   .otherwise(0))\r\n",
+							"\r\n",
+							"    cost_df = cost_df.withColumn('UnitPrice', F.col('UnitPrice').cast(T.DoubleType()))\\\r\n",
+							"                     .withColumn('PayGPrice', F.col('PayGPrice').cast(T.DoubleType()))\\\r\n",
+							"                     .withColumn('Quantity', F.col('Quantity').cast(T.DoubleType()))\\\r\n",
+							"                     .withColumn('EffectivePrice', F.col('EffectivePrice').cast(T.DoubleType()))\\\r\n",
+							"                     .withColumn('CostInBillingCurrency', F.col('CostInBillingCurrency').cast(T.DoubleType()))\\\r\n",
+							"                     .withColumn('Date', F.to_date(F.col('Date'), 'MM/dd/yyyy'))\\\r\n",
+							"                     .withColumn('BillingPeriodStartDate', F.to_date(F.col('BillingPeriodStartDate'), 'MM/dd/yyyy'))\\\r\n",
+							"                     .withColumn('BillingPeriodEndDate', F.to_date(F.col('BillingPeriodEndDate'), 'MM/dd/yyyy'))\r\n",
+							"\r\n",
+							"    return cost_df"
+						],
+						"outputs": [],
+						"execution_count": 113
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"def process_subscriptions(subscriptions_df):\r\n",
+							"    subscriptions_df = subscriptions_df.select('SubscriptionId', 'OperationalWBS', 'ApplicationName')\r\n",
+							"    subscriptions_df = subscriptions_df.where(subscriptions_df.SubscriptionId != '')\r\n",
+							"    subscriptions_df = subscriptions_df.withColumnRenamed('OperationalWBS', 'SubscriptionWBS')\r\n",
+							"    subscriptions_df = subscriptions_df.withColumnRenamed('ApplicationName', 'SubscriptionServiceNow-App')\r\n",
+							"    return subscriptions_df"
+						],
+						"outputs": [],
+						"execution_count": 114
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"def expand_cost_tags(cost_df):\r\n",
+							"    \r\n",
+							"    # Storing the Tags column in a new column, and cleaning it up to fit with CostAllocationType\r\n",
+							"    cost_df = cost_df.withColumn('CostAllocationType', F.regexp_extract(F.col('Tags'), 'CostAllocationType\": \"(.*)\"', 0))\r\n",
+							"    cost_df = cost_df.withColumn('CostAllocationType', F.regexp_replace(F.col('CostAllocationType'), 'CostAllocationType\": \"', \"\"))\r\n",
+							"    cost_df = cost_df.withColumn('CostAllocationType', F.split(F.col('CostAllocationType'),'\"', 0).getItem(0))\r\n",
+							"    cost_df = cost_df.withColumn('CostAllocationType', F.when(F.col('CostAllocationType') == \"\", None).otherwise(F.col('CostAllocationType')))\r\n",
+							"\r\n",
+							"    # Storing the Tags column in a new column, and cleaning it up to fit with CostAllocationCode\r\n",
+							"    cost_df = cost_df.withColumn('CostAllocationCode', F.regexp_extract(F.col('Tags'), 'CostAllocationCode\": \"(.*)\"', 0))\r\n",
+							"    cost_df = cost_df.withColumn('CostAllocationCode', F.regexp_replace(F.col('CostAllocationCode'), 'CostAllocationCode\": \"', \"\"))\r\n",
+							"    cost_df = cost_df.withColumn('CostAllocationCode', F.split(F.col('CostAllocationCode'),'\"', 0).getItem(0))\r\n",
+							"    cost_df = cost_df.withColumn('CostAllocationCode', F.when(F.col('CostAllocationCode') == \"\", None).otherwise(F.col('CostAllocationCode')))\r\n",
+							"    \r\n",
+							"    print(\"Cost Tags expansion complete\")\r\n",
+							"\r\n",
+							"    return cost_df"
+						],
+						"outputs": [],
+						"execution_count": 115
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"def replace_empty_cost_fields_with_subscription_details(cost_df, application_df):\r\n",
+							"    print(\"Creating ActiveWBS column, copying over CostAllocationCode, replacing 'TOBESPECIFIED' and empty values then filling gaps with SubscriptionWBS...\")\r\n",
+							"\r\n",
+							"    # Apply Upper-case for all CostAllocationTypes and Codes\r\n",
+							"    cost_df = cost_df.withColumn('CostAllocationType', F.upper(F.col('CostAllocationType')))\r\n",
+							"    cost_df = cost_df.withColumn('CostAllocationCode', F.upper(F.col('CostAllocationCode')))\r\n",
+							"\r\n",
+							"    # When the tag does not contain CostAllocationCode or CostAllocationType, then we fill/replace the value in ActiveWBSReason\r\n",
+							"    invalidCostAllocationMask = F.col('CostAllocationCode').isNull() | F.col('CostAllocationType').isNull()\r\n",
+							"    cost_df = cost_df.withColumn('ActiveWBSReason', F.when(invalidCostAllocationMask, F.lit('CostAllocationType or CostAllocationCode not present in Tags')))\r\n",
+							"\r\n",
+							"    # When either value in mask appears in AcitveWBS, add invalid reason in new column\r\n",
+							"    validCostAllocationType = ['WBS', 'APPID', 'CI']\r\n",
+							"    cost_df = cost_df.withColumn('ActiveWBSReason', F.when(~F.col('CostAllocationType').isin(validCostAllocationType), F.lit('Invalid CostAllocationType: not APPID, CI or WBS')).otherwise(F.col('ActiveWBSReason')))\r\n",
+							"\r\n",
+							"    # When the values in the columns below match the mask and the cost type is WBS, then:\r\n",
+							"    # regex pattern states that the string should start with a case insensitive letter, followed by a dot, followed by either letters, numbers or dots\r\n",
+							"    pattern = r'^[a-zA-Z]\\.[a-zA-Z0-9.]+$'\r\n",
+							"    rmask = F.col('CostAllocationCode').rlike(pattern)\r\n",
+							"    cost_wbs = (F.col('CostAllocationType') == 'WBS')\r\n",
+							"\r\n",
+							"    # Applying valid WBS' as Active WBS'\r\n",
+							"    # 1. Where the CostAllocationCode follows the regex and the CostAllocationType is WBS, we apply the CostAllocationCode\r\n",
+							"    cost_df = cost_df.withColumn('ActiveWBS', F.when(cost_wbs & rmask, F.col('CostAllocationCode')))\r\n",
+							"    # 2. Where the CostAllocationCode doesn't follow the regex and the CostAllocationType is WBS, we set the ActiveWBSReason to be \"Invalid CostAllocationCode WBS\"\r\n",
+							"    cost_df = cost_df.withColumn('ActiveWBSReason', F.when(cost_wbs & ~rmask, F.lit('Invalid CostAllocationCode WBS')).otherwise(F.col('ActiveWBSReason')))\r\n",
+							"    # 3. Where the CostAllocationCode doesn't follow the regex and the CostAllocationType is WBS, the CostAllocationType is changed to \"SubscriptionWBS\"\r\n",
+							"    cost_df = cost_df.withColumn('CostAllocationType', F.when(cost_wbs & ~rmask, F.lit('SubscriptionWBS')).otherwise(F.col('CostAllocationType')))\r\n",
+							"\r\n",
+							"    # Applying valid AppIDs as Active WBS'\r\n",
+							"    # If the CostAllocationCode is empty, we fill/replace the column ActiveWBS with Operational WBS in the application_df\r\n",
+							"    map_app = application_df.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('AppID', 'OperationalWBS')\r\n",
+							"    joined_df = cost_df.join(map_app, (cost_df.CostAllocationType == 'APPID') & (cost_df.CostAllocationCode == map_app.AppID), how='left')\r\n",
+							"    cost_df = joined_df.withColumn('ActiveWBS', F.when(F.col('ActiveWBS').isNull(), F.col('OperationalWBS')).otherwise(F.col('ActiveWBS')))\r\n",
+							"    cost_df = cost_df.drop('OperationalWBS')\r\n",
+							"\r\n",
+							"    # Applying valid CIs as Active WBS'\r\n",
+							"    # Same here as above, but we merge the dataframes on ApplicationNames rather than AppID\r\n",
+							"    map_app = application_df.select('ApplicationName', 'OperationalWBS')\r\n",
+							"    # Apply join with case insensitivity\r\n",
+							"    map_app = map_app.withColumn('ApplicationName_upper',F.upper(F.col('ApplicationName')))\r\n",
+							"    joined_df = cost_df.join(map_app, (cost_df.CostAllocationType == 'CI') & (cost_df.CostAllocationCode == map_app.ApplicationName_upper), how='left').drop('ApplicationName_upper')\r\n",
+							"    cost_df = joined_df.withColumn('ActiveWBS', F.when(F.col('ActiveWBS').isNull(), F.col('OperationalWBS')).otherwise(F.col('ActiveWBS')))\r\n",
+							"    \r\n",
+							"    # Alternative 1 remove \"AppID\" \r\n",
+							"    cost_df = cost_df.drop('ApplicationName', 'OperationalWBS')\r\n",
+							"\r\n",
+							"    # When ActiveWBS value is string 'TOBESPECIFIED', we replace the value with None. # Why this ActiveWBS have TOBSPECIFIED value? \r\n",
+							"    cost_df = cost_df.withColumn('ActiveWBS', F.when(F.upper(F.col('ActiveWBS')) == 'TOBESPECIFIED', F.lit(None)).otherwise(F.col('ActiveWBS')))\r\n",
+							"\r\n",
+							"    # When Subscriptions are not attached to the costs (unassigned), we fill the values with Unassigned and state the ActiveWBSReason.\r\n",
+							"    cost_df = cost_df.withColumn('CostAllocationType', F.when(F.col('SubscriptionName') == 'Unassigned', F.lit('Unassigned')).otherwise(F.col('CostAllocationType')))\r\n",
+							"    cost_df = cost_df.withColumn('ActiveWBS', F.when(F.col('SubscriptionName') == 'Unassigned', F.lit('Unassigned')).otherwise(F.col('ActiveWBS')))\r\n",
+							"    cost_df = cost_df.withColumn('ActiveWBSReason', F.when(F.col('SubscriptionName') == 'Unassigned', F.lit('Unassigned Subscription, possibly unused RI/SP')).otherwise(F.col('ActiveWBSReason')))\r\n",
+							"\r\n",
+							"    # Now that we have filled in most places in ActiveWBS, if the rest of ActiveWBS is Null, then we apply the CostCenter WBS\r\n",
+							"    # When CostAllocationType is null, we fill it with the value from SubscriptionWBS\r\n",
+							"    cost_df = cost_df.withColumn('ActiveWBSReason', F.when(F.col('ActiveWBS').isNull() & (F.col('CostAllocationType') == 'APPID'), F.lit('AppID CostAllocationCode Invalid or Missing')).otherwise(F.col('ActiveWBSReason')))\r\n",
+							"    cost_df = cost_df.withColumn('ActiveWBSReason', F.when(F.col('ActiveWBS').isNull() & (F.col('CostAllocationType') == 'CI'), F.lit('CI CostAllocationCode Invalid or Missing')).otherwise(F.col('ActiveWBSReason')))\r\n",
+							"    cost_df = cost_df.withColumn('CostAllocationType', F.when(F.col('ActiveWBS').isNull(), F.lit('SubscriptionWBS')).otherwise(F.col('CostAllocationType')))\r\n",
+							"    cost_df = cost_df.withColumn('ActiveWBS', F.when(F.col('ActiveWBS').isNull(), F.col('CostCenter')).otherwise(F.col('ActiveWBS'))) # Cost Center is identical to SubscriptionWBS. So we can remove subscription.json.\r\n",
+							"    cost_df = cost_df.withColumn('CostAllocationType', F.when(~F.col('CostAllocationType').isin(validCostAllocationType), F.lit('SubscriptionWBS')).otherwise(F.col('CostAllocationType')))\r\n",
+							"    cost_df = cost_df.withColumn('CostAllocationType', F.when(F.col('CostAllocationType').isNull(), F.lit('SubscriptionWBS')).otherwise(F.col('CostAllocationType'))) #  Can be removed.\r\n",
+							"\r\n",
+							"    cost_df = cost_df.withColumn('ActiveWBSReason', F.when(F.col('ActiveWBSReason').isNull() & (F.col('CostAllocationType') == 'SubscriptionWBS'), F.lit('No valid AppID, WBS or CI')).otherwise(F.col('ActiveWBSReason')))\r\n",
+							"    \r\n",
+							"\r\n",
+							"    # When CostAllocationType is a specific string, we fill/replace the value in ActiveWBSReason \r\n",
+							"    cost_df = cost_df.withColumn('ActiveWBSReason', F.when(F.col('CostAllocationType') == 'CI', F.lit('CI WBS Lookup from SNOW')).otherwise(F.col('ActiveWBSReason')))\r\n",
+							"    cost_df = cost_df.withColumn('ActiveWBSReason', F.when(F.col('CostAllocationType') == 'APPID', F.lit('AppID WBS Lookup from SNOW')).otherwise(F.col('ActiveWBSReason')))\r\n",
+							"    cost_df = cost_df.withColumn('ActiveWBSReason', F.when(F.col('CostAllocationType') == 'WBS', F.lit('WBS Cost Tag used')).otherwise(F.col('ActiveWBSReason')))\r\n",
+							"\r\n",
+							"    cost_df = cost_df.withColumn('ActiveWBS', F.upper(F.col('ActiveWBS')))\r\n",
+							"\r\n",
+							"    # For cases that where CostAllocationCode is empty, we will use AppID from SerivceNow and Application from Subscription.json to replace.\r\n",
+							"    mask3 = (F.col('CostAllocationType').isin(['APPID']) & F.col('CostAllocationCode').isNull())\r\n",
+							"    mask4 = (F.col('CostAllocationType').isin(['CI']) & F.col('CostAllocationCode').isNull())\r\n",
+							"    cost_df = cost_df.withColumn('CostAllocationCode', F.when(mask3, F.col('AppID')) \\\r\n",
+							"                                                       .when(mask4, F.col('SubscriptionServiceNow-App')) \\\r\n",
+							"                                                       .otherwise(F.col('CostAllocationCode'))).drop('AppID')\r\n",
+							"\r\n",
+							"    return cost_df"
+						],
+						"outputs": [],
+						"execution_count": 116
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"def get_application_names(cost_df, application_df):\r\n",
+							"\r\n",
+							"    # Masks for CI and AppID\r\n",
+							"    ci_mask = F.col('CostAllocationType') == 'CI'\r\n",
+							"    appid_mask = F.col('CostAllocationType') == 'APPID'\r\n",
+							"\r\n",
+							"    # When AppID is present, we use the application name from the Service-Now Application list\r\n",
+							"    # First convert AppID to a string, then select the desired columns\r\n",
+							"    map_app = application_df.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('AppID', 'ApplicationName')\r\n",
+							"\r\n",
+							"    # Apply case insensitivity merge by creating upper case columns\r\n",
+							"    cost_df = cost_df.withColumn('CostAllocationCode_upper',F.upper(F.col('CostAllocationCode')))\r\n",
+							"    map_app = map_app.withColumn('ApplicationName_upper',F.upper(F.col('ApplicationName')))\r\n",
+							"\r\n",
+							"    # Merge CostAllocationCode on APPID\r\n",
+							"    cost_df = cost_df.join(map_app, cost_df.CostAllocationCode_upper == map_app.AppID, how='left')\r\n",
+							"\r\n",
+							"    # Make copy of service now app list for second merge\r\n",
+							"    map_app_copy = map_app.alias('map_app_copy').withColumnRenamed('AppID', 'NewAppID').withColumnRenamed('ApplicationName_upper', 'NewApplicationName_upper').withColumnRenamed('ApplicationName', 'NewApplicationName')\r\n",
+							"\r\n",
+							"    # Merge CostAllicationCode on ApplicationName copy\r\n",
+							"    cost_df = cost_df.join(map_app_copy, cost_df.CostAllocationCode_upper == map_app_copy.NewApplicationName_upper, how='left')\r\n",
+							"\r\n",
+							"    # Populate original AppId and ApplicationName columns from the copied columns\r\n",
+							"    cost_df = cost_df.withColumn('AppID', F.when(F.col('AppID').isNull(), F.col('NewAppID')).otherwise(F.col('AppID')))\r\n",
+							"    cost_df = cost_df.withColumn('ApplicationName', F.when(F.col('ApplicationName').isNull(), F.col('NewApplicationName')).otherwise(F.col('ApplicationName')))\r\n",
+							"\r\n",
+							"    cost_df = cost_df.drop('CostAllocationCode_upper', 'ApplicationName_upper', 'NewAppID', 'NewApplicationName_upper', 'NewApplicationName')\r\n",
+							"\r\n",
+							"    # Create Application_Name column based on Application from ServiceNow to start with.\r\n",
+							"    cost_df = cost_df.withColumn('Application_Name',F.col('ApplicationName'))\r\n",
+							"\r\n",
+							"    # Resolve CostAllocationCode and CostAllocationType typo by replacing Application_name with SubscriptionServiceNow-App value \r\n",
+							"    cost_df = cost_df.withColumn('Application_Name',F.when((F.col('CostAllocationType') == 'APPID') & F.col('CostAllocationCode').cast('int').isNull(),F.col('SubscriptionServiceNow-App'))\\\r\n",
+							"                                                    .when((F.col('CostAllocationType') == 'CI') & F.col('CostAllocationCode').cast('int').isNotNull(),F.col('SubscriptionServiceNow-App')).otherwise(F.col('Application_Name')))\r\n",
+							"\r\n",
+							"    cost_df = cost_df.withColumn('Application_Name',F.when(((F.col('CostAllocationType') == \"SubscriptionWBS\") | (F.col('CostAllocationType') == \"WBS\"))&(F.col('Application_Name').isNull()),F.col('SubscriptionServiceNow-App'))\\\r\n",
+							"                                                     .otherwise(F.col('Application_Name')))\r\n",
+							"\r\n",
+							"    cost_df = cost_df.withColumn('Application_Name_upper',F.upper(F.col('Application_Name')))\r\n",
+							"    map_app = map_app.withColumn('ServiceNowApplicationName_upper',F.upper(F.col('ApplicationName')))\r\n",
+							"    map_app = map_app.withColumn('ServiceNowAppID',F.col('AppID')).drop('AppID')\r\n",
+							"\r\n",
+							"    # Lookup application in ServiceNow. Those applications that can be found will be merged.\r\n",
+							"    cost_df = cost_df.join(map_app,cost_df.Application_Name_upper==map_app.ServiceNowApplicationName_upper,how='left')\r\n",
+							"\r\n",
+							"    # Fill empty AppID with AppID from ServiceNow\r\n",
+							"    cost_df = cost_df.withColumn('AppID',F.when(F.col('AppID').isNull(),F.col('ServiceNowAppID'))\\\r\n",
+							"                                          .otherwise(F.col('AppID'))) \r\n",
+							"\r\n",
+							"    # Remove unused Columns\r\n",
+							"    cost_df = cost_df.drop('Application_Name_upper','ApplicationName','ServiceNowAppID','ServiceNowApplicationName_upper','ApplicationName_upper')\r\n",
+							"\r\n",
+							"\r\n",
+							"    # Application Name will be \"Application not defined or not found\" when SubscriptionServiceNow-App is equal to Application_name as well as AppID is empty.\r\n",
+							"    # This indicates that application from subscription.json file can not be found in ServiceNow. One of Application example is DATAHUB - MARKETING AND SUPPLY, not found in ServiceNow.\r\n",
+							"    cost_df = cost_df.withColumn('Application_Name', F.when((F.upper(F.col('SubscriptionServiceNow-App'))==F.upper(F.col('Application_Name'))) & (F.col('AppID').isNull()),F.lit('Application not defined or not found'))\\\r\n",
+							"                                                    .otherwise(F.col('Application_Name')))\r\n",
+							"\r\n",
+							"    # For anything that left ApplicationName will be \"Application not defined or not found\" and For anything that left AppID will be 0.\r\n",
+							"    cost_df = cost_df.na.fill({'AppID': 0, 'Application_Name': 'Application not defined or not found'})\r\n",
+							"\r\n",
+							"    return cost_df"
+						],
+						"outputs": [],
+						"execution_count": 117
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"def expand_ai_column(cost_df):\r\n",
+							"\r\n",
+							"    warnings.simplefilter(action='ignore', category=FutureWarning)\r\n",
+							"    cost_df = populate_cost_columns(cost_df)\r\n",
+							"    cost_df = extend_cost_additional_info(cost_df)\r\n",
+							"    cost_df = cost_AHB_column(cost_df)\r\n",
+							"    cost_df = cost_set_instance_name(cost_df)\r\n",
+							"    \r\n",
+							"    return cost_df"
+						],
+						"outputs": [],
+						"execution_count": 118
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"def populate_wbs_columns(cost_df, subscription_df, application_df):\r\n",
+							"\r\n",
+							"    cost_df = expand_cost_tags(cost_df)\r\n",
+							"    \r\n",
+							"    subscription_df = process_subscriptions(subscription_df)\r\n",
+							"    cost_df = cost_df.join(subscription_df, cost_df.SubscriptionId == subscription_df.SubscriptionId, how='left')\r\n",
+							"    cost_df = cost_df.drop('SubscriptionId')\r\n",
+							"\r\n",
+							"    cost_df = replace_empty_cost_fields_with_subscription_details(cost_df, application_df)\r\n",
+							"    print('WBS population complete. Populating application names')\r\n",
+							"    cost_df = get_application_names(cost_df, application_df)    \r\n",
+							"    print('App-name population complete')\r\n",
+							"\r\n",
+							"    return cost_df"
+						],
+						"outputs": [],
+						"execution_count": 119
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"def write_output_file(cost_df, destinationFilename):\n",
+							"\n",
+							"    cost_df = cost_df.drop('id', 'AdditionalInfo') \n",
+							"    print('start to write to container')\n",
+							"    cost_df.write.format('parquet').mode('overwrite').option('path', destinationFilename).save()\n",
+							"    print('File write complete!')"
+						],
+						"outputs": [],
+						"execution_count": 120
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"print(f'fromDate: {fromDate}')\n",
+							"print(f'toDate: {toDate}')\n",
+							"reportTypes = ['ActualCost', 'AmortizedCost']\n",
+							"year = toDate[:4]\n",
+							"month = toDate[4:6]\n",
+							"day = toDate[6:]\n",
+							"\n",
+							"print(f\"------ From: {fromDate}, To: {toDate} -----------\")\n",
+							"\n",
+							"for reportType in reportTypes:\n",
+							"\n",
+							"    print(f\"------ {reportType} -----------\")\n",
+							"\n",
+							"    sourceCostPath = 'exports/daily/ACMDaily' + reportType + '/'\n",
+							"    destinationCostPath = 'exports/monthly/ACMMonthly' + reportType + '/'\n",
+							"\n",
+							"    formattedToDate = f'{toDate[0:4]}-{toDate[4:6]}-{toDate[6:]}'\n",
+							"    print(f'formattedToDate: {formattedToDate}')\n",
+							"    dateRange = fromDate + '-' + toDate\n",
+							"    print(f'dateRange: {dateRange}')\n",
+							"    costSourcefilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + sourceCostPath + dateRange + '/*.csv'\n",
+							"    costDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + destinationCostPath + dateRange + '/Extended_v2_ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
+							"    print(f\"Cost data path: {costSourcefilename}\")\n",
+							"    print(f\"Cost destination path: {costDestinationfilename}\")\n",
+							"\n",
+							"    previousMonthDate = get_last_day_prev_month()\n",
+							"    print(f'Using {previousMonthDate} ServiceNow subscription file')\n",
+							"    subscription_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/servicenow/' + previousMonthDate + '-optimized.parquet'\n",
+							"    print(f\"Subscription path: {subscription_path}\")\n",
+							"\n",
+							"    application_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\n",
+							"    print(f\"Application path: {application_path}\")\n",
+							"\n",
+							"    cost_df = load_cost_file(costSourcefilename)\n",
+							"    subscription_df = load_subscription_file(subscription_path)\n",
+							"    application_df = load_application_file(application_path)\n",
+							"    cost_df = expand_ai_column(cost_df)\n",
+							"    cost_df = populate_wbs_columns(cost_df, subscription_df, application_df)\n",
+							"    write_output_file(cost_df, costDestinationfilename)\n",
+							"    \n",
+							"    print(' ')"
+						],
+						"outputs": [],
+						"execution_count": 121
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/servicenow-application-processing')]",
 			"type": "Microsoft.Synapse/workspaces/notebooks",
 			"apiVersion": "2019-06-01-preview",
@@ -38146,6 +39226,296 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/servicenow-subscription-processing')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "NotebookInProduction/ServiceNow"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "[parameters('servicenow-subscription-processing_notebookSparkPoolNameRef')]",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "112g",
+					"driverCores": 16,
+					"executorMemory": "112g",
+					"executorCores": 16,
+					"numExecutors": 1,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "5",
+						"spark.autotune.trackingId": "f16d3bcb-4a67-42d9-b4b7-0671d3a8d080"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "[parameters('servicenow-subscription-processing_notebookSparkPoolIdRef')]",
+						"name": "[parameters('servicenow-subscription-processing_notebookSparkPoolNameRef')]",
+						"type": "Spark",
+						"endpoint": "[parameters('servicenow-subscription-processing_notebookSparkPoolEndpointRef')]",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 16,
+						"memory": 112
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Script initialization"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": 55
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"import pyspark.sql.functions as F\r\n",
+							"import calendar\r\n",
+							"import datetime"
+						],
+						"outputs": [],
+						"execution_count": 56
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"def get_today_formatted():\r\n",
+							"    today = datetime.date.today()\r\n",
+							"    formattedDate = f\"{today.year}-{str(today.month).zfill(2)}-{str(today.day).zfill(2)}\"\r\n",
+							"    return formattedDate\r\n",
+							"\r\n",
+							"def is_last_day_of_month():\r\n",
+							"    today = datetime.date.today()\r\n",
+							"    last_day_of_month = calendar.monthrange(today.year, today.month)[1]\r\n",
+							"    return today.day == last_day_of_month"
+						],
+						"outputs": [],
+						"execution_count": 57
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Load data from source"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"source_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/latest.csv\"\r\n",
+							"subscription_df = spark.read.csv(source_path, header=True, inferSchema=True)"
+						],
+						"outputs": [],
+						"execution_count": 58
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Transform data"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"subscription_df = subscription_df.where(subscription_df.OperationalStatus != 'Ignored')"
+						],
+						"outputs": [],
+						"execution_count": 59
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"subscription_df = subscription_df.withColumn(\"ProductOwnerUserName\", F.split(subscription_df[\"ProductOwnerEmail\"], \"@\").getItem(0))\r\n",
+							"subscription_df = subscription_df.withColumn(\"TechnicalOwnerUserName\", F.split(subscription_df[\"TechnicalOwnerEmail\"], \"@\").getItem(0))\r\n",
+							"subscription_df.drop(\"ProductOwnerEmail\", \"TechnicalOwnerEmail\")"
+						],
+						"outputs": [],
+						"execution_count": 60
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Extract subscription id form Azure subscription URL\r\n",
+							"subscription_df = subscription_df.withColumn('SubscriptionId', F.regexp_extract(subscription_df['SubscriptionURL'], r'subscriptions/([a-f\\d-]+)', 1))"
+						],
+						"outputs": [],
+						"execution_count": 61
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Store data in optimized container"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/latest-optimized.parquet\"\r\n",
+							"subscription_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
+						],
+						"outputs": [],
+						"execution_count": 62
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Store snapshot of subscriptions if last day of month\r\n",
+							"if (is_last_day_of_month()):\r\n",
+							"    formattedDate = get_today_formatted()\r\n",
+							"    target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/{formattedDate}-optimized.parquet\"\r\n",
+							"    subscription_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)\r\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": 63
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/subscriptions-json-processing')]",
 			"type": "Microsoft.Synapse/workspaces/notebooks",
 			"apiVersion": "2019-06-01-preview",
@@ -38171,7 +39541,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "49616837-1c09-4e12-b9ca-8a820055b92b"
+						"spark.autotune.trackingId": "fd247332-5df2-4e69-9041-f005af380fba"
 					}
 				},
 				"metadata": {
@@ -38532,32 +39902,6 @@
 						],
 						"outputs": [],
 						"execution_count": 58
-					},
-					{
-						"cell_type": "markdown",
-						"metadata": {
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							""
-						]
-					},
-					{
-						"cell_type": "markdown",
-						"metadata": {
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							""
-						]
 					},
 					{
 						"cell_type": "markdown",
@@ -39734,6 +41078,31 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
+				},
+				"autoScale": {
+					"enabled": true,
+					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
+					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
+				},
+				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
+				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": true,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "northeurope"
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/sparkpool32')]",
 			"type": "Microsoft.Synapse/workspaces/bigDataPools",
 			"apiVersion": "2019-06-01-preview",
@@ -39756,31 +41125,6 @@
 					"filename": "requirements.txt",
 					"time": "2023-01-25T09:06:41.7702231Z"
 				},
-				"isComputeIsolationEnabled": false,
-				"sessionLevelPackagesEnabled": true,
-				"annotations": []
-			},
-			"dependsOn": [],
-			"location": "northeurope"
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
-			"type": "Microsoft.Synapse/workspaces/bigDataPools",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"autoPause": {
-					"enabled": true,
-					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
-				},
-				"autoScale": {
-					"enabled": true,
-					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
-					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
-				},
-				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
-				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
-				"nodeSizeFamily": "MemoryOptimized",
-				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
 				"isComputeIsolationEnabled": false,
 				"sessionLevelPackagesEnabled": true,
 				"annotations": []
