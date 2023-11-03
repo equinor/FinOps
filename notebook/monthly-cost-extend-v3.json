@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "03d0f994-b4d0-440c-a30e-d91a89831513"
+				"spark.autotune.trackingId": "1d3c2d28-7cba-49f5-8aee-7501d4860e8b"
 			}
 		},
 		"metadata": {
@@ -66,7 +66,7 @@
 					"container = 'usage'\n",
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 71
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -93,7 +93,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 72
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -124,22 +124,9 @@
 					"\r\n",
 					"def load_parquet(parquet_path):\r\n",
 					"    df = spark.read.format('parquet').load(parquet_path)\r\n",
-					"    return df\r\n",
-					"\r\n",
-					"def load_subscription_file(subscription_path):\r\n",
-					"    print(f'Loading ServiceNow subscriptions - {subscription_path}...')\r\n",
-					"    subscription_df = spark.read.format('parquet').load(subscription_path)\r\n",
-					"    print(f\"Subscription file contains: {subscription_df.count()} rows\")\r\n",
-					"    return subscription_df\r\n",
-					"\r\n",
-					"def load_application_file(application_path):\r\n",
-					"    print(f'Loading ServiceNow applications - {application_path}...')\r\n",
-					"    application_df = spark.read.format('parquet').load(application_path)\r\n",
-					"    application_df = application_df.withColumn('AppID', F.col('AppID').cast(\"int\"))\r\n",
-					"    print(f'App list contains: {application_df.count()}')\r\n",
-					"    return application_df"
+					"    return df"
 				],
-				"execution_count": null
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -155,25 +142,43 @@
 					}
 				},
 				"source": [
-					"def load_source_files(path, subscription_path, appListPath):\r\n",
-					"    \r\n",
-					"    print(f'Loading Cost file list - {path}')\r\n",
-					"    cost_df = spark.read.format('parquet').load(path)\r\n",
-					"    print(f\"Cost file contains: {cost_df.count()} rows\")\r\n",
-					"    \r\n",
-					"    print(f'Loading Subscription list - {subscription_path}...')\r\n",
-					"    subscription_df = spark.read.json(subscription_path)\r\n",
-					"    print(f\"Subscription file contains: {subscription_list.count()} rows\")\r\n",
+					"def load_and_process_solum_subscriptions(subscription_path):\r\n",
 					"\r\n",
-					"    print(f'Loading SNOW application list - {appListPath}...')\r\n",
-					"    appList = spark.read.format('parquet').load(appListPath)\r\n",
-					"    appList = appList.withColumn('AppID', F.col('AppID').cast(\"int\"))\r\n",
+					"    subscription_df = load_json(subscription_path)\r\n",
+					"    subscription_df = subscription_df.withColumnRenamed('id', 'SubscriptionId')\r\n",
+					"    subscription_df = subscription_df.withColumn('id', F.monotonically_increasing_id())\r\n",
 					"\r\n",
-					"    print(f'App list contains: {appList.count()}')\r\n",
+					"    try:\r\n",
+					"        subscription_df = subscription_df.withColumn('tags', F.from_json(F.col('tags')))\r\n",
+					"    except:\r\n",
+					"        print('Already a json file')\r\n",
 					"\r\n",
-					"    return cost_df, subscription_list, appList"
+					"    # Expanding the tags list into separate columns\r\n",
+					"    subscription_df = subscription_df.withColumn('SubscriptionWBS', F.col('tags.WBS'))\r\n",
+					"    subscription_df = subscription_df.withColumn('SubscriptionServiceNow-App', F.col('tags.ServiceNow-App'))\r\n",
+					"    subscription_df = subscription_df.drop('tags')\r\n",
+					"\r\n",
+					"    # Dropping unnecessary columns and setting the schema\r\n",
+					"    columns_to_keep = ['SubscriptionId', 'SubscriptionWBS', 'SubscriptionServiceNow-App']\r\n",
+					"    subscription_df = subscription_df.select(columns_to_keep)\r\n",
+					"\r\n",
+					"    return subscription_df\r\n",
+					"\r\n",
+					"def load_and_process_servicenow_subscriptions(subscription_path):\r\n",
+					"    subscription_df = load_parquet(subscription_path)\r\n",
+					"\r\n",
+					"    subscriptions_df = subscriptions_df.select('SubscriptionId', 'OperationalWBS', 'ApplicationName')\r\n",
+					"    subscriptions_df = subscriptions_df.where(subscriptions_df.SubscriptionId != '')\r\n",
+					"    subscriptions_df = subscriptions_df.withColumnRenamed('OperationalWBS', 'SubscriptionWBS')\r\n",
+					"    subscriptions_df = subscriptions_df.withColumnRenamed('ApplicationName', 'SubscriptionServiceNow-App')\r\n",
+					"    return subscriptions_df\r\n",
+					"\r\n",
+					"def load_and_process_applications(application_path):\r\n",
+					"    application_df = load_parquet(application_path)\r\n",
+					"    application_df = application_df.withColumn('AppID', F.col('AppID').cast(\"int\"))\r\n",
+					"    return application_df"
 				],
-				"execution_count": 73
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -203,7 +208,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 74
+				"execution_count": 12
 			},
 			{
 				"cell_type": "code",
@@ -244,7 +249,7 @@
 					"        cost_df = cost_df.withColumn('ai_' + col, F.coalesce(F.col(f'AdditionalInfo.{col}'), F.lit(None)))\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 75
+				"execution_count": 13
 			},
 			{
 				"cell_type": "code",
@@ -273,7 +278,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 76
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -308,53 +313,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 77
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": true
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"def process_subscriptions(subscriptions_df):\r\n",
-					"    subscriptions_df = subscriptions_df.select('SubscriptionId', 'OperationalWBS', 'ApplicationName')\r\n",
-					"    subscriptions_df = subscriptions_df.where(subscriptions_df.SubscriptionId != '')\r\n",
-					"    subscriptions_df = subscriptions_df.withColumnRenamed('OperationalWBS', 'SubscriptionWBS')\r\n",
-					"    subscriptions_df = subscriptions_df.withColumnRenamed('ApplicationName', 'SubscriptionServiceNow-App')\r\n",
-					"    return subscriptions_df"
-				],
-				"execution_count": 78
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"def merge_dataframes(cost_df, subscription_df):\r\n",
-					"    \r\n",
-					"    cost_df = cost_df.join(subscription_df, cost_df.SubscriptionId == subscription_df.SubId, how='left')\r\n",
-					"    cost_df = cost_df.drop('SubId')\r\n",
-					"\r\n",
-					"    return cost_df, subscription_df"
-				],
-				"execution_count": 79
+				"execution_count": 15
 			},
 			{
 				"cell_type": "code",
@@ -388,7 +347,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 80
+				"execution_count": 16
 			},
 			{
 				"cell_type": "code",
@@ -404,7 +363,7 @@
 					}
 				},
 				"source": [
-					"def replace_empty_cost_fields_with_subscription_details(cost_df, appList):\r\n",
+					"def replace_empty_cost_fields_with_subscription_details(cost_df, application_df):\r\n",
 					"    print(\"Creating ActiveWBS column, copying over CostAllocationCode, replacing 'TOBESPECIFIED' and empty values then filling gaps with SubscriptionWBS...\")\r\n",
 					"\r\n",
 					"    # Apply Upper-case for all CostAllocationTypes and Codes\r\n",
@@ -434,15 +393,15 @@
 					"    cost_df = cost_df.withColumn('CostAllocationType', F.when(cost_wbs & ~rmask, F.lit('SubscriptionWBS')).otherwise(F.col('CostAllocationType')))\r\n",
 					"\r\n",
 					"    # Applying valid AppIDs as Active WBS'\r\n",
-					"    # If the CostAllocationCode is empty, we fill/replace the column ActiveWBS with Operational WBS in the AppList\r\n",
-					"    map_app = appList.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('AppID', 'OperationalWBS')\r\n",
+					"    # If the CostAllocationCode is empty, we fill/replace the column ActiveWBS with Operational WBS in the application_df\r\n",
+					"    map_app = application_df.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('AppID', 'OperationalWBS')\r\n",
 					"    joined_df = cost_df.join(map_app, (cost_df.CostAllocationType == 'APPID') & (cost_df.CostAllocationCode == map_app.AppID), how='left')\r\n",
 					"    cost_df = joined_df.withColumn('ActiveWBS', F.when(F.col('ActiveWBS').isNull(), F.col('OperationalWBS')).otherwise(F.col('ActiveWBS')))\r\n",
 					"    cost_df = cost_df.drop('OperationalWBS')\r\n",
 					"\r\n",
 					"    # Applying valid CIs as Active WBS'\r\n",
 					"    # Same here as above, but we merge the dataframes on ApplicationNames rather than AppID\r\n",
-					"    map_app = appList.select('ApplicationName', 'OperationalWBS')\r\n",
+					"    map_app = application_df.select('ApplicationName', 'OperationalWBS')\r\n",
 					"    # Apply join with case insensitivity\r\n",
 					"    map_app = map_app.withColumn('ApplicationName_upper',F.upper(F.col('ApplicationName')))\r\n",
 					"    joined_df = cost_df.join(map_app, (cost_df.CostAllocationType == 'CI') & (cost_df.CostAllocationCode == map_app.ApplicationName_upper), how='left').drop('ApplicationName_upper')\r\n",
@@ -487,7 +446,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 81
+				"execution_count": 17
 			},
 			{
 				"cell_type": "code",
@@ -503,7 +462,7 @@
 					}
 				},
 				"source": [
-					"def get_application_names(cost_df, appList):\r\n",
+					"def get_application_names(cost_df, application_df):\r\n",
 					"\r\n",
 					"    # Masks for CI and AppID\r\n",
 					"    ci_mask = F.col('CostAllocationType') == 'CI'\r\n",
@@ -511,7 +470,7 @@
 					"\r\n",
 					"    # When AppID is present, we use the application name from the Service-Now Application list\r\n",
 					"    # First convert AppID to a string, then select the desired columns\r\n",
-					"    map_app = appList.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('AppID', 'ApplicationName')\r\n",
+					"    map_app = application_df.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('AppID', 'ApplicationName')\r\n",
 					"\r\n",
 					"    # Apply case insensitivity merge by creating upper case columns\r\n",
 					"    cost_df = cost_df.withColumn('CostAllocationCode_upper',F.upper(F.col('CostAllocationCode')))\r\n",
@@ -568,7 +527,7 @@
 					"    return cost_df\r\n",
 					""
 				],
-				"execution_count": 82
+				"execution_count": 18
 			},
 			{
 				"cell_type": "code",
@@ -594,7 +553,7 @@
 					"    \r\n",
 					"    return cost_df"
 				],
-				"execution_count": 83
+				"execution_count": 19
 			},
 			{
 				"cell_type": "code",
@@ -610,19 +569,22 @@
 					}
 				},
 				"source": [
-					"def populate_wbs_columns(cost_df, subscription_list, appList):\r\n",
+					"def populate_wbs_columns(cost_df, subscription_df, application_df):\r\n",
 					"\r\n",
 					"    cost_df = expand_cost_tags(cost_df)\r\n",
-					"    subscription_list = expand_subscription_tags(subscription_list)\r\n",
-					"    cost_df, subscription_list = merge_dataframes(cost_df, subscription_list)\r\n",
-					"    cost_df = replace_empty_cost_fields_with_subscription_details(cost_df, appList)\r\n",
+					"\r\n",
+					"    subscription_df = process_subscriptions(subscription_df)\r\n",
+					"    cost_df = cost_df.join(subscription_df, cost_df.SubscriptionId == subscription_df.SubscriptionId, how='left')\r\n",
+					"    cost_df = cost_df.drop('SubscriptionId')\r\n",
+					"\r\n",
+					"    cost_df = replace_empty_cost_fields_with_subscription_details(cost_df, application_df)\r\n",
 					"    print('WBS population complete. Populating application names')\r\n",
-					"    cost_df = get_application_names(cost_df, appList)    \r\n",
+					"    cost_df = get_application_names(cost_df, application_df)    \r\n",
 					"    print('App-name population complete')\r\n",
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 84
+				"execution_count": 20
 			},
 			{
 				"cell_type": "code",
@@ -645,7 +607,7 @@
 					"    cost_df.write.format('parquet').mode('overwrite').option('path', destinationFilename).save()\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": 85
+				"execution_count": 21
 			},
 			{
 				"cell_type": "code",
@@ -682,25 +644,35 @@
 					"    dateRange = fromDate + '-' + toDate\n",
 					"    print(f'dateRange: {dateRange}')\n",
 					"\n",
-					"    print(dateRange)\n",
 					"    costSourcefilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + sourceCostPath + dateRange + '/ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
-					"    costDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + sourceCostPath + dateRange + '/Extended_v2_ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
+					"    costDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + sourceCostPath + dateRange + '/Extended_v3_ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
+					"    \n",
 					"    if str(longToDate) < '2021-11-30':\n",
 					"        print(longToDate)\n",
 					"        print(f'Using default 2021-11-30 subscription json file')\n",
-					"        subscriptionListPath = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/subscriptions_2021-11-30.json'\n",
+					"        solum_subscription_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/subscriptions_2021-11-30.json'\n",
 					"    else:\n",
 					"        print(f'Using {longToDate} subscription json file')\n",
-					"        subscriptionListPath = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/subscriptions_' + longToDate + '.json'\n",
-					"    appListPath = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\n",
+					"        solum_subscription_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/subscriptions_' + longToDate + '.json'\n",
 					"\n",
-					"    cost_df, subscription_list, appList = load_source_files(costSourcefilename, subscriptionListPath, appListPath)\n",
+					"    servicenow_subscription_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/servicenow/' + longToDate + '-optimized.json'\n",
+					"\n",
+					"    try:\n",
+					"        subscription_df = load_and_process_solum_subscriptions(solum_subscription_path)\n",
+					"    except:\n",
+					"        subscription_df = load_and_process_solum_subscriptions(solum_subscription_path)\n",
+					"\n",
+					"    application_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\n",
+					"\n",
+					"    cost_df = load_cost_file(costSourcefilename)\n",
+					"    application_df = load_and_process_applications(application_path)\n",
+					"\n",
 					"    cost_df = expand_ai_column(cost_df)\n",
 					"    cost_df = populate_wbs_columns(cost_df, subscription_list, appList)\n",
-					"    write_output_file(cost_df, costDestinationfilename)\n",
+					"    # write_output_file(cost_df, costDestinationfilename)\n",
 					"    print(' ')"
 				],
-				"execution_count": 86
+				"execution_count": 22
 			}
 		]
 	}
