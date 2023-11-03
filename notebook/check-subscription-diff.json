@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "36498b16-7420-484c-8b73-855c43283fa4"
+				"spark.autotune.trackingId": "5efe8820-761e-4a74-9ef6-8a247e1194ec"
 			}
 		},
 		"metadata": {
@@ -56,7 +56,7 @@
 				"source": [
 					"import pyspark.sql.functions as F"
 				],
-				"execution_count": 56
+				"execution_count": 95
 			},
 			{
 				"cell_type": "code",
@@ -79,7 +79,7 @@
 					"snow_df = spark.read.format('parquet').load(servicenow_path)\r\n",
 					"solum_df = spark.read.json(solum_path)"
 				],
-				"execution_count": 57
+				"execution_count": 96
 			},
 			{
 				"cell_type": "code",
@@ -95,11 +95,11 @@
 					}
 				},
 				"source": [
-					"snow_df = snow_df.withColumnRenamed('OperationalWBS', 'SNOW_WBS')\r\n",
+					"snow_df = snow_df.withColumn('SNOW_WBS', F.upper(F.col('OperationalWBS')))\r\n",
 					"snow_df = snow_df.withColumnRenamed('ApplicationName', 'SNOW_APPLICATION')\r\n",
-					"snow_df = snow_df.select('SubscriptionId', 'SNOW_WBS', 'SNOW_APPLICATION')"
+					"snow_df = snow_df.select('SubscriptionId', 'SNOW_WBS', 'SNOW_APPLICATION', 'SubscriptionName').where(F.col('SubscriptionId') != '')"
 				],
-				"execution_count": 58
+				"execution_count": 97
 			},
 			{
 				"cell_type": "code",
@@ -124,11 +124,11 @@
 					"    print('Already a json file')\r\n",
 					"\r\n",
 					"# Expanding the tags list into separate columns\r\n",
-					"solum_df = solum_df.withColumn('SOLUM_WBS', F.col('tags.WBS'))\r\n",
+					"solum_df = solum_df.withColumn('SOLUM_WBS', F.upper(F.col('tags.WBS')))\r\n",
 					"solum_df = solum_df.withColumn('SOLUM_APPLICATION', F.upper(F.col('tags.ServiceNow-App')))\r\n",
 					"solum_df = solum_df.select('SubscriptionId', 'SOLUM_WBS', 'SOLUM_APPLICATION')"
 				],
-				"execution_count": 59
+				"execution_count": 98
 			},
 			{
 				"cell_type": "code",
@@ -144,9 +144,9 @@
 					}
 				},
 				"source": [
-					"joined_df = snow_df.join(solum_df, \"SubscriptionId\", \"left\")"
+					"joined_df = snow_df.join(solum_df, \"SubscriptionId\", \"inner\")"
 				],
-				"execution_count": 60
+				"execution_count": 99
 			},
 			{
 				"cell_type": "code",
@@ -167,7 +167,7 @@
 					"wbs_diff_mask = F.col('SNOW_WBS') != F.col('SOLUM_WBS')\r\n",
 					"display(joined_df.where(app_diff_mask | wbs_diff_mask))"
 				],
-				"execution_count": 61
+				"execution_count": 103
 			}
 		]
 	}
