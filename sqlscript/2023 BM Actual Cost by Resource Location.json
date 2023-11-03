@@ -1,0 +1,20 @@
+{
+	"name": "2023 BM Actual Cost by Resource Location",
+	"properties": {
+		"folder": {
+			"name": "OGBG Benchmark 2022/2023"
+		},
+		"content": {
+			"query": "--\n--   Cost by ConsumedService\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    --CostAllocationType,\n    ActiveWBS\n    ,ResourceLocation\n    --,MeterCategory\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,sum(CostInBillingCurrency) as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAm*/202*/Extended_v2_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by ActiveWBS, ResourceLocation --format([Date], 'yyyy-MM'), CostAllocationType,\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}
