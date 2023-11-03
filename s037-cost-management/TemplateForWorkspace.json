@@ -669,6 +669,18 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
+		"check-subscription-diff_notebookSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"check-subscription-diff_notebookSparkPoolIdRef": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"check-subscription-diff_notebookSparkPoolEndpointRef": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
 		"daily-cost-extend_notebookSparkPoolNameRef": {
 			"type": "string",
 			"defaultValue": "sprkpool33large"
@@ -8773,7 +8785,7 @@
 						}
 					},
 					{
-						"name": "runNotebook Daily Extend AI column and WBS tags_v1",
+						"name": "run cost extension v3 daily",
 						"type": "SynapseNotebook",
 						"dependsOn": [
 							{
@@ -8986,6 +8998,74 @@
 								}
 							]
 						}
+					},
+					{
+						"name": "runNotebook Daily Extend AI column and WBS tags_v2",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "If today is the 1st of the Month_copy1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "If today is the 1st of the Month",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "Daily Extend AI column and WBS tags_v1",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"toDate": {
+									"value": {
+										"value": "@variables('toDate')",
+										"type": "Expression"
+									},
+									"type": "string"
+								},
+								"fromDate": {
+									"value": {
+										"value": "@variables('fromDate')",
+										"type": "Expression"
+									},
+									"type": "string"
+								},
+								"storageAccount": {
+									"value": {
+										"value": "@variables('storageAccount')",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": "[parameters('Daily Cleanup_pipelineSparkPoolNameRef')]",
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"driverSize": "Medium",
+							"numExecutors": null
+						}
 					}
 				],
 				"policy": {
@@ -9027,6 +9107,7 @@
 				"[concat(variables('workspaceId'), '/datasets/ds_Daily_Parquet_File')]",
 				"[concat(variables('workspaceId'), '/notebooks/daily-cost-extend')]",
 				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('Daily Cleanup_pipelineSparkPoolNameRef'))]",
+				"[concat(variables('workspaceId'), '/notebooks/Daily Extend AI column and WBS tags_v1')]",
 				"[concat(variables('workspaceId'), '/datasets/ds_Test_delete_file')]",
 				"[concat(variables('workspaceId'), '/datasets/Monthly_Parquet')]"
 			]
@@ -38232,6 +38313,188 @@
 						],
 						"outputs": [],
 						"execution_count": 19
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/check-subscription-diff')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "NotebookInProduction/Utilities"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "[parameters('check-subscription-diff_notebookSparkPoolNameRef')]",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "112g",
+					"driverCores": 16,
+					"executorMemory": "112g",
+					"executorCores": 16,
+					"numExecutors": 1,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "5",
+						"spark.autotune.trackingId": "4f31d1a0-9af4-4bd2-ac8c-d9deb069ac43"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "[parameters('check-subscription-diff_notebookSparkPoolIdRef')]",
+						"name": "[parameters('check-subscription-diff_notebookSparkPoolNameRef')]",
+						"type": "Spark",
+						"endpoint": "[parameters('check-subscription-diff_notebookSparkPoolEndpointRef')]",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 16,
+						"memory": 112
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"source": [
+							"import pyspark.sql.functions as F"
+						],
+						"outputs": [],
+						"execution_count": 110
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"servicenow_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/subscriptions/servicenow/2023-10-31-optimized.parquet/**\"\r\n",
+							"solum_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions_2023-10-31.json\"\r\n",
+							"# solum_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/subscriptions_' + previousMonthDate + '.json'\r\n",
+							"\r\n",
+							"snow_df = spark.read.format('parquet').load(servicenow_path)\r\n",
+							"solum_df = spark.read.json(solum_path)"
+						],
+						"outputs": [],
+						"execution_count": 111
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"snow_df = snow_df.withColumn('SNOW_WBS', F.upper(F.col('OperationalWBS')))\r\n",
+							"snow_df = snow_df.withColumnRenamed('ApplicationName', 'SNOW_APPLICATION')\r\n",
+							"snow_df = snow_df.select('SubscriptionId', 'SNOW_WBS', 'SNOW_APPLICATION', 'SubscriptionName').where(F.col('SubscriptionId') != '')"
+						],
+						"outputs": [],
+						"execution_count": 112
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"solum_df = solum_df.withColumnRenamed('id', 'SubscriptionId')\r\n",
+							"solum_df = solum_df.withColumn('id', F.monotonically_increasing_id())\r\n",
+							"\r\n",
+							"try:\r\n",
+							"    solum_df = solum_df.withColumn('tags', F.from_json(F.col('tags')))\r\n",
+							"except:\r\n",
+							"    print('Already a json file')\r\n",
+							"\r\n",
+							"# Expanding the tags list into separate columns\r\n",
+							"solum_df = solum_df.withColumn('SOLUM_WBS', F.upper(F.col('tags.WBS')))\r\n",
+							"solum_df = solum_df.withColumn('SOLUM_APPLICATION', F.upper(F.col('tags.ServiceNow-App')))\r\n",
+							"solum_df = solum_df.select('SubscriptionId', 'SOLUM_WBS', 'SOLUM_APPLICATION')"
+						],
+						"outputs": [],
+						"execution_count": 113
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"joined_df = snow_df.join(solum_df, \"SubscriptionId\", \"inner\")"
+						],
+						"outputs": [],
+						"execution_count": 114
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"app_diff_mask = F.col('SNOW_APPLICATION') != F.col('SOLUM_APPLICATION')\r\n",
+							"wbs_diff_mask = F.col('SNOW_WBS') != F.col('SOLUM_WBS')\r\n",
+							"display(joined_df.where(app_diff_mask | wbs_diff_mask))"
+						],
+						"outputs": [],
+						"execution_count": 115
 					}
 				]
 			},
