@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "4f31d1a0-9af4-4bd2-ac8c-d9deb069ac43"
+				"spark.autotune.trackingId": "a255d334-078d-4d89-8f21-f79fd3eff6d5"
 			}
 		},
 		"metadata": {
@@ -56,7 +56,7 @@
 				"source": [
 					"import pyspark.sql.functions as F"
 				],
-				"execution_count": 110
+				"execution_count": 101
 			},
 			{
 				"cell_type": "code",
@@ -74,12 +74,33 @@
 				"source": [
 					"servicenow_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/subscriptions/servicenow/2023-10-31-optimized.parquet/**\"\r\n",
 					"solum_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions_2023-10-31.json\"\r\n",
-					"# solum_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/subscriptions_' + previousMonthDate + '.json'\r\n",
 					"\r\n",
 					"snow_df = spark.read.format('parquet').load(servicenow_path)\r\n",
 					"solum_df = spark.read.json(solum_path)"
 				],
-				"execution_count": 111
+				"execution_count": 102
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"def view_duplicate_rows(df):\r\n",
+					"    duplicates = df.where(F.col('SubscriptionId') != '').groupBy(\"SubscriptionId\").count().filter(F.col('count') > 1)\r\n",
+					"    result = df.join(duplicates, \"SubscriptionId\", \"inner\")\r\n",
+					"    display(result)"
+				],
+				"execution_count": 103
 			},
 			{
 				"cell_type": "code",
@@ -97,9 +118,10 @@
 				"source": [
 					"snow_df = snow_df.withColumn('SNOW_WBS', F.upper(F.col('OperationalWBS')))\r\n",
 					"snow_df = snow_df.withColumnRenamed('ApplicationName', 'SNOW_APPLICATION')\r\n",
-					"snow_df = snow_df.select('SubscriptionId', 'SNOW_WBS', 'SNOW_APPLICATION', 'SubscriptionName').where(F.col('SubscriptionId') != '')"
+					"snow_df = snow_df.withColumnRenamed('SubscriptionName', 'SNOW_SUBNAME')\r\n",
+					"snow_df = snow_df.select('SubscriptionId', 'SNOW_WBS', 'SNOW_APPLICATION', 'SNOW_SUBNAME').where(F.col('SubscriptionId') != '')"
 				],
-				"execution_count": 112
+				"execution_count": 104
 			},
 			{
 				"cell_type": "code",
@@ -126,9 +148,10 @@
 					"# Expanding the tags list into separate columns\r\n",
 					"solum_df = solum_df.withColumn('SOLUM_WBS', F.upper(F.col('tags.WBS')))\r\n",
 					"solum_df = solum_df.withColumn('SOLUM_APPLICATION', F.upper(F.col('tags.ServiceNow-App')))\r\n",
-					"solum_df = solum_df.select('SubscriptionId', 'SOLUM_WBS', 'SOLUM_APPLICATION')"
+					"solum_df = solum_df.withColumnRenamed('name', 'SOLUM_SUBNAME')\r\n",
+					"solum_df = solum_df.select('SubscriptionId', 'SOLUM_WBS', 'SOLUM_APPLICATION', 'SOLUM_SUBNAME')"
 				],
-				"execution_count": 113
+				"execution_count": 105
 			},
 			{
 				"cell_type": "code",
@@ -144,9 +167,9 @@
 					}
 				},
 				"source": [
-					"joined_df = snow_df.join(solum_df, \"SubscriptionId\", \"inner\")"
+					"joined_df = snow_df.join(solum_df, \"SubscriptionId\", \"outer\")"
 				],
-				"execution_count": 114
+				"execution_count": 107
 			},
 			{
 				"cell_type": "code",
@@ -165,9 +188,9 @@
 				"source": [
 					"app_diff_mask = F.col('SNOW_APPLICATION') != F.col('SOLUM_APPLICATION')\r\n",
 					"wbs_diff_mask = F.col('SNOW_WBS') != F.col('SOLUM_WBS')\r\n",
-					"display(joined_df.where(app_diff_mask | wbs_diff_mask))"
+					"display(joined_df.where(app_diff_mask))"
 				],
-				"execution_count": 115
+				"execution_count": 108
 			}
 		]
 	}
