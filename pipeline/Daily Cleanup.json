@@ -2103,7 +2103,7 @@
 				}
 			},
 			{
-				"name": "runNotebook Daily Extend AI column and WBS tags_v1",
+				"name": "run cost extension v3 daily",
 				"type": "SynapseNotebook",
 				"dependsOn": [
 					{
@@ -2315,6 +2315,74 @@
 							]
 						}
 					]
+				}
+			},
+			{
+				"name": "runNotebook Daily Extend AI column and WBS tags_v2",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "If today is the 1st of the Month_copy1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "If today is the 1st of the Month",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "Daily Extend AI column and WBS tags_v1",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"toDate": {
+							"value": {
+								"value": "@variables('toDate')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"fromDate": {
+							"value": {
+								"value": "@variables('fromDate')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"storageAccount": {
+							"value": {
+								"value": "@variables('storageAccount')",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": "sprkpool33large",
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Medium",
+					"conf": {
+						"spark.dynamicAllocation.enabled": null,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"driverSize": "Medium",
+					"numExecutors": null
 				}
 			}
 		],
