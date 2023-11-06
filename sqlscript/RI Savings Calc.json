@@ -1,6 +1,9 @@
 {
 	"name": "RI Savings Calc",
 	"properties": {
+		"folder": {
+			"name": "--RI & HUB Savings"
+		},
 		"content": {
 			"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 *,\n    --ChargeType\n    --,EffectivePrice\n    --,UnitPrice\n    --,Quantity\n    --,(UnitPrice - EffectivePrice) * Quantity as [Cost Saving]\n    --,IsRIUsage\n    sum((UnitPrice - EffectivePrice) * Quantity) as [Cost Saving Total]\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAmortizedCost/202*/Extended_v2_ACMMonthlyAmortizedCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where (IsRIUsage = 'RI Usage' or ChargeType = 'UnusedReservation')\n    and [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n",
 			"metadata": {
