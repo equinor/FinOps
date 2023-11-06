@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "b4b1f30b-9b49-4bfe-8111-56210931cc86"
+				"spark.autotune.trackingId": "e32ef8d4-3c5f-450d-8ba1-5a8aff27df47"
 			}
 		},
 		"metadata": {
@@ -78,7 +78,7 @@
 					"container = 'usage'\n",
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 12
+				"execution_count": 43
 			},
 			{
 				"cell_type": "code",
@@ -105,7 +105,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 13
+				"execution_count": 44
 			},
 			{
 				"cell_type": "markdown",
@@ -136,7 +136,7 @@
 				"source": [
 					"%run /cost-extend-utilities"
 				],
-				"execution_count": 14
+				"execution_count": 45
 			},
 			{
 				"cell_type": "code",
@@ -159,7 +159,7 @@
 					"    subscriptions_df = subscriptions_df.withColumnRenamed('ApplicationName', 'SubscriptionServiceNow-App')\r\n",
 					"    return subscriptions_df"
 				],
-				"execution_count": 15
+				"execution_count": 46
 			},
 			{
 				"cell_type": "code",
@@ -182,7 +182,7 @@
 					"    cost_df.write.format('parquet').mode('overwrite').option('path', destinationFilename).save()\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": 16
+				"execution_count": 47
 			},
 			{
 				"cell_type": "markdown",
@@ -254,12 +254,32 @@
 					"\n",
 					"    # Transform data\n",
 					"    cost_df = transform_cost_data(cost_df)\n",
+					"    cost_df = cost_df.withColumn(\"ResourceLocation\", F.lower(F.trim(F.regexp_replace(F.col('ResourceLocation'), \"\\s+\", \"\"))))\n",
 					"    cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\n",
-					"    write_output_file(cost_df, cost_target_path)\n",
+					"    # write_output_file(cost_df, cost_target_path)\n",
 					"    \n",
 					"    print(' ')"
 				],
-				"execution_count": 17
+				"execution_count": 48
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(cost_df.select('ResourceLocation').distinct())"
+				],
+				"execution_count": 49
 			}
 		]
 	}
