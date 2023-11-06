@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "ad869009-0fec-4d80-b823-fffb0ebc92ca"
+				"spark.autotune.trackingId": "112030a2-b0ca-48e2-95ef-bc0bfd4fc21c"
 			}
 		},
 		"metadata": {
@@ -72,7 +72,7 @@
 					"# Pipeline parameter\r\n",
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 23
+				"execution_count": 24
 			},
 			{
 				"cell_type": "code",
@@ -81,7 +81,7 @@
 					"import pyspark.sql.types as T\r\n",
 					"from pyspark.sql.window import Window"
 				],
-				"execution_count": 24
+				"execution_count": 25
 			},
 			{
 				"cell_type": "code",
@@ -117,7 +117,7 @@
 					"\r\n",
 					"    return grouped_df"
 				],
-				"execution_count": 25
+				"execution_count": 26
 			},
 			{
 				"cell_type": "code",
@@ -163,7 +163,7 @@
 					"                                                                                 .otherwise(F.lit(0)))\r\n",
 					"    return costs_by_dates"
 				],
-				"execution_count": 26
+				"execution_count": 27
 			},
 			{
 				"cell_type": "code",
@@ -214,7 +214,7 @@
 					"\r\n",
 					"    return filtered_df"
 				],
-				"execution_count": 27
+				"execution_count": 28
 			},
 			{
 				"cell_type": "code",
@@ -234,17 +234,18 @@
 					"def merge_with_subscription(input_df, subscription_path):\r\n",
 					"\r\n",
 					"    # Reading in useful columns from the subscription.json file\r\n",
-					"    sub_df = spark.read.json(subscription_path).select('name', 'WBSOwner', 'productOwner', 'technicalOwner')\r\n",
+					"    sub_df = spark.read.format('parquet').load(subscription_path).select('SubscriptionName', 'ProductOwnerEmail', 'TechnicalOwnerEmail')\r\n",
+					"    sub_df = sub_df.withColumnRenamed('SubscriptionName','SNSubscriptionName')\r\n",
 					"\r\n",
 					"    # Merging on subscription names\r\n",
-					"    merged_df = input_df.join(sub_df, on=input_df.SubscriptionName == sub_df.name, how='left')\r\n",
+					"    merged_df = input_df.join(sub_df, on=input_df.SubscriptionName == sub_df.SNSubscriptionName, how='left')\r\n",
 					"    \r\n",
 					"    # Dropping the right-join column to avoid duplicate records\r\n",
-					"    merged_df = merged_df.drop('name')\r\n",
+					"    merged_df = merged_df.drop('SNSubscriptionName')\r\n",
 					"\r\n",
 					"    return merged_df"
 				],
-				"execution_count": 30
+				"execution_count": 29
 			},
 			{
 				"cell_type": "code",
@@ -263,7 +264,7 @@
 				"source": [
 					"source_path = \"abfss://usage@\" + storageAccount + \".dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear.parquet\"\r\n",
 					"destination_path = \"abfss://usage@\" + storageAccount + \".dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_AnomalyDetection_3mnth.parquet\"\r\n",
-					"subscription_path = \"abfss://usage@\" + storageAccount + \".dfs.core.windows.net/subscriptions/subscriptions_2023-08-31.json\"\r\n",
+					"subscription_path = \"abfss://usage@\" + storageAccount + \".dfs.core.windows.net/subscriptions/servicenow/latest-optimized.parquet\"\r\n",
 					"\r\n",
 					"print(f\"Reading data from: {source_path}\")\r\n",
 					"df = spark.read.format('parquet').load(source_path)\r\n",
@@ -299,10 +300,10 @@
 					"\r\n",
 					"\r\n",
 					"    print(f\"Writing classification data to this path: {destination_path}\")\r\n",
-					"    merged_df.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
+					"    merged_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(destination_path)\r\n",
 					"    print('Write Complete!')"
 				],
-				"execution_count": 31
+				"execution_count": 30
 			},
 			{
 				"cell_type": "code",
@@ -321,7 +322,7 @@
 				"source": [
 					"# display(merged_df)"
 				],
-				"execution_count": 32
+				"execution_count": 31
 			},
 			{
 				"cell_type": "markdown",
@@ -377,7 +378,7 @@
 					"# plt.legend()\r\n",
 					"# plt.show()"
 				],
-				"execution_count": 22
+				"execution_count": 32
 			}
 		]
 	}
