@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "c3566562-f835-4bd2-8242-6cb48c701658"
+				"spark.autotune.trackingId": "83fd6b54-a938-484d-a011-8bb42f3d50f0"
 			}
 		},
 		"metadata": {
@@ -66,7 +66,7 @@
 					"container = 'usage'\n",
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 106
+				"execution_count": 12
 			},
 			{
 				"cell_type": "code",
@@ -93,7 +93,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 107
+				"execution_count": 13
 			},
 			{
 				"cell_type": "code",
@@ -109,20 +109,9 @@
 					}
 				},
 				"source": [
-					"def get_last_day_prev_month():\r\n",
-					"    current_month = int(toDate[4:6])\r\n",
-					"    current_year = int(toDate[:4])\r\n",
-					"\r\n",
-					"    previous_month = (current_month - 1) if current_month > 1 else 12\r\n",
-					"    previous_year = current_year if current_month > 1 else (current_year - 1)\r\n",
-					"\r\n",
-					"    # Calculating the last day of the month\r\n",
-					"    last_day = calendar.monthrange(previous_year, previous_month)[1]\r\n",
-					"\r\n",
-					"    # Creating a string date for last month\r\n",
-					"    return f\"{previous_year}-{str(previous_month).zfill(2)}-{str(last_day).zfill(2)}\""
+					"%run /cost-extend-utilities"
 				],
-				"execution_count": 108
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -138,456 +127,14 @@
 					}
 				},
 				"source": [
-					"def load_cost_file(cost_path):\r\n",
-					"    csv_options = {'header' : True,\r\n",
-					"                   'delimiter' : ',',\r\n",
-					"                   'quote' : '\"',\r\n",
-					"                   'escape' : '\"'}\r\n",
-					"\r\n",
-					"    print(f'Loading Cost file list - {cost_path}')\r\n",
-					"    cost_df = spark.read.options(**csv_options).csv(cost_path)\r\n",
-					"    print(f\"Cost file contains: {cost_df.count()} rows\")\r\n",
-					"    return cost_df\r\n",
-					"\r\n",
-					"def load_subscription_file(subscription_path):\r\n",
-					"    print(f'Loading ServiceNow subscriptions - {subscription_path}...')\r\n",
-					"    subscription_df = spark.read.format('parquet').load(subscription_path)\r\n",
-					"    print(f\"Subscription file contains: {subscription_df.count()} rows\")\r\n",
-					"    return subscription_df\r\n",
-					"\r\n",
-					"def load_application_file(application_path):\r\n",
-					"    print(f'Loading ServiceNow applications - {application_path}...')\r\n",
-					"    application_df = spark.read.format('parquet').load(application_path)\r\n",
-					"    application_df = application_df.withColumn('AppID', F.col('AppID').cast(\"int\"))\r\n",
-					"    print(f'App list contains: {application_df.count()}')\r\n",
-					"    return application_df"
-				],
-				"execution_count": 109
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"def populate_cost_columns(cost_df):\r\n",
-					"\r\n",
-					"    # Populating the Azure Hybrid Benefit Column\r\n",
-					"    cost_df = cost_df.withColumn('Azure_Hybrid_Benefit', F.when(F.col('MeterSubCategory').contains('Windows'), \"Not Enabled\")\\\r\n",
-					"                                                         .when(F.col('ServiceInfo2') == 'Windows Server BYOL', \"Enabled\")\\\r\n",
-					"                                                         .otherwise('Not Supported'))\r\n",
-					"\r\n",
-					"    # Populating the isRIUsage Column\r\n",
-					"    cost_df = cost_df.withColumn('IsRIUsage',\r\n",
-					"                                 F.when(F.col('ReservationId').isNull(), 'On Demand Usage')\\\r\n",
-					"                                  .otherwise('RI Usage'))\r\n",
-					"\r\n",
-					"    return cost_df"
-				],
-				"execution_count": 110
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"def extend_cost_additional_info(cost_df):\r\n",
-					"    # Extend AdditionalInfo Column\r\n",
-					"    cost_df = cost_df.withColumn('AdditionalInfo', F.from_json('AdditionalInfo', 'map<string,string>', options={'inferSchema': 'true'}))\r\n",
-					"\r\n",
-					"    # Creating an ID column\r\n",
-					"    cost_df = cost_df.withColumn('id', F.monotonically_increasing_id())\r\n",
-					"\r\n",
-					"    # Creating a list of columns we want to keep\r\n",
-					"    cols_to_keep = [\"UsageType\", \r\n",
-					"                    \"ImageType\",\r\n",
-					"                    \"ServiceType\",\r\n",
-					"                    \"VMName\",\r\n",
-					"                    \"VMApplicationName\",\r\n",
-					"                    \"VMProperties\",\r\n",
-					"                    \"VCPUs\",\r\n",
-					"                    \"AHB\",\r\n",
-					"                    \"vCores\",\r\n",
-					"                    \"RINormalizationRatio\",\r\n",
-					"                    \"ConsumedQuantity\",\r\n",
-					"                    \"DatabaseName\"]\r\n",
-					"\r\n",
-					"    for col in cols_to_keep:\r\n",
-					"        cost_df = cost_df.withColumn('ai_' + col, F.coalesce(F.col(f'AdditionalInfo.{col}'), F.lit(None)))\r\n",
-					"    return cost_df"
-				],
-				"execution_count": 111
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"def cost_AHB_column(cost_df):\r\n",
-					"\r\n",
-					"    cost_df = cost_df.withColumn('ai_VCPUs', F.col('ai_VCPUs').cast('int'))\r\n",
-					"    cost_df = cost_df.na.fill({'ai_VCPUs' : 0})\r\n",
-					"    cost_df = cost_df.withColumn('AHB_CPUs', F.when(F.col('ai_VCPUs') == 0, 0)\\\r\n",
-					"                                              .when(F.col('ai_VCPUs') < 8, 8)\\\r\n",
-					"                                              .when(F.col('ai_VCPUs') < 16, 16)\\\r\n",
-					"                                              .when(F.col('ai_VCPUs') == 20, 24)\\\r\n",
-					"                                              .when(F.col('ai_VCPUs') > 20, F.col('ai_VCPUs'))\\\r\n",
-					"                                              .otherwise(0))\r\n",
-					"\r\n",
-					"    return cost_df"
-				],
-				"execution_count": 112
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"def cost_set_instance_name(cost_df):\r\n",
-					"    cost_df = cost_df.withColumn('Instance_Name', F.when(F.col('ai_VMName').isNull(), F.col('ResourceName'))\\\r\n",
-					"                                                   .when(F.col('ai_VMName').isNotNull(), F.col('ai_VMName'))\\\r\n",
-					"                                                   .otherwise(0))\r\n",
-					"\r\n",
-					"    cost_df = cost_df.withColumn('UnitPrice', F.col('UnitPrice').cast(T.DoubleType()))\\\r\n",
-					"                     .withColumn('PayGPrice', F.col('PayGPrice').cast(T.DoubleType()))\\\r\n",
-					"                     .withColumn('Quantity', F.col('Quantity').cast(T.DoubleType()))\\\r\n",
-					"                     .withColumn('EffectivePrice', F.col('EffectivePrice').cast(T.DoubleType()))\\\r\n",
-					"                     .withColumn('CostInBillingCurrency', F.col('CostInBillingCurrency').cast(T.DoubleType()))\\\r\n",
-					"                     .withColumn('Date', F.to_date(F.col('Date'), 'MM/dd/yyyy'))\\\r\n",
-					"                     .withColumn('BillingPeriodStartDate', F.to_date(F.col('BillingPeriodStartDate'), 'MM/dd/yyyy'))\\\r\n",
-					"                     .withColumn('BillingPeriodEndDate', F.to_date(F.col('BillingPeriodEndDate'), 'MM/dd/yyyy'))\r\n",
-					"\r\n",
-					"    return cost_df"
-				],
-				"execution_count": 113
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"def process_subscriptions(subscriptions_df):\r\n",
+					"def pre_process_subscriptions(subscriptions_df):\r\n",
 					"    subscriptions_df = subscriptions_df.select('SubscriptionId', 'OperationalWBS', 'ApplicationName')\r\n",
 					"    subscriptions_df = subscriptions_df.where(subscriptions_df.SubscriptionId != '')\r\n",
 					"    subscriptions_df = subscriptions_df.withColumnRenamed('OperationalWBS', 'SubscriptionWBS')\r\n",
 					"    subscriptions_df = subscriptions_df.withColumnRenamed('ApplicationName', 'SubscriptionServiceNow-App')\r\n",
 					"    return subscriptions_df"
 				],
-				"execution_count": 114
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"def expand_cost_tags(cost_df):\r\n",
-					"    \r\n",
-					"    # Storing the Tags column in a new column, and cleaning it up to fit with CostAllocationType\r\n",
-					"    cost_df = cost_df.withColumn('CostAllocationType', F.regexp_extract(F.col('Tags'), 'CostAllocationType\": \"(.*)\"', 0))\r\n",
-					"    cost_df = cost_df.withColumn('CostAllocationType', F.regexp_replace(F.col('CostAllocationType'), 'CostAllocationType\": \"', \"\"))\r\n",
-					"    cost_df = cost_df.withColumn('CostAllocationType', F.split(F.col('CostAllocationType'),'\"', 0).getItem(0))\r\n",
-					"    cost_df = cost_df.withColumn('CostAllocationType', F.when(F.col('CostAllocationType') == \"\", None).otherwise(F.col('CostAllocationType')))\r\n",
-					"\r\n",
-					"    # Storing the Tags column in a new column, and cleaning it up to fit with CostAllocationCode\r\n",
-					"    cost_df = cost_df.withColumn('CostAllocationCode', F.regexp_extract(F.col('Tags'), 'CostAllocationCode\": \"(.*)\"', 0))\r\n",
-					"    cost_df = cost_df.withColumn('CostAllocationCode', F.regexp_replace(F.col('CostAllocationCode'), 'CostAllocationCode\": \"', \"\"))\r\n",
-					"    cost_df = cost_df.withColumn('CostAllocationCode', F.split(F.col('CostAllocationCode'),'\"', 0).getItem(0))\r\n",
-					"    cost_df = cost_df.withColumn('CostAllocationCode', F.when(F.col('CostAllocationCode') == \"\", None).otherwise(F.col('CostAllocationCode')))\r\n",
-					"    \r\n",
-					"    print(\"Cost Tags expansion complete\")\r\n",
-					"\r\n",
-					"    return cost_df"
-				],
-				"execution_count": 115
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"def replace_empty_cost_fields_with_subscription_details(cost_df, application_df):\r\n",
-					"    print(\"Creating ActiveWBS column, copying over CostAllocationCode, replacing 'TOBESPECIFIED' and empty values then filling gaps with SubscriptionWBS...\")\r\n",
-					"\r\n",
-					"    # Apply Upper-case for all CostAllocationTypes and Codes\r\n",
-					"    cost_df = cost_df.withColumn('CostAllocationType', F.upper(F.col('CostAllocationType')))\r\n",
-					"    cost_df = cost_df.withColumn('CostAllocationCode', F.upper(F.col('CostAllocationCode')))\r\n",
-					"\r\n",
-					"    # When the tag does not contain CostAllocationCode or CostAllocationType, then we fill/replace the value in ActiveWBSReason\r\n",
-					"    invalidCostAllocationMask = F.col('CostAllocationCode').isNull() | F.col('CostAllocationType').isNull()\r\n",
-					"    cost_df = cost_df.withColumn('ActiveWBSReason', F.when(invalidCostAllocationMask, F.lit('CostAllocationType or CostAllocationCode not present in Tags')))\r\n",
-					"\r\n",
-					"    # When either value in mask appears in AcitveWBS, add invalid reason in new column\r\n",
-					"    validCostAllocationType = ['WBS', 'APPID', 'CI']\r\n",
-					"    cost_df = cost_df.withColumn('ActiveWBSReason', F.when(~F.col('CostAllocationType').isin(validCostAllocationType), F.lit('Invalid CostAllocationType: not APPID, CI or WBS')).otherwise(F.col('ActiveWBSReason')))\r\n",
-					"\r\n",
-					"    # When the values in the columns below match the mask and the cost type is WBS, then:\r\n",
-					"    # regex pattern states that the string should start with a case insensitive letter, followed by a dot, followed by either letters, numbers or dots\r\n",
-					"    pattern = r'^[a-zA-Z]\\.[a-zA-Z0-9.]+$'\r\n",
-					"    rmask = F.col('CostAllocationCode').rlike(pattern)\r\n",
-					"    cost_wbs = (F.col('CostAllocationType') == 'WBS')\r\n",
-					"\r\n",
-					"    # Applying valid WBS' as Active WBS'\r\n",
-					"    # 1. Where the CostAllocationCode follows the regex and the CostAllocationType is WBS, we apply the CostAllocationCode\r\n",
-					"    cost_df = cost_df.withColumn('ActiveWBS', F.when(cost_wbs & rmask, F.col('CostAllocationCode')))\r\n",
-					"    # 2. Where the CostAllocationCode doesn't follow the regex and the CostAllocationType is WBS, we set the ActiveWBSReason to be \"Invalid CostAllocationCode WBS\"\r\n",
-					"    cost_df = cost_df.withColumn('ActiveWBSReason', F.when(cost_wbs & ~rmask, F.lit('Invalid CostAllocationCode WBS')).otherwise(F.col('ActiveWBSReason')))\r\n",
-					"    # 3. Where the CostAllocationCode doesn't follow the regex and the CostAllocationType is WBS, the CostAllocationType is changed to \"SubscriptionWBS\"\r\n",
-					"    cost_df = cost_df.withColumn('CostAllocationType', F.when(cost_wbs & ~rmask, F.lit('SubscriptionWBS')).otherwise(F.col('CostAllocationType')))\r\n",
-					"\r\n",
-					"    # Applying valid AppIDs as Active WBS'\r\n",
-					"    # If the CostAllocationCode is empty, we fill/replace the column ActiveWBS with Operational WBS in the application_df\r\n",
-					"    map_app = application_df.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('AppID', 'OperationalWBS')\r\n",
-					"    joined_df = cost_df.join(map_app, (cost_df.CostAllocationType == 'APPID') & (cost_df.CostAllocationCode == map_app.AppID), how='left')\r\n",
-					"    cost_df = joined_df.withColumn('ActiveWBS', F.when(F.col('ActiveWBS').isNull(), F.col('OperationalWBS')).otherwise(F.col('ActiveWBS')))\r\n",
-					"    cost_df = cost_df.drop('OperationalWBS')\r\n",
-					"\r\n",
-					"    # Applying valid CIs as Active WBS'\r\n",
-					"    # Same here as above, but we merge the dataframes on ApplicationNames rather than AppID\r\n",
-					"    map_app = application_df.select('ApplicationName', 'OperationalWBS')\r\n",
-					"    # Apply join with case insensitivity\r\n",
-					"    map_app = map_app.withColumn('ApplicationName_upper',F.upper(F.col('ApplicationName')))\r\n",
-					"    joined_df = cost_df.join(map_app, (cost_df.CostAllocationType == 'CI') & (cost_df.CostAllocationCode == map_app.ApplicationName_upper), how='left').drop('ApplicationName_upper')\r\n",
-					"    cost_df = joined_df.withColumn('ActiveWBS', F.when(F.col('ActiveWBS').isNull(), F.col('OperationalWBS')).otherwise(F.col('ActiveWBS')))\r\n",
-					"    \r\n",
-					"    # Alternative 1 remove \"AppID\" \r\n",
-					"    cost_df = cost_df.drop('ApplicationName', 'OperationalWBS')\r\n",
-					"\r\n",
-					"    # When ActiveWBS value is string 'TOBESPECIFIED', we replace the value with None. # Why this ActiveWBS have TOBSPECIFIED value? \r\n",
-					"    cost_df = cost_df.withColumn('ActiveWBS', F.when(F.upper(F.col('ActiveWBS')) == 'TOBESPECIFIED', F.lit(None)).otherwise(F.col('ActiveWBS')))\r\n",
-					"\r\n",
-					"    # When Subscriptions are not attached to the costs (unassigned), we fill the values with Unassigned and state the ActiveWBSReason.\r\n",
-					"    cost_df = cost_df.withColumn('CostAllocationType', F.when(F.col('SubscriptionName') == 'Unassigned', F.lit('Unassigned')).otherwise(F.col('CostAllocationType')))\r\n",
-					"    cost_df = cost_df.withColumn('ActiveWBS', F.when(F.col('SubscriptionName') == 'Unassigned', F.lit('Unassigned')).otherwise(F.col('ActiveWBS')))\r\n",
-					"    cost_df = cost_df.withColumn('ActiveWBSReason', F.when(F.col('SubscriptionName') == 'Unassigned', F.lit('Unassigned Subscription, possibly unused RI/SP')).otherwise(F.col('ActiveWBSReason')))\r\n",
-					"\r\n",
-					"    # Now that we have filled in most places in ActiveWBS, if the rest of ActiveWBS is Null, then we apply the CostCenter WBS\r\n",
-					"    # When CostAllocationType is null, we fill it with the value from SubscriptionWBS\r\n",
-					"    cost_df = cost_df.withColumn('ActiveWBSReason', F.when(F.col('ActiveWBS').isNull() & (F.col('CostAllocationType') == 'APPID'), F.lit('AppID CostAllocationCode Invalid or Missing')).otherwise(F.col('ActiveWBSReason')))\r\n",
-					"    cost_df = cost_df.withColumn('ActiveWBSReason', F.when(F.col('ActiveWBS').isNull() & (F.col('CostAllocationType') == 'CI'), F.lit('CI CostAllocationCode Invalid or Missing')).otherwise(F.col('ActiveWBSReason')))\r\n",
-					"    cost_df = cost_df.withColumn('CostAllocationType', F.when(F.col('ActiveWBS').isNull(), F.lit('SubscriptionWBS')).otherwise(F.col('CostAllocationType')))\r\n",
-					"    cost_df = cost_df.withColumn('ActiveWBS', F.when(F.col('ActiveWBS').isNull(), F.col('CostCenter')).otherwise(F.col('ActiveWBS'))) # Cost Center is identical to SubscriptionWBS. So we can remove subscription.json.\r\n",
-					"    cost_df = cost_df.withColumn('CostAllocationType', F.when(~F.col('CostAllocationType').isin(validCostAllocationType), F.lit('SubscriptionWBS')).otherwise(F.col('CostAllocationType')))\r\n",
-					"    cost_df = cost_df.withColumn('CostAllocationType', F.when(F.col('CostAllocationType').isNull(), F.lit('SubscriptionWBS')).otherwise(F.col('CostAllocationType'))) #  Can be removed.\r\n",
-					"\r\n",
-					"    cost_df = cost_df.withColumn('ActiveWBSReason', F.when(F.col('ActiveWBSReason').isNull() & (F.col('CostAllocationType') == 'SubscriptionWBS'), F.lit('No valid AppID, WBS or CI')).otherwise(F.col('ActiveWBSReason')))\r\n",
-					"    \r\n",
-					"\r\n",
-					"    # When CostAllocationType is a specific string, we fill/replace the value in ActiveWBSReason \r\n",
-					"    cost_df = cost_df.withColumn('ActiveWBSReason', F.when(F.col('CostAllocationType') == 'CI', F.lit('CI WBS Lookup from SNOW')).otherwise(F.col('ActiveWBSReason')))\r\n",
-					"    cost_df = cost_df.withColumn('ActiveWBSReason', F.when(F.col('CostAllocationType') == 'APPID', F.lit('AppID WBS Lookup from SNOW')).otherwise(F.col('ActiveWBSReason')))\r\n",
-					"    cost_df = cost_df.withColumn('ActiveWBSReason', F.when(F.col('CostAllocationType') == 'WBS', F.lit('WBS Cost Tag used')).otherwise(F.col('ActiveWBSReason')))\r\n",
-					"\r\n",
-					"    cost_df = cost_df.withColumn('ActiveWBS', F.upper(F.col('ActiveWBS')))\r\n",
-					"\r\n",
-					"    # For cases that where CostAllocationCode is empty, we will use AppID from SerivceNow and Application from Subscription.json to replace.\r\n",
-					"    mask3 = (F.col('CostAllocationType').isin(['APPID']) & F.col('CostAllocationCode').isNull())\r\n",
-					"    mask4 = (F.col('CostAllocationType').isin(['CI']) & F.col('CostAllocationCode').isNull())\r\n",
-					"    cost_df = cost_df.withColumn('CostAllocationCode', F.when(mask3, F.col('AppID')) \\\r\n",
-					"                                                       .when(mask4, F.col('SubscriptionServiceNow-App')) \\\r\n",
-					"                                                       .otherwise(F.col('CostAllocationCode'))).drop('AppID')\r\n",
-					"\r\n",
-					"    return cost_df"
-				],
-				"execution_count": 116
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"def get_application_names(cost_df, application_df):\r\n",
-					"\r\n",
-					"    # Masks for CI and AppID\r\n",
-					"    ci_mask = F.col('CostAllocationType') == 'CI'\r\n",
-					"    appid_mask = F.col('CostAllocationType') == 'APPID'\r\n",
-					"\r\n",
-					"    # When AppID is present, we use the application name from the Service-Now Application list\r\n",
-					"    # First convert AppID to a string, then select the desired columns\r\n",
-					"    map_app = application_df.withColumn('AppID', F.col('AppID').cast(T.StringType())).select('AppID', 'ApplicationName')\r\n",
-					"\r\n",
-					"    # Apply case insensitivity merge by creating upper case columns\r\n",
-					"    cost_df = cost_df.withColumn('CostAllocationCode_upper',F.upper(F.col('CostAllocationCode')))\r\n",
-					"    map_app = map_app.withColumn('ApplicationName_upper',F.upper(F.col('ApplicationName')))\r\n",
-					"\r\n",
-					"    # Merge CostAllocationCode on APPID\r\n",
-					"    cost_df = cost_df.join(map_app, cost_df.CostAllocationCode_upper == map_app.AppID, how='left')\r\n",
-					"\r\n",
-					"    # Make copy of service now app list for second merge\r\n",
-					"    map_app_copy = map_app.alias('map_app_copy').withColumnRenamed('AppID', 'NewAppID').withColumnRenamed('ApplicationName_upper', 'NewApplicationName_upper').withColumnRenamed('ApplicationName', 'NewApplicationName')\r\n",
-					"\r\n",
-					"    # Merge CostAllicationCode on ApplicationName copy\r\n",
-					"    cost_df = cost_df.join(map_app_copy, cost_df.CostAllocationCode_upper == map_app_copy.NewApplicationName_upper, how='left')\r\n",
-					"\r\n",
-					"    # Populate original AppId and ApplicationName columns from the copied columns\r\n",
-					"    cost_df = cost_df.withColumn('AppID', F.when(F.col('AppID').isNull(), F.col('NewAppID')).otherwise(F.col('AppID')))\r\n",
-					"    cost_df = cost_df.withColumn('ApplicationName', F.when(F.col('ApplicationName').isNull(), F.col('NewApplicationName')).otherwise(F.col('ApplicationName')))\r\n",
-					"\r\n",
-					"    cost_df = cost_df.drop('CostAllocationCode_upper', 'ApplicationName_upper', 'NewAppID', 'NewApplicationName_upper', 'NewApplicationName')\r\n",
-					"\r\n",
-					"    # Create Application_Name column based on Application from ServiceNow to start with.\r\n",
-					"    cost_df = cost_df.withColumn('Application_Name',F.col('ApplicationName'))\r\n",
-					"\r\n",
-					"    # Resolve CostAllocationCode and CostAllocationType typo by replacing Application_name with SubscriptionServiceNow-App value \r\n",
-					"    cost_df = cost_df.withColumn('Application_Name',F.when((F.col('CostAllocationType') == 'APPID') & F.col('CostAllocationCode').cast('int').isNull(),F.col('SubscriptionServiceNow-App'))\\\r\n",
-					"                                                    .when((F.col('CostAllocationType') == 'CI') & F.col('CostAllocationCode').cast('int').isNotNull(),F.col('SubscriptionServiceNow-App')).otherwise(F.col('Application_Name')))\r\n",
-					"\r\n",
-					"    cost_df = cost_df.withColumn('Application_Name',F.when(((F.col('CostAllocationType') == \"SubscriptionWBS\") | (F.col('CostAllocationType') == \"WBS\"))&(F.col('Application_Name').isNull()),F.col('SubscriptionServiceNow-App'))\\\r\n",
-					"                                                     .otherwise(F.col('Application_Name')))\r\n",
-					"\r\n",
-					"    cost_df = cost_df.withColumn('Application_Name_upper',F.upper(F.col('Application_Name')))\r\n",
-					"    map_app = map_app.withColumn('ServiceNowApplicationName_upper',F.upper(F.col('ApplicationName')))\r\n",
-					"    map_app = map_app.withColumn('ServiceNowAppID',F.col('AppID')).drop('AppID')\r\n",
-					"\r\n",
-					"    # Lookup application in ServiceNow. Those applications that can be found will be merged.\r\n",
-					"    cost_df = cost_df.join(map_app,cost_df.Application_Name_upper==map_app.ServiceNowApplicationName_upper,how='left')\r\n",
-					"\r\n",
-					"    # Fill empty AppID with AppID from ServiceNow\r\n",
-					"    cost_df = cost_df.withColumn('AppID',F.when(F.col('AppID').isNull(),F.col('ServiceNowAppID'))\\\r\n",
-					"                                          .otherwise(F.col('AppID'))) \r\n",
-					"\r\n",
-					"    # Remove unused Columns\r\n",
-					"    cost_df = cost_df.drop('Application_Name_upper','ApplicationName','ServiceNowAppID','ServiceNowApplicationName_upper','ApplicationName_upper')\r\n",
-					"\r\n",
-					"\r\n",
-					"    # Application Name will be \"Application not defined or not found\" when SubscriptionServiceNow-App is equal to Application_name as well as AppID is empty.\r\n",
-					"    # This indicates that application from subscription.json file can not be found in ServiceNow. One of Application example is DATAHUB - MARKETING AND SUPPLY, not found in ServiceNow.\r\n",
-					"    cost_df = cost_df.withColumn('Application_Name', F.when((F.upper(F.col('SubscriptionServiceNow-App'))==F.upper(F.col('Application_Name'))) & (F.col('AppID').isNull()),F.lit('Application not defined or not found'))\\\r\n",
-					"                                                    .otherwise(F.col('Application_Name')))\r\n",
-					"\r\n",
-					"    # For anything that left ApplicationName will be \"Application not defined or not found\" and For anything that left AppID will be 0.\r\n",
-					"    cost_df = cost_df.na.fill({'AppID': 0, 'Application_Name': 'Application not defined or not found'})\r\n",
-					"\r\n",
-					"    return cost_df"
-				],
-				"execution_count": 117
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"def expand_ai_column(cost_df):\r\n",
-					"\r\n",
-					"    warnings.simplefilter(action='ignore', category=FutureWarning)\r\n",
-					"    cost_df = populate_cost_columns(cost_df)\r\n",
-					"    cost_df = extend_cost_additional_info(cost_df)\r\n",
-					"    cost_df = cost_AHB_column(cost_df)\r\n",
-					"    cost_df = cost_set_instance_name(cost_df)\r\n",
-					"    \r\n",
-					"    return cost_df"
-				],
-				"execution_count": 118
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"def populate_wbs_columns(cost_df, subscription_df, application_df):\r\n",
-					"\r\n",
-					"    cost_df = expand_cost_tags(cost_df)\r\n",
-					"    \r\n",
-					"    subscription_df = process_subscriptions(subscription_df)\r\n",
-					"    cost_df = cost_df.join(subscription_df, cost_df.SubscriptionId == subscription_df.SubscriptionId, how='left')\r\n",
-					"    cost_df = cost_df.drop('SubscriptionId')\r\n",
-					"\r\n",
-					"    cost_df = replace_empty_cost_fields_with_subscription_details(cost_df, application_df)\r\n",
-					"    print('WBS population complete. Populating application names')\r\n",
-					"    cost_df = get_application_names(cost_df, application_df)    \r\n",
-					"    print('App-name population complete')\r\n",
-					"\r\n",
-					"    return cost_df"
-				],
-				"execution_count": 119
+				"execution_count": 15
 			},
 			{
 				"cell_type": "code",
@@ -610,7 +157,7 @@
 					"    cost_df.write.format('parquet').mode('overwrite').option('path', destinationFilename).save()\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": 120
+				"execution_count": 16
 			},
 			{
 				"cell_type": "code",
@@ -629,47 +176,52 @@
 				"source": [
 					"print(f'fromDate: {fromDate}')\n",
 					"print(f'toDate: {toDate}')\n",
-					"reportTypes = ['ActualCost', 'AmortizedCost']\n",
-					"year = toDate[:4]\n",
-					"month = toDate[4:6]\n",
-					"day = toDate[6:]\n",
+					"report_types = ['ActualCost', 'AmortizedCost']\n",
 					"\n",
 					"print(f\"------ From: {fromDate}, To: {toDate} -----------\")\n",
 					"\n",
-					"for reportType in reportTypes:\n",
+					"for report_type in report_types:\n",
 					"\n",
-					"    print(f\"------ {reportType} -----------\")\n",
+					"    print(f\"------ {report_type} -----------\")\n",
+					"    date_range = fromDate + '-' + toDate\n",
+					"    print(f'dateRange: {date_range}')\n",
 					"\n",
-					"    sourceCostPath = 'exports/daily/ACMDaily' + reportType + '/'\n",
-					"    destinationCostPath = 'exports/monthly/ACMMonthly' + reportType + '/'\n",
+					"    cost_source_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/daily/ACMDaily{report_type}/{date_range}/*.csv'\n",
+					"    cost_target_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthly{report_type}/{date_range}/Extended_v3_ACMMonthly{report_type}_{date_range}.parquet'\n",
+					"    print(f\"Cost data path: {cost_source_path}\")\n",
+					"    print(f\"Cost destination path: {cost_target_path}\")\n",
 					"\n",
-					"    formattedToDate = f'{toDate[0:4]}-{toDate[4:6]}-{toDate[6:]}'\n",
-					"    print(f'formattedToDate: {formattedToDate}')\n",
-					"    dateRange = fromDate + '-' + toDate\n",
-					"    print(f'dateRange: {dateRange}')\n",
-					"    costSourcefilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + sourceCostPath + dateRange + '/*.csv'\n",
-					"    costDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + destinationCostPath + dateRange + '/Extended_v3_ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
-					"    print(f\"Cost data path: {costSourcefilename}\")\n",
-					"    print(f\"Cost destination path: {costDestinationfilename}\")\n",
-					"\n",
-					"    previousMonthDate = get_last_day_prev_month()\n",
-					"    print(f'Using {previousMonthDate} ServiceNow subscription file')\n",
-					"    subscription_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/servicenow/' + previousMonthDate + '-optimized.parquet'\n",
+					"    previous_month_date = get_last_day_prev_month(toDate)\n",
+					"    print(f'Using {previous_month_date} ServiceNow subscription file')\n",
+					"    subscription_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/{previous_month_date}-optimized.parquet'\n",
 					"    print(f\"Subscription path: {subscription_path}\")\n",
 					"\n",
-					"    application_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\n",
+					"    application_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\n",
 					"    print(f\"Application path: {application_path}\")\n",
 					"\n",
-					"    cost_df = load_cost_file(costSourcefilename)\n",
-					"    subscription_df = load_subscription_file(subscription_path)\n",
-					"    application_df = load_application_file(application_path)\n",
-					"    cost_df = expand_ai_column(cost_df)\n",
-					"    cost_df = populate_wbs_columns(cost_df, subscription_df, application_df)\n",
-					"    write_output_file(cost_df, costDestinationfilename)\n",
+					"    # Load cost file\n",
+					"    csv_options = {'header' : True,\n",
+					"                   'delimiter' : ',',\n",
+					"                   'quote' : '\"',\n",
+					"                   'escape' : '\"'}\n",
+					"    cost_df = spark.read.options(**csv_options).csv(cost_source_path)\n",
+					"\n",
+					"    # Load subscription file\n",
+					"    subscription_df = spark.read.format('parquet').load(subscription_path)\n",
+					"    subscription_df = pre_process_subscriptions(subscription_df)\n",
+					"\n",
+					"    # Load application file\n",
+					"    application_df = spark.read.format('parquet').load(application_path)\n",
+					"    application_df = application_df.withColumn('AppID', F.col('AppID').cast(\"int\"))\n",
+					"\n",
+					"    # Transform data\n",
+					"    cost_df = transform_cost_data(cost_df)\n",
+					"    cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\n",
+					"    # write_output_file(cost_df, cost_target_path)\n",
 					"    \n",
 					"    print(' ')"
 				],
-				"execution_count": 121
+				"execution_count": 17
 			}
 		]
 	}
