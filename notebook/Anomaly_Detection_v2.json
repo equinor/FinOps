@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "d9741362-012a-4185-a791-8ff2eaee35d8"
+				"spark.autotune.trackingId": "4e6fd7f4-5c5a-46de-97eb-dd5b73f8c707"
 			}
 		},
 		"metadata": {
@@ -72,7 +72,7 @@
 					"# Pipeline parameter\r\n",
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 50
+				"execution_count": 1
 			},
 			{
 				"cell_type": "code",
@@ -81,7 +81,7 @@
 					"import pyspark.sql.types as T\r\n",
 					"from pyspark.sql.window import Window"
 				],
-				"execution_count": 51
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -115,7 +115,7 @@
 					"\r\n",
 					"    return grouped_df"
 				],
-				"execution_count": 52
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -159,7 +159,7 @@
 					"                                                                                 .otherwise(F.lit(0)))\r\n",
 					"    return costs_by_dates"
 				],
-				"execution_count": 53
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -204,7 +204,7 @@
 					"\r\n",
 					"    return filtered_df"
 				],
-				"execution_count": 54
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -224,17 +224,18 @@
 					"def merge_with_subscription(input_df, subscription_path):\r\n",
 					"\r\n",
 					"    # Reading in useful columns from the subscription.json file\r\n",
-					"    sub_df = spark.read.json(subscription_path).select('name', 'technicalOwner')\r\n",
+					"    sub_df = spark.read.format('parquet').load(subscription_path).select('SubscriptionName', 'ProductOwnerEmail', 'TechnicalOwnerEmail')\r\n",
+					"    sub_df = sub_df.withColumnRenamed('SubscriptionName','SNSubscriptionName')\r\n",
 					"\r\n",
 					"    # Merging on subscription names\r\n",
-					"    merged_df = input_df.join(sub_df, on=input_df.SubscriptionName == sub_df.name, how='left')\r\n",
+					"    merged_df = input_df.join(sub_df, on=input_df.SubscriptionName == sub_df.SNSubscriptionName, how='left')\r\n",
 					"    \r\n",
 					"    # Dropping the right-join column to avoid duplicate records\r\n",
-					"    merged_df = merged_df.drop('name')\r\n",
+					"    merged_df = merged_df.drop('SNSubscriptionName')\r\n",
 					"\r\n",
 					"    return merged_df"
 				],
-				"execution_count": 55
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -253,7 +254,7 @@
 				"source": [
 					"source_path = \"abfss://usage@\" + storageAccount + \".dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear.parquet\"\r\n",
 					"destination_path = \"abfss://usage@\" + storageAccount + \".dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_AnomalyDetection_3mnth.parquet\"\r\n",
-					"subscription_path = \"abfss://usage@\" + storageAccount + \".dfs.core.windows.net/subscriptions/subscriptions_2023-08-31.json\"\r\n",
+					"subscription_path = \"abfss://usage@\" + storageAccount + \".dfs.core.windows.net/subscriptions/servicenow/latest-optimized.parquet\"\r\n",
 					"\r\n",
 					"print(f\"Reading data from: {source_path}\")\r\n",
 					"df = spark.read.format('parquet').load(source_path)\r\n",
@@ -286,7 +287,7 @@
 					"    merged_df.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
 					"    print('Write Complete!')"
 				],
-				"execution_count": 56
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -305,7 +306,7 @@
 				"source": [
 					"# display(anomaly_df.filter((F.col('SubscriptionName') == 'S034-Geology-Geophysics') & (F.col('ResourceGroup') == 'S034-WE-CC-1')))"
 				],
-				"execution_count": 60
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",
@@ -361,7 +362,7 @@
 					"# plt.legend()\r\n",
 					"# plt.show()"
 				],
-				"execution_count": 59
+				"execution_count": null
 			}
 		]
 	}
