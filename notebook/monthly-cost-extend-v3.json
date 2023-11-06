@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "1d3c2d28-7cba-49f5-8aee-7501d4860e8b"
+				"spark.autotune.trackingId": "118aff83-24f6-425d-bb15-6afa9ad1b80f"
 			}
 		},
 		"metadata": {
@@ -66,7 +66,7 @@
 					"container = 'usage'\n",
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 8
+				"execution_count": 62
 			},
 			{
 				"cell_type": "code",
@@ -93,7 +93,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 9
+				"execution_count": 63
 			},
 			{
 				"cell_type": "code",
@@ -119,14 +119,14 @@
 					"    return df\r\n",
 					"\r\n",
 					"def load_json(json_path):\r\n",
-					"    df = spark.read.format('parquet').load(json_path)\r\n",
+					"    df = spark.read.json(json_path)\r\n",
 					"    return df\r\n",
 					"\r\n",
 					"def load_parquet(parquet_path):\r\n",
 					"    df = spark.read.format('parquet').load(parquet_path)\r\n",
 					"    return df"
 				],
-				"execution_count": 10
+				"execution_count": 64
 			},
 			{
 				"cell_type": "code",
@@ -178,7 +178,7 @@
 					"    application_df = application_df.withColumn('AppID', F.col('AppID').cast(\"int\"))\r\n",
 					"    return application_df"
 				],
-				"execution_count": 11
+				"execution_count": 65
 			},
 			{
 				"cell_type": "code",
@@ -208,7 +208,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 12
+				"execution_count": 66
 			},
 			{
 				"cell_type": "code",
@@ -249,7 +249,7 @@
 					"        cost_df = cost_df.withColumn('ai_' + col, F.coalesce(F.col(f'AdditionalInfo.{col}'), F.lit(None)))\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 13
+				"execution_count": 67
 			},
 			{
 				"cell_type": "code",
@@ -278,7 +278,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 14
+				"execution_count": 68
 			},
 			{
 				"cell_type": "code",
@@ -313,7 +313,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 15
+				"execution_count": 69
 			},
 			{
 				"cell_type": "code",
@@ -347,7 +347,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 16
+				"execution_count": 70
 			},
 			{
 				"cell_type": "code",
@@ -446,7 +446,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 17
+				"execution_count": 71
 			},
 			{
 				"cell_type": "code",
@@ -527,7 +527,7 @@
 					"    return cost_df\r\n",
 					""
 				],
-				"execution_count": 18
+				"execution_count": 72
 			},
 			{
 				"cell_type": "code",
@@ -553,7 +553,7 @@
 					"    \r\n",
 					"    return cost_df"
 				],
-				"execution_count": 19
+				"execution_count": 73
 			},
 			{
 				"cell_type": "code",
@@ -573,7 +573,6 @@
 					"\r\n",
 					"    cost_df = expand_cost_tags(cost_df)\r\n",
 					"\r\n",
-					"    subscription_df = process_subscriptions(subscription_df)\r\n",
 					"    cost_df = cost_df.join(subscription_df, cost_df.SubscriptionId == subscription_df.SubscriptionId, how='left')\r\n",
 					"    cost_df = cost_df.drop('SubscriptionId')\r\n",
 					"\r\n",
@@ -584,7 +583,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 20
+				"execution_count": 74
 			},
 			{
 				"cell_type": "code",
@@ -607,7 +606,7 @@
 					"    cost_df.write.format('parquet').mode('overwrite').option('path', destinationFilename).save()\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": 21
+				"execution_count": 75
 			},
 			{
 				"cell_type": "code",
@@ -648,7 +647,6 @@
 					"    costDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + sourceCostPath + dateRange + '/Extended_v3_ACMMonthly' + reportType + '_' + dateRange + '.parquet'\n",
 					"    \n",
 					"    if str(longToDate) < '2021-11-30':\n",
-					"        print(longToDate)\n",
 					"        print(f'Using default 2021-11-30 subscription json file')\n",
 					"        solum_subscription_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/subscriptions_2021-11-30.json'\n",
 					"    else:\n",
@@ -658,21 +656,21 @@
 					"    servicenow_subscription_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/servicenow/' + longToDate + '-optimized.json'\n",
 					"\n",
 					"    try:\n",
-					"        subscription_df = load_and_process_solum_subscriptions(solum_subscription_path)\n",
+					"        subscription_df = load_and_process_servicenow_subscriptions(servicenow_subscription_path)\n",
 					"    except:\n",
 					"        subscription_df = load_and_process_solum_subscriptions(solum_subscription_path)\n",
 					"\n",
 					"    application_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\n",
 					"\n",
-					"    cost_df = load_cost_file(costSourcefilename)\n",
+					"    cost_df = load_parquet(costSourcefilename)\n",
 					"    application_df = load_and_process_applications(application_path)\n",
 					"\n",
 					"    cost_df = expand_ai_column(cost_df)\n",
-					"    cost_df = populate_wbs_columns(cost_df, subscription_list, appList)\n",
+					"    cost_df = populate_wbs_columns(cost_df, subscription_df, application_df)\n",
 					"    # write_output_file(cost_df, costDestinationfilename)\n",
 					"    print(' ')"
 				],
-				"execution_count": 22
+				"execution_count": 76
 			}
 		]
 	}
