@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "4e6fd7f4-5c5a-46de-97eb-dd5b73f8c707"
+				"spark.autotune.trackingId": "18cc052e-39cd-4960-9333-244f9eac2a32"
 			}
 		},
 		"metadata": {
@@ -72,7 +72,7 @@
 					"# Pipeline parameter\r\n",
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 1
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -81,7 +81,7 @@
 					"import pyspark.sql.types as T\r\n",
 					"from pyspark.sql.window import Window"
 				],
-				"execution_count": null
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -115,7 +115,7 @@
 					"\r\n",
 					"    return grouped_df"
 				],
-				"execution_count": null
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -159,7 +159,7 @@
 					"                                                                                 .otherwise(F.lit(0)))\r\n",
 					"    return costs_by_dates"
 				],
-				"execution_count": null
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -204,7 +204,7 @@
 					"\r\n",
 					"    return filtered_df"
 				],
-				"execution_count": null
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -235,7 +235,7 @@
 					"\r\n",
 					"    return merged_df"
 				],
-				"execution_count": null
+				"execution_count": 7
 			},
 			{
 				"cell_type": "code",
@@ -287,7 +287,7 @@
 					"    merged_df.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
 					"    print('Write Complete!')"
 				],
-				"execution_count": null
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -306,7 +306,7 @@
 				"source": [
 					"# display(anomaly_df.filter((F.col('SubscriptionName') == 'S034-Geology-Geophysics') & (F.col('ResourceGroup') == 'S034-WE-CC-1')))"
 				],
-				"execution_count": null
+				"execution_count": 9
 			},
 			{
 				"cell_type": "markdown",
@@ -362,7 +362,7 @@
 					"# plt.legend()\r\n",
 					"# plt.show()"
 				],
-				"execution_count": null
+				"execution_count": 10
 			}
 		]
 	}
