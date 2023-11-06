@@ -587,15 +587,15 @@
 		},
 		"Run Notebook on Previous Dates_v1_notebookSparkPoolNameRef": {
 			"type": "string",
-			"defaultValue": "sparkpool32"
+			"defaultValue": "sprkpool33large"
 		},
 		"Run Notebook on Previous Dates_v1_notebookSparkPoolIdRef": {
 			"type": "string",
-			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32"
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
 		},
 		"Run Notebook on Previous Dates_v1_notebookSparkPoolEndpointRef": {
 			"type": "string",
-			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
 		"VM-Performance_notebookSparkPoolNameRef": {
 			"type": "string",
@@ -24573,6 +24573,236 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/2023 BM Actual Cost by ConsumedService')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "OGBG Benchmark 2022/2023"
+				},
+				"content": {
+					"query": "--\n--   Cost by ConsumedService\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    --CostAllocationType,\n    ActiveWBS\n    ,ConsumedService\n    --,MeterCategory\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAc*/202*/Extended_v2_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by ActiveWBS, ConsumedService --format([Date], 'yyyy-MM'), CostAllocationType,\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/2023 BM Actual Cost by Resource Location')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "OGBG Benchmark 2022/2023"
+				},
+				"content": {
+					"query": "--\n--   Cost by ConsumedService\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    --CostAllocationType,\n    ActiveWBS\n    ,ResourceLocation\n    --,MeterCategory\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAc*/202*/Extended_v2_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by ActiveWBS, ResourceLocation --format([Date], 'yyyy-MM'), CostAllocationType,\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/2023 BM Actual cost by ActiveWBS')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "OGBG Benchmark 2022/2023"
+				},
+				"content": {
+					"query": "--\n--   Cost by ActiveWBS\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    --CostAllocationType\n    ActiveWBS\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\n    --,format(CostInBillingCurrency, 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAc*/202*/Extended_v2_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --and ActiveWBS is null or ActiveWBS = ''\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by ActiveWBS --format([Date], 'yyyy-MM'),\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/2023 BM Actual cost by CostAllocationType')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "OGBG Benchmark 2022/2023"
+				},
+				"content": {
+					"query": "--\n--   Cost by CostAllocationType\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    CostAllocationType\n    ,ActiveWBS\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAc*/202*/Extended_v2_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by CostAllocationType, ActiveWBS --format([Date], 'yyyy-MM'),\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/2023 BM Amortized Cost by ConsumedService')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "OGBG Benchmark 2022/2023"
+				},
+				"content": {
+					"query": "--\n--   Cost by ConsumedService\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    --CostAllocationType,\n    ActiveWBS\n    ,ConsumedService\n    --,MeterCategory\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAm*/202*/Extended_v2_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by ActiveWBS, ConsumedService --format([Date], 'yyyy-MM'), CostAllocationType,\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/2023 BM Amortized Cost by Resource Location')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "OGBG Benchmark 2022/2023"
+				},
+				"content": {
+					"query": "--\n--   Cost by ConsumedService\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    --CostAllocationType,\n    ActiveWBS\n    ,ResourceLocation\n    --,MeterCategory\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAm*/202*/Extended_v2_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by ActiveWBS, ResourceLocation --format([Date], 'yyyy-MM'), CostAllocationType,\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/2023 BM Amortized cost by ActiveWBS')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "OGBG Benchmark 2022/2023"
+				},
+				"content": {
+					"query": "--\n--   Cost by ActiveWBS\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    --CostAllocationType\n    ActiveWBS\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAm*/202*/Extended_v2_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by ActiveWBS --format([Date], 'yyyy-MM'),\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/2023 BM cost by CostAllocationType Amortized')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "OGBG Benchmark 2022/2023"
+				},
+				"content": {
+					"query": "--\n--   Cost by CostAllocationType\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    CostAllocationType\n    ,ActiveWBS\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAm*/202*/Extended_v2_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by CostAllocationType, ActiveWBS --format([Date], 'yyyy-MM'),\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/2023 Benchmark Actual Cost by ActiveWBS and MeterCategory')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "OGBG Benchmark 2022/2023"
+				},
+				"content": {
+					"query": "--\n--   Cost by MeterCategory\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    --CostAllocationType,\n    ActiveWBS\n    ,MeterCategory\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAc*/202*/Extended_v2_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by ActiveWBS, MeterCategory --format([Date], 'yyyy-MM'), CostAllocationType,\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/2023 Benchmark Amortized Cost by ActiveWBS and MeterCategory')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "OGBG Benchmark 2022/2023"
+				},
+				"content": {
+					"query": "--\n--   Cost by MeterCategory\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    --CostAllocationType,\n    ActiveWBS\n    ,MeterCategory\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAm*/202*/Extended_v2_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by ActiveWBS, MeterCategory --format([Date], 'yyyy-MM'), CostAllocationType,\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/All non RI VMs')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
@@ -36298,17 +36528,17 @@
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
-					"driverMemory": "56g",
-					"driverCores": 8,
-					"executorMemory": "56g",
-					"executorCores": 8,
-					"numExecutors": 2,
+					"driverMemory": "112g",
+					"driverCores": 16,
+					"executorMemory": "112g",
+					"executorCores": 16,
+					"numExecutors": 1,
 					"runAsWorkspaceSystemIdentity": false,
 					"conf": {
-						"spark.dynamicAllocation.enabled": "false",
-						"spark.dynamicAllocation.minExecutors": "2",
-						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "1347d567-b698-4f6d-b96c-aa12db69c194"
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "5",
+						"spark.autotune.trackingId": "a52ca0b1-85d2-4c81-98a6-637ac7c60318"
 					}
 				},
 				"metadata": {
@@ -36330,10 +36560,11 @@
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net"
 						},
-						"sparkVersion": "3.2",
+						"sparkVersion": "3.3",
 						"nodeCount": 3,
-						"cores": 8,
-						"memory": 56
+						"cores": 16,
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -36358,7 +36589,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 6
 					},
 					{
 						"cell_type": "code",
@@ -36377,7 +36608,7 @@
 							"import time"
 						],
 						"outputs": [],
-						"execution_count": 4
+						"execution_count": 7
 					},
 					{
 						"cell_type": "code",
@@ -36404,7 +36635,7 @@
 							"dates = [date_string.split('-') for date_string in dates]"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 8
 					},
 					{
 						"cell_type": "code",
@@ -36424,7 +36655,7 @@
 							"#dates = [[toDate, fromDate] for (toDate, fromDate) in dates if toDate >= '20230101']"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 9
 					},
 					{
 						"cell_type": "code",
@@ -36448,7 +36679,7 @@
 							"    # Checking the run-time of the notebook for timeout-purposes\r\n",
 							"    start_time = time.time()\r\n",
 							"    # Running Monthly Extend-notebook with the variable arguments as inputs to the notebook.\r\n",
-							"    mssparkutils.notebook.run(path='Monthly Extend AI column and WBS tags_v2', \r\n",
+							"    mssparkutils.notebook.run(path='monthly-cost-extend-v3', \r\n",
 							"                              timeout_seconds=600,\r\n",
 							"                              arguments={'fromDate' : fromDate, \r\n",
 							"                                         'toDate' : toDate, \r\n",
@@ -36462,7 +36693,7 @@
 							"    #     break"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 10
 					}
 				]
 			},
@@ -38639,7 +38870,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "5c147410-d45c-4fff-a18e-39a9534ef02f"
+						"spark.autotune.trackingId": "6da7882e-1471-4436-8dc6-056653c17b43"
 					}
 				},
 				"metadata": {
@@ -38689,7 +38920,7 @@
 							"import warnings"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 2
 					},
 					{
 						"cell_type": "code",
@@ -38807,7 +39038,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 6
 					},
 					{
 						"cell_type": "code",
@@ -38840,7 +39071,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 7
 					},
 					{
 						"cell_type": "code",
@@ -38875,7 +39106,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 8
 					},
 					{
 						"cell_type": "code",
@@ -38975,7 +39206,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 9
 					},
 					{
 						"cell_type": "code",
@@ -39056,7 +39287,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 10
 					},
 					{
 						"cell_type": "code",
@@ -39084,7 +39315,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 11
 					},
 					{
 						"cell_type": "code",
@@ -39113,7 +39344,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 12
 					}
 				]
 			},
@@ -39144,7 +39375,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "b4b1f30b-9b49-4bfe-8111-56210931cc86"
+						"spark.autotune.trackingId": "e32ef8d4-3c5f-450d-8ba1-5a8aff27df47"
 					}
 				},
 				"metadata": {
@@ -39201,7 +39432,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 12
+						"execution_count": 43
 					},
 					{
 						"cell_type": "code",
@@ -39229,7 +39460,7 @@
 							"import pyspark.sql.types as T"
 						],
 						"outputs": [],
-						"execution_count": 13
+						"execution_count": 44
 					},
 					{
 						"cell_type": "markdown",
@@ -39261,7 +39492,7 @@
 							"%run /cost-extend-utilities"
 						],
 						"outputs": [],
-						"execution_count": 14
+						"execution_count": 45
 					},
 					{
 						"cell_type": "code",
@@ -39285,7 +39516,7 @@
 							"    return subscriptions_df"
 						],
 						"outputs": [],
-						"execution_count": 15
+						"execution_count": 46
 					},
 					{
 						"cell_type": "code",
@@ -39309,7 +39540,7 @@
 							"    print('File write complete!')"
 						],
 						"outputs": [],
-						"execution_count": 16
+						"execution_count": 47
 					},
 					{
 						"cell_type": "markdown",
@@ -39381,13 +39612,34 @@
 							"\n",
 							"    # Transform data\n",
 							"    cost_df = transform_cost_data(cost_df)\n",
+							"    cost_df = cost_df.withColumn(\"ResourceLocation\", F.lower(F.trim(F.regexp_replace(F.col('ResourceLocation'), \"\\s+\", \"\"))))\n",
 							"    cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\n",
-							"    write_output_file(cost_df, cost_target_path)\n",
+							"    # write_output_file(cost_df, cost_target_path)\n",
 							"    \n",
 							"    print(' ')"
 						],
 						"outputs": [],
-						"execution_count": 17
+						"execution_count": 48
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"display(cost_df.select('ResourceLocation').distinct())"
+						],
+						"outputs": [],
+						"execution_count": 49
 					}
 				]
 			},
@@ -39418,7 +39670,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "842912c3-8cf3-466a-b82f-a7d4e4113d13"
+						"spark.autotune.trackingId": "e5bbb840-9639-46a6-8c5e-287a0d97725f"
 					}
 				},
 				"metadata": {
@@ -39443,8 +39695,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -39678,6 +39929,7 @@
 							"    # Process cost data\n",
 							"    cost_df = spark.read.format('parquet').load(cost_source_path)\n",
 							"    cost_df = transform_cost_data(cost_df)\n",
+							"    cost_df = cost_df.withColumn(\"ResourceLocation\", F.lower(F.trim(F.regexp_replace(F.col('ResourceLocation'), \"\\s+\", \"\"))))\n",
 							"    cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\n",
 							"    write_output_file(cost_df, cost_target_path)\n",
 							"    print(' ')"
