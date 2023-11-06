@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "3f692ec5-47cc-41b2-af3e-e1a6270789f7"
+				"spark.autotune.trackingId": "e5bbb840-9639-46a6-8c5e-287a0d97725f"
 			}
 		},
 		"metadata": {
@@ -276,6 +276,7 @@
 					"    # Process cost data\n",
 					"    cost_df = spark.read.format('parquet').load(cost_source_path)\n",
 					"    cost_df = transform_cost_data(cost_df)\n",
+					"    cost_df = cost_df.withColumn(\"ResourceLocation\", F.lower(F.trim(F.regexp_replace(F.col('ResourceLocation'), \"\\s+\", \"\"))))\n",
 					"    cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\n",
 					"    write_output_file(cost_df, cost_target_path)\n",
 					"    print(' ')"
