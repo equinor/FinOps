@@ -2,7 +2,7 @@
 	"name": "CreateAnomalyView",
 	"properties": {
 		"folder": {
-			"name": "AnomalyDetection"
+			"name": "PowerBIViews"
 		},
 		"content": {
 			"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW Anomalies_Past_Three_Months\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_AnomalyDetection_3mnth.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
