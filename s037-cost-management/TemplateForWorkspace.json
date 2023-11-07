@@ -8901,7 +8901,7 @@
 						"userProperties": [],
 						"typeProperties": {
 							"notebook": {
-								"referenceName": "Daily Extend AI column and WBS tags_v1",
+								"referenceName": "daily-cost-extend-v3",
 								"type": "NotebookReference"
 							},
 							"parameters": {
@@ -9195,8 +9195,9 @@
 				"[concat(variables('workspaceId'), '/datasets/ds_test_delete_files')]",
 				"[concat(variables('workspaceId'), '/datasets/ds_CSV_File')]",
 				"[concat(variables('workspaceId'), '/datasets/ds_Daily_Parquet_File')]",
-				"[concat(variables('workspaceId'), '/notebooks/Daily Extend AI column and WBS tags_v1')]",
+				"[concat(variables('workspaceId'), '/notebooks/daily-cost-extend-v3')]",
 				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('Daily Cleanup_pipelineSparkPoolNameRef'))]",
+				"[concat(variables('workspaceId'), '/notebooks/Daily Extend AI column and WBS tags_v1')]",
 				"[concat(variables('workspaceId'), '/datasets/ds_Test_delete_file')]",
 				"[concat(variables('workspaceId'), '/datasets/Monthly_Parquet')]"
 			]
@@ -26805,6 +26806,29 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/RI Savings Calc')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "--RI & HUB Savings"
+				},
+				"content": {
+					"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 *,\n    --ChargeType\n    --,EffectivePrice\n    --,UnitPrice\n    --,Quantity\n    --,(UnitPrice - EffectivePrice) * Quantity as [Cost Saving]\n    --,IsRIUsage\n    sum((UnitPrice - EffectivePrice) * Quantity) as [Cost Saving Total]\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAmortizedCost/202*/Extended_v2_ACMMonthlyAmortizedCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where (IsRIUsage = 'RI Usage' or ChargeType = 'UnusedReservation')\n    and [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/RI Usage March 2023')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
@@ -27196,6 +27220,29 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/SQL HUB using Extended parquet')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "--RI & HUB Savings/New API/2023"
+				},
+				"content": {
+					"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 \n    ai_ServiceType as ServiceType, \n    ai_AHB as AHB, \n    ai_vCores as vCores, \n    ai_VCPUs as VCPUs, \n    MeterCategory,\n    MeterSubCategory,\n    format([Date], 'yyyy-MM') as [Short Date], \n    sum(Quantity) as Quantity,\n    --PartNumber,\n    ProductName,\n    ResourceId\n    \nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/202*/Extended_v2_ACMMonthlyActualCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nWHERE (MeterCategory = 'SQL Managed Instance' and ai_AHB = 'True') \nor (MeterCategory = 'Virtual Machines Licenses' and MeterSubCategory LIKE '%Hybrid%') \nand format([Date], 'yyyy-MM') >= '2022-11' and format([Date], 'yyyy-MM') <= '2023-10' \n--WHERE JSON_VALUE(AdditionalInfo, '$.AHB') = 'True' or MeterSubCategory LIKE '%Hybrid%'\n\n-----Below line extracts non HUB SQL entries for testing & investigation purposes\n--WHERE (MeterCategory = 'SQL Managed Instance' and JSON_VALUE(AdditionalInfo, '$.AHB') = 'False') or (MeterCategory = 'Virtual Machines Licenses' and MeterSubCategory NOT LIKE '%Hybrid%') and Product LIKE 'SQL Server%' and Product NOT LIKE 'SQL Server Express%'\n\nGROUP BY  ai_ServiceType, ai_AHB, ai_vCores, ai_VCPUs, MeterCategory, MeterSubCategory, format([Date], 'yyyy-MM'), ProductName, ResourceId\nORDER BY format([Date], 'yyyy-MM'), Quantity DESC\n\n\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/SQL Licence query')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
@@ -27372,6 +27419,26 @@
 					},
 					"currentConnection": {
 						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQL script 44')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "-- This is auto-generated code\nSELECT\n    TOP 100 *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/20231001-20231031/Extended_v2_ACMMonthlyActualCost_20231001-20231031.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "master",
 						"poolName": "Built-in"
 					},
 					"resultLimit": 5000
@@ -27873,6 +27940,29 @@
 				},
 				"content": {
 					"query": "SELECT\n    JSON_VALUE(AdditionalInfo, '$.ServiceType') as ServiceType, \n    JSON_VALUE(AdditionalInfo, '$.VCPUs') as VCPUs, \n    substring([Date],0,8) as [Date], \n    sum(ConsumedQuantity) as ConsumedQuantity,\n    PartNumber,\n    Product,\n    ServiceInfo2\n    --,sum(Cost) as Cost\n    --TOP 1000 *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/monthly/2022/*/*-cleaned.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n--WHERE MeterCategory = 'Virtual Machines Licenses'\n----Filtering on only Windows Server HUB VM's, there is also Windows Client BYOL but this is not relecant for VM HUB savings calculations\n----I've removed \"Product LIKE '%Spot%'\" part is not required as spot machine still come under \"MeterCategory = 'Virtual Machines'\"\nWHERE MeterCategory = 'Virtual Machines' and ServiceInfo2 LIKE 'Windows Server BYOL'\nGROUP BY JSON_VALUE(AdditionalInfo, '$.ServiceType'), substring([Date],0,8), PartNumber, Product, ServiceInfo2, JSON_VALUE(AdditionalInfo, '$.VCPUs')\nORDER BY substring([Date],0,8), ConsumedQuantity DESC\n\n\n\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/VM HUB using Extended parquet')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "--RI & HUB Savings/New API/2023"
+				},
+				"content": {
+					"query": "SELECT\n    --TOP 1000 *\n    ai_ServiceType as ServiceType, \n    ai_VCPUs as VCPUs, \n    format([Date], 'yyyy-MM') as [Date], \n    sum(Quantity) as Quantity,\n    PartNumber,\n    ProductName,\n    MeterCategory,\n    ServiceInfo2\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/202*/Extended_v2_ACMMonthlyActualCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nWHERE MeterCategory = 'Virtual Machines' and ServiceInfo2 = 'Windows Server BYOL' --and ReservationName != '' and Product LIKE '%Spot%'\n    and [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\nGROUP BY ai_ServiceType, format([Date], 'yyyy-MM'), PartNumber, ProductName, MeterCategory, ai_VCPUs, ServiceInfo2\nORDER BY format([Date], 'yyyy-MM'), sum(Quantity) DESC\n\n\n\n",
 					"metadata": {
 						"language": "sql"
 					},
@@ -36538,7 +36628,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "a52ca0b1-85d2-4c81-98a6-637ac7c60318"
+						"spark.autotune.trackingId": "a22f1dc0-1a2c-4a48-9526-6eba84cf7730"
 					}
 				},
 				"metadata": {
