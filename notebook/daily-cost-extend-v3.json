@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "e32ef8d4-3c5f-450d-8ba1-5a8aff27df47"
+				"spark.autotune.trackingId": "384d3f89-1c9e-4bdc-8f33-003e895f7a42"
 			}
 		},
 		"metadata": {
@@ -154,6 +154,7 @@
 				"source": [
 					"def pre_process_subscriptions(subscriptions_df):\r\n",
 					"    subscriptions_df = subscriptions_df.select('SubscriptionId', 'OperationalWBS', 'ApplicationName')\r\n",
+					"    subscriptions_df = subscriptions_df.withColumnRenamed('SubscriptionId', 'SubId')\r\n",
 					"    subscriptions_df = subscriptions_df.where(subscriptions_df.SubscriptionId != '')\r\n",
 					"    subscriptions_df = subscriptions_df.withColumnRenamed('OperationalWBS', 'SubscriptionWBS')\r\n",
 					"    subscriptions_df = subscriptions_df.withColumnRenamed('ApplicationName', 'SubscriptionServiceNow-App')\r\n",

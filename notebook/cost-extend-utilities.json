@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "6da7882e-1471-4436-8dc6-056653c17b43"
+				"spark.autotune.trackingId": "6f45c4bc-d5cc-4cd8-b580-61a4d3502bba"
 			}
 		},
 		"metadata": {
@@ -474,8 +474,8 @@
 				"source": [
 					"def combine_subscriptions_and_applications(cost_df, subscription_df, application_df):\r\n",
 					"    \r\n",
-					"    cost_df = cost_df.join(subscription_df, cost_df.SubscriptionId == subscription_df.SubscriptionId, how='left')\r\n",
-					"    cost_df = cost_df.drop('SubscriptionId')\r\n",
+					"    cost_df = cost_df.join(subscription_df, cost_df.SubscriptionId == subscription_df.SubId, how='left')\r\n",
+					"    cost_df = cost_df.drop('SubId')\r\n",
 					"\r\n",
 					"    cost_df = replace_empty_cost_fields_with_subscription_details(cost_df, application_df)\r\n",
 					"    print('WBS population complete. Populating application names')\r\n",

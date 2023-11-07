@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "6a9326be-5ee3-42a8-b3dd-521d9af012e3"
+				"spark.autotune.trackingId": "6fc29a85-898d-4a4b-977a-70dc79ab5701"
 			}
 		},
 		"metadata": {
@@ -92,7 +92,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 13
+				"execution_count": 2
 			},
 			{
 				"cell_type": "markdown",
@@ -134,7 +134,7 @@
 					"from pyspark.sql.functions import when\r\n",
 					""
 				],
-				"execution_count": 14
+				"execution_count": 3
 			},
 			{
 				"cell_type": "markdown",
@@ -180,7 +180,7 @@
 					"date_one_year_ago = datetime.now().date()-timedelta(days=365)\r\n",
 					"\r\n",
 					"# Define a path for the data with random period\r\n",
-					"path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20230501-20230531/Extended_v2_ACMMonthlyAmortizedCost_20230501-20230531.parquet\"\r\n",
+					"path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20230501-20230531/Extended_v3_ACMMonthlyAmortizedCost_20230501-20230531.parquet\"\r\n",
 					"\r\n",
 					"# Load the data schema and add a new column for Report Date\r\n",
 					"df_schema_extended = spark.read.format('parquet').load(path)\r\n",
@@ -188,7 +188,7 @@
 					"df_schema_extended = df_schema_extended.withColumn('Report_Date',lit('') )\r\n",
 					"df_schema_extended = df_schema_extended.withColumn('Report_Date_Partition',lit('') )"
 				],
-				"execution_count": 15
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -207,7 +207,7 @@
 					"print(\"A-year-ago's date since today:\",date_one_year_ago)\r\n",
 					"len(df_schema_extended.columns)"
 				],
-				"execution_count": 16
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -228,7 +228,7 @@
 					"#df_schema_extended_pd = df_schema_extended_pd.rename(columns={'Azure Hybrid Benefit': 'Azure_Hybrid_Benefit'})\r\n",
 					"#df_schema_extended = spark.createDataFrame(df_schema_extended_pd)"
 				],
-				"execution_count": 17
+				"execution_count": 6
 			},
 			{
 				"cell_type": "markdown",
@@ -285,7 +285,7 @@
 					"            file_paths = mssparkutils.fs.ls(root_path +'/'+ str(folder.name))\r\n",
 					"            for file_path in file_paths:\r\n",
 					"                # Focus on parquet file not csv file\r\n",
-					"                if 'Extended_v2' in file_path.name:\r\n",
+					"                if 'Extended_v3' in file_path.name:\r\n",
 					"                    try:\r\n",
 					"                        # Add a Report date column in the dataframe\r\n",
 					"                        date = pd.to_datetime(folder.path.split('/')[-1].split('-')[0],format=\"%Y/%m/%d\")\r\n",
@@ -303,7 +303,7 @@
 					"                        print(len(df_temp.columns),len(df.columns))\r\n",
 					""
 				],
-				"execution_count": 18
+				"execution_count": 7
 			},
 			{
 				"cell_type": "markdown",
@@ -335,7 +335,7 @@
 					"# Change the data type of the 'Report_Date' column to Datetime\r\n",
 					"df = df.withColumn(\"Report_Date\", col(\"Report_Date\").cast(\"timestamp\"))"
 				],
-				"execution_count": 19
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -366,7 +366,7 @@
 					")\r\n",
 					""
 				],
-				"execution_count": 20
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -388,7 +388,7 @@
 					"#display(df.filter((F.col('ApplicationName')).contains('Danske Commodities')))\r\n",
 					"#display(df.filter((F.col('ApplicationName')).contains('Unknown')))"
 				],
-				"execution_count": 21
+				"execution_count": 10
 			},
 			{
 				"cell_type": "markdown",
@@ -423,7 +423,7 @@
 					"# Save the data with partitioned by Report date\r\n",
 					"df.write.format('parquet').mode('overwrite').partitionBy('Report_Date_Partition').option('overwriteSchema', 'true').save(optimized_path)"
 				],
-				"execution_count": 22
+				"execution_count": 11
 			},
 			{
 				"cell_type": "markdown",
@@ -455,7 +455,7 @@
 					"currentSparkSession = SparkSession.builder.getOrCreate()\r\n",
 					"spark.catalog.clearCache()"
 				],
-				"execution_count": 23
+				"execution_count": 12
 			}
 		]
 	}

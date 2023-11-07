@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "e5bbb840-9639-46a6-8c5e-287a0d97725f"
+				"spark.autotune.trackingId": "f2e3c2fc-c756-484a-86cd-045d771d09d0"
 			}
 		},
 		"metadata": {
@@ -155,7 +155,7 @@
 					"def load_and_process_solum_subscriptions(subscription_path):\r\n",
 					"\r\n",
 					"    subscription_df = spark.read.json(subscription_path)\r\n",
-					"    subscription_df = subscription_df.withColumnRenamed('id', 'SubscriptionId')\r\n",
+					"    subscription_df = subscription_df.withColumnRenamed('id', 'SubId')\r\n",
 					"    subscription_df = subscription_df.withColumn('id', F.monotonically_increasing_id())\r\n",
 					"\r\n",
 					"    try:\r\n",
@@ -169,15 +169,16 @@
 					"    subscription_df = subscription_df.drop('tags')\r\n",
 					"\r\n",
 					"    # Dropping unnecessary columns and setting the schema\r\n",
-					"    columns_to_keep = ['SubscriptionId', 'SubscriptionWBS', 'SubscriptionServiceNow-App']\r\n",
+					"    columns_to_keep = ['SubId', 'SubscriptionWBS', 'SubscriptionServiceNow-App']\r\n",
 					"    subscription_df = subscription_df.select(columns_to_keep)\r\n",
 					"\r\n",
 					"    return subscription_df\r\n",
 					"\r\n",
 					"def load_and_process_servicenow_subscriptions(subscription_path):\r\n",
 					"    subscription_df = spark.read.format('parquet').load(subscription_path)\r\n",
-					"\r\n",
+					"    \r\n",
 					"    subscriptions_df = subscriptions_df.select('SubscriptionId', 'OperationalWBS', 'ApplicationName')\r\n",
+					"    subscriptions_df = subscriptions_df.withColumnRenamed('SubscriptionId', 'SubId')\r\n",
 					"    subscriptions_df = subscriptions_df.where(subscriptions_df.SubscriptionId != '')\r\n",
 					"    subscriptions_df = subscriptions_df.withColumnRenamed('OperationalWBS', 'SubscriptionWBS')\r\n",
 					"    subscriptions_df = subscriptions_df.withColumnRenamed('ApplicationName', 'SubscriptionServiceNow-App')\r\n",
