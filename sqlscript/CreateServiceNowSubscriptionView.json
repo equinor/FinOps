@@ -1,0 +1,20 @@
+{
+	"name": "CreateServiceNowSubscriptionView",
+	"properties": {
+		"folder": {
+			"name": "PowerBIViews"
+		},
+		"content": {
+			"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW ServiceNowSubscriptions\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/subscriptions/servicenow/latest-optimized.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
