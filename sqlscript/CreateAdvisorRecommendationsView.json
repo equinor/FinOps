@@ -2,7 +2,7 @@
 	"name": "CreateAdvisorRecommendationsView",
 	"properties": {
 		"folder": {
-			"name": "AdvisorRecommendations"
+			"name": "PowerBIViews"
 		},
 		"content": {
 			"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW Advisor_Recommendations\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/recommendations/cost-recommendations.parquet/',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
