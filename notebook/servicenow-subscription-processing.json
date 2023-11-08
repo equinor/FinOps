@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "959e9941-fbc6-41de-8195-ea69a95726d3"
+				"spark.autotune.trackingId": "ff13073a-140a-44dd-ba9b-a95eb8da8910"
 			}
 		},
 		"metadata": {
@@ -233,9 +233,27 @@
 					}
 				},
 				"source": [
+					"subscription_df = subscription_df.where(F.col('SubscriptionId') != '')"
+				],
+				"execution_count": 8
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
 					"subscription_df = subscription_df.dropDuplicates([\"SubscriptionId\"])"
 				],
-				"execution_count": 14
+				"execution_count": 9
 			},
 			{
 				"cell_type": "markdown",
@@ -267,7 +285,7 @@
 					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/latest-optimized.parquet\"\r\n",
 					"subscription_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 				],
-				"execution_count": 19
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -290,7 +308,7 @@
 					"    subscription_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)\r\n",
 					""
 				],
-				"execution_count": 63
+				"execution_count": 11
 			}
 		]
 	}
