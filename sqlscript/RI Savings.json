@@ -1,0 +1,21 @@
+{
+	"name": "RI Savings",
+	"properties": {
+		"description": "Used RI savings - Unused RI cost\nUsed RI is where IsRIUsage = 'RI Usage'\nUnused RI is where ChargeType = 'UnusedReservation'\nWhen an RI is unused in the Amortized file the UnitPrice is 0 which means the sum((UnitPrice - EffectivePrice) * Quantity) as [Cost Saving Total] calculation can be used to calculate both the saving and the cost in the same line",
+		"folder": {
+			"name": "--RI & HUB Savings/New API/2023"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    TOP 100 \n    --ChargeType\n    --EffectivePrice\n    --,UnitPrice\n    --,Quantity\n    --,(UnitPrice - EffectivePrice) * Quantity as [Cost Saving]\n    --,IsRIUsage\n    sum((UnitPrice - EffectivePrice) * Quantity) as [Cost Saving Total]\n    --sum((EffectivePrice) * Quantity) as [Cost Saving Total]\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAmortizedCost/202*/Extended_v2_ACMMonthlyAmortizedCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where (IsRIUsage = 'RI Usage' or ChargeType = 'UnusedReservation')\n    and [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    and upper(benefitName) like 'S037%' -- filtering for the S037 reservations\n    --and upper(benefitName) not like 'S037%'  -- filtering for the non S037 reservations i.e. the SAP single scope reservations\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}
