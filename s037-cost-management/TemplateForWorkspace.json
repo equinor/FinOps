@@ -777,30 +777,6 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
 		},
-		"sparkpool32_delayInMinutes": {
-			"type": "int",
-			"defaultValue": 15
-		},
-		"sparkpool32_maxNodeCount": {
-			"type": "int",
-			"defaultValue": 5
-		},
-		"sparkpool32_minNodeCount": {
-			"type": "int",
-			"defaultValue": 3
-		},
-		"sparkpool32_nodeCount": {
-			"type": "int",
-			"defaultValue": 0
-		},
-		"sparkpool32_nodeSize": {
-			"type": "string",
-			"defaultValue": "Medium"
-		},
-		"sparkpool32_sparkVersion": {
-			"type": "string",
-			"defaultValue": "3.2"
-		},
 		"sprkpool33large_delayInMinutes": {
 			"type": "int",
 			"defaultValue": 10
@@ -824,6 +800,30 @@
 		"sprkpool33large_sparkVersion": {
 			"type": "string",
 			"defaultValue": "3.3"
+		},
+		"sparkpool32_delayInMinutes": {
+			"type": "int",
+			"defaultValue": 15
+		},
+		"sparkpool32_maxNodeCount": {
+			"type": "int",
+			"defaultValue": 5
+		},
+		"sparkpool32_minNodeCount": {
+			"type": "int",
+			"defaultValue": 3
+		},
+		"sparkpool32_nodeCount": {
+			"type": "int",
+			"defaultValue": 0
+		},
+		"sparkpool32_nodeSize": {
+			"type": "string",
+			"defaultValue": "Medium"
+		},
+		"sparkpool32_sparkVersion": {
+			"type": "string",
+			"defaultValue": "3.2"
 		}
 	},
 	"variables": {
@@ -39534,7 +39534,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "384d3f89-1c9e-4bdc-8f33-003e895f7a42"
+						"spark.autotune.trackingId": "8953debf-bea8-454d-af06-8cc5de050932"
 					}
 				},
 				"metadata": {
@@ -39559,7 +39559,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -39591,7 +39592,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 43
+						"execution_count": 10
 					},
 					{
 						"cell_type": "code",
@@ -39619,7 +39620,7 @@
 							"import pyspark.sql.types as T"
 						],
 						"outputs": [],
-						"execution_count": 44
+						"execution_count": 11
 					},
 					{
 						"cell_type": "markdown",
@@ -39651,7 +39652,7 @@
 							"%run /cost-extend-utilities"
 						],
 						"outputs": [],
-						"execution_count": 45
+						"execution_count": 12
 					},
 					{
 						"cell_type": "code",
@@ -39670,13 +39671,13 @@
 							"def pre_process_subscriptions(subscriptions_df):\r\n",
 							"    subscriptions_df = subscriptions_df.select('SubscriptionId', 'OperationalWBS', 'ApplicationName')\r\n",
 							"    subscriptions_df = subscriptions_df.withColumnRenamed('SubscriptionId', 'SubId')\r\n",
-							"    subscriptions_df = subscriptions_df.where(subscriptions_df.SubscriptionId != '')\r\n",
+							"    subscriptions_df = subscriptions_df.where(subscriptions_df.SubId != '')\r\n",
 							"    subscriptions_df = subscriptions_df.withColumnRenamed('OperationalWBS', 'SubscriptionWBS')\r\n",
 							"    subscriptions_df = subscriptions_df.withColumnRenamed('ApplicationName', 'SubscriptionServiceNow-App')\r\n",
 							"    return subscriptions_df"
 						],
 						"outputs": [],
-						"execution_count": 46
+						"execution_count": 13
 					},
 					{
 						"cell_type": "code",
@@ -39700,7 +39701,7 @@
 							"    print('File write complete!')"
 						],
 						"outputs": [],
-						"execution_count": 47
+						"execution_count": 14
 					},
 					{
 						"cell_type": "markdown",
@@ -39779,27 +39780,7 @@
 							"    print(' ')"
 						],
 						"outputs": [],
-						"execution_count": 48
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							},
-							"collapsed": false
-						},
-						"source": [
-							"display(cost_df.select('ResourceLocation').distinct())"
-						],
-						"outputs": [],
-						"execution_count": 49
+						"execution_count": 15
 					}
 				]
 			},
@@ -39830,7 +39811,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "f2e3c2fc-c756-484a-86cd-045d771d09d0"
+						"spark.autotune.trackingId": "6e094c56-3828-4526-a1a6-66648b5c9130"
 					}
 				},
 				"metadata": {
@@ -39855,7 +39836,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -39990,7 +39972,7 @@
 							"    \r\n",
 							"    subscriptions_df = subscriptions_df.select('SubscriptionId', 'OperationalWBS', 'ApplicationName')\r\n",
 							"    subscriptions_df = subscriptions_df.withColumnRenamed('SubscriptionId', 'SubId')\r\n",
-							"    subscriptions_df = subscriptions_df.where(subscriptions_df.SubscriptionId != '')\r\n",
+							"    subscriptions_df = subscriptions_df.where(subscriptions_df.SubId != '')\r\n",
 							"    subscriptions_df = subscriptions_df.withColumnRenamed('OperationalWBS', 'SubscriptionWBS')\r\n",
 							"    subscriptions_df = subscriptions_df.withColumnRenamed('ApplicationName', 'SubscriptionServiceNow-App')\r\n",
 							"    return subscriptions_df\r\n",
@@ -40420,7 +40402,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "d033d490-97f7-474b-9d33-ab8a107bdba6"
+						"spark.autotune.trackingId": "2788c92f-0a11-402c-9e22-7442b1e94811"
 					}
 				},
 				"metadata": {
@@ -42289,6 +42271,31 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
+				},
+				"autoScale": {
+					"enabled": true,
+					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
+					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
+				},
+				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
+				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": true,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "northeurope"
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/sparkpool32')]",
 			"type": "Microsoft.Synapse/workspaces/bigDataPools",
 			"apiVersion": "2019-06-01-preview",
@@ -42311,31 +42318,6 @@
 					"filename": "requirements.txt",
 					"time": "2023-01-25T09:06:41.7702231Z"
 				},
-				"isComputeIsolationEnabled": false,
-				"sessionLevelPackagesEnabled": true,
-				"annotations": []
-			},
-			"dependsOn": [],
-			"location": "northeurope"
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
-			"type": "Microsoft.Synapse/workspaces/bigDataPools",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"autoPause": {
-					"enabled": true,
-					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
-				},
-				"autoScale": {
-					"enabled": true,
-					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
-					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
-				},
-				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
-				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
-				"nodeSizeFamily": "MemoryOptimized",
-				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
 				"isComputeIsolationEnabled": false,
 				"sessionLevelPackagesEnabled": true,
 				"annotations": []
