@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "1fa8756e-9c67-4717-b268-d916a773441c"
+				"spark.autotune.trackingId": "da361c23-0111-4aec-b315-aec4fc2e2f2a"
 			}
 		},
 		"metadata": {
@@ -94,7 +94,26 @@
 					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 67
+				"execution_count": 75
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(cost_df)"
+				],
+				"execution_count": 78
 			},
 			{
 				"cell_type": "code",
@@ -115,7 +134,7 @@
 					"cost_df = cost_df.withColumnRenamed('ai_ServiceType', 'ServiceType')\r\n",
 					"cost_df = cost_df.withColumnRenamed('ai_VCPUs', 'VCPUs')"
 				],
-				"execution_count": 68
+				"execution_count": 77
 			},
 			{
 				"cell_type": "code",
@@ -138,7 +157,7 @@
 					"    .agg(F.sum('Quantity').alias('Quantity')) \\\r\n",
 					"    .orderBy('Date', 'Quantity')"
 				],
-				"execution_count": 69
+				"execution_count": 79
 			},
 			{
 				"cell_type": "code",
@@ -154,9 +173,10 @@
 					}
 				},
 				"source": [
+					"hub_df = hub_df.where(F.col('VCPUs') != 0)\r\n",
 					"hub_df = hub_df.withColumn('pricesheetService', F.concat(F.lit('Windows Server - '), F.col('VCPUs'), F.lit(' vCPU VM License')))"
 				],
-				"execution_count": 70
+				"execution_count": 80
 			},
 			{
 				"cell_type": "code",
@@ -173,28 +193,9 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(hub_df)"
+					"display(hub_df.select('Date').distinct())"
 				],
-				"execution_count": 72
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(hub_df.where(F.col('VPCUs') == 0))"
-				],
-				"execution_count": 71
+				"execution_count": 82
 			},
 			{
 				"cell_type": "code",
