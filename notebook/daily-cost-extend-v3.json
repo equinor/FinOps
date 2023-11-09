@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "384d3f89-1c9e-4bdc-8f33-003e895f7a42"
+				"spark.autotune.trackingId": "ed61ee94-ebb1-4bd1-a17b-23068507e364"
 			}
 		},
 		"metadata": {
@@ -78,7 +78,7 @@
 					"container = 'usage'\n",
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 43
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -105,7 +105,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 44
+				"execution_count": 11
 			},
 			{
 				"cell_type": "markdown",
@@ -136,7 +136,7 @@
 				"source": [
 					"%run /cost-extend-utilities"
 				],
-				"execution_count": 45
+				"execution_count": 12
 			},
 			{
 				"cell_type": "code",
@@ -155,12 +155,12 @@
 					"def pre_process_subscriptions(subscriptions_df):\r\n",
 					"    subscriptions_df = subscriptions_df.select('SubscriptionId', 'OperationalWBS', 'ApplicationName')\r\n",
 					"    subscriptions_df = subscriptions_df.withColumnRenamed('SubscriptionId', 'SubId')\r\n",
-					"    subscriptions_df = subscriptions_df.where(subscriptions_df.SubscriptionId != '')\r\n",
+					"    subscriptions_df = subscriptions_df.where(subscriptions_df.SubId != '')\r\n",
 					"    subscriptions_df = subscriptions_df.withColumnRenamed('OperationalWBS', 'SubscriptionWBS')\r\n",
 					"    subscriptions_df = subscriptions_df.withColumnRenamed('ApplicationName', 'SubscriptionServiceNow-App')\r\n",
 					"    return subscriptions_df"
 				],
-				"execution_count": 46
+				"execution_count": 13
 			},
 			{
 				"cell_type": "code",
@@ -183,7 +183,7 @@
 					"    cost_df.write.format('parquet').mode('overwrite').option('path', destinationFilename).save()\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": 47
+				"execution_count": 14
 			},
 			{
 				"cell_type": "markdown",
@@ -261,26 +261,7 @@
 					"    \n",
 					"    print(' ')"
 				],
-				"execution_count": 48
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(cost_df.select('ResourceLocation').distinct())"
-				],
-				"execution_count": 49
+				"execution_count": 15
 			}
 		]
 	}
