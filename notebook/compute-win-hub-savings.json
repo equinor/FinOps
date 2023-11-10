@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "ef56999d-89f9-4708-abab-4a2c096e3c22"
+				"spark.autotune.trackingId": "8147caa6-f00a-4f8b-8764-0edb3a2bcf5d"
 			}
 		},
 		"metadata": {
@@ -57,7 +57,7 @@
 					"import pyspark.sql.functions as F\r\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 22
+				"execution_count": 35
 			},
 			{
 				"cell_type": "code",
@@ -75,7 +75,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 23
+				"execution_count": 36
 			},
 			{
 				"cell_type": "code",
@@ -94,7 +94,7 @@
 					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 24
+				"execution_count": 37
 			},
 			{
 				"cell_type": "code",
@@ -113,7 +113,7 @@
 					"pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/pricesheet-LATEST.parquet'\r\n",
 					"pricesheet_df = spark.read.format('parquet').load(pricesheet_path)"
 				],
-				"execution_count": null
+				"execution_count": 38
 			},
 			{
 				"cell_type": "code",
@@ -134,7 +134,7 @@
 					"cost_df = cost_df.withColumnRenamed('ai_ServiceType', 'ServiceType')\r\n",
 					"cost_df = cost_df.withColumnRenamed('ai_VCPUs', 'VCPUs')"
 				],
-				"execution_count": 25
+				"execution_count": 39
 			},
 			{
 				"cell_type": "code",
@@ -157,7 +157,7 @@
 					"    .agg(F.sum('Quantity').alias('Quantity')) \\\r\n",
 					"    .orderBy('Date', 'Quantity')"
 				],
-				"execution_count": 26
+				"execution_count": 40
 			},
 			{
 				"cell_type": "code",
@@ -176,7 +176,7 @@
 					"hub_df = hub_df.where(F.col('VCPUs') != 0)\r\n",
 					"hub_df = hub_df.withColumn('pricesheetService', F.concat(F.lit('Windows Server - '), F.col('VCPUs'), F.lit(' vCPU VM License')))"
 				],
-				"execution_count": 27
+				"execution_count": 41
 			},
 			{
 				"cell_type": "code",
@@ -197,7 +197,7 @@
 					"pricesheet_df = pricesheet_df.withColumn('pricePerUnit', F.col('unitPrice') / F.col('unitQuantity'))\r\n",
 					"pricesheet_df = pricesheet_df.select('meterName', 'unitOfMeasure', 'unitQuantity', 'unitPrice', 'pricePerUnit')"
 				],
-				"execution_count": 28
+				"execution_count": 42
 			},
 			{
 				"cell_type": "code",
@@ -216,7 +216,7 @@
 					"hub_df = hub_df.join(pricesheet_df, pricesheet_df.meterName == hub_df.pricesheetService)\r\n",
 					"hub_df = hub_df.drop('priceSheetService')"
 				],
-				"execution_count": 30
+				"execution_count": 43
 			},
 			{
 				"cell_type": "code",
@@ -235,7 +235,7 @@
 				"source": [
 					"hub_df = hub_df.withColumn('totalCost', F.col('Quantity') * F.col('pricePerUnit'))"
 				],
-				"execution_count": 31
+				"execution_count": 44
 			},
 			{
 				"cell_type": "code",
@@ -253,43 +253,9 @@
 				},
 				"source": [
 					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/savings/hub/windows-hub-savings.parquet\"\r\n",
-					"subscription_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
+					"hub_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 				],
-				"execution_count": 34
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"```\r\n",
-					"SELECT\r\n",
-					"    --TOP 1000 *\r\n",
-					"    ai_ServiceType as ServiceType, \r\n",
-					"    ai_VCPUs as VCPUs, \r\n",
-					"    format([Date], 'yyyy-MM') as [Date], \r\n",
-					"    sum(Quantity) as Quantity,\r\n",
-					"    PartNumber,\r\n",
-					"    ProductName,\r\n",
-					"    MeterCategory,\r\n",
-					"    ServiceInfo2\r\n",
-					"FROM\r\n",
-					"    OPENROWSET(\r\n",
-					"        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/202*/Extended_v2_ACMMonthlyActualCost_*.parquet/**',\r\n",
-					"        FORMAT = 'PARQUET'\r\n",
-					"    ) AS [result]\r\n",
-					"WHERE MeterCategory = 'Virtual Machines' and ServiceInfo2 = 'Windows Server BYOL' --and ReservationName != '' and Product LIKE '%Spot%'\r\n",
-					"    and [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\r\n",
-					"GROUP BY ai_ServiceType, format([Date], 'yyyy-MM'), PartNumber, ProductName, MeterCategory, ai_VCPUs, ServiceInfo2\r\n",
-					"ORDER BY format([Date], 'yyyy-MM'), sum(Quantity) DESC\r\n",
-					"```\r\n",
-					""
-				]
+				"execution_count": 46
 			}
 		]
 	}
