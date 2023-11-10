@@ -645,18 +645,6 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
 		},
-		"Validate_Historic_Total_Cost_notebookSparkPoolNameRef": {
-			"type": "string",
-			"defaultValue": "sparkpool32"
-		},
-		"Validate_Historic_Total_Cost_notebookSparkPoolIdRef": {
-			"type": "string",
-			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32"
-		},
-		"Validate_Historic_Total_Cost_notebookSparkPoolEndpointRef": {
-			"type": "string",
-			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
-		},
 		"advisor-recommendations-processing_notebookSparkPoolNameRef": {
 			"type": "string",
 			"defaultValue": "sprkpool33large"
@@ -678,6 +666,18 @@
 			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
 		},
 		"check-subscription-diff_notebookSparkPoolEndpointRef": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"compute-win-hub-savings_notebookSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"compute-win-hub-savings_notebookSparkPoolIdRef": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"compute-win-hub-savings_notebookSparkPoolEndpointRef": {
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
@@ -777,29 +777,17 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
 		},
-		"sprkpool33large_delayInMinutes": {
-			"type": "int",
-			"defaultValue": 10
-		},
-		"sprkpool33large_maxNodeCount": {
-			"type": "int",
-			"defaultValue": 12
-		},
-		"sprkpool33large_minNodeCount": {
-			"type": "int",
-			"defaultValue": 3
-		},
-		"sprkpool33large_nodeCount": {
-			"type": "int",
-			"defaultValue": 3
-		},
-		"sprkpool33large_nodeSize": {
+		"validate-historic-total-cost_notebookSparkPoolNameRef": {
 			"type": "string",
-			"defaultValue": "Large"
+			"defaultValue": "sparkpool32"
 		},
-		"sprkpool33large_sparkVersion": {
+		"validate-historic-total-cost_notebookSparkPoolIdRef": {
 			"type": "string",
-			"defaultValue": "3.3"
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32"
+		},
+		"validate-historic-total-cost_notebookSparkPoolEndpointRef": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
 		},
 		"sparkpool32_delayInMinutes": {
 			"type": "int",
@@ -824,6 +812,30 @@
 		"sparkpool32_sparkVersion": {
 			"type": "string",
 			"defaultValue": "3.2"
+		},
+		"sprkpool33large_delayInMinutes": {
+			"type": "int",
+			"defaultValue": 10
+		},
+		"sprkpool33large_maxNodeCount": {
+			"type": "int",
+			"defaultValue": 12
+		},
+		"sprkpool33large_minNodeCount": {
+			"type": "int",
+			"defaultValue": 3
+		},
+		"sprkpool33large_nodeCount": {
+			"type": "int",
+			"defaultValue": 3
+		},
+		"sprkpool33large_nodeSize": {
+			"type": "string",
+			"defaultValue": "Large"
+		},
+		"sprkpool33large_sparkVersion": {
+			"type": "string",
+			"defaultValue": "3.3"
 		}
 	},
 	"variables": {
@@ -25840,6 +25852,29 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/CreateWindowsHUBSavingsView')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "PowerBIViews"
+				},
+				"content": {
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW WindowsHUBSavings\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/savings/hub/windows-hub-savings.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "master",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/DB_VCPU_Hours_2021_Daily')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
@@ -38396,256 +38431,6 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/Validate_Historic_Total_Cost')]",
-			"type": "Microsoft.Synapse/workspaces/notebooks",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"description": "This notebook aggregates the cost from the csv cost file and compares it to the aggregated cost of the extended parquet cost file.",
-				"folder": {
-					"name": "NotebookInProduction"
-				},
-				"nbformat": 4,
-				"nbformat_minor": 2,
-				"bigDataPool": {
-					"referenceName": "[parameters('Validate_Historic_Total_Cost_notebookSparkPoolNameRef')]",
-					"type": "BigDataPoolReference"
-				},
-				"sessionProperties": {
-					"driverMemory": "56g",
-					"driverCores": 8,
-					"executorMemory": "56g",
-					"executorCores": 8,
-					"numExecutors": 2,
-					"conf": {
-						"spark.dynamicAllocation.enabled": "false",
-						"spark.dynamicAllocation.minExecutors": "2",
-						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "e94f633a-a27c-46be-9b94-ef72eef1df64"
-					}
-				},
-				"metadata": {
-					"saveOutput": true,
-					"enableDebugMode": false,
-					"kernelspec": {
-						"name": "synapse_pyspark",
-						"display_name": "Synapse PySpark"
-					},
-					"language_info": {
-						"name": "python"
-					},
-					"a365ComputeOptions": {
-						"id": "[parameters('Validate_Historic_Total_Cost_notebookSparkPoolIdRef')]",
-						"name": "[parameters('Validate_Historic_Total_Cost_notebookSparkPoolNameRef')]",
-						"type": "Spark",
-						"endpoint": "[parameters('Validate_Historic_Total_Cost_notebookSparkPoolEndpointRef')]",
-						"auth": {
-							"type": "AAD",
-							"authResource": "https://dev.azuresynapse.net"
-						},
-						"sparkVersion": "3.2",
-						"nodeCount": 3,
-						"cores": 8,
-						"memory": 56
-					},
-					"sessionKeepAliveTimeout": 30
-				},
-				"cells": [
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"import pandas as pd \r\n",
-							"import pyspark.sql.functions as F\r\n",
-							"import pyspark.sql.types as T"
-						],
-						"outputs": [],
-						"execution_count": 19
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							},
-							"tags": [
-								"parameters"
-							]
-						},
-						"source": [
-							"# Input data\r\n",
-							"container = 'usage'\r\n",
-							"storageAccount = 's037costmgmt'"
-						],
-						"outputs": [],
-						"execution_count": 20
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"# Aggregate the entire cost history for both raw and processed data based on cost type ('AmortizedCost' or 'ActualCost')\r\n",
-							"\r\n",
-							"def aggregate_cost_data(cost_type):\r\n",
-							"    # Create schema for cost aggregation\r\n",
-							"    schema = T.StructType([\r\n",
-							"        T.StructField(\"Date\", T.TimestampType(), True),\r\n",
-							"        T.StructField(\"RawDataTotalCost\", T.DoubleType(), True),\r\n",
-							"        T.StructField(\"ProcessedDataTotalCost\", T.DoubleType(), True),\r\n",
-							"        T.StructField(\"TotalCostDiff\", T.IntegerType(), True),\r\n",
-							"        T.StructField(\"CostType\", T.StringType(), True)\r\n",
-							"    ])\r\n",
-							"\r\n",
-							"    # Create an empty DataFrame with the specified schema\r\n",
-							"    df = spark.createDataFrame([], schema=schema)\r\n",
-							"\r\n",
-							"    # Define the root path\r\n",
-							"    root_path = f\"abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthly{cost_type}\"\r\n",
-							"\r\n",
-							"    # Collect all the folders under this root path\r\n",
-							"    folders = mssparkutils.fs.ls(root_path)\r\n",
-							"\r\n",
-							"    for folder in folders:\r\n",
-							"        # List all file paths in current folder\r\n",
-							"        files = mssparkutils.fs.ls(root_path +'/'+ str(folder.name))\r\n",
-							"        file_paths = [file.path for file in files]\r\n",
-							"\r\n",
-							"        # Find the raw data file (csv) and processed data (extended data file - parquet)\r\n",
-							"        csv_file = next(filter(lambda file_path: \"csv\" in file_path, file_paths), None)\r\n",
-							"        extended_file = next(filter(lambda file_path: \"Extended_v2\" in file_path, file_paths), None)\r\n",
-							"        \r\n",
-							"        try:\r\n",
-							"            # Extract date for current folder\r\n",
-							"            date = pd.to_datetime(folder.path.split('/')[-1].split('-')[0],format=\"%Y/%m/%d\")\r\n",
-							"\r\n",
-							"            # Read raw data and transformed fata\r\n",
-							"            csv_df = spark.read.format('csv').load(csv_file, header=True)\r\n",
-							"            extended_df = spark.read.format('parquet').load(extended_file)\r\n",
-							"\r\n",
-							"            # Aggregate on cost for raw data file\r\n",
-							"            agg_csv_df = csv_df.select(F.sum(F.col('CostInBillingCurrency')).alias('RawDataTotalCost'))\r\n",
-							"            agg_csv_df = agg_csv_df.withColumn(\"Date\", F.lit(date).cast(T.TimestampType()))\r\n",
-							"\r\n",
-							"            # Aggregate on cost for processed data file\r\n",
-							"            agg_extended_df = extended_df.select(F.sum(F.col('CostInBillingCurrency')).alias('ProcessedDataTotalCost'))\r\n",
-							"            agg_extended_df = agg_extended_df.withColumn(\"Date\", F.lit(date).cast(T.TimestampType()))\r\n",
-							"\r\n",
-							"            # Combine aggregated cost data into one dataframe\r\n",
-							"            combined_df = agg_csv_df.join(agg_extended_df, on=\"Date\", how=\"left\")\r\n",
-							"\r\n",
-							"            # Compute difference between the raw and processed total cost\r\n",
-							"            combined_df = combined_df.withColumn(\"TotalCostDiff\", F.expr(\"FLOOR(ABS(ProcessedDataTotalCost - RawDataTotalCost))\"))\r\n",
-							"\r\n",
-							"            combined_df = combined_df.withColumn(\"CostType\", F.lit(cost_type))\r\n",
-							"\r\n",
-							"            # Add aggregated cost to historic aggregations\r\n",
-							"            df = df.union(combined_df)\r\n",
-							"\r\n",
-							"        except Exception as e:\r\n",
-							"            print(f\"Error processing the {folder.name} folder contents: {e}\")\r\n",
-							"\r\n",
-							"    return df"
-						],
-						"outputs": [],
-						"execution_count": 23
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							},
-							"collapsed": false
-						},
-						"source": [
-							"# Aggregate actual cost data\r\n",
-							"actual_cost_df = aggregate_cost_data(\"ActualCost\")"
-						],
-						"outputs": [],
-						"execution_count": null
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							},
-							"collapsed": false
-						},
-						"source": [
-							"# Aggregate amortized cost data\r\n",
-							"amortized_cost_df = aggregate_cost_data(\"AmortizedCost\")"
-						],
-						"outputs": [],
-						"execution_count": null
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"# Combine aggregated amortized and actual cost into a single dataframe\r\n",
-							"total_cost_df = actual_cost_df.union(amortized_cost_df)\r\n",
-							"\r\n",
-							"# Display the total aggregated cost difference of the entire cost data history\r\n",
-							"# The computed value should always be 0 when historic data has been processed properly\r\n",
-							"# If the aggregated cost diff is greater than 0, the extend script is erroneous and produces inconsistent data\r\n",
-							"total_cost_df.select(F.sum(F.col(\"TotalCostDiff\")).alias(\"AggregatedCostDiff\")).show()"
-						],
-						"outputs": [],
-						"execution_count": 29
-					}
-				]
-			},
-			"dependsOn": []
-		},
-		{
 			"name": "[concat(parameters('workspaceName'), '/advisor-recommendations-processing')]",
 			"type": "Microsoft.Synapse/workspaces/notebooks",
 			"apiVersion": "2019-06-01-preview",
@@ -39000,6 +38785,281 @@
 						],
 						"outputs": [],
 						"execution_count": 108
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/compute-win-hub-savings')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "NotebookInProduction/HUB Savings"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "[parameters('compute-win-hub-savings_notebookSparkPoolNameRef')]",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "112g",
+					"driverCores": 16,
+					"executorMemory": "112g",
+					"executorCores": 16,
+					"numExecutors": 1,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "5",
+						"spark.autotune.trackingId": "9a2e7663-adc9-4660-a1a1-4c8864073537"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "[parameters('compute-win-hub-savings_notebookSparkPoolIdRef')]",
+						"name": "[parameters('compute-win-hub-savings_notebookSparkPoolNameRef')]",
+						"type": "Spark",
+						"endpoint": "[parameters('compute-win-hub-savings_notebookSparkPoolEndpointRef')]",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 16,
+						"memory": 112
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"source": [
+							"import pyspark.sql.functions as F\r\n",
+							"import pyspark.sql.types as T"
+						],
+						"outputs": [],
+						"execution_count": 35
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": 36
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
+							"cost_df = spark.read.format('parquet').load(cost_path)"
+						],
+						"outputs": [],
+						"execution_count": 37
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/pricesheet-LATEST.parquet'\r\n",
+							"pricesheet_df = spark.read.format('parquet').load(pricesheet_path)"
+						],
+						"outputs": [],
+						"execution_count": 38
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"cost_df = cost_df.where((F.col('MeterCategory') == 'Virtual Machines') & (F.col('ServiceInfo2') == 'Windows Server BYOL'))\r\n",
+							"cost_df = cost_df.withColumn('Date', F.date_format('Date', 'yyyy-MM'))\r\n",
+							"cost_df = cost_df.withColumnRenamed('ai_ServiceType', 'ServiceType')\r\n",
+							"cost_df = cost_df.withColumnRenamed('ai_VCPUs', 'VCPUs')"
+						],
+						"outputs": [],
+						"execution_count": 39
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"hub_df = cost_df \\\r\n",
+							"    .select('ServiceType', 'VCPUs', 'Date', 'Quantity', 'PartNumber', 'ProductName', 'MeterCategory', 'ServiceInfo2') \\\r\n",
+							"    .groupBy('ServiceType', 'Date', 'PartNumber', 'ProductName', 'MeterCategory', 'VCPUs', 'ServiceInfo2') \\\r\n",
+							"    .agg(F.sum('Quantity').alias('Quantity')) \\\r\n",
+							"    .orderBy('Date', 'Quantity')"
+						],
+						"outputs": [],
+						"execution_count": 40
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"hub_df = hub_df.where(F.col('VCPUs') != 0)\r\n",
+							"hub_df = hub_df.withColumn('pricesheetService', F.concat(F.lit('Windows Server - '), F.col('VCPUs'), F.lit(' vCPU VM License')))"
+						],
+						"outputs": [],
+						"execution_count": 41
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"pricesheet_df = pricesheet_df.withColumn('unitQuantity', F.split('unitOfMeasure', ' ')[0])\r\n",
+							"pricesheet_df = pricesheet_df.withColumn('pricePerUnit', F.col('unitPrice') / F.col('unitQuantity'))\r\n",
+							"pricesheet_df = pricesheet_df.select('meterName', 'unitOfMeasure', 'unitQuantity', 'unitPrice', 'pricePerUnit')"
+						],
+						"outputs": [],
+						"execution_count": 42
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"hub_df = hub_df.join(pricesheet_df, pricesheet_df.meterName == hub_df.pricesheetService)\r\n",
+							"hub_df = hub_df.drop('priceSheetService')"
+						],
+						"outputs": [],
+						"execution_count": 43
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"hub_df = hub_df.withColumn('totalCost', F.col('Quantity') * F.col('pricePerUnit'))"
+						],
+						"outputs": [],
+						"execution_count": 44
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/savings/hub/windows-hub-savings.parquet\"\r\n",
+							"hub_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
+						],
+						"outputs": [],
+						"execution_count": 46
 					}
 				]
 			},
@@ -39534,7 +39594,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "8953debf-bea8-454d-af06-8cc5de050932"
+						"spark.autotune.trackingId": "e340817e-48e6-4add-9350-30bf148afae1"
 					}
 				},
 				"metadata": {
@@ -39592,7 +39652,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 10
+						"execution_count": 1
 					},
 					{
 						"cell_type": "code",
@@ -39620,7 +39680,7 @@
 							"import pyspark.sql.types as T"
 						],
 						"outputs": [],
-						"execution_count": 11
+						"execution_count": 2
 					},
 					{
 						"cell_type": "markdown",
@@ -39652,7 +39712,7 @@
 							"%run /cost-extend-utilities"
 						],
 						"outputs": [],
-						"execution_count": 12
+						"execution_count": 3
 					},
 					{
 						"cell_type": "code",
@@ -39677,7 +39737,7 @@
 							"    return subscriptions_df"
 						],
 						"outputs": [],
-						"execution_count": 13
+						"execution_count": 4
 					},
 					{
 						"cell_type": "code",
@@ -39701,7 +39761,7 @@
 							"    print('File write complete!')"
 						],
 						"outputs": [],
-						"execution_count": 14
+						"execution_count": 5
 					},
 					{
 						"cell_type": "markdown",
@@ -39775,12 +39835,12 @@
 							"    cost_df = transform_cost_data(cost_df)\n",
 							"    cost_df = cost_df.withColumn(\"ResourceLocation\", F.lower(F.trim(F.regexp_replace(F.col('ResourceLocation'), \"\\s+\", \"\"))))\n",
 							"    cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\n",
-							"    # write_output_file(cost_df, cost_target_path)\n",
+							"    write_output_file(cost_df, cost_target_path)\n",
 							"    \n",
 							"    print(' ')"
 						],
 						"outputs": [],
-						"execution_count": 15
+						"execution_count": 6
 					}
 				]
 			},
@@ -39811,7 +39871,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "6e094c56-3828-4526-a1a6-66648b5c9130"
+						"spark.autotune.trackingId": "3822d706-bb3f-4219-8549-e9c594f4473d"
 					}
 				},
 				"metadata": {
@@ -39836,8 +39896,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -40402,7 +40461,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "2788c92f-0a11-402c-9e22-7442b1e94811"
+						"spark.autotune.trackingId": "029b9926-db7b-4e1c-a910-eba6d92240d1"
 					}
 				},
 				"metadata": {
@@ -40427,8 +40486,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -40448,7 +40506,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"storageAccount = 's037costmgmt'"
 						],
@@ -40534,7 +40591,7 @@
 							"subscription_df = spark.read.csv(source_path, header=True, inferSchema=True)"
 						],
 						"outputs": [],
-						"execution_count": 4
+						"execution_count": 19
 					},
 					{
 						"cell_type": "markdown",
@@ -40607,7 +40664,7 @@
 							"subscription_df = subscription_df.withColumn('SubscriptionId', F.regexp_extract(subscription_df['SubscriptionURL'], r'subscriptions/([a-f\\d-]+)', 1))"
 						],
 						"outputs": [],
-						"execution_count": 7
+						"execution_count": 20
 					},
 					{
 						"cell_type": "code",
@@ -40626,7 +40683,7 @@
 							"subscription_df = subscription_df.where(F.col('SubscriptionId') != '')"
 						],
 						"outputs": [],
-						"execution_count": 8
+						"execution_count": 10
 					},
 					{
 						"cell_type": "code",
@@ -40645,7 +40702,7 @@
 							"subscription_df = subscription_df.dropDuplicates([\"SubscriptionId\"])"
 						],
 						"outputs": [],
-						"execution_count": 9
+						"execution_count": 14
 					},
 					{
 						"cell_type": "markdown",
@@ -42271,29 +42328,254 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
-			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"name": "[concat(parameters('workspaceName'), '/validate-historic-total-cost')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
-				"autoPause": {
-					"enabled": true,
-					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
+				"description": "This notebook aggregates the cost from the csv cost file and compares it to the aggregated cost of the extended parquet cost file.",
+				"folder": {
+					"name": "NotebookInProduction/Utilities"
 				},
-				"autoScale": {
-					"enabled": true,
-					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
-					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "[parameters('validate-historic-total-cost_notebookSparkPoolNameRef')]",
+					"type": "BigDataPoolReference"
 				},
-				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
-				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
-				"nodeSizeFamily": "MemoryOptimized",
-				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
-				"isComputeIsolationEnabled": false,
-				"sessionLevelPackagesEnabled": true,
-				"annotations": []
+				"sessionProperties": {
+					"driverMemory": "56g",
+					"driverCores": 8,
+					"executorMemory": "56g",
+					"executorCores": 8,
+					"numExecutors": 2,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "decd9a07-d080-4f82-a30a-f7e0c609fd14"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "[parameters('validate-historic-total-cost_notebookSparkPoolIdRef')]",
+						"name": "[parameters('validate-historic-total-cost_notebookSparkPoolNameRef')]",
+						"type": "Spark",
+						"endpoint": "[parameters('validate-historic-total-cost_notebookSparkPoolEndpointRef')]",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.2",
+						"nodeCount": 3,
+						"cores": 8,
+						"memory": 56
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"import pandas as pd \r\n",
+							"import pyspark.sql.functions as F\r\n",
+							"import pyspark.sql.types as T"
+						],
+						"outputs": [],
+						"execution_count": 19
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"# Input data\r\n",
+							"container = 'usage'\r\n",
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": 20
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Aggregate the entire cost history for both raw and processed data based on cost type ('AmortizedCost' or 'ActualCost')\r\n",
+							"\r\n",
+							"def aggregate_cost_data(cost_type):\r\n",
+							"    # Create schema for cost aggregation\r\n",
+							"    schema = T.StructType([\r\n",
+							"        T.StructField(\"Date\", T.TimestampType(), True),\r\n",
+							"        T.StructField(\"RawDataTotalCost\", T.DoubleType(), True),\r\n",
+							"        T.StructField(\"ProcessedDataTotalCost\", T.DoubleType(), True),\r\n",
+							"        T.StructField(\"TotalCostDiff\", T.IntegerType(), True),\r\n",
+							"        T.StructField(\"CostType\", T.StringType(), True)\r\n",
+							"    ])\r\n",
+							"\r\n",
+							"    # Create an empty DataFrame with the specified schema\r\n",
+							"    df = spark.createDataFrame([], schema=schema)\r\n",
+							"\r\n",
+							"    # Define the root path\r\n",
+							"    root_path = f\"abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthly{cost_type}\"\r\n",
+							"\r\n",
+							"    # Collect all the folders under this root path\r\n",
+							"    folders = mssparkutils.fs.ls(root_path)\r\n",
+							"\r\n",
+							"    for folder in folders:\r\n",
+							"        # List all file paths in current folder\r\n",
+							"        files = mssparkutils.fs.ls(root_path +'/'+ str(folder.name))\r\n",
+							"        file_paths = [file.path for file in files]\r\n",
+							"\r\n",
+							"        # Find the raw data file (csv) and processed data (extended data file - parquet)\r\n",
+							"        csv_file = next(filter(lambda file_path: \"csv\" in file_path, file_paths), None)\r\n",
+							"        extended_file = next(filter(lambda file_path: \"Extended_v2\" in file_path, file_paths), None)\r\n",
+							"        \r\n",
+							"        try:\r\n",
+							"            # Extract date for current folder\r\n",
+							"            date = pd.to_datetime(folder.path.split('/')[-1].split('-')[0],format=\"%Y/%m/%d\")\r\n",
+							"\r\n",
+							"            # Read raw data and transformed fata\r\n",
+							"            csv_df = spark.read.format('csv').load(csv_file, header=True)\r\n",
+							"            extended_df = spark.read.format('parquet').load(extended_file)\r\n",
+							"\r\n",
+							"            # Aggregate on cost for raw data file\r\n",
+							"            agg_csv_df = csv_df.select(F.sum(F.col('CostInBillingCurrency')).alias('RawDataTotalCost'))\r\n",
+							"            agg_csv_df = agg_csv_df.withColumn(\"Date\", F.lit(date).cast(T.TimestampType()))\r\n",
+							"\r\n",
+							"            # Aggregate on cost for processed data file\r\n",
+							"            agg_extended_df = extended_df.select(F.sum(F.col('CostInBillingCurrency')).alias('ProcessedDataTotalCost'))\r\n",
+							"            agg_extended_df = agg_extended_df.withColumn(\"Date\", F.lit(date).cast(T.TimestampType()))\r\n",
+							"\r\n",
+							"            # Combine aggregated cost data into one dataframe\r\n",
+							"            combined_df = agg_csv_df.join(agg_extended_df, on=\"Date\", how=\"left\")\r\n",
+							"\r\n",
+							"            # Compute difference between the raw and processed total cost\r\n",
+							"            combined_df = combined_df.withColumn(\"TotalCostDiff\", F.expr(\"FLOOR(ABS(ProcessedDataTotalCost - RawDataTotalCost))\"))\r\n",
+							"\r\n",
+							"            combined_df = combined_df.withColumn(\"CostType\", F.lit(cost_type))\r\n",
+							"\r\n",
+							"            # Add aggregated cost to historic aggregations\r\n",
+							"            df = df.union(combined_df)\r\n",
+							"\r\n",
+							"        except Exception as e:\r\n",
+							"            print(f\"Error processing the {folder.name} folder contents: {e}\")\r\n",
+							"\r\n",
+							"    return df"
+						],
+						"outputs": [],
+						"execution_count": 23
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"# Aggregate actual cost data\r\n",
+							"actual_cost_df = aggregate_cost_data(\"ActualCost\")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"# Aggregate amortized cost data\r\n",
+							"amortized_cost_df = aggregate_cost_data(\"AmortizedCost\")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Combine aggregated amortized and actual cost into a single dataframe\r\n",
+							"total_cost_df = actual_cost_df.union(amortized_cost_df)\r\n",
+							"\r\n",
+							"# Display the total aggregated cost difference of the entire cost data history\r\n",
+							"# The computed value should always be 0 when historic data has been processed properly\r\n",
+							"# If the aggregated cost diff is greater than 0, the extend script is erroneous and produces inconsistent data\r\n",
+							"total_cost_df.select(F.sum(F.col(\"TotalCostDiff\")).alias(\"AggregatedCostDiff\")).show()"
+						],
+						"outputs": [],
+						"execution_count": 29
+					}
+				]
 			},
-			"dependsOn": [],
-			"location": "northeurope"
+			"dependsOn": []
 		},
 		{
 			"name": "[concat(parameters('workspaceName'), '/sparkpool32')]",
@@ -42318,6 +42600,31 @@
 					"filename": "requirements.txt",
 					"time": "2023-01-25T09:06:41.7702231Z"
 				},
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": true,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
+				},
+				"autoScale": {
+					"enabled": true,
+					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
+					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
+				},
+				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
+				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
 				"isComputeIsolationEnabled": false,
 				"sessionLevelPackagesEnabled": true,
 				"annotations": []
