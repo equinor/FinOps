@@ -1,8 +1,8 @@
 {
-	"name": "servicenow-subscription-processing",
+	"name": "compute-win-hub-savings",
 	"properties": {
 		"folder": {
-			"name": "NotebookInProduction/ServiceNow"
+			"name": "NotebookInProduction/HUB Savings"
 		},
 		"nbformat": 4,
 		"nbformat_minor": 2,
@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "029b9926-db7b-4e1c-a910-eba6d92240d1"
+				"spark.autotune.trackingId": "9a2e7663-adc9-4660-a1a1-4c8864073537"
 			}
 		},
 		"metadata": {
@@ -52,24 +52,30 @@
 		},
 		"cells": [
 			{
-				"cell_type": "markdown",
+				"cell_type": "code",
+				"source": [
+					"import pyspark.sql.functions as F\r\n",
+					"import pyspark.sql.types as T"
+				],
+				"execution_count": 35
+			},
+			{
+				"cell_type": "code",
 				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
 					"nteract": {
 						"transient": {
 							"deleting": false
 						}
 					}
 				},
-				"source": [
-					"## Script initialization"
-				]
-			},
-			{
-				"cell_type": "code",
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 1
+				"execution_count": 36
 			},
 			{
 				"cell_type": "code",
@@ -85,11 +91,10 @@
 					}
 				},
 				"source": [
-					"import pyspark.sql.functions as F\r\n",
-					"import calendar\r\n",
-					"import datetime"
+					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
+					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 2
+				"execution_count": 37
 			},
 			{
 				"cell_type": "code",
@@ -105,30 +110,10 @@
 					}
 				},
 				"source": [
-					"def get_today_formatted():\r\n",
-					"    today = datetime.date.today()\r\n",
-					"    formattedDate = f\"{today.year}-{str(today.month).zfill(2)}-{str(today.day).zfill(2)}\"\r\n",
-					"    return formattedDate\r\n",
-					"\r\n",
-					"def is_last_day_of_month():\r\n",
-					"    today = datetime.date.today()\r\n",
-					"    last_day_of_month = calendar.monthrange(today.year, today.month)[1]\r\n",
-					"    return today.day == last_day_of_month"
+					"pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/pricesheet-LATEST.parquet'\r\n",
+					"pricesheet_df = spark.read.format('parquet').load(pricesheet_path)"
 				],
-				"execution_count": 3
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"## Load data from source"
-				]
+				"execution_count": 38
 			},
 			{
 				"cell_type": "code",
@@ -144,23 +129,35 @@
 					}
 				},
 				"source": [
-					"source_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/latest.csv\"\r\n",
-					"subscription_df = spark.read.csv(source_path, header=True, inferSchema=True)"
+					"cost_df = cost_df.where((F.col('MeterCategory') == 'Virtual Machines') & (F.col('ServiceInfo2') == 'Windows Server BYOL'))\r\n",
+					"cost_df = cost_df.withColumn('Date', F.date_format('Date', 'yyyy-MM'))\r\n",
+					"cost_df = cost_df.withColumnRenamed('ai_ServiceType', 'ServiceType')\r\n",
+					"cost_df = cost_df.withColumnRenamed('ai_VCPUs', 'VCPUs')"
 				],
-				"execution_count": 19
+				"execution_count": 39
 			},
 			{
-				"cell_type": "markdown",
+				"cell_type": "code",
 				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
 					"nteract": {
 						"transient": {
 							"deleting": false
 						}
-					}
+					},
+					"collapsed": false
 				},
 				"source": [
-					"## Transform data"
-				]
+					"hub_df = cost_df \\\r\n",
+					"    .select('ServiceType', 'VCPUs', 'Date', 'Quantity', 'PartNumber', 'ProductName', 'MeterCategory', 'ServiceInfo2') \\\r\n",
+					"    .groupBy('ServiceType', 'Date', 'PartNumber', 'ProductName', 'MeterCategory', 'VCPUs', 'ServiceInfo2') \\\r\n",
+					"    .agg(F.sum('Quantity').alias('Quantity')) \\\r\n",
+					"    .orderBy('Date', 'Quantity')"
+				],
+				"execution_count": 40
 			},
 			{
 				"cell_type": "code",
@@ -176,9 +173,31 @@
 					}
 				},
 				"source": [
-					"subscription_df = subscription_df.where(subscription_df.OperationalStatus != 'Ignored')"
+					"hub_df = hub_df.where(F.col('VCPUs') != 0)\r\n",
+					"hub_df = hub_df.withColumn('pricesheetService', F.concat(F.lit('Windows Server - '), F.col('VCPUs'), F.lit(' vCPU VM License')))"
 				],
-				"execution_count": 5
+				"execution_count": 41
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"pricesheet_df = pricesheet_df.withColumn('unitQuantity', F.split('unitOfMeasure', ' ')[0])\r\n",
+					"pricesheet_df = pricesheet_df.withColumn('pricePerUnit', F.col('unitPrice') / F.col('unitQuantity'))\r\n",
+					"pricesheet_df = pricesheet_df.select('meterName', 'unitOfMeasure', 'unitQuantity', 'unitPrice', 'pricePerUnit')"
+				],
+				"execution_count": 42
 			},
 			{
 				"cell_type": "code",
@@ -194,11 +213,10 @@
 					}
 				},
 				"source": [
-					"subscription_df = subscription_df.withColumn(\"ProductOwnerUserName\", F.split(subscription_df[\"ProductOwnerEmail\"], \"@\").getItem(0))\r\n",
-					"subscription_df = subscription_df.withColumn(\"TechnicalOwnerUserName\", F.split(subscription_df[\"TechnicalOwnerEmail\"], \"@\").getItem(0))\r\n",
-					"subscription_df.drop(\"ProductOwnerEmail\", \"TechnicalOwnerEmail\")"
+					"hub_df = hub_df.join(pricesheet_df, pricesheet_df.meterName == hub_df.pricesheetService)\r\n",
+					"hub_df = hub_df.drop('priceSheetService')"
 				],
-				"execution_count": 6
+				"execution_count": 43
 			},
 			{
 				"cell_type": "code",
@@ -211,13 +229,13 @@
 						"transient": {
 							"deleting": false
 						}
-					}
+					},
+					"collapsed": false
 				},
 				"source": [
-					"# Extract subscription id form Azure subscription URL\r\n",
-					"subscription_df = subscription_df.withColumn('SubscriptionId', F.regexp_extract(subscription_df['SubscriptionURL'], r'subscriptions/([a-f\\d-]+)', 1))"
+					"hub_df = hub_df.withColumn('totalCost', F.col('Quantity') * F.col('pricePerUnit'))"
 				],
-				"execution_count": 20
+				"execution_count": 44
 			},
 			{
 				"cell_type": "code",
@@ -230,85 +248,14 @@
 						"transient": {
 							"deleting": false
 						}
-					}
-				},
-				"source": [
-					"subscription_df = subscription_df.where(F.col('SubscriptionId') != '')"
-				],
-				"execution_count": 10
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
 					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
+					"collapsed": false
 				},
 				"source": [
-					"subscription_df = subscription_df.dropDuplicates([\"SubscriptionId\"])"
+					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/savings/hub/windows-hub-savings.parquet\"\r\n",
+					"hub_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 				],
-				"execution_count": 14
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"## Store data in optimized container"
-				]
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/latest-optimized.parquet\"\r\n",
-					"subscription_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
-				],
-				"execution_count": 10
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# Store snapshot of subscriptions if last day of month\r\n",
-					"if (is_last_day_of_month()):\r\n",
-					"    formattedDate = get_today_formatted()\r\n",
-					"    target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/{formattedDate}-optimized.parquet\"\r\n",
-					"    subscription_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)\r\n",
-					""
-				],
-				"execution_count": 11
+				"execution_count": 46
 			}
 		]
 	}
