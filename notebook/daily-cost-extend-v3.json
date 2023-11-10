@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "ed61ee94-ebb1-4bd1-a17b-23068507e364"
+				"spark.autotune.trackingId": "0aed5fdf-c5cd-46b3-b08d-215da25a9414"
 			}
 		},
 		"metadata": {
@@ -257,7 +257,7 @@
 					"    cost_df = transform_cost_data(cost_df)\n",
 					"    cost_df = cost_df.withColumn(\"ResourceLocation\", F.lower(F.trim(F.regexp_replace(F.col('ResourceLocation'), \"\\s+\", \"\"))))\n",
 					"    cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\n",
-					"    # write_output_file(cost_df, cost_target_path)\n",
+					"    write_output_file(cost_df, cost_target_path)\n",
 					"    \n",
 					"    print(' ')"
 				],
