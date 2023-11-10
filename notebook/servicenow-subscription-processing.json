@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "ff13073a-140a-44dd-ba9b-a95eb8da8910"
+				"spark.autotune.trackingId": "029b9926-db7b-4e1c-a910-eba6d92240d1"
 			}
 		},
 		"metadata": {
@@ -147,7 +147,7 @@
 					"source_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/latest.csv\"\r\n",
 					"subscription_df = spark.read.csv(source_path, header=True, inferSchema=True)"
 				],
-				"execution_count": 4
+				"execution_count": 19
 			},
 			{
 				"cell_type": "markdown",
@@ -217,7 +217,7 @@
 					"# Extract subscription id form Azure subscription URL\r\n",
 					"subscription_df = subscription_df.withColumn('SubscriptionId', F.regexp_extract(subscription_df['SubscriptionURL'], r'subscriptions/([a-f\\d-]+)', 1))"
 				],
-				"execution_count": 7
+				"execution_count": 20
 			},
 			{
 				"cell_type": "code",
@@ -235,7 +235,7 @@
 				"source": [
 					"subscription_df = subscription_df.where(F.col('SubscriptionId') != '')"
 				],
-				"execution_count": 8
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -253,7 +253,7 @@
 				"source": [
 					"subscription_df = subscription_df.dropDuplicates([\"SubscriptionId\"])"
 				],
-				"execution_count": 9
+				"execution_count": 14
 			},
 			{
 				"cell_type": "markdown",
