@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "da361c23-0111-4aec-b315-aec4fc2e2f2a"
+				"spark.autotune.trackingId": "ef56999d-89f9-4708-abab-4a2c096e3c22"
 			}
 		},
 		"metadata": {
@@ -57,7 +57,7 @@
 					"import pyspark.sql.functions as F\r\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 65
+				"execution_count": 22
 			},
 			{
 				"cell_type": "code",
@@ -75,7 +75,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 66
+				"execution_count": 23
 			},
 			{
 				"cell_type": "code",
@@ -94,7 +94,7 @@
 					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 75
+				"execution_count": 24
 			},
 			{
 				"cell_type": "code",
@@ -107,13 +107,13 @@
 						"transient": {
 							"deleting": false
 						}
-					},
-					"collapsed": false
+					}
 				},
 				"source": [
-					"display(cost_df)"
+					"pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/pricesheet-LATEST.parquet'\r\n",
+					"pricesheet_df = spark.read.format('parquet').load(pricesheet_path)"
 				],
-				"execution_count": 78
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -134,7 +134,7 @@
 					"cost_df = cost_df.withColumnRenamed('ai_ServiceType', 'ServiceType')\r\n",
 					"cost_df = cost_df.withColumnRenamed('ai_VCPUs', 'VCPUs')"
 				],
-				"execution_count": 77
+				"execution_count": 25
 			},
 			{
 				"cell_type": "code",
@@ -157,7 +157,7 @@
 					"    .agg(F.sum('Quantity').alias('Quantity')) \\\r\n",
 					"    .orderBy('Date', 'Quantity')"
 				],
-				"execution_count": 79
+				"execution_count": 26
 			},
 			{
 				"cell_type": "code",
@@ -176,7 +176,7 @@
 					"hub_df = hub_df.where(F.col('VCPUs') != 0)\r\n",
 					"hub_df = hub_df.withColumn('pricesheetService', F.concat(F.lit('Windows Server - '), F.col('VCPUs'), F.lit(' vCPU VM License')))"
 				],
-				"execution_count": 80
+				"execution_count": 27
 			},
 			{
 				"cell_type": "code",
@@ -193,34 +193,69 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(hub_df.select('Date').distinct())"
-				],
-				"execution_count": 82
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/pricesheet-LATEST.parquet'\r\n",
-					"pricesheet_df = spark.read.format('parquet').load(pricesheet_path)\r\n",
-					"\r\n",
 					"pricesheet_df = pricesheet_df.withColumn('unitQuantity', F.split('unitOfMeasure', ' ')[0])\r\n",
 					"pricesheet_df = pricesheet_df.withColumn('pricePerUnit', F.col('unitPrice') / F.col('unitQuantity'))\r\n",
-					"\r\n",
-					"display(pricesheet_df.where(F.col('partNumber') == '997-03270'))"
+					"pricesheet_df = pricesheet_df.select('meterName', 'unitOfMeasure', 'unitQuantity', 'unitPrice', 'pricePerUnit')"
 				],
-				"execution_count": 63
+				"execution_count": 28
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"hub_df = hub_df.join(pricesheet_df, pricesheet_df.meterName == hub_df.pricesheetService)\r\n",
+					"hub_df = hub_df.drop('priceSheetService')"
+				],
+				"execution_count": 30
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"hub_df = hub_df.withColumn('totalCost', F.col('Quantity') * F.col('pricePerUnit'))"
+				],
+				"execution_count": 31
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/savings/hub/windows-hub-savings.parquet\"\r\n",
+					"subscription_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
+				],
+				"execution_count": 34
 			},
 			{
 				"cell_type": "markdown",
