@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "4abdc28c-4f19-40ee-9709-7b259c9979dc"
+				"spark.autotune.trackingId": "13697681-6861-41b4-8131-877e5061eb0e"
 			}
 		},
 		"metadata": {
@@ -70,7 +70,7 @@
 					"import pyspark.sql.functions as F\r\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 13
+				"execution_count": 26
 			},
 			{
 				"cell_type": "code",
@@ -91,7 +91,26 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 14
+				"execution_count": 27
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Constants \r\n",
+					"WINDOWS_ANNUAL_LICENSE_COST = 1782344.33"
+				],
+				"execution_count": 38
 			},
 			{
 				"cell_type": "markdown",
@@ -123,7 +142,7 @@
 					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 15
+				"execution_count": 28
 			},
 			{
 				"cell_type": "code",
@@ -145,7 +164,7 @@
 					"cost_df = cost_df.withColumnRenamed('ai_ServiceType', 'ServiceType')\r\n",
 					"cost_df = cost_df.withColumnRenamed('ai_VCPUs', 'VCPUs')"
 				],
-				"execution_count": 18
+				"execution_count": 29
 			},
 			{
 				"cell_type": "markdown",
@@ -177,7 +196,7 @@
 					"pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/pricesheet-LATEST.parquet'\r\n",
 					"pricesheet_df = spark.read.format('parquet').load(pricesheet_path)"
 				],
-				"execution_count": null
+				"execution_count": 30
 			},
 			{
 				"cell_type": "code",
@@ -198,7 +217,7 @@
 					"pricesheet_df = pricesheet_df.withColumn('pricePerUnit', F.col('unitPrice') / F.col('unitQuantity'))\r\n",
 					"pricesheet_df = pricesheet_df.select('meterName', 'unitOfMeasure', 'unitQuantity', 'unitPrice', 'pricePerUnit')"
 				],
-				"execution_count": 21
+				"execution_count": 31
 			},
 			{
 				"cell_type": "markdown",
@@ -236,7 +255,7 @@
 					"hub_df = hub_df.where(F.col('VCPUs') != 0)\r\n",
 					"hub_df = hub_df.withColumn('pricesheetService', F.concat(F.lit('Windows Server - '), F.col('VCPUs'), F.lit(' vCPU VM License')))"
 				],
-				"execution_count": null
+				"execution_count": 32
 			},
 			{
 				"cell_type": "code",
@@ -255,7 +274,7 @@
 					"hub_df = hub_df.join(pricesheet_df, pricesheet_df.meterName == hub_df.pricesheetService)\r\n",
 					"hub_df = hub_df.drop('priceSheetService')"
 				],
-				"execution_count": 22
+				"execution_count": 33
 			},
 			{
 				"cell_type": "code",
@@ -274,7 +293,27 @@
 				"source": [
 					"hub_df = hub_df.withColumn('totalCost', F.col('Quantity') * F.col('pricePerUnit'))"
 				],
-				"execution_count": 23
+				"execution_count": 34
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"license_df = hub_df.select('Date').distinct()\r\n",
+					"license_df = license_df.withColumn('LicenseCost', F.lit(WINDOWS_ANNUAL_LICENSE_COST / 12))"
+				],
+				"execution_count": 39
 			},
 			{
 				"cell_type": "markdown",
@@ -286,7 +325,7 @@
 					}
 				},
 				"source": [
-					"## Write result to ASDL"
+					"## Write HUB savings to ASDL"
 				]
 			},
 			{
@@ -304,10 +343,13 @@
 					"collapsed": false
 				},
 				"source": [
-					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/savings/hub/windows-hub-savings.parquet\"\r\n",
-					"hub_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
+					"hub_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/savings/hub/windows-hub-savings.parquet\"\r\n",
+					"hub_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(hub_path)\r\n",
+					"\r\n",
+					"license_cost_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/savings/hub/windows-server-license-cost.parquet\"\r\n",
+					"license_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(license_cost_path)"
 				],
-				"execution_count": 25
+				"execution_count": 40
 			}
 		]
 	}
