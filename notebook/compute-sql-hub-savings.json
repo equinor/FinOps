@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "1c788f1c-b7de-47ef-8306-f8539aebaaee"
+				"spark.autotune.trackingId": "e44cb0d9-bd85-4ce3-9621-986e1b2b93f5"
 			}
 		},
 		"metadata": {
@@ -28,7 +28,7 @@
 			"enableDebugMode": false,
 			"kernelspec": {
 				"name": "synapse_pyspark",
-				"display_name": "python"
+				"display_name": "Synapse PySpark"
 			},
 			"language_info": {
 				"name": "python"
@@ -70,7 +70,7 @@
 					"import pyspark.sql.functions as F\r\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": null
+				"execution_count": 7
 			},
 			{
 				"cell_type": "code",
@@ -91,7 +91,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": null
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -110,7 +110,7 @@
 					"# Constants \r\n",
 					"SQL_ANNUAL_LICENSE_COST =  3272361.37 "
 				],
-				"execution_count": null
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -128,6 +128,97 @@
 				"source": [
 					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
+				],
+				"execution_count": 4
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"isManagedInstance = ((F.col('MeterCategory') == 'SQL Managed Instance') & (F.col('ai_AHB') == True))\r\n",
+					"isVMLicense = (F.col('MeterCategory') == 'Virtual Machine Licenses') & F.col('MeterSubCategory').like('%Hybrid%')\r\n",
+					"\r\n",
+					"cost_df = cost_df.where(isManagedInstance | isVMLicense)\r\n",
+					"cost_df = cost_df.withColumn('Date', F.date_format('Date', 'yyyy-MM'))\r\n",
+					"cost_df = cost_df.withColumn(\"Date\", F.to_date(cost_df.Date, \"yyyy-MM\"))\r\n",
+					"cost_df = cost_df.withColumnRenamed('ai_ServiceType', 'ServiceType')\r\n",
+					"cost_df = cost_df.withColumnRenamed('ai_VCPUs', 'VCPUs')\r\n",
+					"cost_df = cost_df.withColumnRenamed('ai_VCores', 'VCores')\r\n",
+					"cost_df = cost_df.withColumnRenamed('ai_AHB', 'AHB')"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/pricesheet-LATEST.parquet'\r\n",
+					"pricesheet_df = spark.read.format('parquet').load(pricesheet_path)"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"pricesheet_df = pricesheet_df.withColumn('unitQuantity', F.split('unitOfMeasure', ' ')[0])\r\n",
+					"pricesheet_df = pricesheet_df.withColumn('pricePerUnit', F.col('unitPrice') / F.col('unitQuantity'))\r\n",
+					"pricesheet_df = pricesheet_df.select('meterName', 'unitOfMeasure', 'unitQuantity', 'unitPrice', 'pricePerUnit')"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"hub_df = cost_df \\\r\n",
+					"    .select('ServiceType', 'AHB', 'VCores', 'VCPUs', 'MeterCategory', 'MeterSubCategory', 'Date', 'Quantity', 'ProductName', 'ResourceId') \\\r\n",
+					"    .groupBy('ServiceType', 'AHB', 'VCores', 'VCPUs', 'MeterCategory', 'MeterSubCategory', 'Date', 'ProductName', 'ResourceId') \\\r\n",
+					"    .agg(F.sum('Quantity').alias('Quantity')) \\\r\n",
+					"    .orderBy('Date', 'Quantity')\r\n",
+					"\r\n",
+					"# hub_df = hub_df.where(F.col('VCPUs') != 0)\r\n",
+					"# hub_df = hub_df.withColumn('pricesheetService', F.concat(F.lit('Windows Server - '), F.col('VCPUs'), F.lit(' vCPU VM License')))"
 				],
 				"execution_count": null
 			},
