@@ -1,8 +1,8 @@
 {
-	"name": "Collect ACMMonthlyAmortizedCost_overview_Threeyears",
+	"name": "CreateThreeYearCostView",
 	"properties": {
 		"folder": {
-			"name": "SQLScriptsInProduction"
+			"name": "PowerBIViews"
 		},
 		"content": {
 			"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW tsc_ACMMonthlyAmortizedCost_overview_Threeyears\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_Threeyears.parquet/*/*/*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n\n\n",
