@@ -1,0 +1,183 @@
+{
+	"name": "compute-sql-hub-savings",
+	"properties": {
+		"folder": {
+			"name": "NotebookInProduction/HUB Savings"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sprkpool33large",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "112g",
+			"driverCores": 16,
+			"executorMemory": "112g",
+			"executorCores": 16,
+			"numExecutors": 1,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "true",
+				"spark.dynamicAllocation.minExecutors": "1",
+				"spark.dynamicAllocation.maxExecutors": "5",
+				"spark.autotune.trackingId": "384012ed-6fb8-4fa0-ab6d-17baa25f5c40"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "python"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
+				"name": "sprkpool33large",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 16,
+				"memory": 112,
+				"automaticScaleJobs": true
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Initialize script"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"import pyspark.sql.functions as F\r\n",
+					"import pyspark.sql.types as T"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"storageAccount = 's037costmgmt'"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Constants \r\n",
+					"SQL_ANNUAL_LICENSE_COST =  3272361.37 "
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
+					"cost_df = spark.read.format('parquet').load(cost_path)"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"```\r\n",
+					"-- This is auto-generated code\r\n",
+					"SELECT\r\n",
+					"    --TOP 100 \r\n",
+					"    ai_ServiceType as ServiceType, \r\n",
+					"    ai_AHB as AHB, \r\n",
+					"    ai_vCores as vCores, \r\n",
+					"    ai_VCPUs as VCPUs, \r\n",
+					"    MeterCategory,\r\n",
+					"    MeterSubCategory,\r\n",
+					"    format([Date], 'yyyy-MM') as [Short Date], \r\n",
+					"    sum(Quantity) as Quantity,\r\n",
+					"    --PartNumber,\r\n",
+					"    ProductName,\r\n",
+					"    ResourceId\r\n",
+					"    \r\n",
+					"FROM\r\n",
+					"    OPENROWSET(\r\n",
+					"        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/202*/Extended_v2_ACMMonthlyActualCost_*.parquet/**',\r\n",
+					"        FORMAT = 'PARQUET'\r\n",
+					"    ) AS [result]\r\n",
+					"WHERE (MeterCategory = 'SQL Managed Instance' and ai_AHB = 'True') \r\n",
+					"or (MeterCategory = 'Virtual Machines Licenses' and MeterSubCategory LIKE '%Hybrid%') \r\n",
+					"and format([Date], 'yyyy-MM') >= '2022-11' and format([Date], 'yyyy-MM') <= '2023-10' \r\n",
+					"--WHERE JSON_VALUE(AdditionalInfo, '$.AHB') = 'True' or MeterSubCategory LIKE '%Hybrid%'\r\n",
+					"\r\n",
+					"-----Below line extracts non HUB SQL entries for testing & investigation purposes\r\n",
+					"--WHERE (MeterCategory = 'SQL Managed Instance' and JSON_VALUE(AdditionalInfo, '$.AHB') = 'False') or (MeterCategory = 'Virtual Machines Licenses' and MeterSubCategory NOT LIKE '%Hybrid%') and Product LIKE 'SQL Server%' and Product NOT LIKE 'SQL Server Express%'\r\n",
+					"\r\n",
+					"GROUP BY  ai_ServiceType, ai_AHB, ai_vCores, ai_VCPUs, MeterCategory, MeterSubCategory, format([Date], 'yyyy-MM'), ProductName, ResourceId\r\n",
+					"ORDER BY format([Date], 'yyyy-MM'), Quantity DESC\r\n",
+					"\r\n",
+					"\r\n",
+					"\r\n",
+					"```"
+				]
+			}
+		]
+	}
+}
