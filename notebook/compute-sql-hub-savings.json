@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "b634f056-bb7a-4350-8b1b-0240b7a3e08e"
+				"spark.autotune.trackingId": "aaff08b3-46df-4648-a491-83e82fb22841"
 			}
 		},
 		"metadata": {
@@ -71,7 +71,28 @@
 					"import pyspark.sql.types as T\r\n",
 					"from enum import Enum"
 				],
-				"execution_count": 91
+				"execution_count": 2
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"storageAccount = 's037costmgmt'"
+				],
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -98,28 +119,7 @@
 					"    Enterprise = \"Enterprise License\"\r\n",
 					"    Unknown = \"undefined\""
 				],
-				"execution_count": 92
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"tags": [
-						"parameters"
-					]
-				},
-				"source": [
-					"storageAccount = 's037costmgmt'"
-				],
-				"execution_count": 93
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -136,9 +136,23 @@
 				},
 				"source": [
 					"# Constants \r\n",
-					"SQL_ANNUAL_LICENSE_COST =  3272361.37 "
+					"SQL_ANNUAL_LICENSE_COST =  3272361.37 \r\n",
+					"PROD_OFFER_ID = 'MS-AZR-0017P'"
 				],
-				"execution_count": 94
+				"execution_count": 5
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Load and pre-process entire cost data history"
+				]
 			},
 			{
 				"cell_type": "code",
@@ -157,7 +171,7 @@
 					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 95
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -184,7 +198,20 @@
 					"cost_df = cost_df.withColumnRenamed('ai_VCores', 'VCores')\r\n",
 					"cost_df = cost_df.withColumnRenamed('ai_AHB', 'AHB')"
 				],
-				"execution_count": 96
+				"execution_count": 7
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Load and pre-process pricesheet data"
+				]
 			},
 			{
 				"cell_type": "code",
@@ -201,9 +228,10 @@
 				},
 				"source": [
 					"pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/pricesheet-LATEST.parquet'\r\n",
-					"pricesheet_df = spark.read.format('parquet').load(pricesheet_path)"
+					"pricesheet_df = spark.read.format('parquet').load(pricesheet_path)\r\n",
+					"pricesheet_df = pricesheet_df.where(F.col('offerId') == PROD_OFFER_ID)"
 				],
-				"execution_count": 97
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -223,7 +251,20 @@
 					"pricesheet_df = pricesheet_df.withColumn('pricePerUnit', F.col('unitPrice') / F.col('unitQuantity'))\r\n",
 					"pricesheet_df = pricesheet_df.select('meterName', 'unitOfMeasure', 'unitQuantity', 'unitPrice', 'pricePerUnit')"
 				],
-				"execution_count": 98
+				"execution_count": 9
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Compute SQL HUB Savings"
+				]
 			},
 			{
 				"cell_type": "code",
@@ -245,7 +286,7 @@
 					"    .agg(F.sum('Quantity').alias('Quantity')) \\\r\n",
 					"    .orderBy('Date', 'Quantity')"
 				],
-				"execution_count": 99
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -270,7 +311,7 @@
 					"\r\n",
 					"hub_df = hub_df.where(F.col('DBType') != DBTypes.Unknown.value)"
 				],
-				"execution_count": 100
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -294,7 +335,7 @@
 					"\r\n",
 					"hub_df = hub_df.where(F.col('LicenseType') != LicenseTypes.Unknown.value)"
 				],
-				"execution_count": 101
+				"execution_count": 12
 			},
 			{
 				"cell_type": "code",
@@ -322,7 +363,7 @@
 					"    .otherwise('undefined')\r\n",
 					")"
 				],
-				"execution_count": 102
+				"execution_count": 13
 			},
 			{
 				"cell_type": "code",
@@ -343,7 +384,7 @@
 					"\r\n",
 					"hub_df = hub_df.withColumn('totalCost', F.col('Quantity') * F.col('pricePerUnit'))"
 				],
-				"execution_count": 103
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -362,7 +403,20 @@
 					"license_df = hub_df.select('Date').distinct()\r\n",
 					"license_df = license_df.withColumn('LicenseCost', F.lit(SQL_ANNUAL_LICENSE_COST / 12))"
 				],
-				"execution_count": 104
+				"execution_count": 15
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Write HUB savings to ASDL"
+				]
 			},
 			{
 				"cell_type": "code",
@@ -385,7 +439,7 @@
 					"license_cost_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/savings/hub/sql-server-license-cost.parquet\"\r\n",
 					"license_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(license_cost_path)"
 				],
-				"execution_count": 105
+				"execution_count": 16
 			}
 		]
 	}
