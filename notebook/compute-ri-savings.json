@@ -6,17 +6,21 @@
 		},
 		"nbformat": 4,
 		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sprkpool33large",
+			"type": "BigDataPoolReference"
+		},
 		"sessionProperties": {
-			"driverMemory": "28g",
-			"driverCores": 4,
-			"executorMemory": "28g",
-			"executorCores": 4,
-			"numExecutors": 2,
+			"driverMemory": "112g",
+			"driverCores": 16,
+			"executorMemory": "112g",
+			"executorCores": 16,
+			"numExecutors": 1,
 			"conf": {
-				"spark.dynamicAllocation.enabled": "false",
-				"spark.dynamicAllocation.minExecutors": "2",
-				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "8beb2c59-2af0-4895-84d8-4deaf125e2fa"
+				"spark.dynamicAllocation.enabled": "true",
+				"spark.dynamicAllocation.minExecutors": "1",
+				"spark.dynamicAllocation.maxExecutors": "5",
+				"spark.autotune.trackingId": "7222e94d-b659-4105-9346-9b4687a435e7"
 			}
 		},
 		"metadata": {
@@ -24,18 +28,90 @@
 			"enableDebugMode": false,
 			"kernelspec": {
 				"name": "synapse_pyspark",
-				"display_name": "python"
+				"display_name": "Synapse PySpark"
 			},
 			"language_info": {
 				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
+				"name": "sprkpool33large",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 16,
+				"memory": 112,
+				"automaticScaleJobs": true
 			},
 			"sessionKeepAliveTimeout": 30
 		},
 		"cells": [
 			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"```\r\n",
+					"-- This is auto-generated code\r\n",
+					"SELECT\r\n",
+					"    TOP 100 \r\n",
+					"    --ChargeType\r\n",
+					"    --EffectivePrice\r\n",
+					"    --,UnitPrice\r\n",
+					"    --,Quantity\r\n",
+					"    --,(UnitPrice - EffectivePrice) * Quantity as [Cost Saving]\r\n",
+					"    --,IsRIUsage\r\n",
+					"    sum((UnitPrice - EffectivePrice) * Quantity) as [Cost Saving Total]\r\n",
+					"    --sum((EffectivePrice) * Quantity) as [Cost Saving Total]\r\n",
+					"FROM\r\n",
+					"    OPENROWSET(\r\n",
+					"        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAmortizedCost/202*/Extended_v2_ACMMonthlyAmortizedCost_*.parquet/**',\r\n",
+					"        FORMAT = 'PARQUET'\r\n",
+					"    ) AS [result]\r\n",
+					"    where (IsRIUsage = 'RI Usage' or ChargeType = 'UnusedReservation')\r\n",
+					"    and [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\r\n",
+					"    and upper(benefitName) like 'S037%' -- filtering for the S037 reservations\r\n",
+					"    --and upper(benefitName) not like 'S037%'  -- filtering for the non S037 reservations i.e. the SAP single scope reservations\r\n",
+					"\r\n",
+					"```"
+				]
+			},
+			{
 				"cell_type": "code",
 				"source": [
-					""
+					"import pyspark.sql.functions as F\r\n",
+					"import pyspark.sql.types as T"
+				],
+				"execution_count": 4
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"storageAccount = 's037costmgmt'"
 				],
 				"execution_count": null
 			}
