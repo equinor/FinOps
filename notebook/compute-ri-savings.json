@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "7222e94d-b659-4105-9346-9b4687a435e7"
+				"spark.autotune.trackingId": "efc34727-6ffd-44cf-95a3-3535f29e5819"
 			}
 		},
 		"metadata": {
@@ -92,7 +92,7 @@
 					"import pyspark.sql.functions as F\r\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 4
+				"execution_count": 63
 			},
 			{
 				"cell_type": "code",
@@ -113,7 +113,117 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": null
+				"execution_count": 64
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet/**'\r\n",
+					"cost_df = spark.read.format('parquet').load(cost_path)"
+				],
+				"execution_count": 65
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cost_df = cost_df.withColumn('Date', F.date_format('Date', 'yyyy-MM'))\r\n",
+					"cost_df = cost_df.withColumn(\"Date\", F.to_date(cost_df.Date, \"yyyy-MM\"))\r\n",
+					"cost_df = cost_df.withColumn('CostSavings', (F.col('UnitPrice') - F.col('EffectivePrice')) * F.col('Quantity'))\r\n",
+					"cost_df = cost_df.withColumn('EffectiveCost', F.col('EffectivePrice') * F.col('Quantity'))\r\n",
+					"cost_df = cost_df.withColumn('IsS037Reservation', F.when(F.upper(F.col('benefitName')).like('%S037%'), True).otherwise(False))"
+				],
+				"execution_count": 66
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"ri_df = cost_df.where(F.col('IsRIUsage') == 'RI Usage')\r\n",
+					"ri_df = ri_df \\\r\n",
+					"    .select('Date', 'IsS037Reservation', 'CostSavings') \\\r\n",
+					"    .groupBy('Date', 'IsS037Reservation',) \\\r\n",
+					"    .agg(F.sum('CostSavings').alias('CostSavings')) \\\r\n",
+					"    .orderBy('Date', 'CostSavings')"
+				],
+				"execution_count": 67
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"unused_df = cost_df.where(F.col('ChargeType') == 'UnusedReservation')\r\n",
+					"unused_df = unused_df \\\r\n",
+					"    .select('Date', 'IsS037Reservation', 'EffectiveCost') \\\r\n",
+					"    .groupBy('Date', 'IsS037Reservation',) \\\r\n",
+					"    .agg(F.sum('EffectiveCost').alias('EffectiveCost')) \\\r\n",
+					"    .orderBy('Date', 'EffectiveCost')"
+				],
+				"execution_count": 68
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"ri_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/savings/ri/ri-savings.parquet\"\r\n",
+					"ri_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(ri_path)\r\n",
+					"\r\n",
+					"unused_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/savings/ri/unused-ri-cost.parquet\"\r\n",
+					"unused_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(unused_path)"
+				],
+				"execution_count": 69
 			}
 		]
 	}
