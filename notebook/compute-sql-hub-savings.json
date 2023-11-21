@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "d2735d7f-e279-4c97-a45e-12a710ef83af"
+				"spark.autotune.trackingId": "1f15f5d1-1e07-4260-91b2-a312b04c4305"
 			}
 		},
 		"metadata": {
@@ -71,7 +71,7 @@
 					"import pyspark.sql.types as T\r\n",
 					"from enum import Enum"
 				],
-				"execution_count": 1
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -384,7 +384,7 @@
 					"                   F.when(F.date_format(\"Date\", \"yyyy-MM-dd\") >= \"2023-11-01\", \"202310\")\r\n",
 					"                   .otherwise(F.date_format(\"Date\", \"yyyyMM\")))"
 				],
-				"execution_count": null
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -406,7 +406,7 @@
 					"hub_df = hub_df.withColumn('totalCost', F.col('Quantity') * F.col('pricePerUnit'))\r\n",
 					"hub_df = hub_df.where(F.col('meterName').isNotNull())"
 				],
-				"execution_count": 14
+				"execution_count": 15
 			},
 			{
 				"cell_type": "code",
@@ -425,7 +425,7 @@
 					"license_df = hub_df.select('Date').distinct()\r\n",
 					"license_df = license_df.withColumn('LicenseCost', F.lit(SQL_ANNUAL_LICENSE_COST / 12))"
 				],
-				"execution_count": 15
+				"execution_count": 16
 			},
 			{
 				"cell_type": "markdown",
@@ -461,7 +461,7 @@
 					"license_cost_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/savings/hub/sql-server-license-cost.parquet\"\r\n",
 					"license_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(license_cost_path)"
 				],
-				"execution_count": 16
+				"execution_count": 17
 			}
 		]
 	}
