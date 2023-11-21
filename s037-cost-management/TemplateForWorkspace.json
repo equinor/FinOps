@@ -669,6 +669,18 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
+		"check-subscription-quality_notebookSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"check-subscription-quality_notebookSparkPoolIdRef": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"check-subscription-quality_notebookSparkPoolEndpointRef": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
 		"compute-ri-savings_notebookSparkPoolNameRef": {
 			"type": "string",
 			"defaultValue": "sprkpool33large"
@@ -19569,7 +19581,15 @@
 					{
 						"name": "Amortized_Monthly_Cost_Update_OneYear",
 						"type": "SynapseNotebook",
-						"dependsOn": [],
+						"dependsOn": [
+							{
+								"activity": "Amortized_Monthly_Cost_Update_ThreeYears",
+								"dependencyConditions": [
+									"Succeeded",
+									"Failed"
+								]
+							}
+						],
 						"policy": {
 							"timeout": "0.12:00:00",
 							"retry": 0,
@@ -19608,7 +19628,8 @@
 							{
 								"activity": "Amortized_Monthly_Cost_Update_OneYear",
 								"dependencyConditions": [
-									"Succeeded"
+									"Succeeded",
+									"Failed"
 								]
 							}
 						],
@@ -29808,7 +29829,7 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"folder": {
-					"name": "NotebookInProduction"
+					"name": "NotebookInProduction/Anomaly Detection"
 				},
 				"nbformat": 4,
 				"nbformat_minor": 2,
@@ -29827,7 +29848,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "112030a2-b0ca-48e2-95ef-bc0bfd4fc21c"
+						"spark.autotune.trackingId": "9a888982-250c-4e07-a953-246616f1ed8a"
 					}
 				},
 				"metadata": {
@@ -30204,7 +30225,7 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"folder": {
-					"name": "NotebookInProduction"
+					"name": "NotebookInProduction/Anomaly Detection"
 				},
 				"nbformat": 4,
 				"nbformat_minor": 2,
@@ -30223,7 +30244,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "18cc052e-39cd-4960-9333-244f9eac2a32"
+						"spark.autotune.trackingId": "eb679521-7afc-430d-86fa-d23009dccb50"
 					}
 				},
 				"metadata": {
@@ -31075,7 +31096,7 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"folder": {
-					"name": "NotebookInProduction"
+					"name": "NotebookNotInUse"
 				},
 				"nbformat": 4,
 				"nbformat_minor": 2,
@@ -31094,7 +31115,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "4ce2494b-be9b-4a98-a8eb-7426e3f6f11d"
+						"spark.autotune.trackingId": "04ed4281-956d-438f-b961-ed930fc70c1f"
 					}
 				},
 				"metadata": {
@@ -32133,7 +32154,7 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"folder": {
-					"name": "NotebookInProduction"
+					"name": "NotebookNotInUse"
 				},
 				"nbformat": 4,
 				"nbformat_minor": 2,
@@ -32152,7 +32173,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "5ecb6445-8c35-4210-98cc-b7e7b3827f39"
+						"spark.autotune.trackingId": "c2216ffe-84ee-4a51-abea-458cbeebf7a8"
 					}
 				},
 				"metadata": {
@@ -32485,7 +32506,7 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"folder": {
-					"name": "NotebookInProduction"
+					"name": "NotebookNotInUse"
 				},
 				"nbformat": 4,
 				"nbformat_minor": 2,
@@ -32504,7 +32525,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "84fa994b-836e-4000-a25e-0165401d2c5c"
+						"spark.autotune.trackingId": "f3adde53-7fd2-4a1a-aa9a-095ac265cec3"
 					}
 				},
 				"metadata": {
@@ -32645,7 +32666,7 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"folder": {
-					"name": "NotebookInProduction"
+					"name": "NotebookNotInUse"
 				},
 				"nbformat": 4,
 				"nbformat_minor": 2,
@@ -32664,7 +32685,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "0d8366e4-ffb5-4a3b-a042-45e38f067107"
+						"spark.autotune.trackingId": "ca476b31-5bed-46cb-857a-b0b8202f8932"
 					}
 				},
 				"metadata": {
@@ -32844,7 +32865,7 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"folder": {
-					"name": "NotebookInProduction"
+					"name": "NotebookNotInUse"
 				},
 				"nbformat": 4,
 				"nbformat_minor": 2,
@@ -32863,7 +32884,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "8b5d4014-559e-43c7-b8fc-4c49536111b1"
+						"spark.autotune.trackingId": "f16e60e1-bc50-444c-983a-46701ecb923c"
 					}
 				},
 				"metadata": {
@@ -33770,7 +33791,7 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"folder": {
-					"name": "NotebookInProduction"
+					"name": "NotebookNotInUse"
 				},
 				"nbformat": 4,
 				"nbformat_minor": 2,
@@ -33789,7 +33810,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "118f87ac-e4e9-47e0-ad0e-e43aef1eec74"
+						"spark.autotune.trackingId": "f315f77e-55c0-470d-8073-39658b59e6c6"
 					}
 				},
 				"metadata": {
@@ -35111,7 +35132,7 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"folder": {
-					"name": "NotebookInProduction"
+					"name": "NotebookNotInUse"
 				},
 				"nbformat": 4,
 				"nbformat_minor": 2,
@@ -35130,7 +35151,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "5d3cbdde-c5f5-4137-b81c-191e8fbabc0f"
+						"spark.autotune.trackingId": "3c68acb7-bc4d-4a61-b64d-a6287c68b2e5"
 					}
 				},
 				"metadata": {
@@ -36004,7 +36025,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "6281b45e-a754-4f06-90c7-2d693c8c5ef1"
+						"spark.autotune.trackingId": "d9e70b70-43c7-4570-933f-0df75687fcde"
 					}
 				},
 				"metadata": {
@@ -36624,7 +36645,7 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"folder": {
-					"name": "NotebookInProduction"
+					"name": "NotebookNotInUse"
 				},
 				"nbformat": 4,
 				"nbformat_minor": 2,
@@ -36643,7 +36664,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "5c4322ac-e36c-497d-98c7-8747c3f63d11"
+						"spark.autotune.trackingId": "0cfa6f9e-4f52-4de9-943a-5ef419868042"
 					}
 				},
 				"metadata": {
@@ -36754,7 +36775,7 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"folder": {
-					"name": "NotebookInProduction"
+					"name": "NotebookNotInUse"
 				},
 				"nbformat": 4,
 				"nbformat_minor": 2,
@@ -36773,7 +36794,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "63155bbc-8d78-4831-8a0a-0f6cb9e06740"
+						"spark.autotune.trackingId": "f250ff56-133e-4d13-9057-85e2cebfb1ec"
 					}
 				},
 				"metadata": {
@@ -36939,7 +36960,7 @@
 			"properties": {
 				"description": "Double check with Joakim",
 				"folder": {
-					"name": "NotebookInProduction"
+					"name": "NotebookInProduction/Cost Extension"
 				},
 				"nbformat": 4,
 				"nbformat_minor": 2,
@@ -36958,7 +36979,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "f2f51aba-d326-4eda-b220-66ab6eaaf810"
+						"spark.autotune.trackingId": "5f2c8690-6419-46a7-8203-91ba44eaf55a"
 					}
 				},
 				"metadata": {
@@ -37124,7 +37145,7 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"folder": {
-					"name": "NotebookInProduction"
+					"name": "NotebookNotInUse"
 				},
 				"nbformat": 4,
 				"nbformat_minor": 2,
@@ -37143,7 +37164,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "6f597c97-c77b-4e83-b356-17556bff3755"
+						"spark.autotune.trackingId": "9e64a836-4adb-46ee-8a5d-cb8ef720415d"
 					}
 				},
 				"metadata": {
@@ -39010,6 +39031,275 @@
 						],
 						"outputs": [],
 						"execution_count": 108
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/check-subscription-quality')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "NotebookInProduction/Utilities"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "[parameters('check-subscription-quality_notebookSparkPoolNameRef')]",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "112g",
+					"driverCores": 16,
+					"executorMemory": "112g",
+					"executorCores": 16,
+					"numExecutors": 1,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "5",
+						"spark.autotune.trackingId": "dbda117a-8a81-4750-87ee-760ee5356151"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "[parameters('check-subscription-quality_notebookSparkPoolIdRef')]",
+						"name": "[parameters('check-subscription-quality_notebookSparkPoolNameRef')]",
+						"type": "Spark",
+						"endpoint": "[parameters('check-subscription-quality_notebookSparkPoolEndpointRef')]",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 16,
+						"memory": 112,
+						"automaticScaleJobs": true
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"import pyspark.sql.functions as F\r\n",
+							"import pyspark.sql.types as T"
+						],
+						"outputs": [],
+						"execution_count": 39
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": 40
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"cost_source_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_20230601-20230630.parquet/**'\r\n",
+							"cost_df = spark.read.format('parquet').load(cost_source_path)"
+						],
+						"outputs": [],
+						"execution_count": 41
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"cost_df = cost_df.select('SubscriptionId', 'SubscriptionName').distinct()\r\n",
+							"cost_df = cost_df.withColumnRenamed('SubscriptionId', 'CostSubscriptionId')\r\n",
+							"cost_df = cost_df.withColumnRenamed('SubscriptionName', 'CostSubscriptionName')"
+						],
+						"outputs": [],
+						"execution_count": 42
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"subscription_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/latest-optimized.parquet'\r\n",
+							"subscription_df = spark.read.format('parquet').load(subscription_path)"
+						],
+						"outputs": [],
+						"execution_count": 43
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"subscription_df = subscription_df.select('SubscriptionName', 'SubscriptionId').distinct()\r\n",
+							"subscription_df = subscription_df.withColumnRenamed('SubscriptionId', 'SnowSubscriptionId')\r\n",
+							"subscription_df = subscription_df.withColumnRenamed('SubscriptionName', 'SnowSubscriptionName')"
+						],
+						"outputs": [],
+						"execution_count": 44
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"joined = cost_df.join(subscription_df, cost_df.CostSubscriptionId == subscription_df.SnowSubscriptionId, 'left')"
+						],
+						"outputs": [],
+						"execution_count": 45
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"display(subscription_df.where(F.col('SnowSubscriptionName') == 'S377-Aurora-Development'))"
+						],
+						"outputs": [],
+						"execution_count": 49
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"display(joined.where(F.col('SnowSubscriptionName').isNull()))"
+						],
+						"outputs": [],
+						"execution_count": 48
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"xx = joined.where(F.col('SnowSubscriptionName').isNull()).select('CostSubscriptionName')\r\n",
+							"test = xx.join(subscription_df, xx.CostSubscriptionName == subscription_df.SnowSubscriptionName, 'left')"
+						],
+						"outputs": [],
+						"execution_count": 54
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"display(test)"
+						],
+						"outputs": [],
+						"execution_count": 55
 					}
 				]
 			},
