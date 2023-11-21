@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "aaff08b3-46df-4648-a491-83e82fb22841"
+				"spark.autotune.trackingId": "1f15f5d1-1e07-4260-91b2-a312b04c4305"
 			}
 		},
 		"metadata": {
@@ -227,7 +227,7 @@
 					}
 				},
 				"source": [
-					"pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/pricesheet-LATEST.parquet'\r\n",
+					"pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/pricesheet-20*.parquet'\r\n",
 					"pricesheet_df = spark.read.format('parquet').load(pricesheet_path)\r\n",
 					"pricesheet_df = pricesheet_df.where(F.col('offerId') == PROD_OFFER_ID)"
 				],
@@ -249,7 +249,7 @@
 				"source": [
 					"pricesheet_df = pricesheet_df.withColumn('unitQuantity', F.split('unitOfMeasure', ' ')[0])\r\n",
 					"pricesheet_df = pricesheet_df.withColumn('pricePerUnit', F.col('unitPrice') / F.col('unitQuantity'))\r\n",
-					"pricesheet_df = pricesheet_df.select('meterName', 'unitOfMeasure', 'unitQuantity', 'unitPrice', 'pricePerUnit')"
+					"pricesheet_df = pricesheet_df.select('meterName', 'unitOfMeasure', 'unitQuantity', 'unitPrice', 'pricePerUnit', 'billingPeriodId')"
 				],
 				"execution_count": 9
 			},
@@ -379,12 +379,34 @@
 					}
 				},
 				"source": [
-					"hub_df = hub_df.join(pricesheet_df, pricesheet_df.meterName == hub_df.pricesheetService)\r\n",
-					"hub_df = hub_df.drop('priceSheetService')\r\n",
-					"\r\n",
-					"hub_df = hub_df.withColumn('totalCost', F.col('Quantity') * F.col('pricePerUnit'))"
+					"# Create dummy date column for pricesheet join operation\r\n",
+					"hub_df = hub_df.withColumn(\"tempDate\", \r\n",
+					"                   F.when(F.date_format(\"Date\", \"yyyy-MM-dd\") >= \"2023-11-01\", \"202310\")\r\n",
+					"                   .otherwise(F.date_format(\"Date\", \"yyyyMM\")))"
 				],
 				"execution_count": 14
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"hub_df = hub_df.join(pricesheet_df, (pricesheet_df.meterName == hub_df.pricesheetService) & (pricesheet_df.billingPeriodId == hub_df.tempDate), \"left\")\r\n",
+					"hub_df = hub_df.drop('priceSheetService', 'tempDate')\r\n",
+					"\r\n",
+					"hub_df = hub_df.withColumn('totalCost', F.col('Quantity') * F.col('pricePerUnit'))\r\n",
+					"hub_df = hub_df.where(F.col('meterName').isNotNull())"
+				],
+				"execution_count": 15
 			},
 			{
 				"cell_type": "code",
@@ -403,7 +425,7 @@
 					"license_df = hub_df.select('Date').distinct()\r\n",
 					"license_df = license_df.withColumn('LicenseCost', F.lit(SQL_ANNUAL_LICENSE_COST / 12))"
 				],
-				"execution_count": 15
+				"execution_count": 16
 			},
 			{
 				"cell_type": "markdown",
@@ -439,7 +461,7 @@
 					"license_cost_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/savings/hub/sql-server-license-cost.parquet\"\r\n",
 					"license_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(license_cost_path)"
 				],
-				"execution_count": 16
+				"execution_count": 17
 			}
 		]
 	}

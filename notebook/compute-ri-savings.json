@@ -1,0 +1,230 @@
+{
+	"name": "compute-ri-savings",
+	"properties": {
+		"folder": {
+			"name": "NotebookInProduction/RI Savings"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sprkpool33large",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "112g",
+			"driverCores": 16,
+			"executorMemory": "112g",
+			"executorCores": 16,
+			"numExecutors": 1,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "true",
+				"spark.dynamicAllocation.minExecutors": "1",
+				"spark.dynamicAllocation.maxExecutors": "5",
+				"spark.autotune.trackingId": "efc34727-6ffd-44cf-95a3-3535f29e5819"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
+				"name": "sprkpool33large",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 16,
+				"memory": 112,
+				"automaticScaleJobs": true
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"```\r\n",
+					"-- This is auto-generated code\r\n",
+					"SELECT\r\n",
+					"    TOP 100 \r\n",
+					"    --ChargeType\r\n",
+					"    --EffectivePrice\r\n",
+					"    --,UnitPrice\r\n",
+					"    --,Quantity\r\n",
+					"    --,(UnitPrice - EffectivePrice) * Quantity as [Cost Saving]\r\n",
+					"    --,IsRIUsage\r\n",
+					"    sum((UnitPrice - EffectivePrice) * Quantity) as [Cost Saving Total]\r\n",
+					"    --sum((EffectivePrice) * Quantity) as [Cost Saving Total]\r\n",
+					"FROM\r\n",
+					"    OPENROWSET(\r\n",
+					"        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAmortizedCost/202*/Extended_v2_ACMMonthlyAmortizedCost_*.parquet/**',\r\n",
+					"        FORMAT = 'PARQUET'\r\n",
+					"    ) AS [result]\r\n",
+					"    where (IsRIUsage = 'RI Usage' or ChargeType = 'UnusedReservation')\r\n",
+					"    and [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\r\n",
+					"    and upper(benefitName) like 'S037%' -- filtering for the S037 reservations\r\n",
+					"    --and upper(benefitName) not like 'S037%'  -- filtering for the non S037 reservations i.e. the SAP single scope reservations\r\n",
+					"\r\n",
+					"```"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"import pyspark.sql.functions as F\r\n",
+					"import pyspark.sql.types as T"
+				],
+				"execution_count": 63
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"storageAccount = 's037costmgmt'"
+				],
+				"execution_count": 64
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet/**'\r\n",
+					"cost_df = spark.read.format('parquet').load(cost_path)"
+				],
+				"execution_count": 65
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cost_df = cost_df.withColumn('Date', F.date_format('Date', 'yyyy-MM'))\r\n",
+					"cost_df = cost_df.withColumn(\"Date\", F.to_date(cost_df.Date, \"yyyy-MM\"))\r\n",
+					"cost_df = cost_df.withColumn('CostSavings', (F.col('UnitPrice') - F.col('EffectivePrice')) * F.col('Quantity'))\r\n",
+					"cost_df = cost_df.withColumn('EffectiveCost', F.col('EffectivePrice') * F.col('Quantity'))\r\n",
+					"cost_df = cost_df.withColumn('IsS037Reservation', F.when(F.upper(F.col('benefitName')).like('%S037%'), True).otherwise(False))"
+				],
+				"execution_count": 66
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"ri_df = cost_df.where(F.col('IsRIUsage') == 'RI Usage')\r\n",
+					"ri_df = ri_df \\\r\n",
+					"    .select('Date', 'IsS037Reservation', 'CostSavings') \\\r\n",
+					"    .groupBy('Date', 'IsS037Reservation',) \\\r\n",
+					"    .agg(F.sum('CostSavings').alias('CostSavings')) \\\r\n",
+					"    .orderBy('Date', 'CostSavings')"
+				],
+				"execution_count": 67
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"unused_df = cost_df.where(F.col('ChargeType') == 'UnusedReservation')\r\n",
+					"unused_df = unused_df \\\r\n",
+					"    .select('Date', 'IsS037Reservation', 'EffectiveCost') \\\r\n",
+					"    .groupBy('Date', 'IsS037Reservation',) \\\r\n",
+					"    .agg(F.sum('EffectiveCost').alias('EffectiveCost')) \\\r\n",
+					"    .orderBy('Date', 'EffectiveCost')"
+				],
+				"execution_count": 68
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"ri_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/savings/ri/ri-savings.parquet\"\r\n",
+					"ri_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(ri_path)\r\n",
+					"\r\n",
+					"unused_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/savings/ri/unused-ri-cost.parquet\"\r\n",
+					"unused_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(unused_path)"
+				],
+				"execution_count": 69
+			}
+		]
+	}
+}
