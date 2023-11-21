@@ -40,7 +40,15 @@
 			{
 				"name": "Amortized_Monthly_Cost_Update_OneYear",
 				"type": "SynapseNotebook",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "Amortized_Monthly_Cost_Update_ThreeYears",
+						"dependencyConditions": [
+							"Succeeded",
+							"Failed"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -79,7 +87,8 @@
 					{
 						"activity": "Amortized_Monthly_Cost_Update_OneYear",
 						"dependencyConditions": [
-							"Succeeded"
+							"Succeeded",
+							"Failed"
 						]
 					}
 				],
