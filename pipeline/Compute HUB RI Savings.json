@@ -1,0 +1,120 @@
+{
+	"name": "Compute HUB RI Savings",
+	"properties": {
+		"activities": [
+			{
+				"name": "Compute windows HUB savings",
+				"type": "SynapseNotebook",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "compute-win-hub-savings",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"storageAccount": {
+							"value": {
+								"value": "@pipeline().parameters.storageAccount",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true
+				}
+			},
+			{
+				"name": "Compute SQL HUB Savings",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "Compute windows HUB savings",
+						"dependencyConditions": [
+							"Succeeded",
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "compute-sql-hub-savings",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"storageAccount": {
+							"value": {
+								"value": "@pipeline().parameters.storageAccount",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true
+				}
+			},
+			{
+				"name": "Compute RI Savings",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "Compute SQL HUB Savings",
+						"dependencyConditions": [
+							"Succeeded",
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "compute-ri-savings",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"storageAccount": {
+							"value": {
+								"value": "@pipeline().parameters.storageAccount",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true
+				}
+			}
+		],
+		"parameters": {
+			"storageAccount": {
+				"type": "string",
+				"defaultValue": "s037costmgmt"
+			}
+		},
+		"folder": {
+			"name": "PipelinesInProduction"
+		},
+		"annotations": []
+	}
+}
