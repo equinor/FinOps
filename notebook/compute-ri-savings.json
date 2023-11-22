@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "efc34727-6ffd-44cf-95a3-3535f29e5819"
+				"spark.autotune.trackingId": "7be1e4b9-2dd6-46f4-b8e6-c50005f78d96"
 			}
 		},
 		"metadata": {
@@ -61,38 +61,17 @@
 					}
 				},
 				"source": [
-					"```\r\n",
-					"-- This is auto-generated code\r\n",
-					"SELECT\r\n",
-					"    TOP 100 \r\n",
-					"    --ChargeType\r\n",
-					"    --EffectivePrice\r\n",
-					"    --,UnitPrice\r\n",
-					"    --,Quantity\r\n",
-					"    --,(UnitPrice - EffectivePrice) * Quantity as [Cost Saving]\r\n",
-					"    --,IsRIUsage\r\n",
-					"    sum((UnitPrice - EffectivePrice) * Quantity) as [Cost Saving Total]\r\n",
-					"    --sum((EffectivePrice) * Quantity) as [Cost Saving Total]\r\n",
-					"FROM\r\n",
-					"    OPENROWSET(\r\n",
-					"        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAmortizedCost/202*/Extended_v2_ACMMonthlyAmortizedCost_*.parquet/**',\r\n",
-					"        FORMAT = 'PARQUET'\r\n",
-					"    ) AS [result]\r\n",
-					"    where (IsRIUsage = 'RI Usage' or ChargeType = 'UnusedReservation')\r\n",
-					"    and [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\r\n",
-					"    and upper(benefitName) like 'S037%' -- filtering for the S037 reservations\r\n",
-					"    --and upper(benefitName) not like 'S037%'  -- filtering for the non S037 reservations i.e. the SAP single scope reservations\r\n",
-					"\r\n",
-					"```"
+					"## Initialize script"
 				]
 			},
 			{
 				"cell_type": "code",
 				"source": [
 					"import pyspark.sql.functions as F\r\n",
-					"import pyspark.sql.types as T"
+					"import pyspark.sql.types as T\r\n",
+					"from enum import Enum"
 				],
-				"execution_count": 63
+				"execution_count": 19
 			},
 			{
 				"cell_type": "code",
@@ -113,7 +92,40 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 64
+				"execution_count": 2
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"class RITypes(Enum):\r\n",
+					"    VM = \"VM\"\r\n",
+					"    SQL = \"SQL\""
+				],
+				"execution_count": 20
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Load and pre-process entire cost data history"
+				]
 			},
 			{
 				"cell_type": "code",
@@ -132,7 +144,7 @@
 					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet/**'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 65
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -152,9 +164,27 @@
 					"cost_df = cost_df.withColumn(\"Date\", F.to_date(cost_df.Date, \"yyyy-MM\"))\r\n",
 					"cost_df = cost_df.withColumn('CostSavings', (F.col('UnitPrice') - F.col('EffectivePrice')) * F.col('Quantity'))\r\n",
 					"cost_df = cost_df.withColumn('EffectiveCost', F.col('EffectivePrice') * F.col('Quantity'))\r\n",
-					"cost_df = cost_df.withColumn('IsS037Reservation', F.when(F.upper(F.col('benefitName')).like('%S037%'), True).otherwise(False))"
+					"cost_df = cost_df.withColumn('IsS037Reservation', F.when(F.upper(F.col('benefitName')).like('%S037%'), True).otherwise(False))\r\n",
+					"cost_df = cost_df.withColumn('RIType', \r\n",
+					"    F.when(F.col('MeterCategory').like('%Virtual Machines%'), RITypes.VM.value)\r\n",
+					"    .when(F.col('MeterCategory').like('%SQL%'), RITypes.SQL.value)\r\n",
+					"    .otherwise(F.col('MeterCategory'))\r\n",
+					")"
 				],
-				"execution_count": 66
+				"execution_count": 4
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Compute RI Savings"
+				]
 			},
 			{
 				"cell_type": "code",
@@ -172,12 +202,12 @@
 				"source": [
 					"ri_df = cost_df.where(F.col('IsRIUsage') == 'RI Usage')\r\n",
 					"ri_df = ri_df \\\r\n",
-					"    .select('Date', 'IsS037Reservation', 'CostSavings') \\\r\n",
-					"    .groupBy('Date', 'IsS037Reservation',) \\\r\n",
+					"    .select('Date', 'IsS037Reservation', 'RIType', 'CostSavings') \\\r\n",
+					"    .groupBy('Date', 'IsS037Reservation', 'RIType') \\\r\n",
 					"    .agg(F.sum('CostSavings').alias('CostSavings')) \\\r\n",
 					"    .orderBy('Date', 'CostSavings')"
 				],
-				"execution_count": 67
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -201,6 +231,19 @@
 					"    .orderBy('Date', 'EffectiveCost')"
 				],
 				"execution_count": 68
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Write RI savings to ASDL"
+				]
 			},
 			{
 				"cell_type": "code",
