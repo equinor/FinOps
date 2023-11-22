@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "7be1e4b9-2dd6-46f4-b8e6-c50005f78d96"
+				"spark.autotune.trackingId": "38b480a5-93e9-4b66-8eaf-a6d309295e55"
 			}
 		},
 		"metadata": {
@@ -71,7 +71,7 @@
 					"import pyspark.sql.types as T\r\n",
 					"from enum import Enum"
 				],
-				"execution_count": 19
+				"execution_count": 21
 			},
 			{
 				"cell_type": "code",
@@ -92,7 +92,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 2
+				"execution_count": 22
 			},
 			{
 				"cell_type": "code",
@@ -112,7 +112,7 @@
 					"    VM = \"VM\"\r\n",
 					"    SQL = \"SQL\""
 				],
-				"execution_count": 20
+				"execution_count": 23
 			},
 			{
 				"cell_type": "markdown",
@@ -144,7 +144,7 @@
 					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet/**'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 3
+				"execution_count": 24
 			},
 			{
 				"cell_type": "code",
@@ -171,7 +171,7 @@
 					"    .otherwise(F.col('MeterCategory'))\r\n",
 					")"
 				],
-				"execution_count": 4
+				"execution_count": 25
 			},
 			{
 				"cell_type": "markdown",
@@ -207,7 +207,7 @@
 					"    .agg(F.sum('CostSavings').alias('CostSavings')) \\\r\n",
 					"    .orderBy('Date', 'CostSavings')"
 				],
-				"execution_count": 5
+				"execution_count": 26
 			},
 			{
 				"cell_type": "code",
@@ -230,7 +230,7 @@
 					"    .agg(F.sum('EffectiveCost').alias('EffectiveCost')) \\\r\n",
 					"    .orderBy('Date', 'EffectiveCost')"
 				],
-				"execution_count": 68
+				"execution_count": 27
 			},
 			{
 				"cell_type": "markdown",
@@ -266,7 +266,7 @@
 					"unused_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/savings/ri/unused-ri-cost.parquet\"\r\n",
 					"unused_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(unused_path)"
 				],
-				"execution_count": 69
+				"execution_count": 28
 			}
 		]
 	}
