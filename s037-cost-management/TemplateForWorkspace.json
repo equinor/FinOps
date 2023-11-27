@@ -20455,7 +20455,8 @@
 											"physicalType": "nvarchar"
 										},
 										"sink": {
-											"name": "SubscriptionName",
+											"name": "Name",
+											"type": "String",
 											"physicalType": "String"
 										}
 									},
@@ -20526,7 +20527,8 @@
 											"physicalType": "nvarchar"
 										},
 										"sink": {
-											"name": "ApplicationName",
+											"name": "Application",
+											"type": "String",
 											"physicalType": "String"
 										}
 									},
@@ -20598,6 +20600,18 @@
 										},
 										"sink": {
 											"name": "Updated",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "SubscriptionId",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "SubscriptionId",
 											"type": "String",
 											"physicalType": "String"
 										}
@@ -35530,7 +35544,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "844f348f-0656-4867-9065-8244cac54bef"
+						"spark.autotune.trackingId": "c9f90627-d2db-4526-a89d-8e28423ad17d"
 					}
 				},
 				"metadata": {
@@ -35816,7 +35830,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 6
+						"execution_count": 5
 					},
 					{
 						"cell_type": "markdown",
@@ -35849,7 +35863,7 @@
 							"df = df.withColumn(\"Report_Date\", col(\"Report_Date\").cast(\"timestamp\"))"
 						],
 						"outputs": [],
-						"execution_count": 7
+						"execution_count": 6
 					},
 					{
 						"cell_type": "code",
@@ -35881,7 +35895,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 8
+						"execution_count": 14
 					},
 					{
 						"cell_type": "code",
@@ -35940,40 +35954,7 @@
 							"df.write.format('parquet').mode('overwrite').partitionBy('Report_Date_Partition').option('overwriteSchema', 'true').save(optimized_path)"
 						],
 						"outputs": [],
-						"execution_count": 10
-					},
-					{
-						"cell_type": "markdown",
-						"metadata": {
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"# Clear cache in spark session"
-						]
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"currentSparkSession = SparkSession.builder.getOrCreate()\r\n",
-							"spark.catalog.clearCache()"
-						],
-						"outputs": [],
-						"execution_count": 11
+						"execution_count": 15
 					}
 				]
 			},
@@ -39327,7 +39308,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "c9e34503-5148-41ee-bfe1-4311271708ac"
+						"spark.autotune.trackingId": "38b480a5-93e9-4b66-8eaf-a6d309295e55"
 					}
 				},
 				"metadata": {
@@ -39352,8 +39333,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -39373,7 +39353,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"import pyspark.sql.types as T\r\n",
@@ -39612,7 +39591,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "52cdc997-acb6-44d2-932f-243a77621f76"
+						"spark.autotune.trackingId": "1f15f5d1-1e07-4260-91b2-a312b04c4305"
 					}
 				},
 				"metadata": {
@@ -39637,8 +39616,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -39658,7 +39636,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"import pyspark.sql.types as T\r\n",
@@ -40100,7 +40077,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "c4ce39c9-e93b-4d70-bbe7-4243659bee0a"
+						"spark.autotune.trackingId": "aa37b2ac-82cb-441f-967c-ae270e364000"
 					}
 				},
 				"metadata": {
@@ -40125,8 +40102,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -40146,7 +40122,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"import pyspark.sql.types as T"
@@ -41833,7 +41808,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "029b9926-db7b-4e1c-a910-eba6d92240d1"
+						"spark.autotune.trackingId": "9bf31fa2-8755-46f1-bea9-e78946587650"
 					}
 				},
 				"metadata": {
@@ -41858,7 +41833,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -41878,6 +41854,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"storageAccount = 's037costmgmt'"
 						],
@@ -41963,7 +41940,7 @@
 							"subscription_df = spark.read.csv(source_path, header=True, inferSchema=True)"
 						],
 						"outputs": [],
-						"execution_count": 19
+						"execution_count": 11
 					},
 					{
 						"cell_type": "markdown",
@@ -41995,7 +41972,7 @@
 							"subscription_df = subscription_df.where(subscription_df.OperationalStatus != 'Ignored')"
 						],
 						"outputs": [],
-						"execution_count": 5
+						"execution_count": 13
 					},
 					{
 						"cell_type": "code",
@@ -42013,68 +41990,50 @@
 						"source": [
 							"subscription_df = subscription_df.withColumn(\"ProductOwnerUserName\", F.split(subscription_df[\"ProductOwnerEmail\"], \"@\").getItem(0))\r\n",
 							"subscription_df = subscription_df.withColumn(\"TechnicalOwnerUserName\", F.split(subscription_df[\"TechnicalOwnerEmail\"], \"@\").getItem(0))\r\n",
-							"subscription_df.drop(\"ProductOwnerEmail\", \"TechnicalOwnerEmail\")"
-						],
-						"outputs": [],
-						"execution_count": 6
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"# Extract subscription id form Azure subscription URL\r\n",
-							"subscription_df = subscription_df.withColumn('SubscriptionId', F.regexp_extract(subscription_df['SubscriptionURL'], r'subscriptions/([a-f\\d-]+)', 1))"
-						],
-						"outputs": [],
-						"execution_count": 20
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"subscription_df = subscription_df.where(F.col('SubscriptionId') != '')"
-						],
-						"outputs": [],
-						"execution_count": 10
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"subscription_df = subscription_df.dropDuplicates([\"SubscriptionId\"])"
+							"subscription_df = subscription_df.drop(\"ProductOwnerEmail\", \"TechnicalOwnerEmail\")"
 						],
 						"outputs": [],
 						"execution_count": 14
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"subscription_df = subscription_df.where(F.col('SubscriptionId').isNotNull())"
+						],
+						"outputs": [],
+						"execution_count": 15
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# TEMPORARY FIX\r\n",
+							"# TODO:Remove when permanent solution is established  \r\n",
+							"subscription_df = subscription_df.where(F.col('Name') != 'S951-windsomnia')"
+						],
+						"outputs": [],
+						"execution_count": 19
 					},
 					{
 						"cell_type": "markdown",
@@ -42107,7 +42066,7 @@
 							"subscription_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 						],
 						"outputs": [],
-						"execution_count": 10
+						"execution_count": 22
 					},
 					{
 						"cell_type": "code",
