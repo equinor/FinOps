@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "844f348f-0656-4867-9065-8244cac54bef"
+				"spark.autotune.trackingId": "c9f90627-d2db-4526-a89d-8e28423ad17d"
 			}
 		},
 		"metadata": {
@@ -303,7 +303,7 @@
 					"                        print(len(df_temp.columns),len(df.columns))\r\n",
 					""
 				],
-				"execution_count": 6
+				"execution_count": 5
 			},
 			{
 				"cell_type": "markdown",
@@ -335,7 +335,7 @@
 					"# Change the data type of the 'Report_Date' column to Datetime\r\n",
 					"df = df.withColumn(\"Report_Date\", col(\"Report_Date\").cast(\"timestamp\"))"
 				],
-				"execution_count": 7
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -366,7 +366,7 @@
 					")\r\n",
 					""
 				],
-				"execution_count": 8
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -423,39 +423,7 @@
 					"# Save the data with partitioned by Report date\r\n",
 					"df.write.format('parquet').mode('overwrite').partitionBy('Report_Date_Partition').option('overwriteSchema', 'true').save(optimized_path)"
 				],
-				"execution_count": 10
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# Clear cache in spark session"
-				]
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"currentSparkSession = SparkSession.builder.getOrCreate()\r\n",
-					"spark.catalog.clearCache()"
-				],
-				"execution_count": 11
+				"execution_count": 15
 			}
 		]
 	}
