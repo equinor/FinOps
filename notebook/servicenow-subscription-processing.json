@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "e5e01cce-bc75-46a0-8f79-14b85b6ad2f5"
+				"spark.autotune.trackingId": "bee9b132-953d-46a8-bbfa-5646fee92f92"
 			}
 		},
 		"metadata": {
@@ -147,7 +147,7 @@
 					"source_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/latest.csv\"\r\n",
 					"subscription_df = spark.read.csv(source_path, header=True, inferSchema=True)"
 				],
-				"execution_count": 4
+				"execution_count": 11
 			},
 			{
 				"cell_type": "markdown",
@@ -178,7 +178,7 @@
 				"source": [
 					"subscription_df = subscription_df.where(subscription_df.OperationalStatus != 'Ignored')"
 				],
-				"execution_count": 6
+				"execution_count": 13
 			},
 			{
 				"cell_type": "code",
@@ -198,7 +198,7 @@
 					"subscription_df = subscription_df.withColumn(\"TechnicalOwnerUserName\", F.split(subscription_df[\"TechnicalOwnerEmail\"], \"@\").getItem(0))\r\n",
 					"subscription_df = subscription_df.drop(\"ProductOwnerEmail\", \"TechnicalOwnerEmail\")"
 				],
-				"execution_count": 7
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -216,7 +216,7 @@
 				"source": [
 					"subscription_df = subscription_df.where(F.col('SubscriptionId').isNotNull())"
 				],
-				"execution_count": 10
+				"execution_count": 15
 			},
 			{
 				"cell_type": "code",
@@ -232,28 +232,11 @@
 					}
 				},
 				"source": [
-					"duplicates = subscription_df.groupBy(F.col(\"SubscriptionId\")).count().filter(F.col(\"count\") > 1)\r\n",
-					"display(duplicates)"
+					"# TEMPORARY FIX\r\n",
+					"# TODO:Remove when permanent solution is established  \r\n",
+					"subscription_df = subscription_df.where(F.col('Name') != 'S951-windsomnia')"
 				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"subscription_df = subscription_df.dropDuplicates([\"SubscriptionId\"])"
-				],
-				"execution_count": 14
+				"execution_count": 19
 			},
 			{
 				"cell_type": "markdown",
@@ -285,7 +268,7 @@
 					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/latest-optimized.parquet\"\r\n",
 					"subscription_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 				],
-				"execution_count": 10
+				"execution_count": 22
 			},
 			{
 				"cell_type": "code",
