@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "909469da-4889-457c-bb8c-4107ee78d1ae"
+				"spark.autotune.trackingId": "5f803e84-d3b2-4d18-895c-549e2e633078"
 			}
 		},
 		"metadata": {
@@ -291,6 +291,7 @@
 					"                        date = pd.to_datetime(folder.path.split('/')[-1].split('-')[0],format=\"%Y/%m/%d\")\r\n",
 					"                        df_temp = spark.read.format('parquet').load(file_path.path)\r\n",
 					"                        print(date)\r\n",
+					"                        print(\"Filepath:\", file_path.path)\r\n",
 					"                        df_temp = df_temp.withColumn('Report_Date', lit(date))\r\n",
 					"                        df_temp = df_temp.withColumn('Report_Date_Partition', lit(date))\r\n",
 					"                        # Append the dataframe\r\n",
@@ -418,7 +419,7 @@
 				},
 				"source": [
 					"# Invalidate cache as underlying files from most recent month changes frequently\r\n",
-					"spark.sql(\"REFRESH TABLE df\")"
+					"spark.catalog.refreshTable(\"df\")"
 				],
 				"execution_count": null
 			},
