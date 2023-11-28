@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "c9f90627-d2db-4526-a89d-8e28423ad17d"
+				"spark.autotune.trackingId": "909469da-4889-457c-bb8c-4107ee78d1ae"
 			}
 		},
 		"metadata": {
@@ -402,6 +402,25 @@
 				"source": [
 					"# Save it to optimized container"
 				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Invalidate cache as underlying files from most recent month changes frequently\r\n",
+					"spark.sql(\"REFRESH TABLE df\")"
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
