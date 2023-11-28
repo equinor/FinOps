@@ -9206,74 +9206,6 @@
 								}
 							]
 						}
-					},
-					{
-						"name": "runNotebook Daily Extend AI column and WBS tags_v2",
-						"type": "SynapseNotebook",
-						"dependsOn": [
-							{
-								"activity": "If today is the 1st of the Month_copy1",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							},
-							{
-								"activity": "If today is the 1st of the Month",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"notebook": {
-								"referenceName": "Daily Extend AI column and WBS tags_v1",
-								"type": "NotebookReference"
-							},
-							"parameters": {
-								"toDate": {
-									"value": {
-										"value": "@variables('toDate')",
-										"type": "Expression"
-									},
-									"type": "string"
-								},
-								"fromDate": {
-									"value": {
-										"value": "@variables('fromDate')",
-										"type": "Expression"
-									},
-									"type": "string"
-								},
-								"storageAccount": {
-									"value": {
-										"value": "@variables('storageAccount')",
-										"type": "Expression"
-									},
-									"type": "string"
-								}
-							},
-							"snapshot": true,
-							"sparkPool": {
-								"referenceName": "[parameters('Daily Cleanup_pipelineSparkPoolNameRef')]",
-								"type": "BigDataPoolReference"
-							},
-							"executorSize": "Medium",
-							"conf": {
-								"spark.dynamicAllocation.enabled": null,
-								"spark.dynamicAllocation.minExecutors": null,
-								"spark.dynamicAllocation.maxExecutors": null
-							},
-							"driverSize": "Medium",
-							"numExecutors": null
-						}
 					}
 				],
 				"policy": {
@@ -9315,7 +9247,6 @@
 				"[concat(variables('workspaceId'), '/datasets/ds_Daily_Parquet_File')]",
 				"[concat(variables('workspaceId'), '/notebooks/daily-cost-extend-v3')]",
 				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('Daily Cleanup_pipelineSparkPoolNameRef'))]",
-				"[concat(variables('workspaceId'), '/notebooks/Daily Extend AI column and WBS tags_v1')]",
 				"[concat(variables('workspaceId'), '/datasets/ds_Test_delete_file')]",
 				"[concat(variables('workspaceId'), '/datasets/Monthly_Parquet')]"
 			]
@@ -35542,7 +35473,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "c9f90627-d2db-4526-a89d-8e28423ad17d"
+						"spark.autotune.trackingId": "2ccfcff5-9947-4ada-a1dc-557735ceb53e"
 					}
 				},
 				"metadata": {
@@ -35567,7 +35498,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -35815,6 +35747,7 @@
 							"                        date = pd.to_datetime(folder.path.split('/')[-1].split('-')[0],format=\"%Y/%m/%d\")\r\n",
 							"                        df_temp = spark.read.format('parquet').load(file_path.path)\r\n",
 							"                        print(date)\r\n",
+							"                        print(\"Filepath:\", file_path.path)\r\n",
 							"                        df_temp = df_temp.withColumn('Report_Date', lit(date))\r\n",
 							"                        df_temp = df_temp.withColumn('Report_Date_Partition', lit(date))\r\n",
 							"                        # Append the dataframe\r\n",
@@ -35930,6 +35863,27 @@
 						"source": [
 							"# Save it to optimized container"
 						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Invalidate cache as underlying files from most recent month changes frequently\r\n",
+							"df.createOrReplaceTempView(\"df\")\r\n",
+							"spark.catalog.refreshTable(\"df\")"
+						],
+						"outputs": [],
+						"execution_count": null
 					},
 					{
 						"cell_type": "code",
