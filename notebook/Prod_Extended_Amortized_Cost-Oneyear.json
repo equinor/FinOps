@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "5f803e84-d3b2-4d18-895c-549e2e633078"
+				"spark.autotune.trackingId": "c118bc25-240f-47a3-8ab7-5f965b0250ad"
 			}
 		},
 		"metadata": {
@@ -419,6 +419,7 @@
 				},
 				"source": [
 					"# Invalidate cache as underlying files from most recent month changes frequently\r\n",
+					"df.createOrReplaceTempView(\"df\")\r\n",
 					"spark.catalog.refreshTable(\"df\")"
 				],
 				"execution_count": null
