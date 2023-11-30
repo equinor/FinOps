@@ -5,14 +5,7 @@
 			{
 				"name": "HUB Daily File",
 				"type": "SynapseNotebook",
-				"dependsOn": [
-					{
-						"activity": "Set Todays Date",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
+				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -27,13 +20,6 @@
 						"type": "NotebookReference"
 					},
 					"parameters": {
-						"Today": {
-							"value": {
-								"value": "@variables('Today')",
-								"type": "Expression"
-							},
-							"type": "string"
-						},
 						"storageAccount": {
 							"value": {
 								"value": "@variables('storageAccount')",
@@ -52,23 +38,6 @@
 						"spark.dynamicAllocation.enabled": true
 					},
 					"driverSize": "Medium"
-				}
-			},
-			{
-				"name": "Set Todays Date",
-				"type": "SetVariable",
-				"dependsOn": [],
-				"policy": {
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"variableName": "Today",
-					"value": {
-						"value": "@concat(formatDateTime(utcnow(),'yyyy-MM-dd'))",
-						"type": "Expression"
-					}
 				}
 			},
 			{
@@ -159,9 +128,6 @@
 			}
 		],
 		"variables": {
-			"Today": {
-				"type": "String"
-			},
 			"storageAccount": {
 				"type": "String",
 				"defaultValue": "s037costmgmt"
