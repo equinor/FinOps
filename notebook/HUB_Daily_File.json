@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "013eb439-fcf4-4db8-8bb5-3dbe223d1f1e"
+				"spark.autotune.trackingId": "0107f889-6226-48a4-8282-7b6830403b78"
 			}
 		},
 		"metadata": {
@@ -62,7 +62,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 1
+				"execution_count": 15
 			},
 			{
 				"cell_type": "code",
@@ -83,7 +83,7 @@
 					"import pandas as pd\n",
 					"import calendar"
 				],
-				"execution_count": 2
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -99,24 +99,64 @@
 					}
 				},
 				"source": [
-					"start_date = (datetime.now() - timedelta(days=2)).strftime('%Y-%m-%d')\n",
-					"end_date = (datetime.now().strftime('%Y-%m-%d'))\n",
-					"print(start_date)\n",
-					"print(end_date)\n",
-					"last_month = (datetime.now() - relativedelta(months=1)).strftime('%Y%m')\n",
-					"last_month_start = (datetime.now() - relativedelta(months=1)).strftime('%Y%m01')\n",
+					"def get_start_and_end_date():\r\n",
+					"    start_date = (datetime.now() - timedelta(days=2)).strftime('%Y-%m-%d')\r\n",
+					"    print(start_date)\r\n",
+					"\r\n",
+					"    end_date = (datetime.now().strftime('%Y-%m-%d'))\r\n",
+					"    print(end_date)\r\n",
+					"    return start_date, end_date"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def get_dates_last_month():\r\n",
+					"    last_month_start = (datetime.now() - relativedelta(months=1)).strftime('%Y%m01')\r\n",
+					"    print(last_month_start)\r\n",
+					"\r\n",
+					"    input_dt = datetime.now()\r\n",
+					"    first = input_dt.replace(day=1)\r\n",
+					"    res = first - timedelta(days=1)\r\n",
+					"    last_month_end = res.date().strftime('%Y%m%d')\r\n",
+					"    print(last_month_end)\r\n",
+					"\r\n",
+					"    return last_month_start, last_month_end"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"start_date, end_date = get_start_and_end_date()\n",
+					"last_month_start, last_month_end = get_dates_last_month()\n",
 					"\n",
-					"input_dt = datetime.now()\n",
-					"first = input_dt.replace(day=1)#.strftime('%Y%m%d')\n",
-					"res = first - timedelta(days=1)\n",
-					"last_month_end = res.date().strftime('%Y%m%d')\n",
-					"\n",
-					"\n",
-					"print(last_month_start)\n",
-					"print(last_month_end)\n",
 					"print(datetime.now().strftime('%d'))"
 				],
-				"execution_count": 3
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -173,11 +213,7 @@
 					"    print('Removing days before start date...')\n",
 					"    df = df.loc[(df['Date'] >= start_date)]\n",
 					"    print('Removal complete.')\n",
-					"    print(len(df))\n",
-					"\n",
-					"\n",
-					"#if int(datetime.today().strftime ('%d')) <= 3:\n",
-					"#    df = pd.read_parquet()"
+					"    print(len(df))"
 				],
 				"execution_count": 4
 			},
