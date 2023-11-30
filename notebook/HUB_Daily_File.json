@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "b99c2684-153c-4984-b9af-a520add11d36"
+				"spark.autotune.trackingId": "013eb439-fcf4-4db8-8bb5-3dbe223d1f1e"
 			}
 		},
 		"metadata": {
@@ -46,7 +46,8 @@
 				"sparkVersion": "3.3",
 				"nodeCount": 3,
 				"cores": 16,
-				"memory": 112
+				"memory": 112,
+				"automaticScaleJobs": true
 			},
 			"sessionKeepAliveTimeout": 30
 		},
@@ -59,8 +60,6 @@
 					]
 				},
 				"source": [
-					"today = '2023-04-24'\n",
-					"last_month = '202303'\n",
 					"storageAccount = 's037costmgmt'"
 				],
 				"execution_count": 1
@@ -82,9 +81,7 @@
 					"from datetime import timedelta, datetime\n",
 					"from dateutil.relativedelta import relativedelta\n",
 					"import pandas as pd\n",
-					"import calendar\n",
-					"from notebookutils import mssparkutils\n",
-					"from pyspark.sql import SparkSession"
+					"import calendar"
 				],
 				"execution_count": 2
 			},
@@ -228,13 +225,6 @@
 					"        (df['ResourceId'].astype(str).str.contains('/virtualMachineScaleSets/'))) &\n",
 					"        ((df['MeterSubCategory'].astype(str).str.contains('Windows')) |\n",
 					"        (df['ServiceInfo2'].astype(str).str.contains('Windows Server BYOL')))]]\n",
-					"\n",
-					"#df = df.loc[df.index[(df['ResourceId'].astype(str).str.contains('/virtualMachines/') |\n",
-					"#(df['ResourceId'].astype(str).str.contains('/virtualMachineScaleSets/')))]]\n",
-					"\n",
-					"#df = df.loc[df.index[((df['MeterSubCategory'].astype(str).str.contains('Windows')) |\n",
-					"#    (df['ServiceInfo2'].astype(str).str.contains('Windows Server BYOL'))) ]]\n",
-					"    #& (df['MeterCategory'] == 'Virtual Machines')]]\n",
 					"\n",
 					"df.reset_index(inplace=True, drop=True)\n",
 					"print(len(df))\n",
