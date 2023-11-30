@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "de97b778-f49c-480d-b6f5-c9049dba6046"
+				"spark.autotune.trackingId": "9977488f-497d-4d0a-8191-b4dd98663830"
 			}
 		},
 		"metadata": {
@@ -62,7 +62,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 59
+				"execution_count": 73
 			},
 			{
 				"cell_type": "code",
@@ -86,7 +86,7 @@
 					"from notebookutils import mssparkutils\n",
 					"from azure.storage.blob import BlobServiceClient"
 				],
-				"execution_count": 60
+				"execution_count": 74
 			},
 			{
 				"cell_type": "code",
@@ -105,7 +105,7 @@
 					"KEY_VAULT_NAME = 'acm-toolkit-kv'\r\n",
 					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'"
 				],
-				"execution_count": 61
+				"execution_count": 75
 			},
 			{
 				"cell_type": "code",
@@ -123,7 +123,7 @@
 				"source": [
 					"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 				],
-				"execution_count": 62
+				"execution_count": 76
 			},
 			{
 				"cell_type": "code",
@@ -147,7 +147,7 @@
 					"    print(end_date)\r\n",
 					"    return start_date, end_date"
 				],
-				"execution_count": 63
+				"execution_count": 77
 			},
 			{
 				"cell_type": "code",
@@ -175,7 +175,7 @@
 					"\r\n",
 					"    return last_month_start, last_month_end"
 				],
-				"execution_count": 64
+				"execution_count": 78
 			},
 			{
 				"cell_type": "code",
@@ -206,7 +206,7 @@
 					"    cost_df = cost_df.loc[(cost_df['Date'] >= start_date)]\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 65
+				"execution_count": 79
 			},
 			{
 				"cell_type": "markdown",
@@ -243,7 +243,7 @@
 					"print('Writing pricesheet to destination csv file')\r\n",
 					"pricesheet.to_csv(pricesheet_target_path)"
 				],
-				"execution_count": 66
+				"execution_count": 80
 			},
 			{
 				"cell_type": "markdown",
@@ -276,7 +276,7 @@
 					"vm_cost_df = load_cost_data(start_date)\r\n",
 					"sql_cost_df = vm_cost_df.copy()"
 				],
-				"execution_count": 67
+				"execution_count": 81
 			},
 			{
 				"cell_type": "markdown",
@@ -310,7 +310,7 @@
 					"    'CostInBillingCurrency', 'ServiceInfo2', 'PartNumber', 'AdditionalInfo']\n",
 					"vm_cost_df.drop(columns=vm_cost_df.columns.difference(vm_columns_to_keep), inplace=True)"
 				],
-				"execution_count": 68
+				"execution_count": 82
 			},
 			{
 				"cell_type": "code",
@@ -338,7 +338,7 @@
 					"print(len(vm_cost_df))\n",
 					"print(vm_cost_df)"
 				],
-				"execution_count": 69
+				"execution_count": 83
 			},
 			{
 				"cell_type": "markdown",
@@ -384,7 +384,7 @@
 					"sql_metersubcategory_array = sql_config['MeterSubCategory']\r\n",
 					"print(sql_metersubcategory_array)"
 				],
-				"execution_count": 70
+				"execution_count": 84
 			},
 			{
 				"cell_type": "markdown",
@@ -419,7 +419,7 @@
 					"\r\n",
 					"sql_cost_df.drop(columns=sql_cost_df.columns.difference(sql_columns_to_keep), inplace=True)"
 				],
-				"execution_count": 71
+				"execution_count": 85
 			},
 			{
 				"cell_type": "code",
@@ -443,7 +443,7 @@
 					"print(len(sql_cost_df))\r\n",
 					"print(sql_cost_df)"
 				],
-				"execution_count": 72
+				"execution_count": 86
 			},
 			{
 				"cell_type": "markdown",
@@ -472,25 +472,26 @@
 					}
 				},
 				"source": [
-					"output_path = 'abfss://win-activity@hubautomation.dfs.core.windows.net/usage_details/'\n",
+					"win_output_path = 'abfss://win-activity@hubautomation.dfs.core.windows.net/usage_details/'\n",
+					"sql_output_path = 'abfss://sql-activity@hubautomation.dfs.core.windows.net/usage_details/'\n",
 					"\n",
 					"# Write VM usage details\n",
-					"print('Writing DataFrame to parquet file: ', output_path + 'vm_' + end_date + '.csv')\n",
-					"vm_cost_df.to_csv(output_path + 'vm_' + end_date + '.csv')\n",
+					"print('Writing DataFrame to parquet file: ', win_output_path + 'vm_' + end_date + '.csv')\n",
+					"vm_cost_df.to_csv(win_output_path + 'vm_' + end_date + '.csv')\n",
 					"\n",
-					"print('Writing DataFrame to parquet file: ', output_path + 'vm_today.csv')\n",
-					"vm_cost_df.to_csv(output_path + 'vm_today.csv')\n",
+					"print('Writing DataFrame to parquet file: ', win_output_path + 'vm_today.csv')\n",
+					"vm_cost_df.to_csv(win_output_path + 'vm_today.csv')\n",
 					"\n",
 					"# Write SQL usage details\n",
-					"print('Writing DataFrame to parquet file: ', output_path + 'sql_' + end_date + '.csv')\n",
-					"sql_cost_df.to_csv(output_path + 'sql_' + end_date + '.csv')\n",
+					"print('Writing DataFrame to parquet file: ', sql_output_path + 'sql_' + end_date + '.csv')\n",
+					"sql_cost_df.to_csv(sql_output_path + 'sql_' + end_date + '.csv')\n",
 					"\n",
-					"print('Writing DataFrame to parquet file: ', output_path + 'sql_today.csv')\n",
-					"sql_cost_df.to_csv(output_path + 'sql_today.csv')\n",
+					"print('Writing DataFrame to parquet file: ', sql_output_path + 'sql_today.csv')\n",
+					"sql_cost_df.to_csv(sql_output_path + 'sql_today.csv')\n",
 					"\n",
 					"print('File write complete.')"
 				],
-				"execution_count": 7
+				"execution_count": 87
 			}
 		]
 	}
