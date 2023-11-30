@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "eb679521-7afc-430d-86fa-d23009dccb50"
+				"spark.autotune.trackingId": "c1168926-5016-4986-bf86-4ada020b7812"
 			}
 		},
 		"metadata": {
@@ -72,7 +72,7 @@
 					"# Pipeline parameter\r\n",
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 2
+				"execution_count": 56
 			},
 			{
 				"cell_type": "code",
@@ -81,7 +81,7 @@
 					"import pyspark.sql.types as T\r\n",
 					"from pyspark.sql.window import Window"
 				],
-				"execution_count": 3
+				"execution_count": 57
 			},
 			{
 				"cell_type": "code",
@@ -97,25 +97,11 @@
 					}
 				},
 				"source": [
-					"def preprocessing_anomaly_detection(df):\r\n",
-					"\r\n",
-					"    # Selecting just relevant columns for anomaly detection\r\n",
-					"    new_df = df.select('SubscriptionName', 'ResourceGroup', 'Date', 'CostInBillingCurrency')\r\n",
-					"\r\n",
-					"    # Filtering out data older than 90 days to get only the latest historical data\r\n",
-					"    threshold = F.date_sub(F.current_date(), 90)\r\n",
-					"    filtered_df = new_df.filter(F.col('Date') >= threshold)\r\n",
-					"\r\n",
-					"    # Grouping the data by each filtering level and getting the sum of all costs related to the filtering columns\r\n",
-					"    grouped_df = filtered_df.groupBy('SubscriptionName',\r\n",
-					"                                     'ResourceGroup',\r\n",
-					"                                     'Date').agg(F.round(\r\n",
-					"                                                  F.sum(\r\n",
-					"                                                   F.col('CostInBillingCurrency')), 1).alias('TotalCost'))\r\n",
-					"\r\n",
-					"    return grouped_df"
+					"# Constants\r\n",
+					"DETECTOR_WINDOW_SIZE = 60\r\n",
+					"ANOMALY_COST_THRESHOLD = 10000"
 				],
-				"execution_count": 4
+				"execution_count": 58
 			},
 			{
 				"cell_type": "code",
@@ -129,165 +115,245 @@
 							"deleting": false
 						}
 					}
-				},
-				"source": [
-					"def anomaly_detection_classifier(df,\r\n",
-					"                                 filter_column_1,\r\n",
-					"                                 filter_column_2,\r\n",
-					"                                 window_size=30):\r\n",
-					"\r\n",
-					"    # Setting a partition window to divide the dataset in the filter options and order it by the Date\r\n",
-					"    windowSpec = Window.partitionBy(filter_column_1, filter_column_2).orderBy('Date').rowsBetween(-window_size, 0)\r\n",
-					"\r\n",
-					"    # Set a moving average that is set by the n previous days\r\n",
-					"    costs_by_dates = df.withColumn('MovingAverage', F.round(F.avg(F.col('TotalCost')).over(windowSpec), 1))\r\n",
-					"\r\n",
-					"    # Set a moving standard deviation of the same period\r\n",
-					"    costs_by_dates = costs_by_dates.withColumn('MovingStdDev', F.round(F.stddev(F.col('TotalCost')).over(windowSpec), 1))\r\n",
-					"\r\n",
-					"    # Setting a scaling mechanism on the threshold in order to reduce the threshold when the costs are very high\r\n",
-					"    am_curve = lambda x: 13.6 * x ** -0.22\r\n",
-					"    \r\n",
-					"    # Set a minimum scale of 0.1 and a maximum scale of 3.5\r\n",
-					"    costs_by_dates = costs_by_dates.withColumn('Scaler', F.when(F.col('MovingStdDev') > 0.1, am_curve(F.col('MovingStdDev'))).otherwise(F.lit(0.1)))\r\n",
-					"    costs_by_dates = costs_by_dates.withColumn('Scaler', F.when(F.col('Scaler') > 3.5, F.lit(3.5)).otherwise(F.col('Scaler')))\r\n",
-					"\r\n",
-					"    costs_by_dates = costs_by_dates.withColumn('Threshold', F.col('MovingAverage') + (F.col('MovingStdDev') * F.col('Scaler')))\r\n",
-					"\r\n",
-					"     # If the cost is more than the stddev threshold (+ some noise cancellation), then set the datapoint to be 1, otherwise 0\r\n",
-					"    costs_by_dates = costs_by_dates.withColumn('AboveThreshold', F.when(F.col('TotalCost') > (F.col('Threshold') + 1), F.lit(1))\\\r\n",
-					"                                                                                 .otherwise(F.lit(0)))\r\n",
-					"    return costs_by_dates"
-				],
-				"execution_count": 5
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"def anomaly_notification_filtration(df,\r\n",
-					"                                    filter_column_1,\r\n",
-					"                                    filter_column_2):\r\n",
-					"\r\n",
-					"    # Only consider cost items that is above threshold\r\n",
-					"    thres_df = df.filter(F.col('AboveThreshold') == 1)\r\n",
-					"\r\n",
-					"    # Set rolling window to capture date of previous anomaly in resource group\r\n",
-					"    window_spec = Window.partitionBy('SubscriptionName', 'ResourceGroup').orderBy('Date')\r\n",
-					"    thres_df = thres_df.withColumn('PrevDate', F.lag('Date').over(window_spec))\r\n",
-					"\r\n",
-					"    # Compute number of days between anomalies in resource group\r\n",
-					"    thres_df = thres_df.withColumn('DateDiff', F.datediff(F.col('Date'), F.col('PrevDate')))\r\n",
-					"\r\n",
-					"    # Notify anomaly if anomalies haven't occured on subsequent days\r\n",
-					"    notify_mask = (F.col('DateDiff').isNull()) | (F.col('DateDiff') > 1)\r\n",
-					"    thres_df = thres_df.withColumn('NotifyAnomaly', F.when( notify_mask, F.lit(True)).otherwise(F.lit(False)))\r\n",
-					"\r\n",
-					"    # Only use cost items exceeding 10.000 NOK\r\n",
-					"    thres_df = thres_df.filter(F.col('TotalCost') >= 10000)\r\n",
-					"\r\n",
-					"    # Dropping insignificant columns\r\n",
-					"    dropped_df = thres_df.drop('Scaler', 'PrevDate', 'DateDiff')\r\n",
-					"\r\n",
-					"    # Filtering only the relevant data\r\n",
-					"    filtered_df = dropped_df.filter(F.col('NotifyAnomaly') == True)\r\n",
-					"\r\n",
-					"    return filtered_df"
-				],
-				"execution_count": 6
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"def merge_with_subscription(input_df, subscription_path):\r\n",
-					"\r\n",
-					"    # Reading in useful columns from the subscription.json file\r\n",
-					"    sub_df = spark.read.format('parquet').load(subscription_path).select('SubscriptionName', 'ProductOwnerEmail', 'TechnicalOwnerEmail')\r\n",
-					"    sub_df = sub_df.withColumnRenamed('SubscriptionName','SNSubscriptionName')\r\n",
-					"\r\n",
-					"    # Merging on subscription names\r\n",
-					"    merged_df = input_df.join(sub_df, on=input_df.SubscriptionName == sub_df.SNSubscriptionName, how='left')\r\n",
-					"    \r\n",
-					"    # Dropping the right-join column to avoid duplicate records\r\n",
-					"    merged_df = merged_df.drop('SNSubscriptionName')\r\n",
-					"\r\n",
-					"    return merged_df"
-				],
-				"execution_count": 7
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
 				},
 				"source": [
 					"source_path = \"abfss://usage@\" + storageAccount + \".dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear.parquet\"\r\n",
-					"destination_path = \"abfss://usage@\" + storageAccount + \".dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_AnomalyDetection_3mnth.parquet\"\r\n",
-					"subscription_path = \"abfss://usage@\" + storageAccount + \".dfs.core.windows.net/subscriptions/servicenow/latest-optimized.parquet\"\r\n",
-					"\r\n",
-					"print(f\"Reading data from: {source_path}\")\r\n",
-					"df = spark.read.format('parquet').load(source_path)\r\n",
-					"\r\n",
-					"preproc_data = preprocessing_anomaly_detection(df)\r\n",
-					"\r\n",
-					"\r\n",
-					"filter_1 = 'SubscriptionName'\r\n",
-					"filter_2 = 'ResourceGroup'\r\n",
-					"\r\n",
-					"\r\n",
-					"print(\"Running the Anomaly Detection Classifier for Subscription-partitioned data\")\r\n",
-					"anomaly_df =  anomaly_detection_classifier(df=preproc_data,\r\n",
-					"                                           filter_column_1=filter_1,\r\n",
-					"                                           filter_column_2=filter_2,\r\n",
-					"                                           window_size=60)\r\n",
-					"\r\n",
-					"\r\n",
-					"filtered_df = anomaly_notification_filtration(anomaly_df,\r\n",
-					"                                              filter_column_1=filter_1,\r\n",
-					"                                              filter_column_2=filter_2)\r\n",
-					"if filtered_df.count() == 0:\r\n",
-					"    print('No Anomalies today!')\r\n",
-					"else:\r\n",
-					"    merged_df = merge_with_subscription(filtered_df, \r\n",
-					"                                        subscription_path)\r\n",
-					"\r\n",
-					"\r\n",
-					"    print(f\"Writing classification data to this path: {destination_path}\")\r\n",
-					"    merged_df.write.format('parquet').mode('overwrite').save(destination_path)\r\n",
-					"    print('Write Complete!')"
+					"cost_df = spark.read.format('parquet').load(source_path)"
 				],
-				"execution_count": 8
+				"execution_count": 59
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Preprocess cost data"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Selecting just relevant columns for anomaly detection\r\n",
+					"cost_df = cost_df.select('SubscriptionName', 'ResourceGroup', 'Date', 'CostInBillingCurrency')\r\n",
+					"\r\n",
+					"# Filtering out data older than 90 days to get only the latest historical data\r\n",
+					"threshold = F.date_sub(F.current_date(), 90)\r\n",
+					"cost_df = cost_df.filter(F.col('Date') >= threshold)\r\n",
+					"\r\n",
+					"# Grouping the data by each filtering level and getting the sum of all costs related to the filtering columns\r\n",
+					"anomaly_df = cost_df.groupBy('SubscriptionName',\r\n",
+					"                                    'ResourceGroup',\r\n",
+					"                                    'Date').agg(F.round(\r\n",
+					"                                                F.sum(\r\n",
+					"                                                F.col('CostInBillingCurrency')), 1).alias('TotalCost'))"
+				],
+				"execution_count": 60
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Classify anomalies"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Setting a partition window to divide the dataset in the filter options and order it by the Date\r\n",
+					"windowSpec = Window.partitionBy('SubscriptionName', 'ResourceGroup').orderBy('Date').rowsBetween(-DETECTOR_WINDOW_SIZE, 0)\r\n",
+					"\r\n",
+					"# Set a moving average that is set by the n previous days\r\n",
+					"anomaly_df = anomaly_df.withColumn('MovingAverage', F.round(F.avg(F.col('TotalCost')).over(windowSpec), 1))\r\n",
+					"\r\n",
+					"# Set a moving standard deviation of the same period\r\n",
+					"anomaly_df = anomaly_df.withColumn('MovingStdDev', F.round(F.stddev(F.col('TotalCost')).over(windowSpec), 1))\r\n",
+					"\r\n",
+					"# Setting a scaling mechanism on the threshold in order to reduce the threshold when the costs are very high\r\n",
+					"am_curve = lambda x: 13.6 * x ** -0.22\r\n",
+					"\r\n",
+					"# Set a minimum scale of 0.1 and a maximum scale of 3.5\r\n",
+					"anomaly_df = anomaly_df.withColumn('Scaler', F.when(F.col('MovingStdDev') > 0.1, am_curve(F.col('MovingStdDev'))).otherwise(F.lit(0.1)))\r\n",
+					"anomaly_df = anomaly_df.withColumn('Scaler', F.when(F.col('Scaler') > 3.5, F.lit(3.5)).otherwise(F.col('Scaler')))\r\n",
+					"\r\n",
+					"anomaly_df = anomaly_df.withColumn('Threshold', F.col('MovingAverage') + (F.col('MovingStdDev') * F.col('Scaler')))\r\n",
+					"\r\n",
+					"# If the cost is more than the stddev threshold (+ some noise cancellation), then set the datapoint to be 1, otherwise 0\r\n",
+					"anomaly_df = anomaly_df.withColumn('AboveThreshold', F.when(F.col('TotalCost') > (F.col('Threshold') + 1), F.lit(1))\\\r\n",
+					"                                                                                .otherwise(F.lit(0)))"
+				],
+				"execution_count": 61
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Filter detected anomalies"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					" # Only consider cost items that is above threshold\r\n",
+					"notification_df = anomaly_df.filter(F.col('AboveThreshold') == 1)\r\n",
+					"\r\n",
+					"# Set rolling window to capture date of previous anomaly in resource group\r\n",
+					"window_spec = Window.partitionBy('SubscriptionName', 'ResourceGroup').orderBy('Date')\r\n",
+					"notification_df = notification_df.withColumn('PrevDate', F.lag('Date').over(window_spec))\r\n",
+					"\r\n",
+					"# Compute number of days between anomalies in resource group\r\n",
+					"notification_df = notification_df.withColumn('DateDiff', F.datediff(F.col('Date'), F.col('PrevDate')))\r\n",
+					"\r\n",
+					"# Notify anomaly if anomalies haven't occured on subsequent days\r\n",
+					"notify_mask = (F.col('DateDiff').isNull()) | (F.col('DateDiff') > 1)\r\n",
+					"notification_df = notification_df.withColumn('NotifyAnomaly', F.when( notify_mask, F.lit(True)).otherwise(F.lit(False)))\r\n",
+					"\r\n",
+					"# Only use cost items exceeding 10.000 NOK\r\n",
+					"notification_df = notification_df.filter(F.col('TotalCost') >= ANOMALY_COST_THRESHOLD)\r\n",
+					"\r\n",
+					"# Dropping insignificant columns\r\n",
+					"notification_df = notification_df.drop('Scaler', 'PrevDate', 'DateDiff')\r\n",
+					"\r\n",
+					"# Filtering only the relevant data\r\n",
+					"notification_df = notification_df.filter(F.col('NotifyAnomaly') == True)"
+				],
+				"execution_count": 62
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Combine anomalies with subscription data"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"subscription_path = \"abfss://usage@\" + storageAccount + \".dfs.core.windows.net/subscriptions/servicenow/latest-optimized.parquet\"\r\n",
+					"sub_df = spark.read.format('parquet').load(subscription_path)\r\n",
+					"\r\n",
+					"sub_df = sub_df.select('Name', 'ProductOwnerUserName', 'TechnicalOwnerUserName')\r\n",
+					"sub_df = sub_df.withColumnRenamed('Name','SNSubscriptionName')"
+				],
+				"execution_count": 63
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Merging on subscription names\r\n",
+					"notification_df = notification_df.join(sub_df, on=notification_df.SubscriptionName == sub_df.SNSubscriptionName, how='left')\r\n",
+					"notification_df = notification_df.drop('SNSubscriptionName')"
+				],
+				"execution_count": 64
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Write anomalies to optimized container"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"destination_path = \"abfss://usage@\" + storageAccount + \".dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_AnomalyDetection_3mnth.parquet\"\r\n",
+					"notification_df.write.format('parquet').mode('overwrite').save(destination_path)"
+				],
+				"execution_count": 66
 			},
 			{
 				"cell_type": "code",
@@ -304,9 +370,9 @@
 					"collapsed": false
 				},
 				"source": [
-					"# display(anomaly_df.filter((F.col('SubscriptionName') == 'S034-Geology-Geophysics') & (F.col('ResourceGroup') == 'S034-WE-CC-1')))"
+					"# display(anomaly_df.filter((F.col('SubscriptionName') == 'Unassigned') & (F.col('ResourceGroup') == '')))"
 				],
-				"execution_count": 9
+				"execution_count": 67
 			},
 			{
 				"cell_type": "markdown",
@@ -362,7 +428,7 @@
 					"# plt.legend()\r\n",
 					"# plt.show()"
 				],
-				"execution_count": 10
+				"execution_count": 68
 			}
 		]
 	}
