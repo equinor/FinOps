@@ -32842,7 +32842,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "06eb2233-fa27-411b-b820-aedc3376a12e"
+						"spark.autotune.trackingId": "a6094713-336a-4c43-9e99-e81eabe642fc"
 					}
 				},
 				"metadata": {
@@ -32867,7 +32867,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -40635,7 +40636,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "6f45c4bc-d5cc-4cd8-b580-61a4d3502bba"
+						"spark.autotune.trackingId": "67fcecfa-a4af-4dc0-8f49-46fb061718b5"
 					}
 				},
 				"metadata": {
@@ -40660,7 +40661,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -40689,6 +40691,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"def get_last_day_prev_month(to_date):\r\n",
 							"    current_month = int(to_date[4:6])\r\n",
@@ -41140,7 +41143,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "5a91ba28-46f8-40bc-b72c-5d507e3d17fa"
+						"spark.autotune.trackingId": "ac88e1b1-afce-4bd1-a049-a79bec71ca3b"
 					}
 				},
 				"metadata": {
@@ -41165,7 +41168,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -41191,13 +41195,13 @@
 							]
 						},
 						"source": [
-							"toDate = '20231130'\n",
-							"fromDate = '20231101'\n",
+							"toDate = '20231231'\n",
+							"fromDate = '20231201'\n",
 							"container = 'usage'\n",
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 1
+						"execution_count": 2
 					},
 					{
 						"cell_type": "code",
@@ -41225,7 +41229,7 @@
 							"import pyspark.sql.types as T"
 						],
 						"outputs": [],
-						"execution_count": 2
+						"execution_count": 3
 					},
 					{
 						"cell_type": "markdown",
@@ -41257,7 +41261,7 @@
 							"%run /cost-extend-utilities"
 						],
 						"outputs": [],
-						"execution_count": 3
+						"execution_count": 7
 					},
 					{
 						"cell_type": "code",
@@ -41274,14 +41278,14 @@
 						},
 						"source": [
 							"def pre_process_subscriptions(subscriptions_df):\r\n",
-							"    subscriptions_df = subscriptions_df.select('SubscriptionId', 'OperationalWBS', 'ApplicationName')\r\n",
+							"    subscriptions_df = subscriptions_df.select('SubscriptionId', 'OperationalWBS', 'Application')\r\n",
 							"    subscriptions_df = subscriptions_df.withColumnRenamed('SubscriptionId', 'SubId')\r\n",
 							"    subscriptions_df = subscriptions_df.withColumnRenamed('OperationalWBS', 'SubscriptionWBS')\r\n",
-							"    subscriptions_df = subscriptions_df.withColumnRenamed('ApplicationName', 'SubscriptionServiceNow-App')\r\n",
+							"    subscriptions_df = subscriptions_df.withColumnRenamed('Application', 'SubscriptionServiceNow-App')\r\n",
 							"    return subscriptions_df"
 						],
 						"outputs": [],
-						"execution_count": 4
+						"execution_count": 11
 					},
 					{
 						"cell_type": "code",
@@ -41305,7 +41309,7 @@
 							"    print('File write complete!')"
 						],
 						"outputs": [],
-						"execution_count": 5
+						"execution_count": 9
 					},
 					{
 						"cell_type": "markdown",
@@ -41384,7 +41388,7 @@
 							"    print(' ')"
 						],
 						"outputs": [],
-						"execution_count": 6
+						"execution_count": 12
 					}
 				]
 			},
@@ -41415,7 +41419,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "d94f9764-63df-485e-88d2-48cb5fde51ee"
+						"spark.autotune.trackingId": "11888e53-dd4f-4f16-9895-d9a0638e4751"
 					}
 				},
 				"metadata": {
@@ -41440,7 +41444,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -41573,10 +41578,10 @@
 							"def load_and_process_servicenow_subscriptions(subscription_path):\r\n",
 							"    subscription_df = spark.read.format('parquet').load(subscription_path)\r\n",
 							"    \r\n",
-							"    subscriptions_df = subscriptions_df.select('SubscriptionId', 'OperationalWBS', 'ApplicationName')\r\n",
+							"    subscriptions_df = subscriptions_df.select('SubscriptionId', 'OperationalWBS', 'Application')\r\n",
 							"    subscriptions_df = subscriptions_df.withColumnRenamed('SubscriptionId', 'SubId')\r\n",
 							"    subscriptions_df = subscriptions_df.withColumnRenamed('OperationalWBS', 'SubscriptionWBS')\r\n",
-							"    subscriptions_df = subscriptions_df.withColumnRenamed('ApplicationName', 'SubscriptionServiceNow-App')\r\n",
+							"    subscriptions_df = subscriptions_df.withColumnRenamed('Application', 'SubscriptionServiceNow-App')\r\n",
 							"    return subscriptions_df\r\n",
 							"\r\n",
 							"def load_and_process_applications(application_path):\r\n",
@@ -42004,7 +42009,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "73837d20-d614-477b-b491-58ff8a6418c7"
+						"spark.autotune.trackingId": "c17e6167-4886-4878-866d-d96d63ecfd3b"
 					}
 				},
 				"metadata": {
@@ -42029,7 +42034,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -42049,6 +42055,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"storageAccount = 's037costmgmt'"
 						],
