@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "5a91ba28-46f8-40bc-b72c-5d507e3d17fa"
+				"spark.autotune.trackingId": "a7da27e6-4de9-4596-b496-75eed0d9eb13"
 			}
 		},
 		"metadata": {
@@ -73,12 +73,12 @@
 					]
 				},
 				"source": [
-					"toDate = '20231130'\n",
-					"fromDate = '20231101'\n",
+					"toDate = '20231231'\n",
+					"fromDate = '20231201'\n",
 					"container = 'usage'\n",
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 1
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -105,7 +105,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 2
+				"execution_count": 3
 			},
 			{
 				"cell_type": "markdown",
@@ -136,7 +136,7 @@
 				"source": [
 					"%run /cost-extend-utilities"
 				],
-				"execution_count": 3
+				"execution_count": 7
 			},
 			{
 				"cell_type": "code",
@@ -153,13 +153,13 @@
 				},
 				"source": [
 					"def pre_process_subscriptions(subscriptions_df):\r\n",
-					"    subscriptions_df = subscriptions_df.select('SubscriptionId', 'OperationalWBS', 'ApplicationName')\r\n",
+					"    subscriptions_df = subscriptions_df.select('SubscriptionId', 'OperationalWBS', 'Application')\r\n",
 					"    subscriptions_df = subscriptions_df.withColumnRenamed('SubscriptionId', 'SubId')\r\n",
 					"    subscriptions_df = subscriptions_df.withColumnRenamed('OperationalWBS', 'SubscriptionWBS')\r\n",
-					"    subscriptions_df = subscriptions_df.withColumnRenamed('ApplicationName', 'SubscriptionServiceNow-App')\r\n",
+					"    subscriptions_df = subscriptions_df.withColumnRenamed('Application', 'SubscriptionServiceNow-App')\r\n",
 					"    return subscriptions_df"
 				],
-				"execution_count": 4
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -182,7 +182,7 @@
 					"    cost_df.write.format('parquet').mode('overwrite').option('path', destinationFilename).save()\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": 5
+				"execution_count": 9
 			},
 			{
 				"cell_type": "markdown",
@@ -260,7 +260,7 @@
 					"    \n",
 					"    print(' ')"
 				],
-				"execution_count": 6
+				"execution_count": 12
 			}
 		]
 	}
