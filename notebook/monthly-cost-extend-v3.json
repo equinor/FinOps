@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "d94f9764-63df-485e-88d2-48cb5fde51ee"
+				"spark.autotune.trackingId": "f2639944-bcf5-46a2-a4bd-78756bf29b1d"
 			}
 		},
 		"metadata": {
@@ -177,10 +177,10 @@
 					"def load_and_process_servicenow_subscriptions(subscription_path):\r\n",
 					"    subscription_df = spark.read.format('parquet').load(subscription_path)\r\n",
 					"    \r\n",
-					"    subscriptions_df = subscriptions_df.select('SubscriptionId', 'OperationalWBS', 'ApplicationName')\r\n",
+					"    subscriptions_df = subscriptions_df.select('SubscriptionId', 'OperationalWBS', 'Application')\r\n",
 					"    subscriptions_df = subscriptions_df.withColumnRenamed('SubscriptionId', 'SubId')\r\n",
 					"    subscriptions_df = subscriptions_df.withColumnRenamed('OperationalWBS', 'SubscriptionWBS')\r\n",
-					"    subscriptions_df = subscriptions_df.withColumnRenamed('ApplicationName', 'SubscriptionServiceNow-App')\r\n",
+					"    subscriptions_df = subscriptions_df.withColumnRenamed('Application', 'SubscriptionServiceNow-App')\r\n",
 					"    return subscriptions_df\r\n",
 					"\r\n",
 					"def load_and_process_applications(application_path):\r\n",
