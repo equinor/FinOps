@@ -32842,7 +32842,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "a6094713-336a-4c43-9e99-e81eabe642fc"
+						"spark.autotune.trackingId": "06eb2233-fa27-411b-b820-aedc3376a12e"
 					}
 				},
 				"metadata": {
@@ -32867,8 +32867,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -40636,7 +40635,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "67fcecfa-a4af-4dc0-8f49-46fb061718b5"
+						"spark.autotune.trackingId": "6f45c4bc-d5cc-4cd8-b580-61a4d3502bba"
 					}
 				},
 				"metadata": {
@@ -40661,8 +40660,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -40691,7 +40689,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"def get_last_day_prev_month(to_date):\r\n",
 							"    current_month = int(to_date[4:6])\r\n",
@@ -41143,7 +41140,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "ac88e1b1-afce-4bd1-a049-a79bec71ca3b"
+						"spark.autotune.trackingId": "a7da27e6-4de9-4596-b496-75eed0d9eb13"
 					}
 				},
 				"metadata": {
@@ -41168,8 +41165,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -41419,7 +41415,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "11888e53-dd4f-4f16-9895-d9a0638e4751"
+						"spark.autotune.trackingId": "c6db9609-f847-49f6-aa19-96512224030f"
 					}
 				},
 				"metadata": {
@@ -41471,13 +41467,13 @@
 							]
 						},
 						"source": [
-							"toDate = '20230531'\n",
-							"fromDate = '20230501'\n",
+							"toDate = '20231130'\n",
+							"fromDate = '20231101'\n",
 							"container = 'usage'\n",
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 93
+						"execution_count": 14
 					},
 					{
 						"cell_type": "code",
@@ -41505,7 +41501,7 @@
 							"import pyspark.sql.types as T"
 						],
 						"outputs": [],
-						"execution_count": 94
+						"execution_count": 15
 					},
 					{
 						"cell_type": "markdown",
@@ -41537,7 +41533,7 @@
 							"%run /cost-extend-utilities"
 						],
 						"outputs": [],
-						"execution_count": 95
+						"execution_count": 16
 					},
 					{
 						"cell_type": "code",
@@ -41577,12 +41573,11 @@
 							"\r\n",
 							"def load_and_process_servicenow_subscriptions(subscription_path):\r\n",
 							"    subscription_df = spark.read.format('parquet').load(subscription_path)\r\n",
-							"    \r\n",
-							"    subscriptions_df = subscriptions_df.select('SubscriptionId', 'OperationalWBS', 'Application')\r\n",
-							"    subscriptions_df = subscriptions_df.withColumnRenamed('SubscriptionId', 'SubId')\r\n",
-							"    subscriptions_df = subscriptions_df.withColumnRenamed('OperationalWBS', 'SubscriptionWBS')\r\n",
-							"    subscriptions_df = subscriptions_df.withColumnRenamed('Application', 'SubscriptionServiceNow-App')\r\n",
-							"    return subscriptions_df\r\n",
+							"    subscription_df = subscription_df.select('SubscriptionId', 'OperationalWBS', 'Application')\r\n",
+							"    subscription_df = subscription_df.withColumnRenamed('SubscriptionId', 'SubId')\r\n",
+							"    subscription_df = subscription_df.withColumnRenamed('OperationalWBS', 'SubscriptionWBS')\r\n",
+							"    subscription_df = subscription_df.withColumnRenamed('Application', 'SubscriptionServiceNow-App')\r\n",
+							"    return subscription_df\r\n",
 							"\r\n",
 							"def load_and_process_applications(application_path):\r\n",
 							"    application_df = spark.read.format('parquet').load(application_path)\r\n",
@@ -41590,7 +41585,7 @@
 							"    return application_df"
 						],
 						"outputs": [],
-						"execution_count": 96
+						"execution_count": 17
 					},
 					{
 						"cell_type": "code",
@@ -41614,7 +41609,7 @@
 							"    print('File write complete!')"
 						],
 						"outputs": [],
-						"execution_count": 97
+						"execution_count": 18
 					},
 					{
 						"cell_type": "markdown",
@@ -41685,7 +41680,7 @@
 							"    print(' ')"
 						],
 						"outputs": [],
-						"execution_count": 98
+						"execution_count": 19
 					}
 				]
 			},
@@ -42009,7 +42004,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "c17e6167-4886-4878-866d-d96d63ecfd3b"
+						"spark.autotune.trackingId": "73837d20-d614-477b-b491-58ff8a6418c7"
 					}
 				},
 				"metadata": {
@@ -42034,8 +42029,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -42055,7 +42049,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"storageAccount = 's037costmgmt'"
 						],
