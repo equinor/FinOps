@@ -1,0 +1,285 @@
+{
+	"name": "hub-vs-payg",
+	"properties": {
+		"folder": {
+			"name": "NotebookInProduction/HUB Savings"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sprkpool33large",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "112g",
+			"driverCores": 16,
+			"executorMemory": "112g",
+			"executorCores": 16,
+			"numExecutors": 1,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "true",
+				"spark.dynamicAllocation.minExecutors": "1",
+				"spark.dynamicAllocation.maxExecutors": "5",
+				"spark.autotune.trackingId": "57d2f7a8-c8ba-40f8-b87c-3015e4ca6d82"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
+				"name": "sprkpool33large",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 16,
+				"memory": 112,
+				"automaticScaleJobs": true
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## HUB vs PAYG\r\n",
+					"\r\n",
+					"We want to create a visual that displays the amount of cost and vCores that are covered by HUB vs PAYG, both for VMs and SQL instances.\r\n",
+					"\r\n",
+					"Tasks to complete to achieve the above goal:\r\n",
+					"\r\n",
+					"- Identify all cost related to VM/SQL\r\n",
+					"- Determine if cost is covered by HUB or PAYG\r\n",
+					"- Identify instances that are covered by RI, and take that into consideration"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"import pyspark.sql.functions as F"
+				],
+				"execution_count": 36
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"storageAccount = 's037costmgmt'"
+				],
+				"execution_count": 37
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/20231101-20231130/Extended_v3_ACMMonthlyActualCost_20231101-20231130.parquet'\r\n",
+					"# cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/20231101-20231130/ACMMonthlyActualCost_20231101-20231130.parquet'\r\n",
+					"df = spark.read.format('parquet').load(cost_path)"
+				],
+				"execution_count": 38
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"# MeterCategory  - MeterSubCategory - MeterName - Date - ProductName - EffectivePrice - CostInBillingCurrency - ConsumedService - ResourceId - PartNumber - ServiceInfo1 - ServiceInfo 2 - Azure_Hybrid_Benefit - IsRIUsage - AHB_CPUs - ai_DatabaseName - ai_vCores - ai_AHB - ai_VCPUs - aiServiceType - ai_UsageType\r\n",
+					"df = df.select(\r\n",
+					"    'Date', \r\n",
+					"    'ProductName', \r\n",
+					"    'MeterCategory', \r\n",
+					"    'MeterSubCategory', \r\n",
+					"    'MeterName', \r\n",
+					"    'EffectivePrice', \r\n",
+					"    'CostInBillingCurrency', \r\n",
+					"    'ConsumedService', \r\n",
+					"    'ResourceId', \r\n",
+					"    'PartNumber', \r\n",
+					"    'ServiceInfo1', \r\n",
+					"    'ServiceInfo2', \r\n",
+					"    'Azure_Hybrid_Benefit', \r\n",
+					"    'IsRIUsage', \r\n",
+					"    'AHB_CPUs', \r\n",
+					"    'ai_DatabaseName', \r\n",
+					"    'ai_vCores', \r\n",
+					"    'ai_AHB', \r\n",
+					"    'ai_VCPUs', \r\n",
+					"    'ai_ServiceType', \r\n",
+					"    'ai_UsageType'\r\n",
+					")"
+				],
+				"execution_count": 39
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Find VM related cost\r\n",
+					"- In savings - Check _MeterCategory_ for **Virtual Machines** (nov 2023 = 885,034) (and _SericeInfo2_ for **Windows Server BYOL** for HUB)\r\n",
+					"- In HUB daily - Check _ResourceId_ like **/virtualMachines/** or **/virtualMachineScaleSets/** (nov 2023 = 916,043) (and _MeterSubCategory_ like **Windows** for non-HUB or _SericeInfo2_ for **Windows Server BYOL** for HUB)\r\n",
+					"\r\n",
+					"Extended cost file has column **Azure_Hybrid_Benefit** --> \r\n",
+					"\r\n",
+					"if _MeterSubCategory_ contains **Windows** --> HUB is **NOT** enabled\r\n",
+					"\r\n",
+					"if _ServiceInfo2_ is **Windows Server BYOL** --> HUB enabled\r\n",
+					""
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"print(df.where(((F.col('ResourceId').like('%/virtualMachines/%')) | (F.col('ResourceId').like('%/virtualMachineScaleSets/%')))).count())"
+				],
+				"execution_count": 40
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"print(df.where(F.col('MeterCategory') == 'Virtual Machines').count())"
+				],
+				"execution_count": 41
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"# Virtual Machine Licenses - SQL Managed Instance - Virtual Machines - SQL Database - Storage\r\n",
+					"display(df.select('MeterCategory').distinct())"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"# display(df.where((F.col('MeterCategory') == 'Virtual Machines') & (F.col('MeterSubCategory').like('%Windows%'))).select('ServiceInfo2').distinct())\r\n",
+					"display(df.where((F.col('MeterCategory') == 'Virtual Machines') & (F.col('ServiceInfo2') == 'Windows Server BYOL')))"
+				],
+				"execution_count": 34
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"# vm_cost_df = vm_cost_df.loc[vm_cost_df.index[((vm_cost_df['ResourceId'].astype(str).str.contains('/virtualMachines/')) |\r\n",
+					"#         (vm_cost_df['ResourceId'].astype(str).str.contains('/virtualMachineScaleSets/'))) &\r\n",
+					"#         ((vm_cost_df['MeterSubCategory'].astype(str).str.contains('Windows')) |\r\n",
+					"#         (vm_cost_df['ServiceInfo2'].astype(str).str.contains('Windows Server BYOL')))]]\r\n",
+					"display(df.where(((F.col('ResourceId').like('%/virtualMachines/%')) | (F.col('ResourceId').like('%/virtualMachineScaleSets/%'))) & (F.col('MeterSubCategory').like('%Windows%'))).select('ServiceInfo1').distinct())"
+				],
+				"execution_count": 26
+			}
+		]
+	}
+}
