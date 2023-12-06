@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "57d2f7a8-c8ba-40f8-b87c-3015e4ca6d82"
+				"spark.autotune.trackingId": "8e122b58-ac65-4595-b37e-3aed2d8635ca"
 			}
 		},
 		"metadata": {
@@ -77,7 +77,7 @@
 				"source": [
 					"import pyspark.sql.functions as F"
 				],
-				"execution_count": 36
+				"execution_count": 42
 			},
 			{
 				"cell_type": "code",
@@ -95,7 +95,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 37
+				"execution_count": 43
 			},
 			{
 				"cell_type": "code",
@@ -115,7 +115,7 @@
 					"# cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/20231101-20231130/ACMMonthlyActualCost_20231101-20231130.parquet'\r\n",
 					"df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 38
+				"execution_count": 44
 			},
 			{
 				"cell_type": "code",
@@ -157,7 +157,41 @@
 					"    'ai_UsageType'\r\n",
 					")"
 				],
-				"execution_count": 39
+				"execution_count": 45
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def get_distinct_column_values(df, column_name):\r\n",
+					"    temp = df.select(column_name).distinct()\r\n",
+					"    return [row[0] for row in temp.collect()]\r\n",
+					"\r\n",
+					"\r\n",
+					"def get_column_statistics(df1, df2, column_name):\r\n",
+					"    set1 = set(get_distinct_column_values(df1, column_name))\r\n",
+					"    set2 = set(get_distinct_column_values(df2, column_name))\r\n",
+					"\r\n",
+					"    intersection = set1.intersection(set2)\r\n",
+					"    only_in_set1 = set1.difference(set2)\r\n",
+					"    only_in_set2 = set2.difference(set1)\r\n",
+					"    union = set1.union(set2)\r\n",
+					"\r\n",
+					"    print(f\"Elements only in set1: {only_in_set1}\")\r\n",
+					"    print(f\"Elements only in set2: {only_in_set2}\")\r\n",
+					"    print(f\"Elements in both sets: {union}\")"
+				],
+				"execution_count": 82
 			},
 			{
 				"cell_type": "markdown",
@@ -195,9 +229,9 @@
 					}
 				},
 				"source": [
-					"print(df.where(((F.col('ResourceId').like('%/virtualMachines/%')) | (F.col('ResourceId').like('%/virtualMachineScaleSets/%')))).count())"
+					"vm1_df = df.where(((F.col('ResourceId').like('%/virtualMachines/%')) | (F.col('ResourceId').like('%/virtualMachineScaleSets/%'))))"
 				],
-				"execution_count": 40
+				"execution_count": 97
 			},
 			{
 				"cell_type": "code",
@@ -213,9 +247,28 @@
 					}
 				},
 				"source": [
-					"print(df.where(F.col('MeterCategory') == 'Virtual Machines').count())"
+					"vm1_df = vm1_df.where((F.col('MeterSubCategory').contains('Windows')) | (F.col('ServiceInfo2') == 'Windows Server BYOL'))"
 				],
-				"execution_count": 41
+				"execution_count": 98
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# 916,043 --> 135,453\r\n",
+					"print(vm1_df.count())"
+				],
+				"execution_count": 99
 			},
 			{
 				"cell_type": "code",
@@ -232,10 +285,9 @@
 					"collapsed": false
 				},
 				"source": [
-					"# Virtual Machine Licenses - SQL Managed Instance - Virtual Machines - SQL Database - Storage\r\n",
-					"display(df.select('MeterCategory').distinct())"
+					"display(vm1_df.select('MeterSubCategory').where(F.col('MeterSubCategory').contains('SQL')).distinct())"
 				],
-				"execution_count": null
+				"execution_count": 72
 			},
 			{
 				"cell_type": "code",
@@ -252,10 +304,64 @@
 					"collapsed": false
 				},
 				"source": [
-					"# display(df.where((F.col('MeterCategory') == 'Virtual Machines') & (F.col('MeterSubCategory').like('%Windows%'))).select('ServiceInfo2').distinct())\r\n",
-					"display(df.where((F.col('MeterCategory') == 'Virtual Machines') & (F.col('ServiceInfo2') == 'Windows Server BYOL')))"
+					"display(vm1_df)"
 				],
-				"execution_count": 34
+				"execution_count": 65
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"vm2_df = df.where((F.col('MeterCategory') == 'Virtual Machines') | (F.col('MeterCategory') == 'Virtual Machines Licenses'))"
+				],
+				"execution_count": 94
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"vm2_df = vm2_df.where((F.col('MeterSubCategory').contains('Windows')) | (F.col('ServiceInfo2') == 'Windows Server BYOL'))"
+				],
+				"execution_count": 95
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# 885,034 --> 109,607 --> 136,203\r\n",
+					"print(vm2_df.count())"
+				],
+				"execution_count": 96
 			},
 			{
 				"cell_type": "code",
@@ -272,13 +378,101 @@
 					"collapsed": false
 				},
 				"source": [
-					"# vm_cost_df = vm_cost_df.loc[vm_cost_df.index[((vm_cost_df['ResourceId'].astype(str).str.contains('/virtualMachines/')) |\r\n",
-					"#         (vm_cost_df['ResourceId'].astype(str).str.contains('/virtualMachineScaleSets/'))) &\r\n",
-					"#         ((vm_cost_df['MeterSubCategory'].astype(str).str.contains('Windows')) |\r\n",
-					"#         (vm_cost_df['ServiceInfo2'].astype(str).str.contains('Windows Server BYOL')))]]\r\n",
-					"display(df.where(((F.col('ResourceId').like('%/virtualMachines/%')) | (F.col('ResourceId').like('%/virtualMachineScaleSets/%'))) & (F.col('MeterSubCategory').like('%Windows%'))).select('ServiceInfo1').distinct())"
+					"display(vm2_df.where(F.col('MeterSubCategory') == 'Av2 Series Windows'))"
 				],
-				"execution_count": 26
+				"execution_count": 107
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(vm2_df.where(F.col('MeterSubCategory') == 'Ev3/ESv3 Series Windows'))"
+				],
+				"execution_count": 108
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"get_column_statistics(vm1_df, vm2_df, 'IsRIUsage')"
+				],
+				"execution_count": 106
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"#### Comparing the two following queries\r\n",
+					"\r\n",
+					"1. _ResourceId_ includes **/virtualMachines/** or **/virtualMachineScaleSets/** (dataset1)\r\n",
+					"2. _MeterCategory_ is **Virtual Machines** or **Virtual Machines Licenses** (dataset2)\r\n",
+					"\r\n",
+					"Note: both queries also checks that _MeterSubCategory_ includes **Windows** or _ServiceInfo2_ is **Windows Server BYOL** to only account for Windows VMs\r\n",
+					"\r\n",
+					"Based on the queries above, the resulting counts for november 2023 where:\r\n",
+					"\r\n",
+					"1. 135,453 cost items\r\n",
+					"2. 136,203 cost items\r\n",
+					"\r\n",
+					"There is a small difference between these two subsets.\r\n",
+					"\r\n",
+					"Analysis of certain dataset columns yielded the following results:\r\n",
+					"\r\n",
+					"**MeterSubCategory** column in dataset2 includes the following values that are not present in dataset1\r\n",
+					"- Av2 Series Windows\r\n",
+					"- Ev3/ESv3 Series Windows\r\n",
+					"\r\n",
+					"**ProductName** column in dataset2 includes the following values that are not present in dataset1\r\n",
+					"- Virtual Machines Ev3/ESv3 Series Windows - E4 v3/E4s v3 - EU North\r\n",
+					"- Virtual Machines Av2 Series Windows - A1 v2 - NO East\r\n",
+					"- Virtual Machines F/FS Series Windows - F8/F8s - EU North\r\n",
+					"\r\n",
+					"**MeterName** column in dataset2 includes the following values that are not present in dataset1\r\n",
+					"- A1 v2\r\n",
+					"\r\n",
+					"**ai_ServiceType** column in dataset2 includes the following values that are not present in dataset1\r\n",
+					"- Standard_A1_v2\r\n",
+					"- Standard_F8\r\n",
+					"- Standard_E4_v3\r\n",
+					"\r\n",
+					"After further inspection of the above dataset differences, all related costs to the odd values for columns in dataset2, they have the following facts in common:\r\n",
+					"\r\n",
+					"- All are PAYG cost (no HUB enabled)\r\n",
+					"- The resource id of all these costs have the form: /subscriptions/df89af9f-9074-40b4-a620-1d35c0eea0a4/resourceGroups/rg-observability-dev/providers/Microsoft.Batch/batchAccounts/baobservabilitydev/pools/poolobservabilitydev\r\n",
+					"- All costs are associated with Microsoft.Batch consumed service type\r\n",
+					"\r\n",
+					"This is why it is not covered by the dataset that requires virtualMachines or virtualMachineScaleSets to be part of the resource identifier\r\n",
+					"\r\n",
+					"\r\n",
+					""
+				]
 			}
 		]
 	}
