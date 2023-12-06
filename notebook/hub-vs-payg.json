@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "8e122b58-ac65-4595-b37e-3aed2d8635ca"
+				"spark.autotune.trackingId": "4c7bf2f4-8311-4759-b931-8379fbd1463a"
 			}
 		},
 		"metadata": {
@@ -69,7 +69,13 @@
 					"\r\n",
 					"- Identify all cost related to VM/SQL\r\n",
 					"- Determine if cost is covered by HUB or PAYG\r\n",
-					"- Identify instances that are covered by RI, and take that into consideration"
+					"- Identify instances that are covered by RI, and take that into consideration\r\n",
+					"\r\n",
+					"Exclude CVD from resource name _CVD-_\r\n",
+					"\r\n",
+					"PAYG = compute + license - for a cost item\r\n",
+					"RI instances have MeterCategory of Virtual Machines Lincenses - only one cost item per instance\r\n",
+					"Non-RI --> always two cost items per instances --> linux cost of the same VM away from the windows cost item cost - CostInBillingCurrency"
 				]
 			},
 			{
@@ -77,7 +83,7 @@
 				"source": [
 					"import pyspark.sql.functions as F"
 				],
-				"execution_count": 42
+				"execution_count": 110
 			},
 			{
 				"cell_type": "code",
@@ -464,6 +470,7 @@
 					"\r\n",
 					"After further inspection of the above dataset differences, all related costs to the odd values for columns in dataset2, they have the following facts in common:\r\n",
 					"\r\n",
+					"- Very small subset of cost\r\n",
 					"- All are PAYG cost (no HUB enabled)\r\n",
 					"- The resource id of all these costs have the form: /subscriptions/df89af9f-9074-40b4-a620-1d35c0eea0a4/resourceGroups/rg-observability-dev/providers/Microsoft.Batch/batchAccounts/baobservabilitydev/pools/poolobservabilitydev\r\n",
 					"- All costs are associated with Microsoft.Batch consumed service type\r\n",
