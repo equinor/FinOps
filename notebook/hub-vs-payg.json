@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "e7d6dd3a-4678-4af6-b353-45cbdf8ee43f"
+				"spark.autotune.trackingId": "62100638-8a22-421a-a288-fb849ca48fa9"
 			}
 		},
 		"metadata": {
@@ -74,7 +74,9 @@
 					"Exclude CVD from resource name _CVD-_\r\n",
 					"\r\n",
 					"PAYG = compute + license - for a cost item\r\n",
+					"\r\n",
 					"RI instances have MeterCategory of Virtual Machines Lincenses - only one cost item per instance\r\n",
+					"\r\n",
 					"Non-RI --> always two cost items per instances --> linux cost of the same VM away from the windows cost item cost - CostInBillingCurrency"
 				]
 			},
@@ -83,7 +85,7 @@
 				"source": [
 					"import pyspark.sql.functions as F"
 				],
-				"execution_count": 115
+				"execution_count": 1
 			},
 			{
 				"cell_type": "code",
@@ -101,7 +103,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 43
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -121,7 +123,77 @@
 					"# cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/20231101-20231130/ACMMonthlyActualCost_20231101-20231130.parquet'\r\n",
 					"df = spark.read.format('parquet').load(cost_path)"
 				],
+				"execution_count": 34
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cvd_df = df.where(F.col('ResourceName').like('CVD-%'))"
+				],
 				"execution_count": 44
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(cvd_df.select('OfferId').distinct())"
+				],
+				"execution_count": 45
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"\r\n",
+					"MS-AZR-0017P"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(vm_df.where(F.col('ResourceName').like('CVD-%')).limit(100))"
+				],
+				"execution_count": 27
 			},
 			{
 				"cell_type": "code",
@@ -141,16 +213,12 @@
 					"# MeterCategory  - MeterSubCategory - MeterName - Date - ProductName - EffectivePrice - CostInBillingCurrency - ConsumedService - ResourceId - PartNumber - ServiceInfo1 - ServiceInfo 2 - Azure_Hybrid_Benefit - IsRIUsage - AHB_CPUs - ai_DatabaseName - ai_vCores - ai_AHB - ai_VCPUs - aiServiceType - ai_UsageType\r\n",
 					"df = df.select(\r\n",
 					"    'Date', \r\n",
-					"    'ProductName', \r\n",
 					"    'MeterCategory', \r\n",
 					"    'MeterSubCategory', \r\n",
-					"    'MeterName', \r\n",
+					"    'ResourceName',\r\n",
 					"    'EffectivePrice', \r\n",
 					"    'CostInBillingCurrency', \r\n",
-					"    'ConsumedService', \r\n",
 					"    'ResourceId', \r\n",
-					"    'PartNumber', \r\n",
-					"    'ServiceInfo1', \r\n",
 					"    'ServiceInfo2', \r\n",
 					"    'Azure_Hybrid_Benefit', \r\n",
 					"    'IsRIUsage', \r\n",
@@ -163,7 +231,7 @@
 					"    'ai_UsageType'\r\n",
 					")"
 				],
-				"execution_count": 45
+				"execution_count": 35
 			},
 			{
 				"cell_type": "code",
@@ -197,7 +265,7 @@
 					"    print(f\"Elements only in set2: {only_in_set2}\")\r\n",
 					"    print(f\"Elements in both sets: {union}\")"
 				],
-				"execution_count": 82
+				"execution_count": 5
 			},
 			{
 				"cell_type": "markdown",
@@ -235,9 +303,9 @@
 					}
 				},
 				"source": [
-					"vm1_df = df.where(((F.col('ResourceId').like('%/virtualMachines/%')) | (F.col('ResourceId').like('%/virtualMachineScaleSets/%'))))"
+					"vm_df = df.where(((F.col('ResourceId').like('%/virtualMachines/%')) | (F.col('ResourceId').like('%/virtualMachineScaleSets/%'))))"
 				],
-				"execution_count": 97
+				"execution_count": 36
 			},
 			{
 				"cell_type": "code",
@@ -253,9 +321,9 @@
 					}
 				},
 				"source": [
-					"vm1_df = vm1_df.where((F.col('MeterSubCategory').contains('Windows')) | (F.col('ServiceInfo2') == 'Windows Server BYOL'))"
+					"vm_df = vm_df.where((F.col('MeterSubCategory').contains('Windows')) | (F.col('ServiceInfo2') == 'Windows Server BYOL'))"
 				],
-				"execution_count": 98
+				"execution_count": 37
 			},
 			{
 				"cell_type": "code",
@@ -271,10 +339,9 @@
 					}
 				},
 				"source": [
-					"# 916,043 --> 135,453\r\n",
-					"print(vm1_df.count())"
+					"vm_df = vm_df.where(~F.col('ResourceName').like('CVD-%'))"
 				],
-				"execution_count": 99
+				"execution_count": 39
 			},
 			{
 				"cell_type": "code",
@@ -291,9 +358,9 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(vm1_df.select('MeterSubCategory').where(F.col('MeterSubCategory').contains('SQL')).distinct())"
+					"display(vm_df.limit(100))"
 				],
-				"execution_count": 72
+				"execution_count": 43
 			},
 			{
 				"cell_type": "code",
@@ -310,9 +377,42 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(vm1_df)"
+					"print(vm_df.count())\r\n",
+					"display(vm_df.agg(F.sum('CostInBillingCurrency')))"
 				],
-				"execution_count": 65
+				"execution_count": 46
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"135,453 ---filter cvd---> 134,688\r\n",
+					"\r\n",
+					"2,915,986 ---filter cvd---> 2,912,199"
+				]
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"PAYG = compute + license - for a cost item\r\n",
+					"\r\n",
+					"RI instances have MeterCategory of Virtual Machines Lincenses - only one cost item per instance\r\n",
+					"\r\n",
+					"Non-RI --> always two cost items per instances --> linux cost of the same VM away from the windows cost item cost - CostInBillingCurrency"
+				]
 			},
 			{
 				"cell_type": "code",
@@ -328,102 +428,9 @@
 					}
 				},
 				"source": [
-					"vm2_df = df.where((F.col('MeterCategory') == 'Virtual Machines') | (F.col('MeterCategory') == 'Virtual Machines Licenses'))"
+					""
 				],
-				"execution_count": 94
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"vm2_df = vm2_df.where((F.col('MeterSubCategory').contains('Windows')) | (F.col('ServiceInfo2') == 'Windows Server BYOL'))"
-				],
-				"execution_count": 95
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# 885,034 --> 109,607 --> 136,203\r\n",
-					"print(vm2_df.count())"
-				],
-				"execution_count": 96
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(vm2_df.where(F.col('MeterSubCategory') == 'Av2 Series Windows'))"
-				],
-				"execution_count": 107
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(vm2_df.where(F.col('MeterSubCategory') == 'Ev3/ESv3 Series Windows'))"
-				],
-				"execution_count": 108
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"get_column_statistics(vm1_df, vm2_df, 'IsRIUsage')"
-				],
-				"execution_count": 106
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",
