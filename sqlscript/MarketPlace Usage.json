@@ -1,0 +1,20 @@
+{
+	"name": "MarketPlace Usage",
+	"properties": {
+		"folder": {
+			"name": "MarketPlace"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 \n    PublisherType\n    ,PublisherName\n    ,PlanName\n    ,SubscriptionId\n    ,SubscriptionName\n    ,ResourceGroup\n    ,ResourceLocation\n    ,[Date]\n    ,Quantity\n    ,EffectivePrice\n    ,UnitPrice\n    ,CostInBillingCurrency\n    ,ConsumedService\n    ,ResourceId\n    ,ResourceName\n    ,ai_ServiceType\n    ,ai_VCPUs\n    ,CostAllocationType\n    ,CostAllocationCode\n    ,ActiveWBS\n    ,AppID\n    ,Application_Name\n    --,*\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where PublisherType = 'Marketplace' \n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}
