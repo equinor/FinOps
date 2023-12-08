@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "2d6891db-5ac7-4a74-a041-a345d36ce8e1"
+				"spark.autotune.trackingId": "c317a292-268e-42c2-8e8e-d5a94dca4dc0"
 			}
 		},
 		"metadata": {
@@ -85,7 +85,7 @@
 				"source": [
 					"import pyspark.sql.functions as F"
 				],
-				"execution_count": 39
+				"execution_count": 52
 			},
 			{
 				"cell_type": "code",
@@ -103,7 +103,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 40
+				"execution_count": 53
 			},
 			{
 				"cell_type": "code",
@@ -123,7 +123,7 @@
 					"# cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/20231101-20231130/ACMMonthlyActualCost_20231101-20231130.parquet'\r\n",
 					"df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 41
+				"execution_count": 54
 			},
 			{
 				"cell_type": "code",
@@ -163,7 +163,7 @@
 					"    # 'ai_UsageType'\r\n",
 					")"
 				],
-				"execution_count": null
+				"execution_count": 55
 			},
 			{
 				"cell_type": "code",
@@ -197,7 +197,7 @@
 					"    print(f\"Elements only in set2: {only_in_set2}\")\r\n",
 					"    print(f\"Elements in both sets: {union}\")"
 				],
-				"execution_count": null
+				"execution_count": 56
 			},
 			{
 				"cell_type": "markdown",
@@ -235,7 +235,7 @@
 					"pricesheet_df = pricesheet_df.withColumn('pricePerUnit', F.col('unitPrice') / F.col('unitQuantity'))\r\n",
 					"pricesheet_df = pricesheet_df.select('meterName', 'unitOfMeasure', 'unitQuantity', 'unitPrice', 'pricePerUnit', 'billingPeriodId')"
 				],
-				"execution_count": null
+				"execution_count": 57
 			},
 			{
 				"cell_type": "markdown",
@@ -275,7 +275,7 @@
 				"source": [
 					"vm_df = df.where(((F.col('ResourceId').like('%/virtualMachines/%')) | (F.col('ResourceId').like('%/virtualMachineScaleSets/%'))))"
 				],
-				"execution_count": null
+				"execution_count": 58
 			},
 			{
 				"cell_type": "code",
@@ -293,7 +293,7 @@
 				"source": [
 					"vm_df = vm_df.where((F.col('MeterSubCategory').contains('Windows')) | (F.col('ServiceInfo2') == 'Windows Server BYOL'))"
 				],
-				"execution_count": null
+				"execution_count": 59
 			},
 			{
 				"cell_type": "code",
@@ -311,7 +311,7 @@
 				"source": [
 					"vm_df = vm_df.where(~F.col('ResourceName').like('CVD-%'))"
 				],
-				"execution_count": null
+				"execution_count": 60
 			},
 			{
 				"cell_type": "markdown",
@@ -354,13 +354,13 @@
 					"vm_df = vm_df \\\r\n",
 					"    .select('ai_VCPUs', 'Date', 'Quantity', 'MeterCategory', 'ResourceName', 'CostInBillingCurrency', 'Azure_Hybrid_Benefit', 'IsRIUsage', 'UnitOfMeasure') \\\r\n",
 					"    .groupBy('Date', 'ResourceName', 'Azure_Hybrid_Benefit', 'MeterCategory', 'ai_VCPUs', 'IsRIUsage', 'UnitOfMeasure') \\\r\n",
-					"    .agg(F.sum('Quantity').alias('Quantity'), F.sum('CostInBillingCurrency').alias('TotalCost')) \\\r\n",
-					"    .orderBy('Date', 'Quantity', 'TotalCost')\r\n",
+					"    .agg(F.sum('Quantity').alias('Quantity'), F.sum('CostInBillingCurrency').alias('ResourceCost')) \\\r\n",
+					"    .orderBy('Date', 'Quantity', 'ResourceCost')\r\n",
 					"\r\n",
 					"vm_df = vm_df.where(F.col('ai_VCPUs') != 0)\r\n",
 					"vm_df = vm_df.withColumn('pricesheetService', F.concat(F.lit('Windows Server - '), F.col('ai_VCPUs'), F.lit(' vCPU VM License')))"
 				],
-				"execution_count": 36
+				"execution_count": 63
 			},
 			{
 				"cell_type": "code",
@@ -379,9 +379,52 @@
 					"vm_df = vm_df.join(pricesheet_df, pricesheet_df.meterName == vm_df.pricesheetService, \"left\")\r\n",
 					"vm_df = vm_df.drop('priceSheetService')\r\n",
 					"\r\n",
-					"vm_df = vm_df.withColumn('licenseCost', F.col('Quantity') * F.col('pricePerUnit'))"
+					"vm_df = vm_df.withColumn('PAYGLicenseCost', F.col('Quantity') * F.col('pricePerUnit'))"
 				],
-				"execution_count": 37
+				"execution_count": 64
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"non_ri_mask = (F.col('IsRIUsage') == 'On Demand Usage') & (F.col('MeterCategory') == 'Virtual Machines')\r\n",
+					"vm_df = vm_df.withColumn('HUBCost', \r\n",
+					"    F.when(non_ri_mask & (F.col('Azure_Hybrid_Benefit') == 'Enabled'), F.col('ResourceCost'))\r\n",
+					"    .when(non_ri_mask & (F.col('Azure_Hybrid_Benefit') == 'Not Enabled'), F.col('ResourceCost') - F.col('PAYGLicenseCost'))\r\n",
+					"    .otherwise(None)\r\n",
+					")\r\n",
+					"\r\n",
+					"vm_df = vm_df.withColumn('EnableHUBSavings', F.when(F.col('HUBCost').isNotNull(), F.col('ResourceCost') - F.col('HUBCost')).otherwise(None)) "
+				],
+				"execution_count": 69
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"vm_df = vm_df.drop('UnitOfMeasure', 'unitQuantity', 'unitPrice', 'pricePerUnit')"
+				],
+				"execution_count": 72
 			},
 			{
 				"cell_type": "code",
@@ -400,7 +443,26 @@
 				"source": [
 					"display(vm_df)"
 				],
-				"execution_count": 38
+				"execution_count": 73
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"hub_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/hub/windows-vm-hub.parquet\"\r\n",
+					"vm_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(hub_path)"
+				],
+				"execution_count": 74
 			},
 			{
 				"cell_type": "markdown",
