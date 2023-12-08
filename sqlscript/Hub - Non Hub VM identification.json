@@ -1,0 +1,20 @@
+{
+	"name": "Hub - Non Hub VM identification",
+	"properties": {
+		"folder": {
+			"name": "--RI & HUB Savings"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    TOP 100 *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/20231101-20231130/Extended_v3_ACMMonthlyActualCost_20231101-20231130.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where MeterCategory like 'Virtual Machines%'\n    --and Azure_Hybrid_Benefit = 'Enabled' and IsRIUsage = 'RI Usage' -- HUB enabled and RI assigned to VM\n    --and MeterCategory = 'Virtual Machines Licenses' and MeterSubCategory = 'Windows Server' -- RI applied but PAYG Windows Licence\n    --AND IsRIUsage != 'RI Usage' and Azure_Hybrid_Benefit = 'Enabled' -- No RI assigned, HUB assigned\n    and MeterSubCategory = 'Windows Server' and IsRIUsage != 'RI Usage'\n    \n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}
