@@ -1,0 +1,304 @@
+{
+	"name": "VM-utilization-aggregation",
+	"properties": {
+		"folder": {
+			"name": "NotebookInProduction/VMUtilization"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sprkpool33large",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "112g",
+			"driverCores": 16,
+			"executorMemory": "112g",
+			"executorCores": 16,
+			"numExecutors": 1,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "true",
+				"spark.dynamicAllocation.minExecutors": "1",
+				"spark.dynamicAllocation.maxExecutors": "5",
+				"spark.autotune.trackingId": "c38bcc6c-0d84-4dbd-a5d9-3a649e5344d4"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
+				"name": "sprkpool33large",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 16,
+				"memory": 112,
+				"automaticScaleJobs": true
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Script Initialization\r\n",
+					"##### Set parameters, variables and scehma"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from datetime import datetime, timedelta\r\n",
+					"import os\r\n",
+					"import pyspark.sql.functions as F\r\n",
+					"import pyspark.sql.types as T"
+				],
+				"execution_count": 25
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"# Parameters\r\n",
+					"storageAccount = 's037costmgmt'\r\n",
+					"currentDate = '2023-10-19'"
+				],
+				"execution_count": 26
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Date variables\r\n",
+					"startDate = datetime.strptime(currentDate, '%Y-%m-%d') - timedelta(days=90)"
+				],
+				"execution_count": 27
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Set Pyspark schema\r\n",
+					"schema = T.StructType([\r\n",
+					"    T.StructField(\"timestamp\", T.TimestampType(), True),\r\n",
+					"    T.StructField(\"cpu_average\", T.DoubleType(), True),\r\n",
+					"    T.StructField(\"subscriptionId\", T.StringType(), True),\r\n",
+					"    T.StructField(\"resourceGroupName\", T.StringType(), True),\r\n",
+					"    T.StructField(\"virtualMachineName\", T.StringType(), True)\r\n",
+					"])"
+				],
+				"execution_count": 28
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Extract data from source"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Find file paths for aggregation\r\n",
+					"def compute_file_paths(start_date, file_paths=[]):\r\n",
+					"    date_iter = start_date\r\n",
+					"    while (date_iter < datetime.strptime(currentDate, '%Y-%m-%d')):\r\n",
+					"        data_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/metrics/vm-utilization-by-subscription/*/{date_iter.year}/{str(date_iter.month).zfill(2)}/{str(date_iter.day).zfill(2)}/vm_cpu_avg.parquet\"\r\n",
+					"        file_paths.append(data_path)\r\n",
+					"        date_iter += timedelta(days=1)\r\n",
+					"    return file_paths"
+				],
+				"execution_count": 29
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"# Load filedata to dataframe\r\n",
+					"def load_to_df(start_date):\r\n",
+					"    df = spark.createDataFrame([], schema=schema)\r\n",
+					"    file_paths = compute_file_paths(start_date)\r\n",
+					"    for file_path in file_paths:\r\n",
+					"        try:\r\n",
+					"            file_df = spark.read.parquet(file_path)\r\n",
+					"            print(f\"Success reading file {file_path}\")\r\n",
+					"            df = df.union(file_df)\r\n",
+					"        except Exception as e:\r\n",
+					"            print(f\"Error reading file {file_path}: {str(e)}\")\r\n",
+					"    return df"
+				],
+				"execution_count": 30
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Transform source data"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"metrics_df = load_to_df(startDate)\r\n",
+					"metrics_df = metrics_df.withColumn('Report_Date', F.to_date(\"timestamp\"))\r\n",
+					"\r\n",
+					"hourly_df = metrics_df.alias('hourly_df')\r\n",
+					"daily_df = metrics_df.alias('daily_df')\r\n",
+					"\r\n",
+					"# Compute daily CPU average\r\n",
+					"daily_df = daily_df.filter(F.col('cpu_average').isNotNull())\r\n",
+					"daily_df = daily_df.groupBy('subscriptionId', 'resourceGroupName', 'virtualMachineName', 'Report_Date').agg(F.avg('cpu_average').alias('cpu_avg'))\r\n",
+					"\r\n",
+					"# Set null values in hourly CPU average to 0\r\n",
+					"hourly_df = hourly_df.withColumn('cpu_average', F.when(F.col('cpu_average').isNull(), F.lit(0)).otherwise(F.col('cpu_average')))"
+				],
+				"execution_count": 31
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Load transformed data to container"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Write 3 month aggregation to ADLS\r\n",
+					"daily_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/metrics/vm-utilization-aggregates/vm_cpu_agg_daily_past_3_months.parquet\"\r\n",
+					"daily_df.write.format('parquet').mode('overwrite').save(daily_path)\r\n",
+					"\r\n",
+					"hourly_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/metrics/vm-utilization-aggregates/vm_cpu_agg_hourly_past_3_months.parquet\"\r\n",
+					"hourly_df.write.format('parquet').mode('overwrite').save(hourly_path)"
+				],
+				"execution_count": 32
+			}
+		]
+	}
+}

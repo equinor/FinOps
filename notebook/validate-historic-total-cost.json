@@ -1,0 +1,242 @@
+{
+	"name": "validate-historic-total-cost",
+	"properties": {
+		"description": "This notebook aggregates the cost from the csv cost file and compares it to the aggregated cost of the extended parquet cost file.",
+		"folder": {
+			"name": "NotebookInProduction/Utilities"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sparkpool32",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "56g",
+			"driverCores": 8,
+			"executorMemory": "56g",
+			"executorCores": 8,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "decd9a07-d080-4f82-a30a-f7e0c609fd14"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
+				"name": "sparkpool32",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.2",
+				"nodeCount": 3,
+				"cores": 8,
+				"memory": 56,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"import pandas as pd \r\n",
+					"import pyspark.sql.functions as F\r\n",
+					"import pyspark.sql.types as T"
+				],
+				"execution_count": 19
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"# Input data\r\n",
+					"container = 'usage'\r\n",
+					"storageAccount = 's037costmgmt'"
+				],
+				"execution_count": 20
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Aggregate the entire cost history for both raw and processed data based on cost type ('AmortizedCost' or 'ActualCost')\r\n",
+					"\r\n",
+					"def aggregate_cost_data(cost_type):\r\n",
+					"    # Create schema for cost aggregation\r\n",
+					"    schema = T.StructType([\r\n",
+					"        T.StructField(\"Date\", T.TimestampType(), True),\r\n",
+					"        T.StructField(\"RawDataTotalCost\", T.DoubleType(), True),\r\n",
+					"        T.StructField(\"ProcessedDataTotalCost\", T.DoubleType(), True),\r\n",
+					"        T.StructField(\"TotalCostDiff\", T.IntegerType(), True),\r\n",
+					"        T.StructField(\"CostType\", T.StringType(), True)\r\n",
+					"    ])\r\n",
+					"\r\n",
+					"    # Create an empty DataFrame with the specified schema\r\n",
+					"    df = spark.createDataFrame([], schema=schema)\r\n",
+					"\r\n",
+					"    # Define the root path\r\n",
+					"    root_path = f\"abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthly{cost_type}\"\r\n",
+					"\r\n",
+					"    # Collect all the folders under this root path\r\n",
+					"    folders = mssparkutils.fs.ls(root_path)\r\n",
+					"\r\n",
+					"    for folder in folders:\r\n",
+					"        # List all file paths in current folder\r\n",
+					"        files = mssparkutils.fs.ls(root_path +'/'+ str(folder.name))\r\n",
+					"        file_paths = [file.path for file in files]\r\n",
+					"\r\n",
+					"        # Find the raw data file (csv) and processed data (extended data file - parquet)\r\n",
+					"        csv_file = next(filter(lambda file_path: \"csv\" in file_path, file_paths), None)\r\n",
+					"        extended_file = next(filter(lambda file_path: \"Extended_v2\" in file_path, file_paths), None)\r\n",
+					"        \r\n",
+					"        try:\r\n",
+					"            # Extract date for current folder\r\n",
+					"            date = pd.to_datetime(folder.path.split('/')[-1].split('-')[0],format=\"%Y/%m/%d\")\r\n",
+					"\r\n",
+					"            # Read raw data and transformed fata\r\n",
+					"            csv_df = spark.read.format('csv').load(csv_file, header=True)\r\n",
+					"            extended_df = spark.read.format('parquet').load(extended_file)\r\n",
+					"\r\n",
+					"            # Aggregate on cost for raw data file\r\n",
+					"            agg_csv_df = csv_df.select(F.sum(F.col('CostInBillingCurrency')).alias('RawDataTotalCost'))\r\n",
+					"            agg_csv_df = agg_csv_df.withColumn(\"Date\", F.lit(date).cast(T.TimestampType()))\r\n",
+					"\r\n",
+					"            # Aggregate on cost for processed data file\r\n",
+					"            agg_extended_df = extended_df.select(F.sum(F.col('CostInBillingCurrency')).alias('ProcessedDataTotalCost'))\r\n",
+					"            agg_extended_df = agg_extended_df.withColumn(\"Date\", F.lit(date).cast(T.TimestampType()))\r\n",
+					"\r\n",
+					"            # Combine aggregated cost data into one dataframe\r\n",
+					"            combined_df = agg_csv_df.join(agg_extended_df, on=\"Date\", how=\"left\")\r\n",
+					"\r\n",
+					"            # Compute difference between the raw and processed total cost\r\n",
+					"            combined_df = combined_df.withColumn(\"TotalCostDiff\", F.expr(\"FLOOR(ABS(ProcessedDataTotalCost - RawDataTotalCost))\"))\r\n",
+					"\r\n",
+					"            combined_df = combined_df.withColumn(\"CostType\", F.lit(cost_type))\r\n",
+					"\r\n",
+					"            # Add aggregated cost to historic aggregations\r\n",
+					"            df = df.union(combined_df)\r\n",
+					"\r\n",
+					"        except Exception as e:\r\n",
+					"            print(f\"Error processing the {folder.name} folder contents: {e}\")\r\n",
+					"\r\n",
+					"    return df"
+				],
+				"execution_count": 23
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"# Aggregate actual cost data\r\n",
+					"actual_cost_df = aggregate_cost_data(\"ActualCost\")"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"# Aggregate amortized cost data\r\n",
+					"amortized_cost_df = aggregate_cost_data(\"AmortizedCost\")"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Combine aggregated amortized and actual cost into a single dataframe\r\n",
+					"total_cost_df = actual_cost_df.union(amortized_cost_df)\r\n",
+					"\r\n",
+					"# Display the total aggregated cost difference of the entire cost data history\r\n",
+					"# The computed value should always be 0 when historic data has been processed properly\r\n",
+					"# If the aggregated cost diff is greater than 0, the extend script is erroneous and produces inconsistent data\r\n",
+					"total_cost_df.select(F.sum(F.col(\"TotalCostDiff\")).alias(\"AggregatedCostDiff\")).show()"
+				],
+				"execution_count": 29
+			}
+		]
+	}
+}

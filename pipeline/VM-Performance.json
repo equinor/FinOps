@@ -19,12 +19,33 @@
 						"referenceName": "VM-Performance",
 						"type": "NotebookReference"
 					},
-					"snapshot": true
+					"parameters": {
+						"storageAccount": {
+							"value": {
+								"value": "@pipeline().parameters.storageAccount",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true,
+					"conf": {
+						"spark.dynamicAllocation.enabled": null,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"numExecutors": null
 				}
 			}
 		],
+		"parameters": {
+			"storageAccount": {
+				"type": "string",
+				"defaultValue": "s037costmgmt"
+			}
+		},
 		"folder": {
-			"name": "Performance"
+			"name": "PipelinesNotInUse/Performance"
 		},
 		"annotations": [],
 		"lastPublishTime": "2023-03-09T13:13:15Z"

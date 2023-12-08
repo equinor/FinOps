@@ -1,0 +1,20 @@
+{
+	"name": "CreateVMUtilizationHourlyMetricsView",
+	"properties": {
+		"folder": {
+			"name": "PowerBIViews"
+		},
+		"content": {
+			"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW VM_Utilization_Hourly_Metrics_Past_Three_Months\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/metrics/vm-utilization-aggregates/vm_cpu_agg_hourly_past_3_months.parquet/',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

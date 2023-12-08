@@ -5,14 +5,7 @@
 			{
 				"name": "HUB Daily File",
 				"type": "SynapseNotebook",
-				"dependsOn": [
-					{
-						"activity": "Set Todays Date",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
+				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -27,9 +20,9 @@
 						"type": "NotebookReference"
 					},
 					"parameters": {
-						"Today": {
+						"storageAccount": {
 							"value": {
-								"value": "@variables('Today')",
+								"value": "@variables('storageAccount')",
 								"type": "Expression"
 							},
 							"type": "string"
@@ -48,30 +41,100 @@
 				}
 			},
 			{
-				"name": "Set Todays Date",
-				"type": "SetVariable",
-				"dependsOn": [],
+				"name": "Compute Windows HUB Savings",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "HUB Daily File",
+						"dependencyConditions": [
+							"Succeeded",
+							"Failed"
+						]
+					}
+				],
 				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
 					"secureOutput": false,
 					"secureInput": false
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"variableName": "Today",
-					"value": {
-						"value": "@concat(formatDateTime(utcnow(),'yyyy-MM-dd'))",
-						"type": "Expression"
+					"notebook": {
+						"referenceName": "compute-win-hub-savings",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"storageAccount": {
+							"value": {
+								"value": "@variables('storageAccount')",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true,
+					"conf": {
+						"spark.dynamicAllocation.enabled": null,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"numExecutors": null
+				}
+			},
+			{
+				"name": "Compute SQL HUB Savings",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "Compute Windows HUB Savings",
+						"dependencyConditions": [
+							"Succeeded",
+							"Failed"
+						]
 					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "compute-sql-hub-savings",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"storageAccount": {
+							"value": {
+								"value": "@variables('storageAccount')",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true,
+					"conf": {
+						"spark.dynamicAllocation.enabled": null,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"numExecutors": null
 				}
 			}
 		],
 		"variables": {
-			"Today": {
-				"type": "String"
+			"storageAccount": {
+				"type": "String",
+				"defaultValue": "s037costmgmt"
 			}
 		},
 		"folder": {
-			"name": "HUB"
+			"name": "PipelinesInProduction/HUB"
 		},
 		"annotations": [],
 		"lastPublishTime": "2023-08-17T22:03:18Z"

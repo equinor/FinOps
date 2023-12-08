@@ -2,7 +2,7 @@
 	"name": "Collect ACMMonthlyAmortizedCost_Aggregated_overview",
 	"properties": {
 		"folder": {
-			"name": "Views/tsc"
+			"name": "SQLScriptsNotInUse"
 		},
 		"content": {
 			"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW tsc_ACMMonthlyAmortizedCost_Aggregated_overview\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/aggregate/parquet/ACMMonthlyAmortizedCost_Aggregated_overview.parquet/*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n\n\n",

@@ -2,7 +2,7 @@
 	"name": "usersWithBusinessAreaSnapshot_v1",
 	"properties": {
 		"folder": {
-			"name": "AzureAD"
+			"name": "NotebookInProduction/MicrosoftGraph_AzureAD"
 		},
 		"nbformat": 4,
 		"nbformat_minor": 2,
@@ -21,108 +21,11 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "eec86e27-c437-496a-9beb-d21361de8752"
+				"spark.autotune.trackingId": "10a1aa61-123b-4c32-8109-ab9acd0a01aa"
 			}
 		},
 		"metadata": {
 			"saveOutput": true,
-			"synapse_widget": {
-				"version": "0.1",
-				"state": {
-					"4b2ec9c8-bea6-41c5-bdd7-288b834c6748": {
-						"type": "Synapse.DataFrame",
-						"sync_state": {
-							"table": {
-								"rows": [
-									{
-										"0": "933452",
-										"1": "TCNY",
-										"2": "tcny@equinor.com",
-										"3": "TDI",
-										"4": "TDI EDT",
-										"5": "TDI EDT EIP"
-									},
-									{
-										"0": "921714",
-										"1": "TSC",
-										"2": "tsc@equinor.com",
-										"3": "TDI",
-										"4": "TDI EDT",
-										"5": "TDI EDT EIP"
-									},
-									{
-										"0": "104854",
-										"1": "JOMT",
-										"2": "jomt@equinor.com",
-										"3": "TDI",
-										"4": "TDI EDT",
-										"5": "TDI EDT EIP"
-									},
-									{
-										"0": "858262",
-										"1": "DFLOO",
-										"2": "dfloo@equinor.com",
-										"3": "TDI",
-										"4": "TDI EDT",
-										"5": "TDI EDT ES"
-									}
-								],
-								"schema": [
-									{
-										"key": "0",
-										"name": "employeeId",
-										"type": "string"
-									},
-									{
-										"key": "1",
-										"name": "userName",
-										"type": "string"
-									},
-									{
-										"key": "2",
-										"name": "email",
-										"type": "string"
-									},
-									{
-										"key": "3",
-										"name": "businessArea",
-										"type": "string"
-									},
-									{
-										"key": "4",
-										"name": "businessAreaLevel1",
-										"type": "string"
-									},
-									{
-										"key": "5",
-										"name": "businessAreaLevel2",
-										"type": "string"
-									}
-								],
-								"truncated": false
-							},
-							"isSummary": false,
-							"language": "scala"
-						},
-						"persist_state": {
-							"view": {
-								"type": "details",
-								"chartOptions": {
-									"chartType": "bar",
-									"aggregationType": "count",
-									"categoryFieldKeys": [
-										"0"
-									],
-									"seriesFieldKeys": [
-										"0"
-									],
-									"isStacked": false
-								}
-							}
-						}
-					}
-				}
-			},
 			"enableDebugMode": false,
 			"kernelspec": {
 				"name": "synapse_pyspark",
@@ -138,14 +41,13 @@
 				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
 				"auth": {
 					"type": "AAD",
-					"authResource": "https://dev.azuresynapse.net",
-					"authHeader": null
+					"authResource": "https://dev.azuresynapse.net"
 				},
 				"sparkVersion": "3.2",
 				"nodeCount": 3,
 				"cores": 8,
 				"memory": 56,
-				"extraHeader": null
+				"automaticScaleJobs": false
 			},
 			"sessionKeepAliveTimeout": 30
 		},
@@ -162,6 +64,27 @@
 				"source": [
 					"This notebook creates a dataset of employee ID, shortname, Business Area and sub-Business Area (e.g. BA: PDP, subBA: PDP PSR). The BA and subBA is found from the employee's manager at level 2 and 3. The employee hierarchy has been made in another notebook (usersWithManagerSnapshot_v1). Both notebooks use the same inital raw-dataset from ADLS from graphAPI (AzureADUsersWithManager_)."
 				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"storageAccount = 's037costmgmt'"
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -184,17 +107,10 @@
 					}
 				},
 				"source": [
-					"import pandas as pd"
+					"import pandas as pd\r\n",
+					"from pyspark.sql import SparkSession"
 				],
-				"execution_count": 119
-			},
-			{
-				"cell_type": "markdown",
-				"source": [
-					"## Load data\r\n",
-					"\r\n",
-					"#### Load Azure AD users, raw-data from ADLS"
-				]
+				"execution_count": 1
 			},
 			{
 				"cell_type": "code",
@@ -211,7 +127,7 @@
 				},
 				"source": [
 					"container = 'usage'\r\n",
-					"file_path = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + 'AzureAD_BusinessAreaLevel/bronze/AzureAD_EmployeesManagersSnapshot.parquet'\r\n",
+					"file_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + 'AzureAD_BusinessAreaLevel/bronze/AzureAD_EmployeesManagersSnapshot.parquet'\r\n",
 					"\r\n",
 					"df_users = spark.read.format('parquet').load(file_path).toPandas()\r\n",
 					"# df_users.head(10)"
@@ -235,7 +151,7 @@
 				"cell_type": "code",
 				"source": [
 					"# Get Hierarchy-dataframe from ADLS\n",
-					"file_path = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + 'AzureAD_BusinessAreaLevel/silver/usersWithManagerSnapshot_v1.parquet'\n",
+					"file_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + 'AzureAD_BusinessAreaLevel/silver/usersWithManagerSnapshot_v1.parquet'\n",
 					"\n",
 					"employees = spark.read.format('parquet').load(file_path).toPandas()\n",
 					"# employees.head(10)"
@@ -581,7 +497,7 @@
 				"cell_type": "code",
 				"source": [
 					"#Set optimized path\n",
-					"optimized_path = file_path = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + 'AzureAD_BusinessAreaLevel/gold/usersWithBusinessAreaSnapshot_v1.parquet'\n",
+					"optimized_path = file_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + 'AzureAD_BusinessAreaLevel/gold/usersWithBusinessAreaSnapshot_v1.parquet'\n",
 					"\n",
 					"df_spark = spark.createDataFrame(employees_short)\n",
 					"\n",
@@ -589,6 +505,38 @@
 					"#df_spark.write.format('parquet').mode('overwrite').option('overwriteSchema', 'True').save(optimized_path)"
 				],
 				"execution_count": 108
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Clear cache in Spark session"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"currentSparkSession = SparkSession.builder.getOrCreate()\r\n",
+					"spark.catalog.clearCache()"
+				],
+				"execution_count": 2
 			}
 		]
 	}

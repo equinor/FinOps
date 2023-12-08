@@ -1,6 +1,9 @@
 {
 	"name": "Extend Cost File_v2",
 	"properties": {
+		"folder": {
+			"name": "NotebookNotInUse"
+		},
 		"nbformat": 4,
 		"nbformat_minor": 2,
 		"bigDataPool": {
@@ -18,14 +21,11 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "6600c6ce-c9fe-4471-ab9f-be8b02695c15"
+				"spark.autotune.trackingId": "c2216ffe-84ee-4a51-abea-458cbeebf7a8"
 			}
 		},
 		"metadata": {
 			"saveOutput": true,
-			"synapse_widget": {
-				"version": "0.1"
-			},
 			"enableDebugMode": false,
 			"kernelspec": {
 				"name": "synapse_pyspark",
@@ -41,26 +41,31 @@
 				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
 				"auth": {
 					"type": "AAD",
-					"authResource": "https://dev.azuresynapse.net",
-					"authHeader": null
+					"authResource": "https://dev.azuresynapse.net"
 				},
 				"sparkVersion": "3.3",
 				"nodeCount": 3,
 				"cores": 16,
 				"memory": 112,
-				"extraHeader": null
+				"automaticScaleJobs": true
 			},
 			"sessionKeepAliveTimeout": 30
 		},
 		"cells": [
 			{
 				"cell_type": "code",
+				"metadata": {
+					"tags": [
+						"parameters"
+					]
+				},
 				"source": [
 					"amortizedCostPath = 'exports/monthly/ACMMonthlyAmortizedCost/'\r\n",
 					"actualCostPath = 'exports/monthly/ACMMonthlyActualCost/'\r\n",
 					"toDate = '20230731'\r\n",
 					"fromDate = '20230701'\r\n",
-					"container = 'usage'"
+					"container = 'usage'\r\n",
+					"storageAccount = 's037costmgmt'"
 				],
 				"execution_count": 24
 			},
@@ -313,11 +318,11 @@
 					"\r\n",
 					"dateRange = fromDate + '-' + toDate\r\n",
 					"\r\n",
-					"#actualCostSourcefilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + actualCostPath + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\r\n",
-					"#actualCostDestinationfilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + actualCostPath + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\r\n",
+					"#actualCostSourcefilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + actualCostPath + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\r\n",
+					"#actualCostDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + actualCostPath + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\r\n",
 					"\r\n",
-					"actualCostSourcefilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + amortizedCostPath + dateRange + '/ACMMonthlyAmortizedCost_' + dateRange + '.parquet'\r\n",
-					"actualCostDestinationfilename = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + amortizedCostPath + dateRange + '/Extended_ACMMonthlyAmortizedCost_' + dateRange + '.parquet'\r\n",
+					"actualCostSourcefilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + amortizedCostPath + dateRange + '/ACMMonthlyAmortizedCost_' + dateRange + '.parquet'\r\n",
+					"actualCostDestinationfilename = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + amortizedCostPath + dateRange + '/Extended_ACMMonthlyAmortizedCost_' + dateRange + '.parquet'\r\n",
 					"\r\n",
 					"actualCost_df = load_source(actualCostSourcefilename)\r\n",
 					"actualCost_df = populate_columns(actualCost_df)\r\n",

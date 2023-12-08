@@ -1,0 +1,20 @@
+{
+	"name": "VM details within a Subscription",
+	"properties": {
+		"folder": {
+			"name": "Ad Hoc Cost Report Requests"
+		},
+		"content": {
+			"query": "SELECT\n    --TOP 100 \n    ResourceName\n    --ResourceName\n    ,ResourceGroup\n    ,MeterCategory\n    ,MeterSubCategory\n    ,ResourceId\n    --,ai_ImageType\n    --,*\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/20230901-20230930/Extended_v2_ACMMonthlyActualCost_20230901-20230930.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where MeterCategory = 'Virtual Machines'\n    --MeterCategory = 'Virtual Machines Licenses'\n    and SubscriptionName = 'S268-Prod-Geology-Geophysics'\n    --and ResourceId like '%Capacity%'\n    --and (ResourceName is NULL or ResourceName = '')\n    group by ResourceId, ResourceName, ResourceGroup ,MeterSubCategory, MeterCategory\n    order by ResourceName",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

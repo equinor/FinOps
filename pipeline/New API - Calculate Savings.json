@@ -79,11 +79,24 @@
 											"type": "Expression"
 										},
 										"type": "string"
+									},
+									"storageAccount": {
+										"value": {
+											"value": "@pipeline().parameters.storageAccount",
+											"type": "Expression"
+										},
+										"type": "string"
 									}
 								},
 								"snapshot": true,
 								"executorSize": null,
-								"driverSize": null
+								"conf": {
+									"spark.dynamicAllocation.enabled": null,
+									"spark.dynamicAllocation.minExecutors": null,
+									"spark.dynamicAllocation.maxExecutors": null
+								},
+								"driverSize": null,
+								"numExecutors": null
 							}
 						},
 						{
@@ -238,6 +251,10 @@
 			"reportType": {
 				"type": "string",
 				"defaultValue": "ActualCost"
+			},
+			"storageAccount": {
+				"type": "string",
+				"defaultValue": "s037costmgmt"
 			}
 		},
 		"variables": {
@@ -261,7 +278,7 @@
 			}
 		},
 		"folder": {
-			"name": "Management API (New)"
+			"name": "PipelinesNotInUse/Keep/Management API (New)"
 		},
 		"annotations": [],
 		"lastPublishTime": "2023-03-08T15:35:11Z"

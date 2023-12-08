@@ -1,6 +1,9 @@
 {
 	"name": "New API - Calculate Savings",
 	"properties": {
+		"folder": {
+			"name": "NotebookNotInUse/Keep"
+		},
 		"nbformat": 4,
 		"nbformat_minor": 2,
 		"bigDataPool": {
@@ -18,14 +21,11 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "2c1b7c15-c1cd-482b-8222-70c9ac0e0111"
+				"spark.autotune.trackingId": "a4b6b6de-a3ef-49fb-8efd-50f9f22ca139"
 			}
 		},
 		"metadata": {
 			"saveOutput": true,
-			"synapse_widget": {
-				"version": "0.1"
-			},
 			"enableDebugMode": false,
 			"kernelspec": {
 				"name": "synapse_pyspark",
@@ -41,14 +41,13 @@
 				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
 				"auth": {
 					"type": "AAD",
-					"authResource": "https://dev.azuresynapse.net",
-					"authHeader": null
+					"authResource": "https://dev.azuresynapse.net"
 				},
 				"sparkVersion": "3.2",
 				"nodeCount": 3,
 				"cores": 8,
 				"memory": 56,
-				"extraHeader": null
+				"automaticScaleJobs": false
 			},
 			"sessionKeepAliveTimeout": 30
 		},
@@ -66,7 +65,7 @@
 					"reportType = 'ActualCost'\n",
 					"dateRange = '20220101-20220131'\n",
 					"path = ''\n",
-					""
+					"storageAccount = 's037costmgmt'"
 				],
 				"execution_count": 27
 			},
@@ -87,9 +86,9 @@
 					"import pandas as pd\n",
 					"\n",
 					"if reportType == 'ActualCost':\n",
-					"    source_filename = 'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/' + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
+					"    source_filename = 'abfss://usage@' + storageAccount + '.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/' + dateRange + '/ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
 					"elif reportType == 'AmortizedCost':\n",
-					"    source_filename = 'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/' + dateRange + '/ACMMonthlyAmortizedCost_' + dateRange + '.parquet'\n",
+					"    source_filename = 'abfss://usage@' + storageAccount + '.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/' + dateRange + '/ACMMonthlyAmortizedCost_' + dateRange + '.parquet'\n",
 					"\n",
 					"print(f'Loading source file... ',source_filename)\n",
 					"#usage = pd.read_csv(source_filename)\n",
@@ -105,9 +104,9 @@
 					"usage['TotalUsedSavings'] = (usage['UnitPrice'] - usage['EffectivePrice']) * usage['Quantity']\n",
 					"\n",
 					"if reportType == 'ActualCost':\n",
-					"    dest_filename = 'abfss://savings@s037costmgmt.dfs.core.windows.net/New-monthly/' + dateRange + '/' + dateRange + '-RI_Savings'\n",
+					"    dest_filename = 'abfss://savings@' + storageAccount + '.dfs.core.windows.net/New-monthly/' + dateRange + '/' + dateRange + '-RI_Savings'\n",
 					"elif reportType == 'AmortizedCost':\n",
-					"    dest_filename = 'abfss://savings@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/' + dateRange + '/ACMMonthlyAmortizedCost_' + dateRange + '-RI_Savings'\n",
+					"    dest_filename = 'abfss://savings@' + storageAccount + '.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/' + dateRange + '/ACMMonthlyAmortizedCost_' + dateRange + '-RI_Savings'\n",
 					"\n",
 					"print(f'Writing csv savings file... ',dest_filename+'.csv')\n",
 					"usage.to_csv(dest_filename+'.csv')\n",

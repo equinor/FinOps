@@ -234,10 +234,7 @@
 						"referenceName": "Older_Files_For_Deletion_Binary",
 						"type": "DatasetReference",
 						"parameters": {
-							"ReportType": {
-								"value": "@variables('AmortizedCost')",
-								"type": "Expression"
-							}
+							"ReportType": "@variables('AmortizedCost')"
 						}
 					},
 					"fieldList": [
@@ -1174,7 +1171,7 @@
 				"typeProperties": {
 					"variableName": "toDate",
 					"value": {
-						"value": "@replace(adddays(formatDateTime(adddays(formatDateTime(variables('fromDate'), 'yyyy-MM-28'),5), 'yyyy-MM-01'),-1),'T00:00:00.0000000','')",
+						"value": "@replace(replace(adddays(formatDateTime(adddays(formatDateTime(formatDateTime(utcnow(),'yyyy-MM-01'), 'yyyy-MM-28'),5), 'yyyy-MM-01'),-1),'T00:00:00.0000000',''),'-','')",
 						"type": "Expression"
 					}
 				}
@@ -1192,7 +1189,7 @@
 				"typeProperties": {
 					"variableName": "fromDate",
 					"value": {
-						"value": "@concat(formatDateTime(utcnow(),'yyyy-MM-01'))",
+						"value": "@concat(formatDateTime(utcnow(),'yyyyMM01'))",
 						"type": "Expression"
 					}
 				}
@@ -2044,6 +2041,9 @@
 										"type": "AzureBlobFSReadSettings",
 										"recursive": false,
 										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "ParquetReadSettings"
 									}
 								},
 								"sink": {
@@ -2101,6 +2101,221 @@
 						}
 					]
 				}
+			},
+			{
+				"name": "run cost extension v3 daily",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "If today is the 1st of the Month",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "If today is the 1st of the Month_copy1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "daily-cost-extend-v3",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"toDate": {
+							"value": {
+								"value": "@variables('toDate')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"fromDate": {
+							"value": {
+								"value": "@variables('fromDate')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"storageAccount": {
+							"value": {
+								"value": "@variables('storageAccount')",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": "sprkpool33large",
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Medium",
+					"conf": {
+						"spark.dynamicAllocation.enabled": null,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"driverSize": "Medium",
+					"numExecutors": null
+				}
+			},
+			{
+				"name": "If today is the 1st of the Month_copy1",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "Create Amortized Cost Parquet File",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(dayOfMonth(utcnow()),1)",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "Get last day of previous month Amortized",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "Get first day of previous month Amortized",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "toDate",
+								"value": {
+									"value": "@concat(formatDateTime(addDays(utcnow(), -1),'yyyyMMdd'))",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "Get first day of previous month Amortized",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "fromDate",
+								"value": {
+									"value": "@concat(formatDateTime(addDays(utcnow(), -1),'yyyyMM01'))",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "Copy daily file to Monthly folder Amortized",
+							"description": "Copy daily file to monthly folder as it is 1st of the month. This places a file in the monthly folder so the union SQL queries will work. This file will be overwritten when Microsoft pushes the official monthly file on the 5th of every month.",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "Get last day of previous month Amortized",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "ParquetSource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": false,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "ParquetReadSettings"
+									}
+								},
+								"sink": {
+									"type": "ParquetSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "ParquetWriteSettings"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "ds_Daily_Parquet_File",
+									"type": "DatasetReference",
+									"parameters": {
+										"Path": {
+											"value": "@concat('exports/daily/ACMDaily',variables('AmortizedCost'))",
+											"type": "Expression"
+										},
+										"reportType": {
+											"value": "@variables('AmortizedCost')",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "Monthly_Parquet",
+									"type": "DatasetReference",
+									"parameters": {
+										"Path": {
+											"value": "@concat('exports/monthly/ACMMonthlyAmortizedCost/',variables('fromDate'),'-',variables('toDate'))",
+											"type": "Expression"
+										},
+										"Container": "usage",
+										"toDate_fromDate": {
+											"value": "@concat(variables('fromDate'),'-',variables('toDate'))",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		],
 		"variables": {
@@ -2120,10 +2335,14 @@
 			},
 			"dateRange": {
 				"type": "String"
+			},
+			"storageAccount": {
+				"type": "String",
+				"defaultValue": "s037costmgmt"
 			}
 		},
 		"folder": {
-			"name": "Management API (New)"
+			"name": "PipelinesInProduction/Management API (New)"
 		},
 		"annotations": [],
 		"lastPublishTime": "2023-02-01T10:07:38Z"

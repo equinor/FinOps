@@ -1581,17 +1581,17 @@
 				]
 			},
 			{
-				"name": "Extend AI column and WBS tags - populate MS App columns",
+				"name": "Extend cost data v3",
 				"type": "SynapseNotebook",
 				"dependsOn": [
 					{
-						"activity": "Convert Actual Cost CSV to Parquet",
+						"activity": "Convert Amortised Cost CSV to Parquet",
 						"dependencyConditions": [
 							"Succeeded"
 						]
 					},
 					{
-						"activity": "Convert Amortised Cost CSV to Parquet",
+						"activity": "Convert Actual Cost CSV to Parquet",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -1607,7 +1607,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"notebook": {
-						"referenceName": "Monthly Extend AI column and WBS tags_v2",
+						"referenceName": "monthly-cost-extend-v3",
 						"type": "NotebookReference"
 					},
 					"parameters": {
@@ -1621,6 +1621,13 @@
 						"fromDate": {
 							"value": {
 								"value": "@variables('fromDate')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"storageAccount": {
+							"value": {
+								"value": "@variables('storageAccount')",
 								"type": "Expression"
 							},
 							"type": "string"
@@ -1663,10 +1670,14 @@
 			"ActualCost_Path": {
 				"type": "String",
 				"defaultValue": "exports/monthly/ACMMonthlyActualCost/"
+			},
+			"storageAccount": {
+				"type": "String",
+				"defaultValue": "s037costmgmt"
 			}
 		},
 		"folder": {
-			"name": "Management API (New)"
+			"name": "PipelinesInProduction/Management API (New)"
 		},
 		"annotations": [],
 		"lastPublishTime": "2023-09-08T08:39:03Z"

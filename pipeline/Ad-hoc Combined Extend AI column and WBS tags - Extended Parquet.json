@@ -19,7 +19,22 @@
 						"referenceName": "AdHoc Extend AI column and WBS tags",
 						"type": "NotebookReference"
 					},
-					"snapshot": true
+					"parameters": {
+						"storageAccount": {
+							"value": {
+								"value": "@variables('storageAccount')",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true,
+					"conf": {
+						"spark.dynamicAllocation.enabled": null,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"numExecutors": null
 				}
 			}
 		],
@@ -41,10 +56,14 @@
 			"ActualCost_Path": {
 				"type": "String",
 				"defaultValue": "exports/monthly/ACMMonthlyActualCost/"
+			},
+			"storageAccount": {
+				"type": "String",
+				"defaultValue": "s037costmgmt"
 			}
 		},
 		"folder": {
-			"name": "Management API (New)"
+			"name": "PipelinesNotInUse/Keep/Management API (New)"
 		},
 		"annotations": [],
 		"lastPublishTime": "2023-07-05T08:10:16Z"

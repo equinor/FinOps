@@ -3,7 +3,7 @@
 	"properties": {
 		"description": "create a calendar table and store in SQL warehouse",
 		"folder": {
-			"name": "tsc/Unused"
+			"name": "NotebookInProduction"
 		},
 		"nbformat": 4,
 		"nbformat_minor": 2,
@@ -22,14 +22,11 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "03580b90-f689-4919-9a92-492fc7e40c97"
+				"spark.autotune.trackingId": "86e0d14b-b922-421c-b6ea-ab2ee6210cf1"
 			}
 		},
 		"metadata": {
 			"saveOutput": true,
-			"synapse_widget": {
-				"version": "0.1"
-			},
 			"enableDebugMode": false,
 			"kernelspec": {
 				"name": "synapse_pyspark",
@@ -45,14 +42,13 @@
 				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
 				"auth": {
 					"type": "AAD",
-					"authResource": "https://dev.azuresynapse.net",
-					"authHeader": null
+					"authResource": "https://dev.azuresynapse.net"
 				},
 				"sparkVersion": "3.2",
 				"nodeCount": 3,
 				"cores": 8,
 				"memory": 56,
-				"extraHeader": null
+				"automaticScaleJobs": false
 			},
 			"sessionKeepAliveTimeout": 30
 		},
@@ -75,6 +71,27 @@
 					"from datetime import datetime as dt"
 				],
 				"execution_count": 10
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"storageAccount = 's037costmgmt'"
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -156,7 +173,7 @@
 				},
 				"source": [
 					"# Define path to save the data\r\n",
-					"path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/Calendar/delta/Calendar.delta\" \r\n",
+					"path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/Calendar/delta/Calendar.delta\" \r\n",
 					"\r\n",
 					"#Save the data\r\n",
 					"spark.createDataFrame(calendar).write.format('delta').mode('overwrite').option('overwriteSchema', 'True').save(path)"

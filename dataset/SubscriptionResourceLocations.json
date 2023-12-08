@@ -1,0 +1,32 @@
+{
+	"name": "SubscriptionResourceLocations",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "s037-cost-management-WorkspaceDefaultStorage",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"subscriptionId": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "locations.csv",
+				"folderPath": {
+					"value": "@concat('metrics/vm-utilization-by-subscription/', dataset().subscriptionId)",
+					"type": "Expression"
+				},
+				"fileSystem": "usage"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": []
+	}
+}

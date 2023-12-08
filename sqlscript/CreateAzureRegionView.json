@@ -1,0 +1,20 @@
+{
+	"name": "CreateAzureRegionView",
+	"properties": {
+		"folder": {
+			"name": "PowerBIViews"
+		},
+		"content": {
+			"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW AzureRegions\nAS\n\nSELECT\n    [displayName]\n    ,[geographyGroup]\n    ,[latitude]\n    ,[longitude]\n    ,[pairedRegion]\n    ,[physicalLocation]\n    ,[regionCategory]\n    ,[regionType]\n    ,lower([name]) as name\n    ,[regionalDisplayName]\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/locations/azure_regions.csv',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW = TRUE\n    ) AS [result]",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

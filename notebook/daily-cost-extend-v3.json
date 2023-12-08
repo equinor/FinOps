@@ -1,0 +1,267 @@
+{
+	"name": "daily-cost-extend-v3",
+	"properties": {
+		"folder": {
+			"name": "NotebookInProduction/Cost Extension"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sprkpool33large",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "112g",
+			"driverCores": 16,
+			"executorMemory": "112g",
+			"executorCores": 16,
+			"numExecutors": 1,
+			"runAsWorkspaceSystemIdentity": false,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "true",
+				"spark.dynamicAllocation.minExecutors": "1",
+				"spark.dynamicAllocation.maxExecutors": "4",
+				"spark.autotune.trackingId": "a7da27e6-4de9-4596-b496-75eed0d9eb13"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
+				"name": "sprkpool33large",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 16,
+				"memory": 112,
+				"automaticScaleJobs": true
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Initialize script"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"toDate = '20231231'\n",
+					"fromDate = '20231201'\n",
+					"container = 'usage'\n",
+					"storageAccount = 's037costmgmt'"
+				],
+				"execution_count": 2
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"import pandas as pd\n",
+					"import pyspark.pandas as ps\n",
+					"import json\n",
+					"import numpy as np\n",
+					"from datetime import datetime\n",
+					"import calendar\n",
+					"import warnings\n",
+					"\n",
+					"import pyspark.sql.functions as F\n",
+					"import pyspark.sql.types as T"
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Load utility functions"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run /cost-extend-utilities"
+				],
+				"execution_count": 7
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def pre_process_subscriptions(subscriptions_df):\r\n",
+					"    subscriptions_df = subscriptions_df.select('SubscriptionId', 'OperationalWBS', 'Application')\r\n",
+					"    subscriptions_df = subscriptions_df.withColumnRenamed('SubscriptionId', 'SubId')\r\n",
+					"    subscriptions_df = subscriptions_df.withColumnRenamed('OperationalWBS', 'SubscriptionWBS')\r\n",
+					"    subscriptions_df = subscriptions_df.withColumnRenamed('Application', 'SubscriptionServiceNow-App')\r\n",
+					"    return subscriptions_df"
+				],
+				"execution_count": 11
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def write_output_file(cost_df, destinationFilename):\n",
+					"\n",
+					"    cost_df = cost_df.drop('id', 'AdditionalInfo') \n",
+					"    print('start to write to container')\n",
+					"    cost_df.write.format('parquet').mode('overwrite').option('path', destinationFilename).save()\n",
+					"    print('File write complete!')"
+				],
+				"execution_count": 9
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Execute transformation on cost data"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"print(f'fromDate: {fromDate}')\n",
+					"print(f'toDate: {toDate}')\n",
+					"report_types = ['ActualCost', 'AmortizedCost']\n",
+					"\n",
+					"print(f\"------ From: {fromDate}, To: {toDate} -----------\")\n",
+					"\n",
+					"for report_type in report_types:\n",
+					"\n",
+					"    print(f\"------ {report_type} -----------\")\n",
+					"    date_range = fromDate + '-' + toDate\n",
+					"    print(f'dateRange: {date_range}')\n",
+					"\n",
+					"    cost_source_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/daily/ACMDaily{report_type}/{date_range}/*.csv'\n",
+					"    cost_target_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthly{report_type}/{date_range}/Extended_v3_ACMMonthly{report_type}_{date_range}.parquet'\n",
+					"    print(f\"Cost data path: {cost_source_path}\")\n",
+					"    print(f\"Cost destination path: {cost_target_path}\")\n",
+					"\n",
+					"    previous_month_date = get_last_day_prev_month(toDate)\n",
+					"    print(f'Using {previous_month_date} ServiceNow subscription file')\n",
+					"    subscription_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/{previous_month_date}-optimized.parquet'\n",
+					"    print(f\"Subscription path: {subscription_path}\")\n",
+					"\n",
+					"    application_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\n",
+					"    print(f\"Application path: {application_path}\")\n",
+					"\n",
+					"    # Load cost file\n",
+					"    csv_options = {'header' : True,\n",
+					"                   'delimiter' : ',',\n",
+					"                   'quote' : '\"',\n",
+					"                   'escape' : '\"'}\n",
+					"    cost_df = spark.read.options(**csv_options).csv(cost_source_path)\n",
+					"\n",
+					"    # Load subscription file\n",
+					"    subscription_df = spark.read.format('parquet').load(subscription_path)\n",
+					"    subscription_df = pre_process_subscriptions(subscription_df)\n",
+					"\n",
+					"    # Load application file\n",
+					"    application_df = spark.read.format('parquet').load(application_path)\n",
+					"    application_df = application_df.withColumn('AppID', F.col('AppID').cast(\"int\"))\n",
+					"\n",
+					"    # Transform data\n",
+					"    cost_df = transform_cost_data(cost_df)\n",
+					"    cost_df = cost_df.withColumn(\"ResourceLocation\", F.lower(F.trim(F.regexp_replace(F.col('ResourceLocation'), \"\\s+\", \"\"))))\n",
+					"    cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\n",
+					"    write_output_file(cost_df, cost_target_path)\n",
+					"    \n",
+					"    print(' ')"
+				],
+				"execution_count": 12
+			}
+		]
+	}
+}

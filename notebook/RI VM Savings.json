@@ -1,6 +1,9 @@
 {
 	"name": "RI VM Savings",
 	"properties": {
+		"folder": {
+			"name": "NotebookNotInUse"
+		},
 		"nbformat": 4,
 		"nbformat_minor": 2,
 		"bigDataPool": {
@@ -18,14 +21,11 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "d27c5d5d-20de-45ed-9453-d904b327395f"
+				"spark.autotune.trackingId": "f250ff56-133e-4d13-9057-85e2cebfb1ec"
 			}
 		},
 		"metadata": {
 			"saveOutput": true,
-			"synapse_widget": {
-				"version": "0.1"
-			},
 			"enableDebugMode": false,
 			"kernelspec": {
 				"name": "synapse_pyspark",
@@ -41,14 +41,13 @@
 				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
 				"auth": {
 					"type": "AAD",
-					"authResource": "https://dev.azuresynapse.net",
-					"authHeader": null
+					"authResource": "https://dev.azuresynapse.net"
 				},
 				"sparkVersion": "3.2",
 				"nodeCount": 3,
 				"cores": 8,
 				"memory": 56,
-				"extraHeader": null
+				"automaticScaleJobs": false
 			},
 			"sessionKeepAliveTimeout": 30
 		},
@@ -65,8 +64,7 @@
 					"end_date = '2022-06-30'\n",
 					"Year = '2022'\n",
 					"Month = '06'\n",
-					"\n",
-					""
+					"storageAccount = 's037costmgmt'"
 				],
 				"execution_count": 20
 			},
@@ -89,14 +87,14 @@
 					"import pyarrow as pa\n",
 					"import json\n",
 					"\n",
-					"source_usage_filename = 'abfss://usage@s037costmgmt.dfs.core.windows.net/monthly/' + Year + '/' + Month + '/' + start_date + '_' + end_date + '-cleaned.parquet'\n",
+					"source_usage_filename = 'abfss://usage@' + storageAccount + '.dfs.core.windows.net/monthly/' + Year + '/' + Month + '/' + start_date + '_' + end_date + '-cleaned.parquet'\n",
 					"\n",
-					"reservation_charges_source_file = 'abfss://reservations@s037costmgmt.dfs.core.windows.net/' + Year + '/' + Month + '/reservation-charges.parquet'\n",
+					"reservation_charges_source_file = 'abfss://reservations@' + storageAccount + '.dfs.core.windows.net/' + Year + '/' + Month + '/reservation-charges.parquet'\n",
 					"\n",
-					"pricelist_file = 'abfss://usage@s037costmgmt.dfs.core.windows.net/pricesheet/pricesheet-LATEST.parquet'\n",
+					"pricelist_file = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/pricesheet-LATEST.parquet'\n",
 					"\n",
-					"saving_file_parquet = 'abfss://savings@s037costmgmt.dfs.core.windows.net/monthly/' + Year + '/' + Month + '/' + start_date + '_' + end_date + '-RI-VM.parquet'\n",
-					"saving_file_csv = 'abfss://savings@s037costmgmt.dfs.core.windows.net/monthly/' + Year + '/' + Month + '/' + start_date + '_' + end_date + '-RI-VM.csv'\n",
+					"saving_file_parquet = 'abfss://savings@' + storageAccount + '.dfs.core.windows.net/monthly/' + Year + '/' + Month + '/' + start_date + '_' + end_date + '-RI-VM.parquet'\n",
+					"saving_file_csv = 'abfss://savings@' + storageAccount + '.dfs.core.windows.net/monthly/' + Year + '/' + Month + '/' + start_date + '_' + end_date + '-RI-VM.csv'\n",
 					"\n",
 					"print(source_usage_filename)\n",
 					"\n",

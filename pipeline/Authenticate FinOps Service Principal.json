@@ -1,0 +1,71 @@
+{
+	"name": "Authenticate FinOps Service Principal",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get SP client secret",
+				"type": "WebActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": true,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": "https://acm-toolkit-kv.vault.azure.net/secrets/sp-password/127d0505066d4ae6913e286bab8cc79c?api-version=7.0",
+					"connectVia": {
+						"referenceName": "AutoResolveIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
+					},
+					"method": "GET",
+					"authentication": {
+						"type": "MSI",
+						"resource": "https://vault.azure.net"
+					}
+				}
+			},
+			{
+				"name": "Get client credentials token",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Get SP client secret",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": "https://login.microsoftonline.com/3aa4a235-b6e2-48d5-9195-7fcf05b459b0/oauth2/token",
+					"connectVia": {
+						"referenceName": "AutoResolveIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
+					},
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/x-www-form-urlencoded"
+					},
+					"body": {
+						"value": "@concat('client_id=4c1cded2-f7a7-4c00-8d65-0a3287cbd682&client_secret=',activity('Get SP client secret').output.value,'&grant_type=client_credentials&resource=https://management.azure.com&scope=./default')",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"folder": {
+			"name": "PipelinesInProduction/Management API (New)"
+		},
+		"annotations": []
+	}
+}

@@ -1,6 +1,9 @@
 {
 	"name": "CostTagExpansion",
 	"properties": {
+		"folder": {
+			"name": "NotebookNotInUse/Keep"
+		},
 		"nbformat": 4,
 		"nbformat_minor": 2,
 		"bigDataPool": {
@@ -18,14 +21,11 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "8eb5e689-2be3-492c-86c4-32a4c43dee21"
+				"spark.autotune.trackingId": "ef2dc14b-362a-482a-9041-66628e00badc"
 			}
 		},
 		"metadata": {
 			"saveOutput": true,
-			"synapse_widget": {
-				"version": "0.1"
-			},
 			"enableDebugMode": false,
 			"kernelspec": {
 				"name": "synapse_pyspark",
@@ -41,14 +41,13 @@
 				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
 				"auth": {
 					"type": "AAD",
-					"authResource": "https://dev.azuresynapse.net",
-					"authHeader": null
+					"authResource": "https://dev.azuresynapse.net"
 				},
 				"sparkVersion": "3.3",
 				"nodeCount": 3,
 				"cores": 16,
 				"memory": 112,
-				"extraHeader": null
+				"automaticScaleJobs": true
 			},
 			"sessionKeepAliveTimeout": 30
 		},
@@ -74,7 +73,8 @@
 					"actualCostPath = 'exports/monthly/ACMMonthlyActualCost/'\n",
 					"toDate = '20230430'\n",
 					"fromDate = '20230401'\n",
-					"container = 'usage'"
+					"container = 'usage'\n",
+					"storageAccount = 's037costmgmt'"
 				],
 				"execution_count": 1
 			},
@@ -445,10 +445,10 @@
 					"\n",
 					"        longToDate = datetime.strptime(toDate, '%Y%m%d').strftime('%Y-%m-%d')\n",
 					"\n",
-					"        extended_actual_cost_data_path = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + actualCostPath + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
-					"        subscription_path = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions_' + longToDate + '.json'\n",
-					"        #subscription_path = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/subscriptions/subscriptions.json'\n",
-					"        appListPath = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/applications/applicationList.parquet'\n",
+					"        extended_actual_cost_data_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + actualCostPath + dateRange + '/Extended_ACMMonthlyActualCost_' + dateRange + '.parquet'\n",
+					"        subscription_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/subscriptions_' + longToDate + '.json'\n",
+					"        #subscription_path = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/subscriptions/subscriptions.json'\n",
+					"        appListPath = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/applications/applicationList.parquet'\n",
 					"\n",
 					"        #extended_actual_cost_data_path = 'data/2022 Actual cost (10k rows).csv'\n",
 					"        #extended_actual_cost_data_path = 'data/ACMMonthlyActualCost_20220101-20220131.parquet'\n",

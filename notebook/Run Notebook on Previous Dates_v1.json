@@ -1,31 +1,32 @@
 {
 	"name": "Run Notebook on Previous Dates_v1",
 	"properties": {
+		"description": "Double check with Joakim",
+		"folder": {
+			"name": "NotebookInProduction/Cost Extension"
+		},
 		"nbformat": 4,
 		"nbformat_minor": 2,
 		"bigDataPool": {
-			"referenceName": "sparkpool32",
+			"referenceName": "sprkpool33large",
 			"type": "BigDataPoolReference"
 		},
 		"sessionProperties": {
-			"driverMemory": "56g",
-			"driverCores": 8,
-			"executorMemory": "56g",
-			"executorCores": 8,
-			"numExecutors": 2,
+			"driverMemory": "112g",
+			"driverCores": 16,
+			"executorMemory": "112g",
+			"executorCores": 16,
+			"numExecutors": 1,
 			"runAsWorkspaceSystemIdentity": false,
 			"conf": {
-				"spark.dynamicAllocation.enabled": "false",
-				"spark.dynamicAllocation.minExecutors": "2",
-				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "7c0f6b8c-cbbc-47d5-a42b-6b800041d122"
+				"spark.dynamicAllocation.enabled": "true",
+				"spark.dynamicAllocation.minExecutors": "1",
+				"spark.dynamicAllocation.maxExecutors": "5",
+				"spark.autotune.trackingId": "5f2c8690-6419-46a7-8203-91ba44eaf55a"
 			}
 		},
 		"metadata": {
 			"saveOutput": true,
-			"synapse_widget": {
-				"version": "0.1"
-			},
 			"enableDebugMode": false,
 			"kernelspec": {
 				"name": "synapse_pyspark",
@@ -35,24 +36,44 @@
 				"name": "python"
 			},
 			"a365ComputeOptions": {
-				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
-				"name": "sparkpool32",
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
+				"name": "sprkpool33large",
 				"type": "Spark",
-				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
 				"auth": {
 					"type": "AAD",
-					"authResource": "https://dev.azuresynapse.net",
-					"authHeader": null
+					"authResource": "https://dev.azuresynapse.net"
 				},
-				"sparkVersion": "3.2",
+				"sparkVersion": "3.3",
 				"nodeCount": 3,
-				"cores": 8,
-				"memory": 56,
-				"extraHeader": null
+				"cores": 16,
+				"memory": 112,
+				"automaticScaleJobs": true
 			},
 			"sessionKeepAliveTimeout": 30
 		},
 		"cells": [
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"storageAccount = 's037costmgmt'"
+				],
+				"execution_count": 6
+			},
 			{
 				"cell_type": "code",
 				"metadata": {
@@ -69,7 +90,7 @@
 				"source": [
 					"import time"
 				],
-				"execution_count": 4
+				"execution_count": 7
 			},
 			{
 				"cell_type": "code",
@@ -87,14 +108,15 @@
 				"source": [
 					"# Setting a root directory to get all the dates. Whether it is Actual or Amortized isn't important seeing as we only want the dates\r\n",
 					"container = 'usage'\r\n",
-					"root_dir = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/'\r\n",
+					"root_dir = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/'\r\n",
 					"\r\n",
 					"\r\n",
 					"# Getting the dates from the directory folder\r\n",
 					"date_paths = mssparkutils.fs.ls(root_dir)\r\n",
 					"dates = [files.name for files in date_paths]\r\n",
 					"dates = [date_string.split('-') for date_string in dates]"
-				]
+				],
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -111,8 +133,9 @@
 				},
 				"source": [
 					"# # For Testing Purposes\r\n",
-					"# dates = [[toDate, fromDate] for (toDate, fromDate) in dates if toDate >= '20230801']"
-				]
+					"#dates = [[toDate, fromDate] for (toDate, fromDate) in dates if toDate >= '20230101']"
+				],
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -136,7 +159,7 @@
 					"    # Checking the run-time of the notebook for timeout-purposes\r\n",
 					"    start_time = time.time()\r\n",
 					"    # Running Monthly Extend-notebook with the variable arguments as inputs to the notebook.\r\n",
-					"    mssparkutils.notebook.run(path='Monthly Extend AI column and WBS tags_v2', \r\n",
+					"    mssparkutils.notebook.run(path='monthly-cost-extend-v3', \r\n",
 					"                              timeout_seconds=600,\r\n",
 					"                              arguments={'fromDate' : fromDate, \r\n",
 					"                                         'toDate' : toDate, \r\n",
@@ -148,7 +171,8 @@
 					"    # n += 1\r\n",
 					"    # if n == 2:\r\n",
 					"    #     break"
-				]
+				],
+				"execution_count": 10
 			}
 		]
 	}

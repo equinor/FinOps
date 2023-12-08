@@ -1,0 +1,450 @@
+{
+	"name": "VM-utilization-fetch",
+	"properties": {
+		"folder": {
+			"name": "NotebookInProduction/VMUtilization"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sparkpool32",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "56g",
+			"driverCores": 8,
+			"executorMemory": "56g",
+			"executorCores": 8,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "69b086fb-0f83-4dce-aec4-b38a990f9266"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sparkpool32",
+				"name": "sparkpool32",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.2",
+				"nodeCount": 3,
+				"cores": 8,
+				"memory": 56,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Script Initialization\r\n",
+					"##### Set parameters, constants, variables and scehma"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from datetime import datetime, timedelta\r\n",
+					"from azure.identity import ClientSecretCredential, KnownAuthorities\r\n",
+					"from notebookutils import mssparkutils\r\n",
+					"import requests\r\n",
+					"import pyspark.sql.functions as F\r\n",
+					"import pyspark.sql.types as T"
+				],
+				"execution_count": 1
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"# Parameters\r\n",
+					"storageAccount = 's037costmgmt'\r\n",
+					"subscriptionId = '061f6daa-2afe-427d-b3a5-a1919906d96f'\r\n",
+					"startDate = '2023-10-17'"
+				],
+				"execution_count": 2
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Constants\r\n",
+					"KEY_VAULT_NAME = 'acm-toolkit-kv'\r\n",
+					"SCOPE = 'https://management.azure.com/.default'\r\n",
+					"BASE_URL = 'https://management.azure.com/'\r\n",
+					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'"
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Date variables\r\n",
+					"next_day = datetime.strptime(startDate, '%Y-%m-%d') + timedelta(days=1)\r\n",
+					"endDate = next_day.strftime('%Y-%m-%d')\r\n",
+					"\r\n",
+					"datesplit = startDate.split('-')\r\n",
+					"year = datesplit[0]\r\n",
+					"month = datesplit[1]\r\n",
+					"day = datesplit[2]"
+				],
+				"execution_count": 4
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Set Pyspark schema\r\n",
+					"\r\n",
+					"api_schema = T.StructType([\r\n",
+					"    T.StructField(\"metadatavalues\", T.ArrayType(\r\n",
+					"        T.StructType([\r\n",
+					"            T.StructField(\"name\", T.StructType([\r\n",
+					"                T.StructField(\"value\", T.StringType()),\r\n",
+					"                T.StructField(\"localizedValue\", T.StringType())\r\n",
+					"            ])),\r\n",
+					"            T.StructField(\"value\", T.StringType())\r\n",
+					"        ])\r\n",
+					"    )),\r\n",
+					"    T.StructField(\"data\", T.ArrayType(\r\n",
+					"        T.StructType([\r\n",
+					"            T.StructField(\"timeStamp\", T.StringType()),\r\n",
+					"            T.StructField(\"average\", T.DoubleType())\r\n",
+					"        ])\r\n",
+					"    ))\r\n",
+					"])\r\n",
+					"\r\n",
+					"parquet_schema = T.StructType([\r\n",
+					"    T.StructField(\"timestamp\", T.TimestampType(), True),\r\n",
+					"    T.StructField(\"cpu_average\", T.DoubleType(), True),\r\n",
+					"    T.StructField(\"subscriptionId\", T.StringType(), True),\r\n",
+					"    T.StructField(\"resourceGroupName\", T.StringType(), True),\r\n",
+					"    T.StructField(\"virtualMachineName\", T.StringType(), True)\r\n",
+					"])"
+				],
+				"execution_count": 5
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Extract data from source"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def read_subscription_locations(location_path):\r\n",
+					"    location_df = spark.read.csv(location_path, header=True, inferSchema=True)\r\n",
+					"    location_df = location_df.select('location').distinct()\r\n",
+					"    location_list = [row['location'] for row in location_df.collect()]\r\n",
+					"    unique_locations = [str(value) for value in location_list]\r\n",
+					"    return unique_locations"
+				],
+				"execution_count": 6
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def get_access_token():\r\n",
+					"    tenant_id = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'tenantID', LINKED_SERVICE_NAME)\r\n",
+					"    client_id = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'Azure-Cost-Management-Metrics-Reader-Client-Id', LINKED_SERVICE_NAME)\r\n",
+					"    client_secret = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'Azure-Cost-Management-Metrics-Reader-secret', LINKED_SERVICE_NAME)\r\n",
+					"\r\n",
+					"    credential = ClientSecretCredential(\r\n",
+					"        authority=KnownAuthorities.AZURE_PUBLIC_CLOUD,\r\n",
+					"        tenant_id=tenant_id,\r\n",
+					"        client_id=client_id,\r\n",
+					"        client_secret=client_secret\r\n",
+					"    )\r\n",
+					"\r\n",
+					"    token = credential.get_token(SCOPE)\r\n",
+					"    return token.token"
+				],
+				"execution_count": 7
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def build_api_endpoint(\r\n",
+					"    subscription_id, \r\n",
+					"    start_date, \r\n",
+					"    end_date,\r\n",
+					"    interval,\r\n",
+					"    metric,\r\n",
+					"    location,\r\n",
+					"    aggregation,\r\n",
+					"    api_version):\r\n",
+					"\r\n",
+					"    url = BASE_URL\r\n",
+					"    url += f\"subscriptions/{subscription_id}/providers/microsoft.Insights/metrics?\"\r\n",
+					"    url += f\"timespan={start_date}T00:00:00.000Z/{end_date}T00:00:00.000Z\"\r\n",
+					"    url += f\"&interval={interval}\"\r\n",
+					"    url += f\"&metricnames={metric}\"\r\n",
+					"    url += f\"&region={location}\"\r\n",
+					"    url += f\"&aggregation={aggregation}\"\r\n",
+					"    url += f\"&api-version={api_version}\"\r\n",
+					"    url += f\"&metricNamespace=microsoft.compute/virtualmachines&$filter=Microsoft.ResourceId eq '*'\"\r\n",
+					"\r\n",
+					"    return url"
+				],
+				"execution_count": 8
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def fetch_metrics(access_token, location):\r\n",
+					"    # Build Azure management API metric endpoint\r\n",
+					"    api_endpoint = build_api_endpoint(\r\n",
+					"        subscription_id=subscriptionId,\r\n",
+					"        start_date=startDate,\r\n",
+					"        end_date=endDate,\r\n",
+					"        interval=\"PT1H\",\r\n",
+					"        metric=\"Percentage CPU\",\r\n",
+					"        location=location,\r\n",
+					"        aggregation=\"average\",\r\n",
+					"        api_version=\"2021-05-01\"\r\n",
+					"    )\r\n",
+					"\r\n",
+					"    headers = {\r\n",
+					"        'Authorization': 'Bearer ' + access_token\r\n",
+					"    }\r\n",
+					"\r\n",
+					"    response = requests.get(api_endpoint, headers=headers)\r\n",
+					"    result = response.json()\r\n",
+					"    return result"
+				],
+				"execution_count": 9
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Transform source data"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"def transform_to_df(json_result):\r\n",
+					"    df = spark.createDataFrame(json_result[\"value\"][0]['timeseries'], schema=api_schema)\r\n",
+					"\r\n",
+					"    df = df.withColumn('resourceReference', F.col('metadatavalues')[0].value.alias('resourceReference'))\r\n",
+					"    df = df.withColumn('data', F.explode('data'))\r\n",
+					"\r\n",
+					"    df = df.select('resourceReference', F.col('data.timeStamp').alias('timestamp'), F.col('data.average').alias('cpu_average'))\r\n",
+					"\r\n",
+					"    df = df.withColumn('refComponents', F.split(F.col('resourceReference'), '/'))\r\n",
+					"    df = df.withColumn('subscriptionId', F.col('refComponents')[2])\r\n",
+					"    df = df.withColumn('resourceGroupName', F.col('refComponents')[4])\r\n",
+					"    df = df.withColumn('virtualMachineName', F.col('refComponents')[8])\r\n",
+					"\r\n",
+					"    df = df.withColumn(\"timestamp\", F.to_timestamp(\"timestamp\", \"yyyy-MM-dd'T'HH:mm:ss'Z'\"))\r\n",
+					"\r\n",
+					"    df = df.drop('resourceReference', 'refComponents')\r\n",
+					"    return df"
+				],
+				"execution_count": 10
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Load transformed data to container"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"# Get all locations that the given subscription has residing VMs\r\n",
+					"location_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/metrics/vm-utilization-by-subscription/{subscriptionId}/locations.csv\"\r\n",
+					"locations = read_subscription_locations(location_path)\r\n",
+					"\r\n",
+					"# Get service principal access token\r\n",
+					"access_token = get_access_token()\r\n",
+					"\r\n",
+					"df = spark.createDataFrame([], schema=parquet_schema)\r\n",
+					"\r\n",
+					"for location in locations:\r\n",
+					"    # Fetch virtual machine utilization metrics in given location\r\n",
+					"    metrics = fetch_metrics(access_token, location)\r\n",
+					"\r\n",
+					"    # Transform metrics json data to dataframe\r\n",
+					"    metrics_df = transform_to_df(metrics)\r\n",
+					"    \r\n",
+					"    # Merge metrics from current location with target\r\n",
+					"    df = df.union(metrics_df)\r\n",
+					"\r\n",
+					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/metrics/vm-utilization-by-subscription/{subscriptionId}/{year}/{month}/{day}/vm_cpu_avg.parquet\"\r\n",
+					"df.write.format('parquet').mode('overwrite').save(target_path)"
+				],
+				"execution_count": 11
+			}
+		]
+	}
+}

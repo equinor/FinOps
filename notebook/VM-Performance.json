@@ -1,6 +1,9 @@
 {
 	"name": "VM-Performance",
 	"properties": {
+		"folder": {
+			"name": "NotebookNotInUse"
+		},
 		"nbformat": 4,
 		"nbformat_minor": 2,
 		"bigDataPool": {
@@ -18,14 +21,11 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "093ddd57-cd57-46d0-a2d5-7912456326ea"
+				"spark.autotune.trackingId": "9e64a836-4adb-46ee-8a5d-cb8ef720415d"
 			}
 		},
 		"metadata": {
 			"saveOutput": true,
-			"synapse_widget": {
-				"version": "0.1"
-			},
 			"enableDebugMode": false,
 			"kernelspec": {
 				"name": "synapse_pyspark",
@@ -41,14 +41,13 @@
 				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32",
 				"auth": {
 					"type": "AAD",
-					"authResource": "https://dev.azuresynapse.net",
-					"authHeader": null
+					"authResource": "https://dev.azuresynapse.net"
 				},
 				"sparkVersion": "3.2",
 				"nodeCount": 3,
 				"cores": 8,
 				"memory": 56,
-				"extraHeader": null
+				"automaticScaleJobs": false
 			},
 			"sessionKeepAliveTimeout": 30
 		},
@@ -70,7 +69,8 @@
 					]
 				},
 				"source": [
-					"KVUri = 'https://acm-toolkit-kv.vault.azure.net/'"
+					"KVUri = 'https://acm-toolkit-kv.vault.azure.net/'\r\n",
+					"storageAccount = 's037costmgmt'"
 				],
 				"execution_count": 7
 			},
@@ -170,7 +170,7 @@
 					"month = (datetime.now() - timedelta(days=1)).strftime('%m')\n",
 					"day = (datetime.now() - timedelta(days=1)).strftime('%d')\n",
 					"\n",
-					"performance_store = 'abfss://' + container + '@s037costmgmt.dfs.core.windows.net/' + vm_path + '/' + cpu_avg_folder + '/' + year + '/' + month + '/' + day + '/'\n",
+					"performance_store = 'abfss://' + container + '@' + storageAccount + '.dfs.core.windows.net/' + vm_path + '/' + cpu_avg_folder + '/' + year + '/' + month + '/' + day + '/'\n",
 					"\n",
 					"## Get subscription, resourcegroup and name of every VM that the service principal has access to in graph   \n",
 					"token, credential, client_id, client_secret, tenant_id = get_token(KVUri)\n",
@@ -228,7 +228,8 @@
 					"\n",
 					"\n",
 					""
-				]
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -245,7 +246,8 @@
 				},
 				"source": [
 					""
-				]
+				],
+				"execution_count": null
 			}
 		]
 	}

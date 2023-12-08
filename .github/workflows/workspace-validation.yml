@@ -1,0 +1,19 @@
+name: Synapse Workspace Validation
+
+on:
+    pull_request:
+        types: [opened, synchronize]
+
+jobs:
+    validate:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v2
+
+            - name: Validate synapse workspace
+              uses: Azure/synapse-workspace-deployment@V1.8.0
+              with:
+                TargetWorkspaceName: 'Synapse'
+                ArtifactsFolder: '$GITHUB_WORKSPACE'
+                operation: 'validate'

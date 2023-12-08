@@ -1,0 +1,284 @@
+{
+	"name": "servicenow-application-processing",
+	"properties": {
+		"folder": {
+			"name": "NotebookInProduction/ServiceNow"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sprkpool33large",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "112g",
+			"driverCores": 16,
+			"executorMemory": "112g",
+			"executorCores": 16,
+			"numExecutors": 1,
+			"runAsWorkspaceSystemIdentity": false,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "true",
+				"spark.dynamicAllocation.minExecutors": "1",
+				"spark.dynamicAllocation.maxExecutors": "4",
+				"spark.autotune.trackingId": "6bf4de8b-70a9-4704-b2a9-9376850e0138"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
+				"name": "sprkpool33large",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 16,
+				"memory": 112,
+				"automaticScaleJobs": true
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Script initialization"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"storageAccount = 's037costmgmt'"
+				],
+				"execution_count": 11
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"import pandas as pd \r\n",
+					"from pyspark.sql import SparkSession\r\n",
+					"import pyspark.sql.functions as F"
+				],
+				"execution_count": 12
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Extract data from source"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"source_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/applications/NewServiceNowDataset.csv\"\r\n",
+					"application_df = spark.read.csv(source_path, header=True, inferSchema=True)"
+				],
+				"execution_count": 13
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Validate data quality"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# According to the feedback from BPA team (Daniel Lee), we have to filter out all those records that have \"Ignored\" in OperationalStatus field.\r\n",
+					"df = application_df.where(application_df.OperationalStatus != 'Ignored')"
+				],
+				"execution_count": 14
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Transform the data"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Transform string fields into integer format, and if there are empty entries, set them to 0\r\n",
+					"df = df.withColumn('AppID', F.col('AppID').cast(\"int\")).fillna(0, subset=['AppID'])\r\n",
+					"df = df.withColumn('IsOmniaSubscription', F.col('IsOmniaSubscription').cast(\"int\")).fillna(0, subset=['IsOmniaSubscription'])\r\n",
+					"df = df.withColumn('ProductOwnerNo', F.col('ProductOwnerNo').cast(\"int\")).fillna(0, subset=['ProductOwnerNo'])\r\n",
+					"df = df.withColumn('OperationalUnitManagerNo', F.col('OperationalUnitManagerNo').cast(\"int\")).fillna(0, subset=['OperationalUnitManagerNo'])\r\n",
+					"\r\n",
+					"# Transform string fields into date format\r\n",
+					"df = df.withColumn('Created', F.to_timestamp('Created'))\r\n",
+					"df = df.withColumn('Updated', F.to_timestamp('Updated'))\r\n",
+					"df = df.withColumn('EndOfLifeDate', F.to_timestamp('EndOfLifeDate'))"
+				],
+				"execution_count": 15
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"# Mitigate email part from shortname string such that only employee initials remains\r\n",
+					"df = df.withColumn(\"ProductOwnerUserName\", F.split(df[\"ProductOwnerShortName\"], \"@\").getItem(0))\r\n",
+					"df = df.withColumn(\"OperationalManagerUserName\", F.split(df[\"OperationalManagerShortName\"], \"@\").getItem(0))\r\n",
+					"df = df.drop('ProductOwnerShortName', 'OperationalManagerShortName')"
+				],
+				"execution_count": 16
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"# Split org unit string into three substrings\r\n",
+					"split_col = F.split(F.col('OperationalUnitOrgUnit'), \" \")\r\n",
+					"df = df.withColumn(\"OrgUnitLevel0\", split_col.getItem(0))\r\n",
+					"df = df.withColumn(\"OrgUnitLevel1\", F.concat(split_col.getItem(0), F.lit(\" \"), split_col.getItem(1)))\r\n",
+					"df = df.withColumn(\"OrgUnitLevel2\", F.concat(split_col.getItem(0), F.lit(\" \"), split_col.getItem(1), F.lit(\" \"), split_col.getItem(2)))"
+				],
+				"execution_count": 17
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Save it to Optimized Container"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Define optimized path to save the data\r\n",
+					"optimized_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet\"\r\n",
+					"\r\n",
+					"#Save the data with partitioned by time\r\n",
+					"df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
+				],
+				"execution_count": 18
+			}
+		]
+	}
+}

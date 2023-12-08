@@ -1,0 +1,85 @@
+{
+    "Microsoft.Synapse/workspaces/datasets": {
+        "*": {
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "=:-dataSetLinkedServiceName:string"
+                }
+            }
+        }
+    },
+    "Microsoft.Synapse/workspaces/linkedServices": {
+        "*": {
+            "properties": {
+                "typeProperties": {
+                    "url": "=:-linkedServiceUrl:string"
+                }
+            }            
+        }
+    },
+    "Microsoft.Synapse/workspaces/notebooks": {
+        "properties": {
+            "bigDataPool": {
+                "referenceName": "=:-notebookSparkPoolNameRef:string"
+            },
+             "metadata": {
+                "a365ComputeOptions": {
+                    "id": "=:-notebookSparkPoolIdRef:string",
+                    "name": "=:-notebookSparkPoolNameRef:string",
+                    "endpoint": "=:-notebookSparkPoolEndpointRef:string"
+                }
+            }
+        }
+    },
+    "Microsoft.Synapse/workspaces/pipelines": {
+        "properties": {
+            "activities": [{
+                "typeProperties": {
+                    "sparkPool": {
+                        "referenceName": "=:-pipelineSparkPoolNameRef:string"
+                    }
+                }
+            }],
+            "variables": {
+                "storageAccount": {
+                    "defaultValue": "=:-pipelineStorageAccountVariable:string"
+                }
+            },
+            "parameters": {
+                "storageAccount": {
+                    "defaultValue": "=:-pipelineStorageAccountParameter:string"
+                }
+            }        
+        }
+    },
+    "Microsoft.Synapse/workspaces/dataflows": {
+        "properties": {
+            "typeProperties": {
+                "sources": [{
+                    "linkedService": {
+                        "referenceName": "=:-sourceDataflowLinkedServiceNameRef:string"
+                    }
+                }],
+                "sinks": [{
+                    "linkedService": {
+                        "referenceName": "=:-sinkDataflowLinkedServiceNameRef:string"
+                    }
+                }]
+            }
+        }
+    },
+    "Microsoft.Synapse/workspaces/bigDataPools": {
+        "properties": {
+            "autoPause": {
+                "delayInMinutes": "=:-delayInMinutes:int"
+            },
+            "autoScale": {
+                "maxNodeCount": "=:-maxNodeCount:int",
+                "minNodeCount": "=:-minNodeCount:int"
+            },
+            "nodeCount": "=:-nodeCount:int",
+            "nodeSize": "=:-nodeSize:string",
+            "sparkVersion": "=:-sparkVersion:string"
+        }
+    }
+}
