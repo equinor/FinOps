@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "d9e70b70-43c7-4570-933f-0df75687fcde"
+				"spark.autotune.trackingId": "cdcd4ea1-aacb-43d0-962c-44ab55800aca"
 			}
 		},
 		"metadata": {
@@ -338,6 +338,8 @@
 					"# Applied Unknown label in ApplicationName field. \r\n",
 					"condition_1 = (F.col('ApplicationName').isNull()| (F.col('ApplicationName') == \"\")) & (F.col('SubscriptionName').contains('Danske Commodities'))\r\n",
 					"condition_2 = (F.col('ApplicationName').isNull()| (F.col('ApplicationName') == \"\")) & (~(F.col('SubscriptionName').contains('Danske Commodities')))\r\n",
+					"\r\n",
+					"condition_1 = (F.col('ApplicationName') == 'Application not defined or not found') & (F.col('SubscriptionName').contains('Danske Commodities'))\r\n",
 					"\r\n",
 					"df = df.withColumn(\r\n",
 					"    'ApplicationName',\r\n",
