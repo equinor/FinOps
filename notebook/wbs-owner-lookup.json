@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "0ee6036c-f8ba-4016-ab1a-df3172659005"
+				"spark.autotune.trackingId": "901398fc-1aed-4df5-9232-3938df5639bc"
 			}
 		},
 		"metadata": {
@@ -56,7 +56,7 @@
 				"source": [
 					"import pyspark.sql.functions as F"
 				],
-				"execution_count": 10
+				"execution_count": 25
 			},
 			{
 				"cell_type": "code",
@@ -77,7 +77,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 11
+				"execution_count": 26
 			},
 			{
 				"cell_type": "code",
@@ -96,7 +96,7 @@
 					"graph_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/AzureAD_BusinessAreaLevel/gold/usersWithBusinessAreaSnapshot_v1.parquet'\r\n",
 					"graph_df = spark.read.format('parquet').load(graph_path)"
 				],
-				"execution_count": 12
+				"execution_count": 27
 			},
 			{
 				"cell_type": "code",
@@ -115,7 +115,25 @@
 					"sap_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/sap/sap-wbs-latest.parquet'\r\n",
 					"sap_df = spark.read.format('parquet').load(sap_path)"
 				],
-				"execution_count": 13
+				"execution_count": 28
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"sap_df = sap_df.withColumn('WBS_Owner_ID', F.when(F.length(F.col('WBS_Owner_ID')) == 5, F.lpad(F.col('WBS_Owner_ID'), 6, '0')).otherwise(F.col('WBS_Owner_ID')))"
+				],
+				"execution_count": 29
 			},
 			{
 				"cell_type": "code",
@@ -134,7 +152,7 @@
 					"sap_df = sap_df.join(graph_df, sap_df.WBS_Owner_ID == graph_df.employeeId, \"left\")\r\n",
 					"sap_df = sap_df.drop('WBS_Owner_ID')"
 				],
-				"execution_count": 14
+				"execution_count": 30
 			},
 			{
 				"cell_type": "code",
@@ -153,7 +171,7 @@
 					"wbs_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/sap/wbs-owner-latest.parquet\"\r\n",
 					"sap_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(wbs_path)"
 				],
-				"execution_count": 15
+				"execution_count": 31
 			}
 		]
 	}
