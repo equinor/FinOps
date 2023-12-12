@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "3ecbdfbc-c4a3-4053-be62-0acec1acd2e8"
+				"spark.autotune.trackingId": "3bf590fe-9c87-4a4c-8f39-87ba8f823252"
 			}
 		},
 		"metadata": {
@@ -86,7 +86,7 @@
 					"import pyspark.sql.functions as F\r\n",
 					"from enum import Enum"
 				],
-				"execution_count": 51
+				"execution_count": 70
 			},
 			{
 				"cell_type": "code",
@@ -104,7 +104,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 52
+				"execution_count": 71
 			},
 			{
 				"cell_type": "code",
@@ -127,7 +127,7 @@
 					"    VM_nRI_nHUB = \"VM - RI disabled - HUB disabled\"\r\n",
 					"    UNKNOWN = \"Unknown\""
 				],
-				"execution_count": 53
+				"execution_count": 72
 			},
 			{
 				"cell_type": "code",
@@ -147,7 +147,7 @@
 					"# cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/20231101-20231130/ACMMonthlyActualCost_20231101-20231130.parquet'\r\n",
 					"df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 54
+				"execution_count": 73
 			},
 			{
 				"cell_type": "code",
@@ -187,7 +187,7 @@
 					"    # 'ai_UsageType'\r\n",
 					")"
 				],
-				"execution_count": 55
+				"execution_count": 74
 			},
 			{
 				"cell_type": "code",
@@ -221,7 +221,7 @@
 					"    print(f\"Elements only in set2: {only_in_set2}\")\r\n",
 					"    print(f\"Elements in both sets: {union}\")"
 				],
-				"execution_count": 56
+				"execution_count": 75
 			},
 			{
 				"cell_type": "markdown",
@@ -259,7 +259,7 @@
 					"pricesheet_df = pricesheet_df.withColumn('pricePerUnit', F.col('unitPrice') / F.col('unitQuantity'))\r\n",
 					"pricesheet_df = pricesheet_df.select('meterName', 'unitOfMeasure', 'unitQuantity', 'unitPrice', 'pricePerUnit', 'billingPeriodId')"
 				],
-				"execution_count": 57
+				"execution_count": 76
 			},
 			{
 				"cell_type": "markdown",
@@ -299,7 +299,7 @@
 				"source": [
 					"vm_df = df.where(((F.col('ResourceId').like('%/virtualMachines/%')) | (F.col('ResourceId').like('%/virtualMachineScaleSets/%'))))"
 				],
-				"execution_count": 58
+				"execution_count": 77
 			},
 			{
 				"cell_type": "code",
@@ -317,7 +317,7 @@
 				"source": [
 					"vm_df = vm_df.where((F.col('MeterSubCategory').contains('Windows')) | (F.col('ServiceInfo2') == 'Windows Server BYOL'))"
 				],
-				"execution_count": null
+				"execution_count": 78
 			},
 			{
 				"cell_type": "code",
@@ -335,7 +335,7 @@
 				"source": [
 					"vm_df = vm_df.where(~F.col('ResourceName').like('CVD-%'))"
 				],
-				"execution_count": null
+				"execution_count": 79
 			},
 			{
 				"cell_type": "markdown",
@@ -389,7 +389,7 @@
 					"    F.lit(' vCPU VM License')\r\n",
 					"))"
 				],
-				"execution_count": null
+				"execution_count": 80
 			},
 			{
 				"cell_type": "code",
@@ -410,7 +410,7 @@
 					"\r\n",
 					"vm_df = vm_df.withColumn('PAYGLicenseCost', F.col('Quantity') * F.col('pricePerUnit'))"
 				],
-				"execution_count": null
+				"execution_count": 81
 			},
 			{
 				"cell_type": "code",
@@ -434,7 +434,7 @@
 					"    .otherwise(HUBCategory.UNKNOWN.value)\r\n",
 					")"
 				],
-				"execution_count": null
+				"execution_count": 82
 			},
 			{
 				"cell_type": "code",
@@ -459,7 +459,7 @@
 					"vm_df = vm_df.withColumn('UnlockedSavings', F.when((F.col('HUBCategory') == HUBCategory.VM_RI_HUB.value) | (F.col('HUBCategory') == HUBCategory.VM_nRI_HUB.value), F.col('PAYGLicenseCost')).otherwise(0))\r\n",
 					"vm_df = vm_df.withColumn('PotentialSavings', F.col('ResourceCost') - F.col('CostWithHub'))"
 				],
-				"execution_count": null
+				"execution_count": 83
 			},
 			{
 				"cell_type": "code",
@@ -477,26 +477,7 @@
 				"source": [
 					"vm_df = vm_df.drop('UnitOfMeasure', 'unitQuantity', 'unitPrice', 'pricePerUnit')"
 				],
-				"execution_count": 44
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(vm_df.where(F.col('HUBCategory') == HUBCategory.VM_RI_nHUB.value).agg(F.sum('PotentialSavings')))"
-				],
-				"execution_count": 50
+				"execution_count": 84
 			},
 			{
 				"cell_type": "code",
@@ -513,9 +494,9 @@
 				},
 				"source": [
 					"hub_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/hub/windows-vm-hub.parquet\"\r\n",
-					"# vm_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(hub_path)"
+					"vm_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(hub_path)"
 				],
-				"execution_count": 46
+				"execution_count": 85
 			},
 			{
 				"cell_type": "markdown",
