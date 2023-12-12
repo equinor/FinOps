@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "f350a0e2-2ad6-46f3-9c9c-be999ecff6d6"
+				"spark.autotune.trackingId": "b558dadf-2e5c-47c3-88bf-bc6a15ec26b0"
 			}
 		},
 		"metadata": {
@@ -83,9 +83,10 @@
 			{
 				"cell_type": "code",
 				"source": [
-					"import pyspark.sql.functions as F"
+					"import pyspark.sql.functions as F\r\n",
+					"from enum import Enum"
 				],
-				"execution_count": 95
+				"execution_count": 18
 			},
 			{
 				"cell_type": "code",
@@ -103,7 +104,30 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 96
+				"execution_count": 19
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"class HUBCategory(Enum):\r\n",
+					"    VM_RI_HUB = \"VM - RI enabled - HUB enabled\"\r\n",
+					"    VM_RI_nHUB = \"VM - RI enabled - HUB disabled\"\r\n",
+					"    VM_nRI_HUB = \"VM - RI disabled - HUB enabled\"\r\n",
+					"    VM_nRI_nHUB = \"VM - RI disabled - HUB disabled\"\r\n",
+					"    UNKNOWN = \"Unknown\""
+				],
+				"execution_count": 20
 			},
 			{
 				"cell_type": "code",
@@ -123,7 +147,7 @@
 					"# cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/20231101-20231130/ACMMonthlyActualCost_20231101-20231130.parquet'\r\n",
 					"df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 119
+				"execution_count": 21
 			},
 			{
 				"cell_type": "code",
@@ -163,7 +187,7 @@
 					"    # 'ai_UsageType'\r\n",
 					")"
 				],
-				"execution_count": 120
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -197,7 +221,7 @@
 					"    print(f\"Elements only in set2: {only_in_set2}\")\r\n",
 					"    print(f\"Elements in both sets: {union}\")"
 				],
-				"execution_count": 99
+				"execution_count": 5
 			},
 			{
 				"cell_type": "markdown",
@@ -235,7 +259,7 @@
 					"pricesheet_df = pricesheet_df.withColumn('pricePerUnit', F.col('unitPrice') / F.col('unitQuantity'))\r\n",
 					"pricesheet_df = pricesheet_df.select('meterName', 'unitOfMeasure', 'unitQuantity', 'unitPrice', 'pricePerUnit', 'billingPeriodId')"
 				],
-				"execution_count": 100
+				"execution_count": 22
 			},
 			{
 				"cell_type": "markdown",
@@ -275,7 +299,7 @@
 				"source": [
 					"vm_df = df.where(((F.col('ResourceId').like('%/virtualMachines/%')) | (F.col('ResourceId').like('%/virtualMachineScaleSets/%'))))"
 				],
-				"execution_count": 121
+				"execution_count": 23
 			},
 			{
 				"cell_type": "code",
@@ -293,7 +317,7 @@
 				"source": [
 					"vm_df = vm_df.where((F.col('MeterSubCategory').contains('Windows')) | (F.col('ServiceInfo2') == 'Windows Server BYOL'))"
 				],
-				"execution_count": 116
+				"execution_count": 24
 			},
 			{
 				"cell_type": "code",
@@ -311,7 +335,7 @@
 				"source": [
 					"vm_df = vm_df.where(~F.col('ResourceName').like('CVD-%'))"
 				],
-				"execution_count": 117
+				"execution_count": 25
 			},
 			{
 				"cell_type": "code",
@@ -377,9 +401,57 @@
 					"    .orderBy('Date', 'Quantity', 'ResourceCost')\r\n",
 					"\r\n",
 					"vm_df = vm_df.where(F.col('ai_VCPUs') != 0)\r\n",
-					"vm_df = vm_df.withColumn('pricesheetService', F.concat(F.lit('Windows Server - '), F.col('ai_VCPUs'), F.lit(' vCPU VM License')))"
+					"vm_df = vm_df.withColumn('pricesheetService', F.concat(\r\n",
+					"    F.lit('Windows Server'),\r\n",
+					"    F.when(F.col('MeterSubCategory') == 'Windows Server Burst', ' Burst - ').otherwise(' - '), \r\n",
+					"    F.col('ai_VCPUs'), \r\n",
+					"    F.lit(' vCPU VM License')\r\n",
+					"))"
 				],
-				"execution_count": 104
+				"execution_count": 26
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(vm_df.select('HUBCategory').distinct())"
+				],
+				"execution_count": 29
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"vm_df = vm_df.withColumn('HUBCategory',\r\n",
+					"    F.when((F.col('IsRIUsage') == 'RI Usage') & (F.col('Azure_Hybrid_Benefit') == 'Enabled'), HUBCategory.VM_RI_HUB.value)\r\n",
+					"    .when((F.col('MeterCategory') == 'Virtual Machines Licenses') & (F.col('MeterSubCategory').like('Windows Server%')), HUBCategory.VM_RI_nHUB.value)\r\n",
+					"    .when((F.col('IsRIUsage') == 'On Demand Usage') == (F.col('Azure_Hybrid_Benefit') == 'Enabled'), HUBCategory.VM_nRI_HUB.value)\r\n",
+					"    .when((F.col('IsRIUsage') == 'On Demand Usage') == (F.col('Azure_Hybrid_Benefit') == 'Not Enabled'), HUBCategory.VM_nRI_nHUB.value)\r\n",
+					"    .otherwise(HUBCategory.UNKNOWN.value)\r\n",
+					")"
+				],
+				"execution_count": 27
 			},
 			{
 				"cell_type": "code",
@@ -416,10 +488,9 @@
 					}
 				},
 				"source": [
-					"non_ri_mask = (F.col('IsRIUsage') == 'On Demand Usage') & (F.col('MeterCategory') == 'Virtual Machines')\r\n",
-					"vm_df = vm_df.withColumn('HUBCost', \r\n",
-					"    F.when(non_ri_mask & (F.col('Azure_Hybrid_Benefit') == 'Enabled'), F.col('ResourceCost'))\r\n",
-					"    .when(non_ri_mask & (F.col('Azure_Hybrid_Benefit') == 'Not Enabled'), F.col('ResourceCost') - F.col('PAYGLicenseCost'))\r\n",
+					"vm_df = vm_df.withColumn('CostWithHub', \r\n",
+					"    F.when((F.col('HUBCategory') == HUBCategory.VM_nRI_HUB.value) | (F.col('HUBCategory') == HUBCategory.VM_RI_HUB.value), F.col('ResourceCost'))\r\n",
+					"    .when((F.col('HUBCategory') == HUBCategory.VM_nRI_nHUB.value) | (F.col('HUBCategory') == HUBCategory.VM_RI_nHUB.value), F.col('ResourceCost') - F.col('PAYGLicenseCost'))\r\n",
 					"    .otherwise(None)\r\n",
 					")\r\n",
 					"\r\n",
