@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "da9097d6-fb5f-4b75-9e9c-8c52bb29f22e"
+				"spark.autotune.trackingId": "3ecbdfbc-c4a3-4053-be62-0acec1acd2e8"
 			}
 		},
 		"metadata": {
@@ -86,7 +86,7 @@
 					"import pyspark.sql.functions as F\r\n",
 					"from enum import Enum"
 				],
-				"execution_count": 18
+				"execution_count": 51
 			},
 			{
 				"cell_type": "code",
@@ -104,7 +104,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 19
+				"execution_count": 52
 			},
 			{
 				"cell_type": "code",
@@ -127,7 +127,7 @@
 					"    VM_nRI_nHUB = \"VM - RI disabled - HUB disabled\"\r\n",
 					"    UNKNOWN = \"Unknown\""
 				],
-				"execution_count": 20
+				"execution_count": 53
 			},
 			{
 				"cell_type": "code",
@@ -147,7 +147,7 @@
 					"# cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/20231101-20231130/ACMMonthlyActualCost_20231101-20231130.parquet'\r\n",
 					"df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 21
+				"execution_count": 54
 			},
 			{
 				"cell_type": "code",
@@ -187,7 +187,7 @@
 					"    # 'ai_UsageType'\r\n",
 					")"
 				],
-				"execution_count": 4
+				"execution_count": 55
 			},
 			{
 				"cell_type": "code",
@@ -221,7 +221,7 @@
 					"    print(f\"Elements only in set2: {only_in_set2}\")\r\n",
 					"    print(f\"Elements in both sets: {union}\")"
 				],
-				"execution_count": 5
+				"execution_count": 56
 			},
 			{
 				"cell_type": "markdown",
@@ -259,7 +259,7 @@
 					"pricesheet_df = pricesheet_df.withColumn('pricePerUnit', F.col('unitPrice') / F.col('unitQuantity'))\r\n",
 					"pricesheet_df = pricesheet_df.select('meterName', 'unitOfMeasure', 'unitQuantity', 'unitPrice', 'pricePerUnit', 'billingPeriodId')"
 				],
-				"execution_count": 22
+				"execution_count": 57
 			},
 			{
 				"cell_type": "markdown",
@@ -299,7 +299,7 @@
 				"source": [
 					"vm_df = df.where(((F.col('ResourceId').like('%/virtualMachines/%')) | (F.col('ResourceId').like('%/virtualMachineScaleSets/%'))))"
 				],
-				"execution_count": 23
+				"execution_count": 58
 			},
 			{
 				"cell_type": "code",
@@ -317,7 +317,7 @@
 				"source": [
 					"vm_df = vm_df.where((F.col('MeterSubCategory').contains('Windows')) | (F.col('ServiceInfo2') == 'Windows Server BYOL'))"
 				],
-				"execution_count": 24
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -335,26 +335,7 @@
 				"source": [
 					"vm_df = vm_df.where(~F.col('ResourceName').like('CVD-%'))"
 				],
-				"execution_count": 25
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(vm_df.where(F.col('MeterSubCategory') == 'Windows Server Burst'))"
-				],
-				"execution_count": 118
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",
@@ -408,7 +389,7 @@
 					"    F.lit(' vCPU VM License')\r\n",
 					"))"
 				],
-				"execution_count": 26
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -429,7 +410,7 @@
 					"\r\n",
 					"vm_df = vm_df.withColumn('PAYGLicenseCost', F.col('Quantity') * F.col('pricePerUnit'))"
 				],
-				"execution_count": 105
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -453,7 +434,7 @@
 					"    .otherwise(HUBCategory.UNKNOWN.value)\r\n",
 					")"
 				],
-				"execution_count": 27
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -475,9 +456,10 @@
 					"    .otherwise(None)\r\n",
 					")\r\n",
 					"\r\n",
-					"vm_df = vm_df.withColumn('EnableHUBSavings', F.when(F.col('HUBCost').isNotNull(), F.col('ResourceCost') - F.col('HUBCost')).otherwise(None)) "
+					"vm_df = vm_df.withColumn('UnlockedSavings', F.when((F.col('HUBCategory') == HUBCategory.VM_RI_HUB.value) | (F.col('HUBCategory') == HUBCategory.VM_nRI_HUB.value), F.col('PAYGLicenseCost')).otherwise(0))\r\n",
+					"vm_df = vm_df.withColumn('PotentialSavings', F.col('ResourceCost') - F.col('CostWithHub'))"
 				],
-				"execution_count": 106
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -495,7 +477,7 @@
 				"source": [
 					"vm_df = vm_df.drop('UnitOfMeasure', 'unitQuantity', 'unitPrice', 'pricePerUnit')"
 				],
-				"execution_count": 107
+				"execution_count": 44
 			},
 			{
 				"cell_type": "code",
@@ -512,10 +494,9 @@
 					"collapsed": false
 				},
 				"source": [
-					"# display(vm_df.where((F.col('IsRIUsage') == 'RI Usage') & (F.col('Azure_Hybrid_Benefit') == 'Enabled')))\r\n",
-					"display(vm_df.where(F.col('MeterCategory') == 'Virtual Machines Licenses'))"
+					"display(vm_df.where(F.col('HUBCategory') == HUBCategory.VM_RI_nHUB.value).agg(F.sum('PotentialSavings')))"
 				],
-				"execution_count": 112
+				"execution_count": 50
 			},
 			{
 				"cell_type": "code",
@@ -532,9 +513,9 @@
 				},
 				"source": [
 					"hub_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/hub/windows-vm-hub.parquet\"\r\n",
-					"vm_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(hub_path)"
+					"# vm_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(hub_path)"
 				],
-				"execution_count": 109
+				"execution_count": 46
 			},
 			{
 				"cell_type": "markdown",
@@ -627,21 +608,6 @@
 					"\r\n",
 					"\r\n",
 					""
-				]
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"## Questions for David\r\n",
-					"\r\n",
-					"1. When viewing RI instances in the cost file - all instances have 0 cost and all are of MeterCategory equals to **Virtual Machines**. Are all **Virtual Machines Licenses** cost items associated with these RI instances? (no correspondence between RI cost instances and license cost instances)"
 				]
 			}
 		]
