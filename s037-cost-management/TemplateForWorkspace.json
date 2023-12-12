@@ -36336,7 +36336,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "72784082-d606-4d68-a413-e86804ce499e"
+						"spark.autotune.trackingId": "85d236e5-0ca2-47e0-9ff8-459936b2df23"
 					}
 				},
 				"metadata": {
@@ -36361,8 +36361,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -41135,7 +41134,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "0946a553-cda9-4cb1-aa88-b4bd3aec9549"
+						"spark.autotune.trackingId": "45eea5eb-ad3b-4d21-8fa1-bacb67c87d1d"
 					}
 				},
 				"metadata": {
@@ -41160,7 +41159,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -41189,6 +41189,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"def get_last_day_prev_month(to_date):\r\n",
 							"    current_month = int(to_date[4:6])\r\n",
@@ -41543,8 +41544,8 @@
 							"\r\n",
 							"    # Application Name will be \"Application not defined or not found\" when SubscriptionServiceNow-App is equal to Application_name as well as AppID is empty.\r\n",
 							"    # This indicates that application from subscription.json file can not be found in ServiceNow. One of Application example is DATAHUB - MARKETING AND SUPPLY, not found in ServiceNow.\r\n",
-							"    cost_df = cost_df.withColumn('Application_Name', F.when((F.upper(F.col('SubscriptionServiceNow-App'))==F.upper(F.col('Application_Name'))) & (F.col('AppID').isNull()),F.lit('Application not defined or not found'))\\\r\n",
-							"                                                    .otherwise(F.col('Application_Name')))\r\n",
+							"    # cost_df = cost_df.withColumn('Application_Name', F.when((F.upper(F.col('SubscriptionServiceNow-App'))==F.upper(F.col('Application_Name'))) & (F.col('AppID').isNull()),F.lit('Application not defined or not found'))\\\r\n",
+							"    #                                                 .otherwise(F.col('Application_Name')))\r\n",
 							"\r\n",
 							"    # For anything that left ApplicationName will be \"Application not defined or not found\" and For anything that left AppID will be 0.\r\n",
 							"    cost_df = cost_df.na.fill({'AppID': 0, 'Application_Name': 'Application not defined or not found'})\r\n",
