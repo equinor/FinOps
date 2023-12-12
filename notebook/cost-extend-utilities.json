@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "6f45c4bc-d5cc-4cd8-b580-61a4d3502bba"
+				"spark.autotune.trackingId": "0946a553-cda9-4cb1-aa88-b4bd3aec9549"
 			}
 		},
 		"metadata": {
@@ -70,7 +70,7 @@
 					"import pyspark.sql.functions as F\r\n",
 					"import warnings"
 				],
-				"execution_count": 2
+				"execution_count": 1
 			},
 			{
 				"cell_type": "code",
@@ -88,7 +88,7 @@
 					"    # Creating a string date for last month\r\n",
 					"    return f\"{previous_year}-{str(previous_month).zfill(2)}-{str(last_day).zfill(2)}\""
 				],
-				"execution_count": 3
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -115,7 +115,7 @@
 					"                                  .otherwise('RI Usage'))\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 4
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -156,7 +156,7 @@
 					"        cost_df = cost_df.withColumn('ai_' + col, F.coalesce(F.col(f'AdditionalInfo.{col}'), F.lit(None)))\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 5
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -184,7 +184,7 @@
 					"                                              .otherwise(0))\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 6
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -216,7 +216,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 7
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -250,7 +250,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 8
+				"execution_count": 7
 			},
 			{
 				"cell_type": "code",
@@ -349,7 +349,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 9
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -427,9 +427,15 @@
 					"    # For anything that left ApplicationName will be \"Application not defined or not found\" and For anything that left AppID will be 0.\r\n",
 					"    cost_df = cost_df.na.fill({'AppID': 0, 'Application_Name': 'Application not defined or not found'})\r\n",
 					"\r\n",
+					"    # Setup dummy application reference for Danske Commodities related cost\r\n",
+					"    cost_df = cost_df.withColumn('Application_Name', \r\n",
+					"        F.when((F.upper(F.col('SubscriptionName')).contains('DANSKE')) & (F.col('Application_Name') == 'Application not defined or not found'), 'Danske Commodities')\r\n",
+					"        .otherwise(F.col('Application_Name'))\r\n",
+					"    )\r\n",
+					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 10
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -456,7 +462,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 11
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -484,7 +490,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 12
+				"execution_count": 11
 			}
 		]
 	}
