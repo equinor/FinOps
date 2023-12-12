@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "b558dadf-2e5c-47c3-88bf-bc6a15ec26b0"
+				"spark.autotune.trackingId": "da9097d6-fb5f-4b75-9e9c-8c52bb29f22e"
 			}
 		},
 		"metadata": {
@@ -421,13 +421,15 @@
 						"transient": {
 							"deleting": false
 						}
-					},
-					"collapsed": false
+					}
 				},
 				"source": [
-					"display(vm_df.select('HUBCategory').distinct())"
+					"vm_df = vm_df.join(pricesheet_df, pricesheet_df.meterName == vm_df.pricesheetService, \"left\")\r\n",
+					"vm_df = vm_df.drop('priceSheetService')\r\n",
+					"\r\n",
+					"vm_df = vm_df.withColumn('PAYGLicenseCost', F.col('Quantity') * F.col('pricePerUnit'))"
 				],
-				"execution_count": 29
+				"execution_count": 105
 			},
 			{
 				"cell_type": "code",
@@ -452,27 +454,6 @@
 					")"
 				],
 				"execution_count": 27
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"vm_df = vm_df.join(pricesheet_df, pricesheet_df.meterName == vm_df.pricesheetService, \"left\")\r\n",
-					"vm_df = vm_df.drop('priceSheetService')\r\n",
-					"\r\n",
-					"vm_df = vm_df.withColumn('PAYGLicenseCost', F.col('Quantity') * F.col('pricePerUnit'))"
-				],
-				"execution_count": 105
 			},
 			{
 				"cell_type": "code",
