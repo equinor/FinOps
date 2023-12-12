@@ -657,6 +657,18 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
+		"calculate-missing-application-cost_notebookSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"calculate-missing-application-cost_notebookSparkPoolIdRef": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"calculate-missing-application-cost_notebookSparkPoolEndpointRef": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
 		"check-subscription-diff_notebookSparkPoolNameRef": {
 			"type": "string",
 			"defaultValue": "sprkpool33large"
@@ -35916,7 +35928,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "de526ce2-114e-45af-9fc1-7857f7785f4b"
+						"spark.autotune.trackingId": "07a6e201-a533-495d-85d0-8c32ce794337"
 					}
 				},
 				"metadata": {
@@ -36253,45 +36265,10 @@
 						},
 						"source": [
 							"# Change the column name\r\n",
-							"df = df.withColumnRenamed(\"Application_Name\", \"ApplicationName\")\r\n",
-							"\r\n",
-							"# Applied Unknown label in ApplicationName field. \r\n",
-							"condition_1 = (F.col('ApplicationName').isNull()| (F.col('ApplicationName') == \"\")) & (F.col('SubscriptionName').contains('Danske Commodities'))\r\n",
-							"condition_2 = (F.col('ApplicationName').isNull()| (F.col('ApplicationName') == \"\")) & (~(F.col('SubscriptionName').contains('Danske Commodities')))\r\n",
-							"\r\n",
-							"df = df.withColumn(\r\n",
-							"    'ApplicationName',\r\n",
-							"    F.when(condition_1,'Danske Commodities'\r\n",
-							"    ).when(condition_2,'Unknown'\r\n",
-							"    ).otherwise(F.col('ApplicationName'))\r\n",
-							")\r\n",
-							""
+							"df = df.withColumnRenamed(\"Application_Name\", \"ApplicationName\")"
 						],
 						"outputs": [],
 						"execution_count": 8
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							},
-							"collapsed": false
-						},
-						"source": [
-							"# print('Number of rows in the appended dataframe:',df.count())\r\n",
-							"# df.printSchema()\r\n",
-							"#display(df.filter((F.col('ApplicationName')).contains('Danske Commodities')))\r\n",
-							"#display(df.filter((F.col('ApplicationName')).contains('Unknown')))"
-						],
-						"outputs": [],
-						"execution_count": 9
 					},
 					{
 						"cell_type": "markdown",
@@ -36359,7 +36336,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "d9e70b70-43c7-4570-933f-0df75687fcde"
+						"spark.autotune.trackingId": "72784082-d606-4d68-a413-e86804ce499e"
 					}
 				},
 				"metadata": {
@@ -36384,7 +36361,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -36675,47 +36653,10 @@
 						},
 						"source": [
 							"# Change the column name\r\n",
-							"df = df.withColumnRenamed(\"Application_Name\", \"ApplicationName\")\r\n",
-							"\r\n",
-							"# Applied Unknown label in ApplicationName field. \r\n",
-							"condition_1 = (F.col('ApplicationName').isNull()| (F.col('ApplicationName') == \"\")) & (F.col('SubscriptionName').contains('Danske Commodities'))\r\n",
-							"condition_2 = (F.col('ApplicationName').isNull()| (F.col('ApplicationName') == \"\")) & (~(F.col('SubscriptionName').contains('Danske Commodities')))\r\n",
-							"\r\n",
-							"df = df.withColumn(\r\n",
-							"    'ApplicationName',\r\n",
-							"    F.when(condition_1,'Danske Commodities'\r\n",
-							"    ).when(condition_2,'Unknown'\r\n",
-							"    ).otherwise(F.col('ApplicationName'))\r\n",
-							")\r\n",
-							"\r\n",
-							""
+							"df = df.withColumnRenamed(\"Application_Name\", \"ApplicationName\")"
 						],
 						"outputs": [],
 						"execution_count": 7
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							},
-							"collapsed": false
-						},
-						"source": [
-							"#print('Number of rows in the appended dataframe:',df.count())\r\n",
-							"#display(df)\r\n",
-							"#display(df.filter((F.col('ApplicationName').isNull())|(F.col('ApplicationName')=='')))\r\n",
-							"#display(df.filter((F.col('ApplicationName')).contains('Danske Commodities')))\r\n",
-							"#display(df.filter((F.col('ApplicationName')).contains('Unknown')))"
-						],
-						"outputs": [],
-						"execution_count": 8
 					},
 					{
 						"cell_type": "markdown",
@@ -39165,6 +39106,390 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/calculate-missing-application-cost')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "NotebookInProduction/Utilities"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "[parameters('calculate-missing-application-cost_notebookSparkPoolNameRef')]",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "112g",
+					"driverCores": 16,
+					"executorMemory": "112g",
+					"executorCores": 16,
+					"numExecutors": 1,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "5",
+						"spark.autotune.trackingId": "df58fbfb-882e-428a-a821-09437a4c1766"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "[parameters('calculate-missing-application-cost_notebookSparkPoolIdRef')]",
+						"name": "[parameters('calculate-missing-application-cost_notebookSparkPoolNameRef')]",
+						"type": "Spark",
+						"endpoint": "[parameters('calculate-missing-application-cost_notebookSparkPoolEndpointRef')]",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 16,
+						"memory": 112
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"from pyspark.sql import functions as F"
+						],
+						"outputs": [],
+						"execution_count": 1
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"source_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear.parquet\" \r\n",
+							"df = spark.read.format('parquet').load(source_path)"
+						],
+						"outputs": [],
+						"execution_count": 2
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"df = df.where(F.col('ApplicationName') == 'Application not defined or not found')"
+						],
+						"outputs": [],
+						"execution_count": 3
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"df = df.withColumnRenamed('SubscriptionServiceNow-App', 'Application')"
+						],
+						"outputs": [],
+						"execution_count": 4
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"df = df.where((F.col('Report_Date') >= '2023-09-01 00:00:00') & (F.col('Report_Date') <= '2023-11-01 00:00:00'))"
+						],
+						"outputs": [],
+						"execution_count": 5
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# df = df.where((F.col('Report_Date') > F.date_sub(F.current_date(), 120) & ((F.col('Report_Date') < F.date_sub(F.current_date(), 30)))"
+						],
+						"outputs": [],
+						"execution_count": 6
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"display(df.agg(F.sum('CostInBillingCurrency')))"
+						],
+						"outputs": [],
+						"execution_count": 7
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"df = df \\\r\n",
+							"    .select('Report_Date', 'CostInBillingCurrency','SubscriptionName', 'Application') \\\r\n",
+							"    .groupBy('Report_Date', 'SubscriptionName', 'Application') \\\r\n",
+							"    .agg(F.sum('CostInBillingCurrency').alias('Cost'))"
+						],
+						"outputs": [],
+						"execution_count": 8
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"display(df)"
+						],
+						"outputs": [],
+						"execution_count": 9
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"print(df.count())"
+						],
+						"outputs": [],
+						"execution_count": 10
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"display(df.select('Application', 'SubscriptionName').distinct())"
+						],
+						"outputs": [],
+						"execution_count": 11
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"display(df.select('Application').distinct())"
+						],
+						"outputs": [],
+						"execution_count": 12
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"display(df.select('SubscriptionName').distinct())"
+						],
+						"outputs": [],
+						"execution_count": 13
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"display(df.select('Cost', 'Application').groupBy('Application').agg(F.sum('Cost').alias('Cost')))"
+						],
+						"outputs": [],
+						"execution_count": 14
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"display(df.select('Cost', 'SubscriptionName').groupBy('SubscriptionName').agg(F.sum('Cost').alias('Cost')))"
+						],
+						"outputs": [],
+						"execution_count": 15
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"pivot = df.select('SubscriptionName', 'Application', 'Cost').groupBy('SubscriptionName', 'Application').agg(F.sum('Cost').alias('Cost'))\r\n",
+							"display(pivot)"
+						],
+						"outputs": [],
+						"execution_count": 16
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"danske = df.where(F.upper(F.col('SubscriptionName')).like('%DANSKE%')).agg(F.sum('Cost').alias('Cost'))\r\n",
+							"display(danske)"
+						],
+						"outputs": [],
+						"execution_count": 19
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/check-subscription-diff')]",
 			"type": "Microsoft.Synapse/workspaces/notebooks",
 			"apiVersion": "2019-06-01-preview",
@@ -40810,7 +41135,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "6f45c4bc-d5cc-4cd8-b580-61a4d3502bba"
+						"spark.autotune.trackingId": "0946a553-cda9-4cb1-aa88-b4bd3aec9549"
 					}
 				},
 				"metadata": {
@@ -40860,7 +41185,7 @@
 							"import warnings"
 						],
 						"outputs": [],
-						"execution_count": 2
+						"execution_count": 1
 					},
 					{
 						"cell_type": "code",
@@ -40879,7 +41204,7 @@
 							"    return f\"{previous_year}-{str(previous_month).zfill(2)}-{str(last_day).zfill(2)}\""
 						],
 						"outputs": [],
-						"execution_count": 3
+						"execution_count": 2
 					},
 					{
 						"cell_type": "code",
@@ -40907,7 +41232,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 4
+						"execution_count": 3
 					},
 					{
 						"cell_type": "code",
@@ -40949,7 +41274,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 5
+						"execution_count": 4
 					},
 					{
 						"cell_type": "code",
@@ -40978,7 +41303,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 6
+						"execution_count": 5
 					},
 					{
 						"cell_type": "code",
@@ -41011,7 +41336,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 7
+						"execution_count": 6
 					},
 					{
 						"cell_type": "code",
@@ -41046,7 +41371,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 8
+						"execution_count": 7
 					},
 					{
 						"cell_type": "code",
@@ -41146,7 +41471,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 9
+						"execution_count": 8
 					},
 					{
 						"cell_type": "code",
@@ -41224,10 +41549,16 @@
 							"    # For anything that left ApplicationName will be \"Application not defined or not found\" and For anything that left AppID will be 0.\r\n",
 							"    cost_df = cost_df.na.fill({'AppID': 0, 'Application_Name': 'Application not defined or not found'})\r\n",
 							"\r\n",
+							"    # Setup dummy application reference for Danske Commodities related cost\r\n",
+							"    cost_df = cost_df.withColumn('Application_Name', \r\n",
+							"        F.when((F.upper(F.col('SubscriptionName')).contains('DANSKE')) & (F.col('Application_Name') == 'Application not defined or not found'), 'Danske Commodities')\r\n",
+							"        .otherwise(F.col('Application_Name'))\r\n",
+							"    )\r\n",
+							"\r\n",
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 10
+						"execution_count": 9
 					},
 					{
 						"cell_type": "code",
@@ -41255,7 +41586,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 11
+						"execution_count": 10
 					},
 					{
 						"cell_type": "code",
@@ -41284,7 +41615,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 12
+						"execution_count": 11
 					}
 				]
 			},
@@ -42500,7 +42831,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "6bf4de8b-70a9-4704-b2a9-9376850e0138"
+						"spark.autotune.trackingId": "d8dccc24-d89f-4902-b9e2-caaa216e469a"
 					}
 				},
 				"metadata": {
@@ -42563,7 +42894,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 11
+						"execution_count": 6
 					},
 					{
 						"cell_type": "code",
@@ -42573,7 +42904,7 @@
 							"import pyspark.sql.functions as F"
 						],
 						"outputs": [],
-						"execution_count": 12
+						"execution_count": 7
 					},
 					{
 						"cell_type": "markdown",
@@ -42603,10 +42934,10 @@
 						},
 						"source": [
 							"source_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/applications/NewServiceNowDataset.csv\"\r\n",
-							"application_df = spark.read.csv(source_path, header=True, inferSchema=True)"
+							"df = spark.read.csv(source_path, header=True, inferSchema=True)"
 						],
 						"outputs": [],
-						"execution_count": 13
+						"execution_count": 8
 					},
 					{
 						"cell_type": "markdown",
@@ -42636,10 +42967,10 @@
 						},
 						"source": [
 							"# According to the feedback from BPA team (Daniel Lee), we have to filter out all those records that have \"Ignored\" in OperationalStatus field.\r\n",
-							"df = application_df.where(application_df.OperationalStatus != 'Ignored')"
+							"# df = application_df.where(application_df.OperationalStatus != 'Ignored')"
 						],
 						"outputs": [],
-						"execution_count": 14
+						"execution_count": 9
 					},
 					{
 						"cell_type": "markdown",
@@ -42680,7 +43011,7 @@
 							"df = df.withColumn('EndOfLifeDate', F.to_timestamp('EndOfLifeDate'))"
 						],
 						"outputs": [],
-						"execution_count": 15
+						"execution_count": 10
 					},
 					{
 						"cell_type": "code",
@@ -42703,7 +43034,7 @@
 							"df = df.drop('ProductOwnerShortName', 'OperationalManagerShortName')"
 						],
 						"outputs": [],
-						"execution_count": 16
+						"execution_count": 11
 					},
 					{
 						"cell_type": "code",
@@ -42727,7 +43058,7 @@
 							"df = df.withColumn(\"OrgUnitLevel2\", F.concat(split_col.getItem(0), F.lit(\" \"), split_col.getItem(1), F.lit(\" \"), split_col.getItem(2)))"
 						],
 						"outputs": [],
-						"execution_count": 17
+						"execution_count": 12
 					},
 					{
 						"cell_type": "markdown",
@@ -42763,7 +43094,7 @@
 							"df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
 						],
 						"outputs": [],
-						"execution_count": 18
+						"execution_count": 13
 					}
 				]
 			},
@@ -42793,7 +43124,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "73837d20-d614-477b-b491-58ff8a6418c7"
+						"spark.autotune.trackingId": "7e419aa2-26d1-4175-9607-4e215981d359"
 					}
 				},
 				"metadata": {
@@ -42842,7 +43173,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 12
+						"execution_count": 2
 					},
 					{
 						"cell_type": "code",
@@ -42863,7 +43194,7 @@
 							"import datetime"
 						],
 						"outputs": [],
-						"execution_count": 13
+						"execution_count": 3
 					},
 					{
 						"cell_type": "code",
@@ -42890,7 +43221,7 @@
 							"    return today.day == last_day_of_month"
 						],
 						"outputs": [],
-						"execution_count": 14
+						"execution_count": 4
 					},
 					{
 						"cell_type": "markdown",
@@ -42923,7 +43254,7 @@
 							"subscription_df = spark.read.csv(source_path, header=True, inferSchema=True)"
 						],
 						"outputs": [],
-						"execution_count": 15
+						"execution_count": 5
 					},
 					{
 						"cell_type": "markdown",
@@ -42952,10 +43283,10 @@
 							}
 						},
 						"source": [
-							"subscription_df = subscription_df.where(subscription_df.OperationalStatus != 'Ignored')"
+							"# subscription_df = subscription_df.where(subscription_df.OperationalStatus != 'Ignored')"
 						],
 						"outputs": [],
-						"execution_count": 16
+						"execution_count": 6
 					},
 					{
 						"cell_type": "code",
@@ -42976,7 +43307,7 @@
 							"subscription_df = subscription_df.drop(\"ProductOwnerEmail\", \"TechnicalOwnerEmail\")"
 						],
 						"outputs": [],
-						"execution_count": 17
+						"execution_count": 7
 					},
 					{
 						"cell_type": "code",
@@ -42995,7 +43326,7 @@
 							"subscription_df = subscription_df.where(F.col('SubscriptionId').isNotNull())"
 						],
 						"outputs": [],
-						"execution_count": 18
+						"execution_count": 8
 					},
 					{
 						"cell_type": "code",
@@ -43016,7 +43347,7 @@
 							"# duplicates = subscription_df.groupBy('SubscriptionId').count().filter(F.col('count') > 1)"
 						],
 						"outputs": [],
-						"execution_count": 19
+						"execution_count": 9
 					},
 					{
 						"cell_type": "markdown",
@@ -43049,7 +43380,7 @@
 							"subscription_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 						],
 						"outputs": [],
-						"execution_count": 20
+						"execution_count": 10
 					},
 					{
 						"cell_type": "code",
@@ -43073,7 +43404,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 21
+						"execution_count": 11
 					}
 				]
 			},
@@ -44398,7 +44729,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "0ee6036c-f8ba-4016-ab1a-df3172659005"
+						"spark.autotune.trackingId": "d7b04fe9-512f-49be-9ae9-8c329e6cf5b2"
 					}
 				},
 				"metadata": {
@@ -44434,7 +44765,7 @@
 							"import pyspark.sql.functions as F"
 						],
 						"outputs": [],
-						"execution_count": 10
+						"execution_count": 11
 					},
 					{
 						"cell_type": "code",
@@ -44456,7 +44787,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 11
+						"execution_count": 12
 					},
 					{
 						"cell_type": "code",
@@ -44476,7 +44807,7 @@
 							"graph_df = spark.read.format('parquet').load(graph_path)"
 						],
 						"outputs": [],
-						"execution_count": 12
+						"execution_count": 13
 					},
 					{
 						"cell_type": "code",
@@ -44496,7 +44827,26 @@
 							"sap_df = spark.read.format('parquet').load(sap_path)"
 						],
 						"outputs": [],
-						"execution_count": 13
+						"execution_count": 14
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"sap_df = sap_df.withColumn('WBS_Owner_ID', F.when(F.length(F.col('WBS_Owner_ID')) == 5, F.lpad(F.col('WBS_Owner_ID'), 6, '0')).otherwise(F.col('WBS_Owner_ID')))"
+						],
+						"outputs": [],
+						"execution_count": 15
 					},
 					{
 						"cell_type": "code",
@@ -44516,7 +44866,7 @@
 							"sap_df = sap_df.drop('WBS_Owner_ID')"
 						],
 						"outputs": [],
-						"execution_count": 14
+						"execution_count": 17
 					},
 					{
 						"cell_type": "code",
@@ -44536,7 +44886,7 @@
 							"sap_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(wbs_path)"
 						],
 						"outputs": [],
-						"execution_count": 15
+						"execution_count": 18
 					}
 				]
 			},
