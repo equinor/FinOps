@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "cebc2c42-a355-4818-89d9-1121c33a380c"
+				"spark.autotune.trackingId": "20981076-6f71-40cf-bcdb-21cf9e4d2c40"
 			}
 		},
 		"metadata": {
@@ -178,7 +178,6 @@
 					"    'MeterSubCategory', \r\n",
 					"    'ResourceName',\r\n",
 					"    'ProductName',\r\n",
-					"    # 'EffectivePrice', \r\n",
 					"    'CostInBillingCurrency',\r\n",
 					"    'Quantity',\r\n",
 					"    'UnitOfMeasure', \r\n",
@@ -411,9 +410,9 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(df.limit(100))"
+					"display(df.where(F.col('DBType') == DBTypes.VM.value).agg(F.sum('PotentialSavings')))"
 				],
-				"execution_count": 182
+				"execution_count": 187
 			},
 			{
 				"cell_type": "markdown",
