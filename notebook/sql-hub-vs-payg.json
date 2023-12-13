@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "20981076-6f71-40cf-bcdb-21cf9e4d2c40"
+				"spark.autotune.trackingId": "f2920044-7bba-4fbb-a8e8-f5d5c84b464f"
 			}
 		},
 		"metadata": {
@@ -94,44 +94,29 @@
 					}
 				},
 				"source": [
+					"class HUBType(Enum):\r\n",
+					"    SQL = \"SQL\"\r\n",
+					"    VM = \"VM\"\r\n",
+					"\r\n",
 					"class HUBCategory(Enum):\r\n",
-					"    SQL_RI_HUB = \"SQL - RI enabled - HUB enabled\"\r\n",
-					"    SQL_RI_nHUB = \"SQL - RI enabled - HUB disabled\"\r\n",
-					"    SQL_nRI_HUB = \"SQL - RI disabled - HUB enabled\"\r\n",
-					"    SQL_nRI_nHUB = \"SQL - RI disabled - HUB disabled\"\r\n",
-					"    UNKNOWN = \"Unknown\"\r\n",
+					"    RI_HUB = \"RI enabled - HUB enabled\"\r\n",
+					"    RI_nHUB = \"RI enabled - HUB disabled\"\r\n",
+					"    nRI_HUB = \"RI disabled - HUB enabled\"\r\n",
+					"    nRI_nHUB = \"RI disabled - HUB disabled\"\r\n",
+					"    Unknown = \"Unknown\"\r\n",
 					"\r\n",
 					"class DBTypes(Enum):\r\n",
 					"    DB = \"SQL DB\"\r\n",
 					"    MI = \"SQL MI\"\r\n",
 					"    VM = \"SQL VM\"\r\n",
-					"    Unknown = \"undefined\"\r\n",
+					"    Unknown = \"Unknown\"\r\n",
 					"\r\n",
 					"class LicenseTypes(Enum):\r\n",
 					"    Standard = \"Standard License\"\r\n",
 					"    Enterprise = \"Enterprise License\"\r\n",
 					"    Unknown = \"Unknown\""
 				],
-				"execution_count": 169
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/20231101-20231130/Extended_v3_ACMMonthlyActualCost_20231101-20231130.parquet'\r\n",
-					"df = spark.read.format('parquet').load(cost_path)"
-				],
-				"execution_count": 170
+				"execution_count": 189
 			},
 			{
 				"cell_type": "code",
@@ -157,6 +142,25 @@
 					"pricesheet_df = pricesheet_df.select('meterName', 'unitOfMeasure', 'unitQuantity', 'unitPrice', 'pricePerUnit', 'billingPeriodId')"
 				],
 				"execution_count": 171
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/20231101-20231130/Extended_v3_ACMMonthlyActualCost_20231101-20231130.parquet'\r\n",
+					"df = spark.read.format('parquet').load(cost_path)"
+				],
+				"execution_count": 170
 			},
 			{
 				"cell_type": "code",
@@ -198,6 +202,50 @@
 					"df = df.withColumnRenamed('ai_VCPUs', 'VCPUs')"
 				],
 				"execution_count": 172
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Compute VM related cost"
+				]
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Compute SQL related cost"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
