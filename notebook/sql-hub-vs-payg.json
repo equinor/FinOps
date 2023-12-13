@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "fa81edbc-7085-434c-adf9-ca516a6e6503"
+				"spark.autotune.trackingId": "52e153ca-93de-42cc-be40-6f032f94fac7"
 			}
 		},
 		"metadata": {
@@ -57,7 +57,7 @@
 					"import pyspark.sql.functions as F\r\n",
 					"from enum import Enum"
 				],
-				"execution_count": 19
+				"execution_count": 98
 			},
 			{
 				"cell_type": "code",
@@ -78,7 +78,41 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 20
+				"execution_count": 99
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"class HUBCategory(Enum):\r\n",
+					"    SQL_RI_HUB = \"SQL - RI enabled - HUB enabled\"\r\n",
+					"    SQL_RI_nHUB = \"SQL - RI enabled - HUB disabled\"\r\n",
+					"    SQL_nRI_HUB = \"SQL - RI disabled - HUB enabled\"\r\n",
+					"    SQL_nRI_nHUB = \"SQL - RI disabled - HUB disabled\"\r\n",
+					"    UNKNOWN = \"Unknown\"\r\n",
+					"\r\n",
+					"class DBTypes(Enum):\r\n",
+					"    DB = \"SQL DB\"\r\n",
+					"    MI = \"SQL MI\"\r\n",
+					"    VM = \"SQL VM\"\r\n",
+					"    Unknown = \"undefined\"\r\n",
+					"\r\n",
+					"class LicenseTypes(Enum):\r\n",
+					"    Standard = \"Standard License\"\r\n",
+					"    Enterprise = \"Enterprise License\"\r\n",
+					"    Unknown = \"Unknown\""
+				],
+				"execution_count": 100
 			},
 			{
 				"cell_type": "code",
@@ -97,7 +131,32 @@
 					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/20231101-20231130/Extended_v3_ACMMonthlyActualCost_20231101-20231130.parquet'\r\n",
 					"df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 21
+				"execution_count": 101
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"PROD_OFFER_ID = 'MS-AZR-0017P'\r\n",
+					"# pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/pricesheet-20*.parquet'\r\n",
+					"pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/pricesheet-LATEST.parquet'\r\n",
+					"pricesheet_df = spark.read.format('parquet').load(pricesheet_path)\r\n",
+					"pricesheet_df = pricesheet_df.where(F.col('offerId') == PROD_OFFER_ID)\r\n",
+					"pricesheet_df = pricesheet_df.withColumn('unitQuantity', F.split('unitOfMeasure', ' ')[0])\r\n",
+					"pricesheet_df = pricesheet_df.withColumn('pricePerUnit', F.col('unitPrice') / F.col('unitQuantity'))\r\n",
+					"pricesheet_df = pricesheet_df.select('meterName', 'unitOfMeasure', 'unitQuantity', 'unitPrice', 'pricePerUnit', 'billingPeriodId')"
+				],
+				"execution_count": 102
 			},
 			{
 				"cell_type": "code",
@@ -134,27 +193,12 @@
 					"    'ai_VCPUs',\r\n",
 					"    'ai_ServiceType', \r\n",
 					"    'ai_UsageType'\r\n",
-					")"
-				],
-				"execution_count": 22
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"    F.when(F.col('ResourceId').like('%Microsoft.Sql/servers%'), DBTypes.DB.value)\r\n",
-					"    .when(F.col('ResourceId').like('%Microsoft.Sql/managedInstances%'), DBTypes.MI.value)\r\n",
-					"    .when(F.col('ResourceId').like('%Microsoft.Compute/virtualMachines%'\r\n",
+					")\r\n",
 					"\r\n",
-					"    isManagedInstance = ((F.col('MeterCategory') == 'SQL Managed Instance') & (F.col('ai_AHB') == True))\r\n",
-					"isVMLicense = (F.col('MeterCategory') == 'Virtual Machines Licenses') & (F.col('MeterSubCategory').like('%Hybrid%'))"
-				]
+					"df = df.withColumn('IsHUB', F.when((F.col('ai_AHB').isNull()) | (F.col('ai_AHB') == False), False).otherwise(True)).drop('ai_AHB')\r\n",
+					"df = df.withColumnRenamed('ai_VCPUs', 'VCPUs')"
+				],
+				"execution_count": 103
 			},
 			{
 				"cell_type": "code",
@@ -171,14 +215,61 @@
 				},
 				"source": [
 					"df = df.where(\r\n",
-					"    (F.col('ResourceId').like('%Microsoft.Sql/servers%')) |\r\n",
-					"    (F.col('ResourceId').like('%Microsoft.Sql/managedInstances%')) | \r\n",
-					"    ((F.col('MeterCategory') == 'Virtual Machines Licenses') & (F.col('MeterSubCategory').like('SQL Server%')))\r\n",
+					"    ((F.col('ResourceId').like('%Microsoft.Sql/servers%')) & (F.col('MeterCategory').like('SQL%'))) | # SQL DB - RI - HUB\r\n",
+					"    ((F.col('ResourceId').like('%Microsoft.Sql/managedInstances%')) & (F.col('MeterCategory').like('SQL%'))) | # SQL MI - RI - HUB\r\n",
+					"    ((F.col('MeterCategory') == 'Virtual Machines Licenses') & (F.col('MeterSubCategory').like('SQL Server%'))) # SQL VM ---> HUB disabled (RI?)\r\n",
 					")\r\n",
 					"\r\n",
 					"df = df.where(F.col('MeterSubCategory') != 'SQL Server Express Edition')"
 				],
-				"execution_count": 23
+				"execution_count": 104
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"df = df \\\r\n",
+					"    .select('VCPUs', 'Date', 'Quantity', 'MeterCategory', 'MeterSubCategory', 'ResourceName', 'CostInBillingCurrency', 'IsHUB', 'IsRIUsage', 'ProductName', 'ResourceId') \\\r\n",
+					"    .groupBy('Date', 'ResourceName', 'IsHUB', 'MeterCategory', 'MeterSubCategory', 'VCPUs', 'IsRIUsage', 'ProductName', 'ResourceId') \\\r\n",
+					"    .agg(F.sum('Quantity').alias('Quantity'), F.sum('CostInBillingCurrency').alias('ResourceCost')) \\\r\n",
+					"    .orderBy('Date', 'Quantity', 'ResourceCost')"
+				],
+				"execution_count": 106
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"df = df.withColumn('DBType', \r\n",
+					"    F.when(F.col('ResourceId').like('%Microsoft.Sql/servers%'), DBTypes.DB.value)\r\n",
+					"    .when(F.col('ResourceId').like('%Microsoft.Sql/managedInstances%'), DBTypes.MI.value)\r\n",
+					"    .when(F.col('ResourceId').like('%Microsoft.Compute/virtualMachines%'), DBTypes.VM.value)\r\n",
+					"    .otherwise(DBTypes.Unknown.value)\r\n",
+					")\r\n",
+					"\r\n",
+					"hub_df = hub_df.where(F.col('DBType') != DBTypes.Unknown.value)"
+				],
+				"execution_count": 107
 			},
 			{
 				"cell_type": "code",
@@ -195,10 +286,47 @@
 					"collapsed": false
 				},
 				"source": [
-					"# Virtual Machines - SQL Database - SQL Managed Instance - Virtual Machine Licenses\r\n",
-					"display(df.where(F.col('MeterCategory') == 'Virtual Machines Licenses').select('MeterSubCategory').distinct())"
+					"df = df.withColumn('HUBCategory',\r\n",
+					"    F.when((F.col('IsRIUsage') == 'RI Usage') & (F.col('IsHUB') == True), HUBCategory.SQL_RI_HUB.value)\r\n",
+					"    .when((F.col('IsRIUsage') == 'RI Usage') & (F.col('IsHUB') == False), HUBCategory.SQL_RI_nHUB.value)\r\n",
+					"    .when((F.col('IsRIUsage') == 'On Demand Usage') == (F.col('IsHUB') == True), HUBCategory.SQL_nRI_HUB.value)\r\n",
+					"    .when((F.col('IsRIUsage') == 'On Demand Usage') == (F.col('IsHUB') == False), HUBCategory.SQL_nRI_nHUB.value)\r\n",
+					"    .otherwise(HUBCategory.UNKNOWN.value)\r\n",
+					")"
 				],
-				"execution_count": 24
+				"execution_count": 108
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Finding SQL Server related cost\r\n",
+					"\r\n",
+					"SQL cost are grouped into three categories:\r\n",
+					"\r\n",
+					"1. SQL Virtual Machine - Cost with _MeterCategory_ like **Virtual Machines Licenses** and _MeterSubCategory_ like **SQL Server%** (besides SQL Server Express)\r\n",
+					"2. SQL Managed Instance - Cost with _ResourceId_ like **Microsoft.Sql/managedInstances**\r\n",
+					"3. SQL Database - Cost with _ResourceId_ like **Microsoft.Sql/servers**\r\n",
+					"\r\n",
+					"\r\n",
+					"### SQL Database\r\n",
+					"\r\n",
+					"This category will include _MeterCategories_ like SQL Managed Instance, Microsoft Defender for Cloud, SQL Database and Azure Synapse Analytics.\r\n",
+					"\r\n",
+					"Should exclude _Microsoft Defender for Cloud_ and _Azure Synapse Analytics_ as these meter categories is not applicable for HUB\r\n",
+					"\r\n",
+					"### SQL Managed Instance\r\n",
+					"\r\n",
+					"This category will include _MeterCategories_ like SQL Managed Instance and Microsoft Defender for Cloud.\r\n",
+					"\r\n",
+					"Should exclude _Microsoft Defender for Cloud_ as this meter category is not applicable for HUB"
+				]
 			}
 		]
 	}
