@@ -1,0 +1,205 @@
+{
+	"name": "sql-hub-vs-payg",
+	"properties": {
+		"folder": {
+			"name": "NotebookInProduction/HUB Savings"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sprkpool33large",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "112g",
+			"driverCores": 16,
+			"executorMemory": "112g",
+			"executorCores": 16,
+			"numExecutors": 1,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "true",
+				"spark.dynamicAllocation.minExecutors": "1",
+				"spark.dynamicAllocation.maxExecutors": "5",
+				"spark.autotune.trackingId": "fa81edbc-7085-434c-adf9-ca516a6e6503"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
+				"name": "sprkpool33large",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 16,
+				"memory": 112,
+				"automaticScaleJobs": true
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "code",
+				"source": [
+					"import pyspark.sql.functions as F\r\n",
+					"from enum import Enum"
+				],
+				"execution_count": 19
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"storageAccount = 's037costmgmt'"
+				],
+				"execution_count": 20
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/20231101-20231130/Extended_v3_ACMMonthlyActualCost_20231101-20231130.parquet'\r\n",
+					"df = spark.read.format('parquet').load(cost_path)"
+				],
+				"execution_count": 21
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"df = df.select(\r\n",
+					"    'Date', \r\n",
+					"    'MeterCategory', \r\n",
+					"    'MeterSubCategory', \r\n",
+					"    'ResourceName',\r\n",
+					"    'ProductName',\r\n",
+					"    # 'EffectivePrice', \r\n",
+					"    'CostInBillingCurrency',\r\n",
+					"    'Quantity',\r\n",
+					"    'UnitOfMeasure', \r\n",
+					"    'ResourceId', \r\n",
+					"    'ServiceInfo2', \r\n",
+					"    'Azure_Hybrid_Benefit', \r\n",
+					"    'IsRIUsage', \r\n",
+					"    'AHB_CPUs', \r\n",
+					"    'ai_DatabaseName', \r\n",
+					"    'ai_vCores', \r\n",
+					"    'ai_AHB', \r\n",
+					"    'ai_VCPUs',\r\n",
+					"    'ai_ServiceType', \r\n",
+					"    'ai_UsageType'\r\n",
+					")"
+				],
+				"execution_count": 22
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"    F.when(F.col('ResourceId').like('%Microsoft.Sql/servers%'), DBTypes.DB.value)\r\n",
+					"    .when(F.col('ResourceId').like('%Microsoft.Sql/managedInstances%'), DBTypes.MI.value)\r\n",
+					"    .when(F.col('ResourceId').like('%Microsoft.Compute/virtualMachines%'\r\n",
+					"\r\n",
+					"    isManagedInstance = ((F.col('MeterCategory') == 'SQL Managed Instance') & (F.col('ai_AHB') == True))\r\n",
+					"isVMLicense = (F.col('MeterCategory') == 'Virtual Machines Licenses') & (F.col('MeterSubCategory').like('%Hybrid%'))"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"df = df.where(\r\n",
+					"    (F.col('ResourceId').like('%Microsoft.Sql/servers%')) |\r\n",
+					"    (F.col('ResourceId').like('%Microsoft.Sql/managedInstances%')) | \r\n",
+					"    ((F.col('MeterCategory') == 'Virtual Machines Licenses') & (F.col('MeterSubCategory').like('SQL Server%')))\r\n",
+					")\r\n",
+					"\r\n",
+					"df = df.where(F.col('MeterSubCategory') != 'SQL Server Express Edition')"
+				],
+				"execution_count": 23
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"# Virtual Machines - SQL Database - SQL Managed Instance - Virtual Machine Licenses\r\n",
+					"display(df.where(F.col('MeterCategory') == 'Virtual Machines Licenses').select('MeterSubCategory').distinct())"
+				],
+				"execution_count": 24
+			}
+		]
+	}
+}
