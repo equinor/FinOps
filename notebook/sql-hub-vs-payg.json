@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "a1afd350-15a6-4c94-bb26-15167c7cbcb8"
+				"spark.autotune.trackingId": "041e050d-ba1f-41ae-8627-f1e6eb2bd784"
 			}
 		},
 		"metadata": {
@@ -70,7 +70,7 @@
 					"import pyspark.sql.functions as F\r\n",
 					"from enum import Enum"
 				],
-				"execution_count": 1
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -550,6 +550,37 @@
 					}
 				},
 				"source": [
+					"## Combine dataframes"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"hub_df = vm_df.union(sql_df)"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
 					"## Compute HUB Savings"
 				]
 			},
@@ -567,9 +598,29 @@
 					}
 				},
 				"source": [
+					"# Create dummy date column for pricesheet join operation\r\n",
+					"hub_df = hub_df.withColumn(\"tempDate\", \r\n",
+					"    F.when(F.date_format(\"Date\", \"yyyy-MM-dd\") >= \"2023-11-01\", \"202310\") # Latest pricesheet stored in ASDL is October 2023\r\n",
+					"    .otherwise(F.date_format(\"Date\", \"yyyyMM\")))"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
 					"PROD_OFFER_ID = 'MS-AZR-0017P'\r\n",
-					"# pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/pricesheet-20*.parquet'\r\n",
-					"pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/pricesheet-LATEST.parquet'\r\n",
+					"pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/pricesheet-20*.parquet'\r\n",
 					"pricesheet_df = spark.read.format('parquet').load(pricesheet_path)\r\n",
 					"pricesheet_df = pricesheet_df.where(F.col('offerId') == PROD_OFFER_ID)\r\n",
 					"pricesheet_df = pricesheet_df.withColumn('unitQuantity', F.split('unitOfMeasure', ' ')[0])\r\n",
@@ -592,10 +643,10 @@
 					}
 				},
 				"source": [
-					"df = df.join(pricesheet_df, pricesheet_df.meterName == df.pricesheetService, \"left\")\r\n",
-					"df = df.drop('priceSheetService')\r\n",
+					"hub_df = hub_df.join(pricesheet_df, (pricesheet_df.meterName == hub_df.pricesheetService) & (pricesheet_df.billingPeriodId == hub_df.tempDate), \"left\")\r\n",
+					"hub_df = hub_df.drop('priceSheetService', 'tempDate')\r\n",
 					"\r\n",
-					"df = df.withColumn('PAYGLicenseCost', F.col('Quantity') * F.col('pricePerUnit'))"
+					"hub_df = hub_df.withColumn('PAYGLicenseCost', F.col('Quantity') * F.col('pricePerUnit'))"
 				],
 				"execution_count": 177
 			},
@@ -613,14 +664,14 @@
 					}
 				},
 				"source": [
-					"df = df.withColumn('CostWithHub', \r\n",
-					"    F.when((F.col('HUBCategory') == HUBCategory.SQL_nRI_HUB.value) | (F.col('HUBCategory') == HUBCategory.SQL_RI_HUB.value), F.col('ResourceCost'))\r\n",
-					"    .when((F.col('HUBCategory') == HUBCategory.SQL_nRI_nHUB.value) | (F.col('HUBCategory') == HUBCategory.SQL_RI_nHUB.value), F.col('ResourceCost') - F.col('PAYGLicenseCost'))\r\n",
+					"hub_df = hub_df.withColumn('CostWithHub', \r\n",
+					"    F.when((F.col('HUBCategory') == HUBCategory.nRI_HUB.value) | (F.col('HUBCategory') == HUBCategory.RI_HUB.value), F.col('ResourceCost'))\r\n",
+					"    .when((F.col('HUBCategory') == HUBCategory.nRI_nHUB.value) | (F.col('HUBCategory') == HUBCategory.RI_nHUB.value), F.col('ResourceCost') - F.col('PAYGLicenseCost'))\r\n",
 					"    .otherwise(None)\r\n",
 					")\r\n",
 					"\r\n",
-					"df = df.withColumn('UnlockedSavings', F.when((F.col('HUBCategory') == HUBCategory.SQL_RI_HUB.value) | (F.col('HUBCategory') == HUBCategory.SQL_nRI_HUB.value), F.col('PAYGLicenseCost')).otherwise(0))\r\n",
-					"df = df.withColumn('PotentialSavings', F.col('ResourceCost') - F.col('CostWithHub'))"
+					"hub_df = hub_df.withColumn('UnlockedSavings', F.when((F.col('HUBCategory') == HUBCategory.RI_HUB.value) | (F.col('HUBCategory') == HUBCategory.nRI_HUB.value), F.col('PAYGLicenseCost')).otherwise(0))\r\n",
+					"hub_df = hub_df.withColumn('PotentialSavings', F.col('ResourceCost') - F.col('CostWithHub'))"
 				],
 				"execution_count": 179
 			},
@@ -638,7 +689,7 @@
 					}
 				},
 				"source": [
-					"df = df.drop('UnitOfMeasure', 'unitQuantity', 'unitPrice', 'pricePerUnit')"
+					"hub_df = hub_df.drop('UnitOfMeasure', 'unitQuantity', 'unitPrice', 'pricePerUnit')"
 				],
 				"execution_count": 181
 			},
@@ -657,7 +708,7 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(df.where(F.col('DBType') == DBTypes.VM.value).agg(F.sum('PotentialSavings')))"
+					"display(hub_df.where(F.col('DBType') == DBTypes.VM.value).agg(F.sum('PotentialSavings')))"
 				],
 				"execution_count": 187
 			},
