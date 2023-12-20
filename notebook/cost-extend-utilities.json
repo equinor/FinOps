@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "961ea702-f74e-4c54-b576-c9528e7f8852"
+				"spark.autotune.trackingId": "ba0c4c0a-cd61-44fd-8068-7fabbf6c6440"
 			}
 		},
 		"metadata": {
@@ -419,17 +419,19 @@
 					"    cost_df = cost_df.drop('Application_Name_upper','ApplicationName','ServiceNowAppID','ServiceNowApplicationName_upper','ApplicationName_upper')\r\n",
 					"\r\n",
 					"\r\n",
-					"    # Application Name will be \"Application not defined or not found\" when SubscriptionServiceNow-App is equal to Application_name as well as AppID is empty.\r\n",
+					"    # Application Name will be \"Unknown\" when SubscriptionServiceNow-App is equal to Application_name as well as AppID is empty.\r\n",
 					"    # This indicates that application from subscription.json file can not be found in ServiceNow. One of Application example is DATAHUB - MARKETING AND SUPPLY, not found in ServiceNow.\r\n",
-					"    # cost_df = cost_df.withColumn('Application_Name', F.when((F.upper(F.col('SubscriptionServiceNow-App'))==F.upper(F.col('Application_Name'))) & (F.col('AppID').isNull()),F.lit('Application not defined or not found'))\\\r\n",
+					"    # cost_df = cost_df.withColumn('Application_Name', F.when((F.upper(F.col('SubscriptionServiceNow-App'))==F.upper(F.col('Application_Name'))) & (F.col('AppID').isNull()),F.lit('Uknown'))\\\r\n",
 					"    #                                                 .otherwise(F.col('Application_Name')))\r\n",
 					"\r\n",
-					"    # For anything that left ApplicationName will be \"Application not defined or not found\" and For anything that left AppID will be 0.\r\n",
-					"    cost_df = cost_df.na.fill({'AppID': 0, 'Application_Name': 'Application not defined or not found'})\r\n",
+					"    # If Subscription Application is empty or null - set application name to 'Unknown' and AppId to null\r\n",
+					"    cost_df = cost_df.withColumn('Application_Name', \r\n",
+					"        F.when((F.col('Application_Name').isNull()) | (F.col('Application_Name') == ''), F.lit('Unknown')).otherwise(F.col('Application_Name'))\r\n",
+					"    )\r\n",
 					"\r\n",
 					"    # Setup dummy application reference for Danske Commodities related cost\r\n",
 					"    cost_df = cost_df.withColumn('Application_Name', \r\n",
-					"        F.when((F.upper(F.col('SubscriptionName')).contains('DANSKE')) & (F.col('Application_Name') == 'Application not defined or not found'), 'Danske Commodities')\r\n",
+					"        F.when((F.upper(F.col('SubscriptionName')).contains('DANSKE')) & (F.col('Application_Name') == 'Unknown'), 'Danske Commodities')\r\n",
 					"        .otherwise(F.col('Application_Name'))\r\n",
 					"    )\r\n",
 					"\r\n",
