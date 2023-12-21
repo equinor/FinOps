@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "f7cee32d-1356-483a-acba-71ba9b381a81"
+				"spark.autotune.trackingId": "eb84f6ce-90fb-4ebb-8dba-43cf4a35f580"
 			}
 		},
 		"metadata": {
@@ -71,7 +71,7 @@
 					"from enum import Enum\r\n",
 					"from datetime import datetime, timedelta"
 				],
-				"execution_count": 103
+				"execution_count": 287
 			},
 			{
 				"cell_type": "code",
@@ -92,7 +92,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 104
+				"execution_count": 288
 			},
 			{
 				"cell_type": "code",
@@ -130,7 +130,7 @@
 					"    Enterprise = \"Enterprise License\"\r\n",
 					"    Unknown = \"Unknown\""
 				],
-				"execution_count": 105
+				"execution_count": 289
 			},
 			{
 				"cell_type": "markdown",
@@ -159,9 +159,9 @@
 					}
 				},
 				"source": [
-					"date_two_year_ago = datetime.now().date()-timedelta(days=730)"
+					"date_two_year_ago = datetime.now().date()-timedelta(days=710)"
 				],
-				"execution_count": 106
+				"execution_count": 290
 			},
 			{
 				"cell_type": "code",
@@ -181,7 +181,7 @@
 					"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
 					"cost_df = cost_df.where(F.col('Date') >= date_two_year_ago)"
 				],
-				"execution_count": 107
+				"execution_count": 291
 			},
 			{
 				"cell_type": "code",
@@ -218,7 +218,7 @@
 					"\r\n",
 					"cost_df = cost_df.withColumnRenamed('ai_VCPUs', 'VCPUs')"
 				],
-				"execution_count": 108
+				"execution_count": 292
 			},
 			{
 				"cell_type": "markdown",
@@ -250,7 +250,7 @@
 					"vm_df = cost_df.alias('vm_df')\r\n",
 					"vm_df = vm_df.withColumn('IsHUB', F.when(F.col('Azure_Hybrid_Benefit') == 'Enabled', True).otherwise(False))"
 				],
-				"execution_count": 109
+				"execution_count": 293
 			},
 			{
 				"cell_type": "code",
@@ -272,7 +272,7 @@
 					"    (~F.col('ResourceName').like('CVD-%'))\r\n",
 					")"
 				],
-				"execution_count": 110
+				"execution_count": 294
 			},
 			{
 				"cell_type": "code",
@@ -294,7 +294,7 @@
 					"    .agg(F.sum('Quantity').alias('Quantity'), F.sum('CostInBillingCurrency').alias('ResourceCost')) \\\r\n",
 					"    .orderBy('Date', 'Quantity', 'ResourceCost')"
 				],
-				"execution_count": 111
+				"execution_count": 295
 			},
 			{
 				"cell_type": "code",
@@ -318,7 +318,7 @@
 					"    .otherwise(HUBCategory.Unknown.value)\r\n",
 					")"
 				],
-				"execution_count": 112
+				"execution_count": 296
 			},
 			{
 				"cell_type": "code",
@@ -342,7 +342,7 @@
 					"    F.lit(' vCPU VM License')\r\n",
 					"))"
 				],
-				"execution_count": 113
+				"execution_count": 297
 			},
 			{
 				"cell_type": "code",
@@ -360,7 +360,7 @@
 				"source": [
 					"vm_df = vm_df.withColumn('HUBType', F.lit(HUBType.VM.value))"
 				],
-				"execution_count": 114
+				"execution_count": 298
 			},
 			{
 				"cell_type": "code",
@@ -378,7 +378,7 @@
 				"source": [
 					"vm_df = vm_df.withColumn('DBType', F.lit(None))"
 				],
-				"execution_count": 115
+				"execution_count": 299
 			},
 			{
 				"cell_type": "markdown",
@@ -410,7 +410,7 @@
 					"sql_df = cost_df.alias('sql_df')\r\n",
 					"sql_df = sql_df.withColumn('IsHUB', F.when((F.col('ai_AHB').isNull()) | (F.col('ai_AHB') == False), False).otherwise(True))"
 				],
-				"execution_count": 116
+				"execution_count": 300
 			},
 			{
 				"cell_type": "code",
@@ -434,7 +434,7 @@
 					"\r\n",
 					"sql_df = sql_df.where(F.col('MeterSubCategory') != 'SQL Server Express Edition')"
 				],
-				"execution_count": 117
+				"execution_count": 301
 			},
 			{
 				"cell_type": "code",
@@ -456,7 +456,7 @@
 					"    .agg(F.sum('Quantity').alias('Quantity'), F.sum('CostInBillingCurrency').alias('ResourceCost')) \\\r\n",
 					"    .orderBy('Date', 'Quantity', 'ResourceCost')"
 				],
-				"execution_count": 118
+				"execution_count": 302
 			},
 			{
 				"cell_type": "code",
@@ -481,7 +481,7 @@
 					"\r\n",
 					"sql_df = sql_df.where(F.col('DBType') != DBTypes.Unknown.value)"
 				],
-				"execution_count": 119
+				"execution_count": 303
 			},
 			{
 				"cell_type": "code",
@@ -505,7 +505,7 @@
 					"\r\n",
 					"sql_df = sql_df.where(F.col('LicenseType') != LicenseTypes.Unknown.value)"
 				],
-				"execution_count": 120
+				"execution_count": 304
 			},
 			{
 				"cell_type": "code",
@@ -530,7 +530,7 @@
 					"    .otherwise(HUBCategory.Unknown.value)\r\n",
 					")"
 				],
-				"execution_count": 121
+				"execution_count": 305
 			},
 			{
 				"cell_type": "code",
@@ -558,7 +558,7 @@
 					"    .otherwise('undefined')\r\n",
 					")"
 				],
-				"execution_count": 122
+				"execution_count": 306
 			},
 			{
 				"cell_type": "code",
@@ -576,7 +576,7 @@
 				"source": [
 					"sql_df = sql_df.withColumn('HUBType', F.lit(HUBType.SQL.value))"
 				],
-				"execution_count": 123
+				"execution_count": 307
 			},
 			{
 				"cell_type": "markdown",
@@ -610,7 +610,7 @@
 					"sql_df = sql_df.select(*columns)\r\n",
 					""
 				],
-				"execution_count": 124
+				"execution_count": 308
 			},
 			{
 				"cell_type": "code",
@@ -628,7 +628,7 @@
 				"source": [
 					"hub_df = vm_df.union(sql_df)"
 				],
-				"execution_count": 125
+				"execution_count": 309
 			},
 			{
 				"cell_type": "code",
@@ -646,7 +646,7 @@
 				"source": [
 					"hub_df = hub_df.withColumn('MonthDate', F.date_trunc('month', 'Date'))"
 				],
-				"execution_count": 126
+				"execution_count": 310
 			},
 			{
 				"cell_type": "markdown",
@@ -678,7 +678,7 @@
 					"# Create dummy date column for pricesheet join operation\r\n",
 					"hub_df = hub_df.withColumn(\"TempDate\", F.date_format(\"Date\", \"yyyyMM\"))"
 				],
-				"execution_count": 127
+				"execution_count": 311
 			},
 			{
 				"cell_type": "markdown",
@@ -709,7 +709,7 @@
 				"source": [
 					"PROD_OFFER_ID = 'MS-AZR-0017P'"
 				],
-				"execution_count": 128
+				"execution_count": 312
 			},
 			{
 				"cell_type": "code",
@@ -728,15 +728,15 @@
 					"old_pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/pricesheet-2022*.parquet'\r\n",
 					"old_pricesheet_df = spark.read.format('parquet').load(old_pricesheet_path)\r\n",
 					"old_pricesheet_df = old_pricesheet_df.where(F.col('offerId') == PROD_OFFER_ID)\r\n",
-					"old_pricesheet_df = old_pricesheet_df.withColumnRenamed('meterName', 'MeterName')\r\n",
+					"old_pricesheet_df = old_pricesheet_df.withColumnRenamed('meterName', 'ProductMapping')\r\n",
 					"old_pricesheet_df = old_pricesheet_df.withColumnRenamed('unitOfMeasure', 'UnitOfMeasure')\r\n",
 					"old_pricesheet_df = old_pricesheet_df.withColumnRenamed('unitPrice', 'UnitPrice')\r\n",
 					"old_pricesheet_df = old_pricesheet_df.withColumnRenamed('billingPeriodId', 'BillingPeriodId')\r\n",
 					"old_pricesheet_df = old_pricesheet_df.withColumn('UnitQuantity', F.split('UnitOfMeasure', ' ')[0])\r\n",
 					"old_pricesheet_df = old_pricesheet_df.withColumn('PricePerUnit', F.col('UnitPrice') / F.col('UnitQuantity'))\r\n",
-					"old_pricesheet_df = old_pricesheet_df.select('MeterName', 'UnitOfMeasure', 'UnitQuantity', 'UnitPrice', 'PricePerUnit', 'BillingPeriodId')"
+					"old_pricesheet_df = old_pricesheet_df.select('ProductMapping', 'UnitOfMeasure', 'UnitQuantity', 'UnitPrice', 'PricePerUnit', 'BillingPeriodId')"
 				],
-				"execution_count": 129
+				"execution_count": 313
 			},
 			{
 				"cell_type": "markdown",
@@ -772,9 +772,10 @@
 					"new_pricesheet_df = new_pricesheet_df.withColumn('BillingPeriodId', F.date_format('FormattedDate', \"yyyyMM\"))\r\n",
 					"new_pricesheet_df = new_pricesheet_df.withColumn('UnitQuantity', F.split('UnitOfMeasure', ' ')[0])\r\n",
 					"new_pricesheet_df = new_pricesheet_df.withColumn('PricePerUnit', F.col('UnitPrice') / F.col('UnitQuantity'))\r\n",
-					"new_pricesheet_df = new_pricesheet_df.select('MeterName', 'UnitOfMeasure', 'UnitQuantity', 'UnitPrice', 'PricePerUnit', 'BillingPeriodId')"
+					"new_pricesheet_df = new_pricesheet_df.withColumnRenamed('Product', 'ProductMapping')\r\n",
+					"new_pricesheet_df = new_pricesheet_df.select('ProductMapping', 'UnitOfMeasure', 'UnitQuantity', 'UnitPrice', 'PricePerUnit', 'BillingPeriodId')"
 				],
-				"execution_count": 130
+				"execution_count": 314
 			},
 			{
 				"cell_type": "markdown",
@@ -805,7 +806,7 @@
 				"source": [
 					"pricesheet_df = new_pricesheet_df.union(old_pricesheet_df)"
 				],
-				"execution_count": 131
+				"execution_count": 315
 			},
 			{
 				"cell_type": "code",
@@ -821,12 +822,12 @@
 					}
 				},
 				"source": [
-					"hub_df = hub_df.join(pricesheet_df, (pricesheet_df.MeterName == hub_df.PricesheetService) & (pricesheet_df.BillingPeriodId == hub_df.TempDate), \"left\")\r\n",
+					"hub_df = hub_df.join(pricesheet_df, (pricesheet_df.ProductMapping == hub_df.PricesheetService) & (pricesheet_df.BillingPeriodId == hub_df.TempDate), \"left\")\r\n",
 					"hub_df = hub_df.drop('PriceSheetService', 'TempDate')\r\n",
 					"\r\n",
 					"hub_df = hub_df.withColumn('PAYGLicenseCost', F.col('Quantity') * F.col('pricePerUnit'))"
 				],
-				"execution_count": 132
+				"execution_count": 316
 			},
 			{
 				"cell_type": "code",
@@ -851,7 +852,7 @@
 					"hub_df = hub_df.withColumn('UnlockedSavings', F.when((F.col('HUBCategory') == HUBCategory.RI_HUB.value) | (F.col('HUBCategory') == HUBCategory.nRI_HUB.value), F.col('PAYGLicenseCost')).otherwise(0))\r\n",
 					"hub_df = hub_df.withColumn('PotentialSavings', F.col('ResourceCost') - F.col('CostWithHub'))"
 				],
-				"execution_count": 133
+				"execution_count": 317
 			},
 			{
 				"cell_type": "code",
@@ -869,7 +870,7 @@
 				"source": [
 					"hub_df = hub_df.drop('UnitOfMeasure', 'UnitQuantity', 'UnitPrice', 'PricePerUnit')"
 				],
-				"execution_count": 134
+				"execution_count": 318
 			},
 			{
 				"cell_type": "markdown",
@@ -901,7 +902,7 @@
 					"hub_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/hub/hub-savings-past-two-years.parquet\"\r\n",
 					"hub_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(hub_path)"
 				],
-				"execution_count": 135
+				"execution_count": 321
 			},
 			{
 				"cell_type": "markdown",
