@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "f6040d54-0292-43b4-8da4-5c6b4e1d8001"
+				"spark.autotune.trackingId": "3bfd6ec5-e35b-4f3a-b5e9-2f8e3ad547e9"
 			}
 		},
 		"metadata": {
@@ -71,7 +71,7 @@
 					"from enum import Enum\r\n",
 					"from datetime import datetime, timedelta"
 				],
-				"execution_count": 68
+				"execution_count": 278
 			},
 			{
 				"cell_type": "code",
@@ -92,7 +92,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 69
+				"execution_count": 279
 			},
 			{
 				"cell_type": "code",
@@ -130,7 +130,7 @@
 					"    Enterprise = \"Enterprise License\"\r\n",
 					"    Unknown = \"Unknown\""
 				],
-				"execution_count": 70
+				"execution_count": 280
 			},
 			{
 				"cell_type": "markdown",
@@ -161,7 +161,7 @@
 				"source": [
 					"date_two_year_ago = datetime.now().date()-timedelta(days=710)"
 				],
-				"execution_count": 71
+				"execution_count": 281
 			},
 			{
 				"cell_type": "code",
@@ -181,7 +181,7 @@
 					"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
 					"cost_df = cost_df.where(F.col('Date') >= date_two_year_ago)"
 				],
-				"execution_count": 72
+				"execution_count": 282
 			},
 			{
 				"cell_type": "code",
@@ -218,7 +218,7 @@
 					"\r\n",
 					"cost_df = cost_df.withColumnRenamed('ai_VCPUs', 'VCPUs')"
 				],
-				"execution_count": 73
+				"execution_count": 283
 			},
 			{
 				"cell_type": "markdown",
@@ -248,9 +248,10 @@
 				},
 				"source": [
 					"vm_df = cost_df.alias('vm_df')\r\n",
-					"vm_df = vm_df.withColumn('IsHUB', F.when(F.col('Azure_Hybrid_Benefit') == 'Enabled', True).otherwise(False))"
+					"vm_df = vm_df.withColumn('IsHUB', F.when(F.col('Azure_Hybrid_Benefit') == 'Enabled', True).otherwise(False))\r\n",
+					"vm_df = vm_df.withColumn('Date', F.date_trunc('month', 'Date'))"
 				],
-				"execution_count": 93
+				"execution_count": 284
 			},
 			{
 				"cell_type": "code",
@@ -272,7 +273,7 @@
 					"    (~F.col('ResourceName').like('CVD-%'))\r\n",
 					")"
 				],
-				"execution_count": 94
+				"execution_count": 285
 			},
 			{
 				"cell_type": "code",
@@ -289,34 +290,12 @@
 				},
 				"source": [
 					"# Unit of measure should only have units on format x hours\r\n",
-					"vm_df = vm_df.withColumn('UnitHours', F.split('UnitOfMeasure', ' ')[0])\r\n",
+					"# vm_df = vm_df.withColumn('UnitHours', F.split('UnitOfMeasure', ' ')[0])\r\n",
 					"\r\n",
 					"# Compute quantity in hours based on unit of measure\r\n",
-					"vm_df = vm_df.withColumn('ServiceHours', F.col('UnitHours') * F.col('Quantity'))"
+					"# vm_df = vm_df.withColumn('ServiceHours', F.col('UnitHours') * F.col('Quantity'))"
 				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"vm_df = vm_df \\\r\n",
-					"    .select('VCPUs', 'Date', 'ServiceHours', 'MeterCategory', 'MeterSubCategory', 'ResourceName', 'CostInBillingCurrency', 'IsHUB', 'IsRIUsage', 'AHB_CPUs') \\\r\n",
-					"    .groupBy('Date', 'ResourceName', 'IsHUB', 'MeterCategory', 'MeterSubCategory', 'VCPUs', 'IsRIUsage', 'AHB_CPUs') \\\r\n",
-					"    .agg(F.sum('ServiceHours').alias('ServiceHours'), F.sum('CostInBillingCurrency').alias('ResourceCost')) \\\r\n",
-					"    .orderBy('Date', 'ServiceHours', 'ResourceCost')"
-				],
-				"execution_count": 95
+				"execution_count": 286
 			},
 			{
 				"cell_type": "code",
@@ -341,7 +320,7 @@
 					"    .otherwise(HUBCategory.Unknown.value)\r\n",
 					")"
 				],
-				"execution_count": 96
+				"execution_count": 287
 			},
 			{
 				"cell_type": "code",
@@ -364,7 +343,29 @@
 					"    F.lit(' vCPU VM License')\r\n",
 					"))"
 				],
-				"execution_count": 97
+				"execution_count": 288
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"vm_df = vm_df \\\r\n",
+					"    .select('VCPUs', 'Date', 'Quantity', 'ResourceName', 'CostInBillingCurrency', 'IsHUB', 'IsRIUsage', 'AHB_CPUs', 'HUBCategory', 'PricesheetService') \\\r\n",
+					"    .groupBy('Date', 'ResourceName', 'IsHUB', 'VCPUs', 'IsRIUsage', 'AHB_CPUs', 'HUBCategory', 'PricesheetService') \\\r\n",
+					"    .agg(F.sum('Quantity').alias('Quantity'), F.sum('CostInBillingCurrency').alias('ResourceCost')) \\\r\n",
+					"    .orderBy('Date', 'Quantity', 'ResourceCost')"
+				],
+				"execution_count": 289
 			},
 			{
 				"cell_type": "code",
@@ -382,7 +383,7 @@
 				"source": [
 					"vm_df = vm_df.withColumn('HUBType', F.lit(HUBType.VM.value))"
 				],
-				"execution_count": 98
+				"execution_count": 290
 			},
 			{
 				"cell_type": "code",
@@ -400,7 +401,7 @@
 				"source": [
 					"vm_df = vm_df.withColumn('DBType', F.lit(None))"
 				],
-				"execution_count": 99
+				"execution_count": 291
 			},
 			{
 				"cell_type": "markdown",
@@ -430,9 +431,10 @@
 				},
 				"source": [
 					"sql_df = cost_df.alias('sql_df')\r\n",
-					"sql_df = sql_df.withColumn('IsHUB', F.when((F.col('ai_AHB').isNull()) | (F.col('ai_AHB') == False), False).otherwise(True))"
+					"sql_df = sql_df.withColumn('IsHUB', F.when((F.col('ai_AHB').isNull()) | (F.col('ai_AHB') == False), False).otherwise(True))\r\n",
+					"sql_df = sql_df.withColumn('Date', F.date_trunc('month', 'Date'))"
 				],
-				"execution_count": 81
+				"execution_count": 292
 			},
 			{
 				"cell_type": "code",
@@ -456,7 +458,7 @@
 					"\r\n",
 					"sql_df = sql_df.where(F.col('MeterSubCategory') != 'SQL Server Express Edition')"
 				],
-				"execution_count": 82
+				"execution_count": 293
 			},
 			{
 				"cell_type": "code",
@@ -476,34 +478,12 @@
 					"sql_df = sql_df.where((~F.col('UnitOfMeasure').like('%GB%')) & (~F.col('UnitOfMeasure').like('%/Day%')))\r\n",
 					"\r\n",
 					"# Unit of measure should only have units on format x hours\r\n",
-					"sql_df = sql_df.withColumn('UnitHours', F.split('UnitOfMeasure', ' ')[0])\r\n",
+					"# sql_df = sql_df.withColumn('UnitHours', F.split('UnitOfMeasure', ' ')[0])\r\n",
 					"\r\n",
 					"# Compute quantity in hours based on unit of measure\r\n",
-					"sql_df = sql_df.withColumn('ServiceHours', F.col('UnitHours') * F.col('Quantity'))"
+					"# sql_df = sql_df.withColumn('ServiceHours', F.col('UnitHours') * F.col('Quantity'))"
 				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"sql_df = sql_df \\\r\n",
-					"    .select('VCPUs', 'Date', 'ServiceHours', 'MeterCategory', 'MeterSubCategory', 'ResourceName', 'CostInBillingCurrency', 'IsHUB', 'IsRIUsage', 'ResourceId', 'ProductName', 'AHB_CPUs') \\\r\n",
-					"    .groupBy('Date', 'ResourceName', 'IsHUB', 'MeterCategory', 'MeterSubCategory', 'VCPUs', 'IsRIUsage', 'ResourceId', 'ProductName', 'AHB_CPUs') \\\r\n",
-					"    .agg(F.sum('ServiceHours').alias('ServiceHours'), F.sum('CostInBillingCurrency').alias('ResourceCost')) \\\r\n",
-					"    .orderBy('Date', 'ServiceHours', 'ResourceCost')"
-				],
-				"execution_count": 83
+				"execution_count": 294
 			},
 			{
 				"cell_type": "code",
@@ -528,7 +508,7 @@
 					"\r\n",
 					"sql_df = sql_df.where(F.col('DBType') != DBTypes.Unknown.value)"
 				],
-				"execution_count": 84
+				"execution_count": 295
 			},
 			{
 				"cell_type": "code",
@@ -552,7 +532,7 @@
 					"\r\n",
 					"sql_df = sql_df.where(F.col('LicenseType') != LicenseTypes.Unknown.value)"
 				],
-				"execution_count": 85
+				"execution_count": 296
 			},
 			{
 				"cell_type": "code",
@@ -565,8 +545,7 @@
 						"transient": {
 							"deleting": false
 						}
-					},
-					"collapsed": false
+					}
 				},
 				"source": [
 					"sql_df = sql_df.withColumn('HUBCategory',\r\n",
@@ -577,7 +556,7 @@
 					"    .otherwise(HUBCategory.Unknown.value)\r\n",
 					")"
 				],
-				"execution_count": 86
+				"execution_count": 297
 			},
 			{
 				"cell_type": "code",
@@ -605,7 +584,29 @@
 					"    .otherwise('undefined')\r\n",
 					")"
 				],
-				"execution_count": 87
+				"execution_count": 298
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"sql_df = sql_df \\\r\n",
+					"    .select('VCPUs', 'Date', 'Quantity', 'ResourceName', 'CostInBillingCurrency', 'IsHUB', 'IsRIUsage', 'AHB_CPUs', 'DBType', 'PricesheetService', 'HUBCategory') \\\r\n",
+					"    .groupBy('Date', 'ResourceName', 'IsHUB', 'VCPUs', 'IsRIUsage', 'AHB_CPUs', 'DBType', 'PricesheetService', 'HUBCategory') \\\r\n",
+					"    .agg(F.sum('Quantity').alias('Quantity'), F.sum('CostInBillingCurrency').alias('ResourceCost')) \\\r\n",
+					"    .orderBy('Date', 'Quantity', 'ResourceCost')"
+				],
+				"execution_count": 299
 			},
 			{
 				"cell_type": "code",
@@ -623,7 +624,7 @@
 				"source": [
 					"sql_df = sql_df.withColumn('HUBType', F.lit(HUBType.SQL.value))"
 				],
-				"execution_count": 88
+				"execution_count": 300
 			},
 			{
 				"cell_type": "markdown",
@@ -652,12 +653,12 @@
 					}
 				},
 				"source": [
-					"columns = ['Date', 'ResourceName', 'MeterCategory', 'MeterSubCategory', 'VCPUs', 'ServiceHours', 'ResourceCost', 'HUBType', 'HUBCategory', 'DBType', 'IsRIUsage', 'IsHUB', 'PricesheetService', 'AHB_CPUs']\r\n",
+					"columns = ['Date', 'ResourceName', 'VCPUs', 'Quantity', 'ResourceCost', 'HUBType', 'HUBCategory', 'DBType', 'IsRIUsage', 'IsHUB', 'PricesheetService', 'AHB_CPUs']\r\n",
 					"vm_df = vm_df.select(*columns)\r\n",
 					"sql_df = sql_df.select(*columns)\r\n",
 					""
 				],
-				"execution_count": 27
+				"execution_count": 301
 			},
 			{
 				"cell_type": "code",
@@ -675,25 +676,7 @@
 				"source": [
 					"hub_df = vm_df.union(sql_df)"
 				],
-				"execution_count": 28
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"hub_df = hub_df.withColumn('MonthDate', F.date_trunc('month', 'Date'))"
-				],
-				"execution_count": 29
+				"execution_count": 302
 			},
 			{
 				"cell_type": "markdown",
@@ -725,7 +708,7 @@
 					"# Create dummy date column for pricesheet join operation\r\n",
 					"hub_df = hub_df.withColumn(\"TempDate\", F.date_format(\"Date\", \"yyyyMM\"))"
 				],
-				"execution_count": 30
+				"execution_count": 303
 			},
 			{
 				"cell_type": "markdown",
@@ -756,7 +739,7 @@
 				"source": [
 					"PROD_OFFER_ID = 'MS-AZR-0017P'"
 				],
-				"execution_count": 31
+				"execution_count": 304
 			},
 			{
 				"cell_type": "code",
@@ -783,7 +766,7 @@
 					"old_pricesheet_df = old_pricesheet_df.withColumn('PricePerUnit', F.col('UnitPrice') / F.col('UnitQuantity'))\r\n",
 					"old_pricesheet_df = old_pricesheet_df.select('ProductMapping', 'UnitOfMeasure', 'UnitQuantity', 'UnitPrice', 'PricePerUnit', 'BillingPeriodId')"
 				],
-				"execution_count": 34
+				"execution_count": 305
 			},
 			{
 				"cell_type": "markdown",
@@ -822,7 +805,7 @@
 					"new_pricesheet_df = new_pricesheet_df.withColumnRenamed('Product', 'ProductMapping')\r\n",
 					"new_pricesheet_df = new_pricesheet_df.select('ProductMapping', 'UnitOfMeasure', 'UnitQuantity', 'UnitPrice', 'PricePerUnit', 'BillingPeriodId')"
 				],
-				"execution_count": 32
+				"execution_count": 306
 			},
 			{
 				"cell_type": "markdown",
@@ -853,7 +836,7 @@
 				"source": [
 					"pricesheet_df = new_pricesheet_df.union(old_pricesheet_df)"
 				],
-				"execution_count": 35
+				"execution_count": 307
 			},
 			{
 				"cell_type": "code",
@@ -872,9 +855,9 @@
 					"hub_df = hub_df.join(pricesheet_df, (pricesheet_df.ProductMapping == hub_df.PricesheetService) & (pricesheet_df.BillingPeriodId == hub_df.TempDate), \"left\")\r\n",
 					"hub_df = hub_df.drop('PriceSheetService', 'TempDate')\r\n",
 					"\r\n",
-					"hub_df = hub_df.withColumn('PAYGLicenseCost', F.col('ServiceHours') * F.col('PricePerUnit'))"
+					"hub_df = hub_df.withColumn('PAYGLicenseCost', F.col('Quantity') * F.col('PricePerUnit'))"
 				],
-				"execution_count": 36
+				"execution_count": 308
 			},
 			{
 				"cell_type": "code",
@@ -899,7 +882,7 @@
 					"hub_df = hub_df.withColumn('UnlockedSavings', F.when((F.col('HUBCategory') == HUBCategory.RI_HUB.value) | (F.col('HUBCategory') == HUBCategory.nRI_HUB.value), F.col('PAYGLicenseCost')).otherwise(0))\r\n",
 					"hub_df = hub_df.withColumn('PotentialSavings', F.col('ResourceCost') - F.col('CostWithHub'))"
 				],
-				"execution_count": 37
+				"execution_count": 309
 			},
 			{
 				"cell_type": "code",
@@ -917,7 +900,7 @@
 				"source": [
 					"hub_df = hub_df.drop('UnitOfMeasure', 'UnitQuantity', 'UnitPrice', 'PricePerUnit')"
 				],
-				"execution_count": 318
+				"execution_count": 310
 			},
 			{
 				"cell_type": "markdown",
@@ -949,7 +932,7 @@
 					"hub_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/hub/hub-savings-past-two-years.parquet\"\r\n",
 					"hub_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(hub_path)"
 				],
-				"execution_count": 321
+				"execution_count": 311
 			},
 			{
 				"cell_type": "markdown",
