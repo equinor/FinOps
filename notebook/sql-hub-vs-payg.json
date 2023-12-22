@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "3bfd6ec5-e35b-4f3a-b5e9-2f8e3ad547e9"
+				"spark.autotune.trackingId": "6c38f59b-daf6-4bb2-a2fa-22e808010ea7"
 			}
 		},
 		"metadata": {
@@ -971,6 +971,64 @@
 					"There is a lot of cost associated with SQL that has VCPUs set to 0. \r\n",
 					"If the unit of measure for these cost items is inspected, it varies between _x hours_, _x / day_ and _x GB/month_\r\n",
 					"We would only be interested in cost with unit of measure equal to _x hours_ (corresponds to SQL serverless pools), whereas the other corresponds to memory/DTU cost. "
+				]
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## VM Related Cost\r\n",
+					"\r\n",
+					"#### Comparing the two following queries\r\n",
+					"\r\n",
+					"1. _ResourceId_ includes **/virtualMachines/** or **/virtualMachineScaleSets/** (dataset1)\r\n",
+					"2. _MeterCategory_ is **Virtual Machines** or **Virtual Machines Licenses** (dataset2)\r\n",
+					"\r\n",
+					"Note: both queries also checks that _MeterSubCategory_ includes **Windows** or _ServiceInfo2_ is **Windows Server BYOL** to only account for Windows VMs\r\n",
+					"\r\n",
+					"Based on the queries above, the resulting counts for november 2023 where:\r\n",
+					"\r\n",
+					"1. 135,453 cost items\r\n",
+					"2. 136,203 cost items\r\n",
+					"\r\n",
+					"There is a small difference between these two subsets.\r\n",
+					"\r\n",
+					"Analysis of certain dataset columns yielded the following results:\r\n",
+					"\r\n",
+					"**MeterSubCategory** column in dataset2 includes the following values that are not present in dataset1\r\n",
+					"- Av2 Series Windows\r\n",
+					"- Ev3/ESv3 Series Windows\r\n",
+					"\r\n",
+					"**ProductName** column in dataset2 includes the following values that are not present in dataset1\r\n",
+					"- Virtual Machines Ev3/ESv3 Series Windows - E4 v3/E4s v3 - EU North\r\n",
+					"- Virtual Machines Av2 Series Windows - A1 v2 - NO East\r\n",
+					"- Virtual Machines F/FS Series Windows - F8/F8s - EU North\r\n",
+					"\r\n",
+					"**MeterName** column in dataset2 includes the following values that are not present in dataset1\r\n",
+					"- A1 v2\r\n",
+					"\r\n",
+					"**ai_ServiceType** column in dataset2 includes the following values that are not present in dataset1\r\n",
+					"- Standard_A1_v2\r\n",
+					"- Standard_F8\r\n",
+					"- Standard_E4_v3\r\n",
+					"\r\n",
+					"After further inspection of the above dataset differences, all related costs to the odd values for columns in dataset2, they have the following facts in common:\r\n",
+					"\r\n",
+					"- Very small subset of cost\r\n",
+					"- All are PAYG cost (no HUB enabled)\r\n",
+					"- The resource id of all these costs have the form: /subscriptions/df89af9f-9074-40b4-a620-1d35c0eea0a4/resourceGroups/rg-observability-dev/providers/Microsoft.Batch/batchAccounts/baobservabilitydev/pools/poolobservabilitydev\r\n",
+					"- All costs are associated with Microsoft.Batch consumed service type\r\n",
+					"\r\n",
+					"This is why it is not covered by the dataset that requires virtualMachines or virtualMachineScaleSets to be part of the resource identifier\r\n",
+					"\r\n",
+					"\r\n",
+					""
 				]
 			}
 		]
