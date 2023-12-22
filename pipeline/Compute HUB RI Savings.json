@@ -3,83 +3,9 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Compute windows HUB savings",
-				"type": "SynapseNotebook",
-				"dependsOn": [],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"notebook": {
-						"referenceName": "compute-win-hub-savings",
-						"type": "NotebookReference"
-					},
-					"parameters": {
-						"storageAccount": {
-							"value": {
-								"value": "@pipeline().parameters.storageAccount",
-								"type": "Expression"
-							},
-							"type": "string"
-						}
-					},
-					"snapshot": true
-				}
-			},
-			{
-				"name": "Compute SQL HUB Savings",
-				"type": "SynapseNotebook",
-				"dependsOn": [
-					{
-						"activity": "Compute windows HUB savings",
-						"dependencyConditions": [
-							"Succeeded",
-							"Failed"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"notebook": {
-						"referenceName": "compute-sql-hub-savings",
-						"type": "NotebookReference"
-					},
-					"parameters": {
-						"storageAccount": {
-							"value": {
-								"value": "@pipeline().parameters.storageAccount",
-								"type": "Expression"
-							},
-							"type": "string"
-						}
-					},
-					"snapshot": true
-				}
-			},
-			{
 				"name": "Compute RI Savings",
 				"type": "SynapseNotebook",
-				"dependsOn": [
-					{
-						"activity": "Compute SQL HUB Savings",
-						"dependencyConditions": [
-							"Succeeded",
-							"Failed"
-						]
-					}
-				],
+				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -102,7 +28,13 @@
 							"type": "string"
 						}
 					},
-					"snapshot": true
+					"snapshot": true,
+					"conf": {
+						"spark.dynamicAllocation.enabled": null,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"numExecutors": null
 				}
 			}
 		],
