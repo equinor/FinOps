@@ -41,14 +41,13 @@
 				}
 			},
 			{
-				"name": "Compute Windows HUB Savings",
+				"name": "Compute VM and SQL HUB Savings",
 				"type": "SynapseNotebook",
 				"dependsOn": [
 					{
 						"activity": "HUB Daily File",
 						"dependencyConditions": [
-							"Succeeded",
-							"Failed"
+							"Succeeded"
 						]
 					}
 				],
@@ -62,68 +61,16 @@
 				"userProperties": [],
 				"typeProperties": {
 					"notebook": {
-						"referenceName": "compute-win-hub-savings",
+						"referenceName": "compute-hub-savings",
 						"type": "NotebookReference"
 					},
 					"parameters": {
 						"storageAccount": {
-							"value": {
-								"value": "@variables('storageAccount')",
-								"type": "Expression"
-							},
+							"value": "s037costmgmt",
 							"type": "string"
 						}
 					},
-					"snapshot": true,
-					"conf": {
-						"spark.dynamicAllocation.enabled": null,
-						"spark.dynamicAllocation.minExecutors": null,
-						"spark.dynamicAllocation.maxExecutors": null
-					},
-					"numExecutors": null
-				}
-			},
-			{
-				"name": "Compute SQL HUB Savings",
-				"type": "SynapseNotebook",
-				"dependsOn": [
-					{
-						"activity": "Compute Windows HUB Savings",
-						"dependencyConditions": [
-							"Succeeded",
-							"Failed"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"notebook": {
-						"referenceName": "compute-sql-hub-savings",
-						"type": "NotebookReference"
-					},
-					"parameters": {
-						"storageAccount": {
-							"value": {
-								"value": "@variables('storageAccount')",
-								"type": "Expression"
-							},
-							"type": "string"
-						}
-					},
-					"snapshot": true,
-					"conf": {
-						"spark.dynamicAllocation.enabled": null,
-						"spark.dynamicAllocation.minExecutors": null,
-						"spark.dynamicAllocation.maxExecutors": null
-					},
-					"numExecutors": null
+					"snapshot": true
 				}
 			}
 		],
