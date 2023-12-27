@@ -66,6 +66,46 @@
 						"type": "Expression"
 					}
 				}
+			},
+			{
+				"name": "Persist with latest suffix",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "Set folder path",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "persist-latest-pricesheet",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"storageAccount": {
+							"value": "s037costmgmt",
+							"type": "string"
+						},
+						"dateRange": {
+							"value": {
+								"value": "@variables('folderpath')",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true
+				}
 			}
 		],
 		"variables": {
