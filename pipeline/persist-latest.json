@@ -1,6 +1,84 @@
 {
 	"name": "persist-latest",
 	"properties": {
+		"activities": [
+			{
+				"name": "Set first day of month",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "firstday",
+					"value": {
+						"value": "formatDateTime(utcNow(), 'yyyyMM') + '01'",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Set last day of month",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Set first day of month",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "lastday",
+					"value": {
+						"value": "formatDateTime(subDays(formatDateTime(addMonths(utcNow(), 1)'yyyy-MM') + '-01',1), 'yyyyMMdd')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Set folder path",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Set last day of month",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "folderpath",
+					"value": {
+						"value": "@concat(variables('firstday'), '-', variables('lastday'))",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"variables": {
+			"lastday": {
+				"type": "String"
+			},
+			"firstday": {
+				"type": "String"
+			},
+			"folderpath": {
+				"type": "String"
+			}
+		},
 		"folder": {
 			"name": "PipelinesInProduction/Pricesheet"
 		},
