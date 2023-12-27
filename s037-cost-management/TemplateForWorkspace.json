@@ -44590,6 +44590,37 @@
 			},
 			"dependsOn": [],
 			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/pricesheet-updates-trigger')]",
+			"type": "Microsoft.Synapse/workspaces/triggers",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "persist-latest",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "BlobEventsTrigger",
+				"typeProperties": {
+					"blobPathBeginsWith": "/usage/blobs/pricesheet/portal-export/FinOps-Pricesheet-Monthly",
+					"blobPathEndsWith": ".csv",
+					"ignoreEmptyBlobs": true,
+					"scope": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt",
+					"events": [
+						"Microsoft.Storage.BlobCreated"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/persist-latest')]"
+			]
 		}
 	]
 }
