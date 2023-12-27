@@ -753,6 +753,18 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
+		"persist-latest-pricesheet_notebookSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"persist-latest-pricesheet_notebookSparkPoolIdRef": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"persist-latest-pricesheet_notebookSparkPoolEndpointRef": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
 		"servicenow-application-processing_notebookSparkPoolNameRef": {
 			"type": "string",
 			"defaultValue": "sprkpool33large"
@@ -872,18 +884,6 @@
 		"sprkpool33large_sparkVersion": {
 			"type": "string",
 			"defaultValue": "3.3"
-		},
-		"persist-latest-pricesheet_notebookSparkPoolNameRef": {
-			"type": "string",
-			"defaultValue": "sprkpool33large"
-		},
-		"persist-latest-pricesheet_notebookSparkPoolIdRef": {
-			"type": "string",
-			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
-		},
-		"persist-latest-pricesheet_notebookSparkPoolEndpointRef": {
-			"type": "string",
-			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		}
 	},
 	"variables": {
@@ -19831,6 +19831,147 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/persist-latest')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Set first day of month",
+						"type": "SetVariable",
+						"dependsOn": [],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "firstday",
+							"value": {
+								"value": "@concat(formatDateTime(utcNow(), 'yyyyMM'), '01')",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Set last day of month",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Set first day of month",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "lastday",
+							"value": {
+								"value": "@formatDateTime(subtractFromTime(concat(formatDateTime(addToTime(utcNow(), 1, 'Month'),'yyyy-MM'), '-01'), 1, 'Day'), 'yyyyMMdd')",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Set folder path",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Set last day of month",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "folderpath",
+							"value": {
+								"value": "@concat(variables('firstday'), '-', variables('lastday'))",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Persist with latest suffix",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "Set folder path",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "persist-latest-pricesheet",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"storageAccount": {
+									"value": "s037costmgmt",
+									"type": "string"
+								},
+								"dateRange": {
+									"value": {
+										"value": "@variables('folderpath')",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"numExecutors": null
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"lastday": {
+						"type": "String"
+					},
+					"firstday": {
+						"type": "String"
+					},
+					"folderpath": {
+						"type": "String"
+					}
+				},
+				"folder": {
+					"name": "PipelinesInProduction/Pricesheet"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/notebooks/persist-latest-pricesheet')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/process-wbs-owners')]",
 			"type": "Microsoft.Synapse/workspaces/pipelines",
 			"apiVersion": "2019-06-01-preview",
@@ -32826,7 +32967,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "527d88c6-0b15-46c8-9f6e-0503234bc617"
+						"spark.autotune.trackingId": "14f6e9db-ef54-4821-ab95-7748444001dc"
 					}
 				},
 				"metadata": {
@@ -32851,8 +32992,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -39785,7 +39925,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "0b39df28-57b4-4dd5-a6c5-a7b69c5bf499"
+						"spark.autotune.trackingId": "4f8cbbae-8e8c-4e41-81cc-10a968d7d67f"
 					}
 				},
 				"metadata": {
@@ -39810,8 +39950,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -39831,7 +39970,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"from enum import Enum\r\n",
@@ -42201,6 +42339,118 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/persist-latest-pricesheet')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "NotebookInProduction/Pricesheet"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "[parameters('persist-latest-pricesheet_notebookSparkPoolNameRef')]",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "112g",
+					"driverCores": 16,
+					"executorMemory": "112g",
+					"executorCores": 16,
+					"numExecutors": 1,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "5",
+						"spark.autotune.trackingId": "c88fc8da-726a-422b-8a19-80439853392f"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "[parameters('persist-latest-pricesheet_notebookSparkPoolIdRef')]",
+						"name": "[parameters('persist-latest-pricesheet_notebookSparkPoolNameRef')]",
+						"type": "Spark",
+						"endpoint": "[parameters('persist-latest-pricesheet_notebookSparkPoolEndpointRef')]",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 16,
+						"memory": 112
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"dateRange = '20231201-20231231'\r\n",
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": 5
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"source_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/FinOps-Pricesheet-Monthly/{dateRange}/*/*.csv'\r\n",
+							"df = spark.read.csv(source_path, header=True, inferSchema=True)"
+						],
+						"outputs": [],
+						"execution_count": 6
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"target_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/pricesheet-latest'\r\n",
+							"df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
+						],
+						"outputs": [],
+						"execution_count": 7
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/servicenow-application-processing')]",
 			"type": "Microsoft.Synapse/workspaces/notebooks",
 			"apiVersion": "2019-06-01-preview",
@@ -44340,287 +44590,6 @@
 			},
 			"dependsOn": [],
 			"location": "northeurope"
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/persist-latest')]",
-			"type": "Microsoft.Synapse/workspaces/pipelines",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"activities": [
-					{
-						"name": "Set first day of month",
-						"type": "SetVariable",
-						"dependsOn": [],
-						"policy": {
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"variableName": "firstday",
-							"value": {
-								"value": "@concat(formatDateTime(utcNow(), 'yyyyMM'), '01')",
-								"type": "Expression"
-							}
-						}
-					},
-					{
-						"name": "Set last day of month",
-						"type": "SetVariable",
-						"dependsOn": [
-							{
-								"activity": "Set first day of month",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"variableName": "lastday",
-							"value": {
-								"value": "@formatDateTime(subtractFromTime(concat(formatDateTime(addToTime(utcNow(), 1, 'Month'),'yyyy-MM'), '-01'), 1, 'Day'), 'yyyyMMdd')",
-								"type": "Expression"
-							}
-						}
-					},
-					{
-						"name": "Set folder path",
-						"type": "SetVariable",
-						"dependsOn": [
-							{
-								"activity": "Set last day of month",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"variableName": "folderpath",
-							"value": {
-								"value": "@concat(variables('firstday'), '-', variables('lastday'))",
-								"type": "Expression"
-							}
-						}
-					},
-					{
-						"name": "Persist with latest suffix",
-						"type": "SynapseNotebook",
-						"dependsOn": [
-							{
-								"activity": "Set folder path",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"notebook": {
-								"referenceName": "persist-latest-pricesheet",
-								"type": "NotebookReference"
-							},
-							"parameters": {
-								"storageAccount": {
-									"value": "s037costmgmt",
-									"type": "string"
-								},
-								"dateRange": {
-									"value": {
-										"value": "@variables('folderpath')",
-										"type": "Expression"
-									},
-									"type": "string"
-								}
-							},
-							"snapshot": true,
-							"conf": {}
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"variables": {
-					"lastday": {
-						"type": "String"
-					},
-					"firstday": {
-						"type": "String"
-					},
-					"folderpath": {
-						"type": "String"
-					}
-				},
-				"folder": {
-					"name": "PipelinesInProduction/Pricesheet"
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/notebooks/persist-latest-pricesheet')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/pricesheet-update-trigger')]",
-			"type": "Microsoft.Synapse/workspaces/triggers",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"description": "Triggers whenever a file within the pricesheet portal export folder gets updated.",
-				"annotations": [],
-				"runtimeState": "Stopped",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "persist-latest",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "BlobEventsTrigger",
-				"typeProperties": {
-					"blobPathBeginsWith": "/usage/blobs/pricesheet/portal-export/FinOps-Pricesheet-Monthly",
-					"blobPathEndsWith": ".csv",
-					"ignoreEmptyBlobs": true,
-					"scope": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt",
-					"events": [
-						"Microsoft.Storage.BlobCreated"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/pipelines/persist-latest')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/persist-latest-pricesheet')]",
-			"type": "Microsoft.Synapse/workspaces/notebooks",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"folder": {
-					"name": "NotebookInProduction/Pricesheet"
-				},
-				"nbformat": 4,
-				"nbformat_minor": 2,
-				"bigDataPool": {
-					"referenceName": "[parameters('persist-latest-pricesheet_notebookSparkPoolNameRef')]",
-					"type": "BigDataPoolReference"
-				},
-				"sessionProperties": {
-					"driverMemory": "112g",
-					"driverCores": 16,
-					"executorMemory": "112g",
-					"executorCores": 16,
-					"numExecutors": 1,
-					"conf": {
-						"spark.dynamicAllocation.enabled": "true",
-						"spark.dynamicAllocation.minExecutors": "1",
-						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "81fbd22a-b3b0-478d-93b6-e7ca8c98e4ba"
-					}
-				},
-				"metadata": {
-					"saveOutput": true,
-					"enableDebugMode": false,
-					"kernelspec": {
-						"name": "synapse_pyspark",
-						"display_name": "Synapse PySpark"
-					},
-					"language_info": {
-						"name": "python"
-					},
-					"a365ComputeOptions": {
-						"id": "[parameters('persist-latest-pricesheet_notebookSparkPoolIdRef')]",
-						"name": "[parameters('persist-latest-pricesheet_notebookSparkPoolNameRef')]",
-						"type": "Spark",
-						"endpoint": "[parameters('persist-latest-pricesheet_notebookSparkPoolEndpointRef')]",
-						"auth": {
-							"type": "AAD",
-							"authResource": "https://dev.azuresynapse.net"
-						},
-						"sparkVersion": "3.3",
-						"nodeCount": 3,
-						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
-					},
-					"sessionKeepAliveTimeout": 30
-				},
-				"cells": [
-					{
-						"cell_type": "code",
-						"metadata": {
-							"tags": [
-								"parameters"
-							]
-						},
-						"source": [
-							"dateRange = '20231201-20231231'\r\n",
-							"storageAccount = 's037costmgmt'"
-						],
-						"outputs": [],
-						"execution_count": 5
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"source_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/FinOps-Pricesheet-Monthly/{dateRange}/*/*.csv'\r\n",
-							"df = spark.read.csv(source_path, header=True, inferSchema=True)"
-						],
-						"outputs": [],
-						"execution_count": 6
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"target_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/pricesheet-latest'\r\n",
-							"df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
-						],
-						"outputs": [],
-						"execution_count": 7
-					}
-				]
-			},
-			"dependsOn": []
 		}
 	]
 }
