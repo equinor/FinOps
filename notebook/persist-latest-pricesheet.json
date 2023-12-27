@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "825f494c-f3ee-43a4-a1d7-d63f1cdef3b7"
+				"spark.autotune.trackingId": "da30f0bb-da5d-4cf7-8850-3ce1fba9dd7d"
 			}
 		},
 		"metadata": {
@@ -57,7 +57,7 @@
 					"dateRange = '20231201-20231231'\r\n",
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 1
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -76,7 +76,7 @@
 					"source_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/FinOps-Pricesheet-Monthly/{dateRange}/*/*.csv'\r\n",
 					"df = spark.read.csv(source_path, header=True, inferSchema=True)"
 				],
-				"execution_count": null
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -92,10 +92,10 @@
 					}
 				},
 				"source": [
-					"target_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/pricesheet-latest.parquet'\r\n",
-					"df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(hub_path)"
+					"target_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/pricesheet-latest'\r\n",
+					"df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 				],
-				"execution_count": null
+				"execution_count": 7
 			}
 		]
 	}
