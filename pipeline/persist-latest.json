@@ -14,7 +14,7 @@
 				"typeProperties": {
 					"variableName": "firstday",
 					"value": {
-						"value": "formatDateTime(utcNow(), 'yyyyMM') + '01'",
+						"value": "@concat(formatDateTime(utcNow(), 'yyyyMM'), '01')",
 						"type": "Expression"
 					}
 				}
@@ -38,7 +38,7 @@
 				"typeProperties": {
 					"variableName": "lastday",
 					"value": {
-						"value": "formatDateTime(subDays(formatDateTime(addMonths(utcNow(), 1)'yyyy-MM') + '-01',1), 'yyyyMMdd')",
+						"value": "@formatDateTime(subtractFromTime(concat(formatDateTime(addToTime(utcNow(), 1, 'Month'),'yyyy-MM'), '-01'), 1, 'Day'), 'yyyyMMdd')",
 						"type": "Expression"
 					}
 				}
