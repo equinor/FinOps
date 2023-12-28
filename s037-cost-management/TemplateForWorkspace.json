@@ -24382,6 +24382,38 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/pricesheet-updates-trigger')]",
+			"type": "Microsoft.Synapse/workspaces/triggers",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"description": "d",
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "persist-latest",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "BlobEventsTrigger",
+				"typeProperties": {
+					"blobPathBeginsWith": "/usage/blobs/pricesheet/portal-export/FinOps-Pricesheet-Monthly",
+					"blobPathEndsWith": ".csv",
+					"ignoreEmptyBlobs": true,
+					"scope": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt",
+					"events": [
+						"Microsoft.Storage.BlobCreated"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/persist-latest')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/AutoResolveIntegrationRuntime')]",
 			"type": "Microsoft.Synapse/workspaces/integrationRuntimes",
 			"apiVersion": "2019-06-01-preview",
@@ -32967,7 +32999,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "14f6e9db-ef54-4821-ab95-7748444001dc"
+						"spark.autotune.trackingId": "5729c43f-4a5b-47e9-ab6e-ba3b818f41f0"
 					}
 				},
 				"metadata": {
@@ -32992,7 +33024,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -33187,7 +33220,7 @@
 							}
 						},
 						"source": [
-							"pricesheet_source_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/pricesheet-latest/*.parquet'\r\n",
+							"pricesheet_source_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/pricesheet-latest'\r\n",
 							"pricesheet_target_path = 'abfss://win-activity@hubautomation.dfs.core.windows.net/usage_details/pricesheet.csv'\r\n",
 							"\r\n",
 							"print('Loading the latest pricesheet from source parquet')\r\n",
@@ -33196,7 +33229,7 @@
 							"pricesheet.to_csv(pricesheet_target_path)"
 						],
 						"outputs": [],
-						"execution_count": 8
+						"execution_count": 9
 					},
 					{
 						"cell_type": "markdown",
@@ -33230,7 +33263,7 @@
 							"sql_cost_df = vm_cost_df.copy()"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 10
 					},
 					{
 						"cell_type": "markdown",
@@ -33265,7 +33298,7 @@
 							"vm_cost_df.drop(columns=vm_cost_df.columns.difference(vm_columns_to_keep), inplace=True)"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 11
 					},
 					{
 						"cell_type": "code",
@@ -33294,7 +33327,7 @@
 							"print(vm_cost_df)"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 12
 					},
 					{
 						"cell_type": "markdown",
@@ -33341,7 +33374,7 @@
 							"print(sql_metersubcategory_array)"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 13
 					},
 					{
 						"cell_type": "markdown",
@@ -33377,7 +33410,7 @@
 							"sql_cost_df.drop(columns=sql_cost_df.columns.difference(sql_columns_to_keep), inplace=True)"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 14
 					},
 					{
 						"cell_type": "code",
@@ -33402,7 +33435,7 @@
 							"print(sql_cost_df)"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 15
 					},
 					{
 						"cell_type": "markdown",
@@ -33451,7 +33484,7 @@
 							"print('File write complete.')"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 16
 					}
 				]
 			},
@@ -44590,37 +44623,6 @@
 			},
 			"dependsOn": [],
 			"location": "northeurope"
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/pricesheet-updates-trigger')]",
-			"type": "Microsoft.Synapse/workspaces/triggers",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Stopped",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "persist-latest",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "BlobEventsTrigger",
-				"typeProperties": {
-					"blobPathBeginsWith": "/usage/blobs/pricesheet/portal-export/FinOps-Pricesheet-Monthly",
-					"blobPathEndsWith": ".csv",
-					"ignoreEmptyBlobs": true,
-					"scope": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt",
-					"events": [
-						"Microsoft.Storage.BlobCreated"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/pipelines/persist-latest')]"
-			]
 		}
 	]
 }
