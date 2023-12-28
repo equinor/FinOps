@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "2f8045b4-8acb-4906-95a4-f88dacd41181"
+				"spark.autotune.trackingId": "b33fa18a-6263-4d84-915c-85c3c4c4268d"
 			}
 		},
 		"metadata": {
@@ -235,7 +235,7 @@
 					}
 				},
 				"source": [
-					"pricesheet_source_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/pricesheet-latest/*.parquet'\r\n",
+					"pricesheet_source_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/pricesheet-latest'\r\n",
 					"pricesheet_target_path = 'abfss://win-activity@hubautomation.dfs.core.windows.net/usage_details/pricesheet.csv'\r\n",
 					"\r\n",
 					"print('Loading the latest pricesheet from source parquet')\r\n",
@@ -243,7 +243,7 @@
 					"print('Writing pricesheet to destination csv file')\r\n",
 					"pricesheet.to_csv(pricesheet_target_path)"
 				],
-				"execution_count": 8
+				"execution_count": 9
 			},
 			{
 				"cell_type": "markdown",
@@ -276,7 +276,7 @@
 					"vm_cost_df = load_cost_data(start_date)\r\n",
 					"sql_cost_df = vm_cost_df.copy()"
 				],
-				"execution_count": null
+				"execution_count": 10
 			},
 			{
 				"cell_type": "markdown",
@@ -310,7 +310,7 @@
 					"    'CostInBillingCurrency', 'ServiceInfo2', 'PartNumber', 'AdditionalInfo']\n",
 					"vm_cost_df.drop(columns=vm_cost_df.columns.difference(vm_columns_to_keep), inplace=True)"
 				],
-				"execution_count": null
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -338,7 +338,7 @@
 					"print(len(vm_cost_df))\n",
 					"print(vm_cost_df)"
 				],
-				"execution_count": null
+				"execution_count": 12
 			},
 			{
 				"cell_type": "markdown",
@@ -384,7 +384,7 @@
 					"sql_metersubcategory_array = sql_config['MeterSubCategory']\r\n",
 					"print(sql_metersubcategory_array)"
 				],
-				"execution_count": null
+				"execution_count": 13
 			},
 			{
 				"cell_type": "markdown",
@@ -419,7 +419,7 @@
 					"\r\n",
 					"sql_cost_df.drop(columns=sql_cost_df.columns.difference(sql_columns_to_keep), inplace=True)"
 				],
-				"execution_count": null
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -443,7 +443,7 @@
 					"print(len(sql_cost_df))\r\n",
 					"print(sql_cost_df)"
 				],
-				"execution_count": null
+				"execution_count": 15
 			},
 			{
 				"cell_type": "markdown",
@@ -491,7 +491,7 @@
 					"\n",
 					"print('File write complete.')"
 				],
-				"execution_count": null
+				"execution_count": 16
 			}
 		]
 	}
