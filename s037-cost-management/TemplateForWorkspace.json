@@ -97,7 +97,7 @@
 			"type": "string",
 			"defaultValue": "s037costmgmt"
 		},
-		"Update PBI Datasets and Run AnomalyDetection_v1_pipelineStorageAccountVariable": {
+		"Update Cost Overview Datasets_pipelineStorageAccountVariable": {
 			"type": "string",
 			"defaultValue": "s037costmgmt"
 		},
@@ -690,6 +690,18 @@
 			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
 		},
 		"check-subscription-quality_notebookSparkPoolEndpointRef": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"compute-accumulative-cost_notebookSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"compute-accumulative-cost_notebookSparkPoolIdRef": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"compute-accumulative-cost_notebookSparkPoolEndpointRef": {
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
@@ -9157,7 +9169,7 @@
 						"userProperties": [],
 						"typeProperties": {
 							"pipeline": {
-								"referenceName": "Update PBI Datasets and Run AnomalyDetection_v1",
+								"referenceName": "Update Cost Overview Datasets",
 								"type": "PipelineReference"
 							},
 							"waitOnCompletion": true,
@@ -9204,7 +9216,7 @@
 				"[concat(variables('workspaceId'), '/datasets/ds_Daily_Parquet_File')]",
 				"[concat(variables('workspaceId'), '/notebooks/daily-cost-extend-v3')]",
 				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('Daily Cleanup_pipelineSparkPoolNameRef'))]",
-				"[concat(variables('workspaceId'), '/pipelines/Update PBI Datasets and Run AnomalyDetection_v1')]",
+				"[concat(variables('workspaceId'), '/pipelines/Update Cost Overview Datasets')]",
 				"[concat(variables('workspaceId'), '/datasets/ds_Test_delete_file')]",
 				"[concat(variables('workspaceId'), '/datasets/Monthly_Parquet')]"
 			]
@@ -19345,7 +19357,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/Update PBI Datasets and Run AnomalyDetection_v1')]",
+			"name": "[concat(parameters('workspaceName'), '/Update Cost Overview Datasets')]",
 			"type": "Microsoft.Synapse/workspaces/pipelines",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -19468,6 +19480,48 @@
 							},
 							"numExecutors": null
 						}
+					},
+					{
+						"name": "Run accumulated cost prediction",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "Run anomaly detection V2",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "compute-accumulative-cost",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@variables('storageAccount')",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"numExecutors": null
+						}
 					}
 				],
 				"policy": {
@@ -19476,7 +19530,7 @@
 				"variables": {
 					"storageAccount": {
 						"type": "String",
-						"defaultValue": "[parameters('Update PBI Datasets and Run AnomalyDetection_v1_pipelineStorageAccountVariable')]"
+						"defaultValue": "[parameters('Update Cost Overview Datasets_pipelineStorageAccountVariable')]"
 					}
 				},
 				"folder": {
@@ -19487,7 +19541,8 @@
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/notebooks/Prod_Extended_Amortized_Cost-Threeyears')]",
 				"[concat(variables('workspaceId'), '/notebooks/Prod_Extended_Amortized_Cost-Oneyear')]",
-				"[concat(variables('workspaceId'), '/notebooks/Anomaly_Detection_v2')]"
+				"[concat(variables('workspaceId'), '/notebooks/Anomaly_Detection_v2')]",
+				"[concat(variables('workspaceId'), '/notebooks/compute-accumulative-cost')]"
 			]
 		},
 		{
@@ -19948,6 +20003,7 @@
 						}
 					}
 				],
+				"concurrency": 1,
 				"policy": {
 					"elapsedTimeMetric": {}
 				},
@@ -25766,6 +25822,29 @@
 						"poolName": "Built-in"
 					},
 					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/CreateAccumulatedCostView')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "PowerBIViews"
+				},
+				"content": {
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW AccumulatedCost\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/accumulated-cost-prediction.parquet/',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
 				},
 				"type": "SqlQuery"
 			},
@@ -32999,7 +33078,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "d7ac0e17-16f1-425f-8799-615fbb045e29"
+						"spark.autotune.trackingId": "b33fa18a-6263-4d84-915c-85c3c4c4268d"
 					}
 				},
 				"metadata": {
@@ -33024,8 +33103,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -39929,6 +40007,250 @@
 						],
 						"outputs": [],
 						"execution_count": 29
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/compute-accumulative-cost')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "NotebookInProduction"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "[parameters('compute-accumulative-cost_notebookSparkPoolNameRef')]",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "112g",
+					"driverCores": 16,
+					"executorMemory": "112g",
+					"executorCores": 16,
+					"numExecutors": 1,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "5",
+						"spark.autotune.trackingId": "928f8c7e-c7e6-43f6-acf6-6d6b60664786"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "[parameters('compute-accumulative-cost_notebookSparkPoolIdRef')]",
+						"name": "[parameters('compute-accumulative-cost_notebookSparkPoolNameRef')]",
+						"type": "Spark",
+						"endpoint": "[parameters('compute-accumulative-cost_notebookSparkPoolEndpointRef')]",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 16,
+						"memory": 112
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": 46
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"import pyspark.sql.functions as F\r\n",
+							"import pyspark.sql.window as W\r\n",
+							"import statsmodels.api as sm\r\n",
+							"import pandas as pd"
+						],
+						"outputs": [],
+						"execution_count": 47
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
+							"df = spark.read.format('parquet').load(cost_path)"
+						],
+						"outputs": [],
+						"execution_count": 48
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"df = df.select('Date', 'CostInBillingCurrency')\r\n",
+							"df = df.withColumn('Date', F.date_trunc('month', 'Date'))\r\n",
+							"df = df.groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('Cost'))"
+						],
+						"outputs": [],
+						"execution_count": 49
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"window = W.Window.orderBy(\"Date\").rowsBetween(W.Window.unboundedPreceding, 0)\r\n",
+							"df = df.withColumn(\"AccumulatedCost\", F.sum(\"Cost\").over(window))"
+						],
+						"outputs": [],
+						"execution_count": 50
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"pdf = df.toPandas()\r\n",
+							"\r\n",
+							"# Set the month column as the index\r\n",
+							"pdf.set_index(\"Date\", inplace=True)"
+						],
+						"outputs": [],
+						"execution_count": 51
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Fit an ARIMA model to the accumulated cost data\r\n",
+							"model = sm.tsa.ARIMA(pdf[\"AccumulatedCost\"], order=(1, 1, 1)).fit()\r\n",
+							"\r\n",
+							"# Predict future accumulated values\r\n",
+							"future_months = pd.date_range(start=pdf.index[-1], periods=72, freq=\"MS\")\r\n",
+							"future_accumulated = model.predict(start=pdf.index[-1], end=future_months[-1], typ=\"levels\")\r\n",
+							"\r\n",
+							"# Convert the predicted values to a dataframe\r\n",
+							"future_df = pd.DataFrame({\"Date\": future_months, \"PredictedCost\": future_accumulated})\r\n",
+							"\r\n",
+							"# Convert the dataframe back to a pyspark dataframe\r\n",
+							"future_df = spark.createDataFrame(future_df)"
+						],
+						"outputs": [],
+						"execution_count": 55
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"joined_df = df.join(future_df, on='Date', how='outer')\r\n",
+							"joined_df = joined_df.withColumn('Date', F.to_date('Date'))"
+						],
+						"outputs": [],
+						"execution_count": 56
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/accumulated-cost-prediction.parquet\"\r\n",
+							"joined_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
+						],
+						"outputs": [],
+						"execution_count": 57
 					}
 				]
 			},
