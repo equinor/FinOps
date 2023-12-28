@@ -1,5 +1,5 @@
 {
-	"name": "Update PBI Datasets and Run AnomalyDetection_v1",
+	"name": "Update Cost Overview Datasets",
 	"properties": {
 		"activities": [
 			{
@@ -119,6 +119,29 @@
 						"spark.dynamicAllocation.maxExecutors": null
 					},
 					"numExecutors": null
+				}
+			},
+			{
+				"name": "Run accumulated cost prediction",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "Run anomaly detection V2",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"snapshot": true
 				}
 			}
 		],
