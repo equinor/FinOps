@@ -105,11 +105,11 @@
 			"type": "string",
 			"defaultValue": "s037costmgmt"
 		},
-		"servicenow-applications-daily-persist_pipelineSparkPoolNameRef": {
+		"servicenow-applications-daily_pipelineSparkPoolNameRef": {
 			"type": "string",
 			"defaultValue": "sprkpool33large"
 		},
-		"servicenow-applications-daily-persist_pipelineStorageAccountVariable": {
+		"servicenow-applications-daily_pipelineStorageAccountVariable": {
 			"type": "string",
 			"defaultValue": "s037costmgmt"
 		},
@@ -170,14 +170,6 @@
 			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
 		},
 		"Parquet_for_Deletion_dataSetLinkedServiceName": {
-			"type": "string",
-			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
-		},
-		"Pricesheet_Json_src_dataSetLinkedServiceName": {
-			"type": "string",
-			"defaultValue": "ms_consumption_api_http"
-		},
-		"Pricesheet_Parquet_dst_dataSetLinkedServiceName": {
 			"type": "string",
 			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
 		},
@@ -849,30 +841,6 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
-		"sparkpool32_delayInMinutes": {
-			"type": "int",
-			"defaultValue": 15
-		},
-		"sparkpool32_maxNodeCount": {
-			"type": "int",
-			"defaultValue": 5
-		},
-		"sparkpool32_minNodeCount": {
-			"type": "int",
-			"defaultValue": 3
-		},
-		"sparkpool32_nodeCount": {
-			"type": "int",
-			"defaultValue": 0
-		},
-		"sparkpool32_nodeSize": {
-			"type": "string",
-			"defaultValue": "Medium"
-		},
-		"sparkpool32_sparkVersion": {
-			"type": "string",
-			"defaultValue": "3.2"
-		},
 		"sprkpool33large_delayInMinutes": {
 			"type": "int",
 			"defaultValue": 10
@@ -896,6 +864,30 @@
 		"sprkpool33large_sparkVersion": {
 			"type": "string",
 			"defaultValue": "3.3"
+		},
+		"sparkpool32_delayInMinutes": {
+			"type": "int",
+			"defaultValue": 15
+		},
+		"sparkpool32_maxNodeCount": {
+			"type": "int",
+			"defaultValue": 5
+		},
+		"sparkpool32_minNodeCount": {
+			"type": "int",
+			"defaultValue": 3
+		},
+		"sparkpool32_nodeCount": {
+			"type": "int",
+			"defaultValue": 0
+		},
+		"sparkpool32_nodeSize": {
+			"type": "string",
+			"defaultValue": "Medium"
+		},
+		"sparkpool32_sparkVersion": {
+			"type": "string",
+			"defaultValue": "3.2"
 		}
 	},
 	"variables": {
@@ -19546,285 +19538,6 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/Update_Pricesheet')]",
-			"type": "Microsoft.Synapse/workspaces/pipelines",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"activities": [
-					{
-						"name": "Copy Pricesheet",
-						"type": "Copy",
-						"dependsOn": [
-							{
-								"activity": "Set yyyymm",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "7.00:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "JsonSource",
-								"storeSettings": {
-									"type": "HttpReadSettings",
-									"requestMethod": "GET"
-								},
-								"formatSettings": {
-									"type": "JsonReadSettings"
-								}
-							},
-							"sink": {
-								"type": "ParquetSink",
-								"storeSettings": {
-									"type": "AzureBlobFSWriteSettings"
-								},
-								"formatSettings": {
-									"type": "ParquetWriteSettings"
-								}
-							},
-							"enableStaging": false,
-							"translator": {
-								"type": "TabularTranslator",
-								"mappings": [
-									{
-										"source": {
-											"path": "$['offerId']"
-										},
-										"sink": {
-											"name": "offerId",
-											"type": "String"
-										}
-									},
-									{
-										"source": {
-											"path": "$['id']"
-										},
-										"sink": {
-											"name": "id",
-											"type": "String"
-										}
-									},
-									{
-										"source": {
-											"path": "$['billingPeriodId']"
-										},
-										"sink": {
-											"name": "billingPeriodId",
-											"type": "String"
-										}
-									},
-									{
-										"source": {
-											"path": "$['meterId']"
-										},
-										"sink": {
-											"name": "meterId",
-											"type": "String"
-										}
-									},
-									{
-										"source": {
-											"path": "$['meterName']"
-										},
-										"sink": {
-											"name": "meterName",
-											"type": "String"
-										}
-									},
-									{
-										"source": {
-											"path": "$['unitOfMeasure']"
-										},
-										"sink": {
-											"name": "unitOfMeasure",
-											"type": "String"
-										}
-									},
-									{
-										"source": {
-											"path": "$['includedQuantity']"
-										},
-										"sink": {
-											"name": "includedQuantity",
-											"type": "Double"
-										}
-									},
-									{
-										"source": {
-											"path": "$['partNumber']"
-										},
-										"sink": {
-											"name": "partNumber",
-											"type": "String"
-										}
-									},
-									{
-										"source": {
-											"path": "$['unitPrice']"
-										},
-										"sink": {
-											"name": "unitPrice",
-											"type": "Double"
-										}
-									},
-									{
-										"source": {
-											"path": "$['currencyCode']"
-										},
-										"sink": {
-											"name": "currencyCode",
-											"type": "String"
-										}
-									}
-								]
-							}
-						},
-						"inputs": [
-							{
-								"referenceName": "Pricesheet_Json_src",
-								"type": "DatasetReference",
-								"parameters": {
-									"Date_yyyyMM": {
-										"value": "@variables('Date_yyyMM')",
-										"type": "Expression"
-									}
-								}
-							}
-						],
-						"outputs": [
-							{
-								"referenceName": "Pricesheet_Parquet_dst",
-								"type": "DatasetReference",
-								"parameters": {
-									"latest": false,
-									"Date_yyyyMM": {
-										"value": "@variables('Date_yyyMM')",
-										"type": "Expression"
-									}
-								}
-							}
-						]
-					},
-					{
-						"name": "Copy dated file to LATEST file",
-						"type": "Copy",
-						"dependsOn": [
-							{
-								"activity": "Copy Pricesheet",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "ParquetSource",
-								"storeSettings": {
-									"type": "AzureBlobFSReadSettings",
-									"recursive": true,
-									"enablePartitionDiscovery": false
-								},
-								"formatSettings": {
-									"type": "ParquetReadSettings"
-								}
-							},
-							"sink": {
-								"type": "ParquetSink",
-								"storeSettings": {
-									"type": "AzureBlobFSWriteSettings"
-								},
-								"formatSettings": {
-									"type": "ParquetWriteSettings"
-								}
-							},
-							"enableStaging": false,
-							"translator": {
-								"type": "TabularTranslator",
-								"typeConversion": true,
-								"typeConversionSettings": {
-									"allowDataTruncation": true,
-									"treatBooleanAsNumber": false
-								}
-							}
-						},
-						"inputs": [
-							{
-								"referenceName": "Pricesheet_Parquet_dst",
-								"type": "DatasetReference",
-								"parameters": {
-									"latest": false,
-									"Date_yyyyMM": {
-										"value": "@variables('Date_yyyMM')",
-										"type": "Expression"
-									}
-								}
-							}
-						],
-						"outputs": [
-							{
-								"referenceName": "Pricesheet_Parquet_dst",
-								"type": "DatasetReference",
-								"parameters": {
-									"latest": true,
-									"Date_yyyyMM": "LATEST"
-								}
-							}
-						]
-					},
-					{
-						"name": "Set yyyymm",
-						"type": "SetVariable",
-						"dependsOn": [],
-						"policy": {
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"variableName": "Date_yyyMM",
-							"value": {
-								"value": "@formatDateTime(utcNow(),'yyyyMM')",
-								"type": "Expression"
-							}
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"variables": {
-					"Date_yyyMM": {
-						"type": "String"
-					}
-				},
-				"folder": {
-					"name": "PipelinesInProduction/Consumption API (Old)"
-				},
-				"annotations": [],
-				"lastPublishTime": "2023-06-20T14:27:06Z"
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/datasets/Pricesheet_Json_src')]",
-				"[concat(variables('workspaceId'), '/datasets/Pricesheet_Parquet_dst')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('workspaceName'), '/VM-Performance')]",
 			"type": "Microsoft.Synapse/workspaces/pipelines",
 			"apiVersion": "2019-06-01-preview",
@@ -20079,7 +19792,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/servicenow-applications-daily-persist')]",
+			"name": "[concat(parameters('workspaceName'), '/servicenow-applications-daily')]",
 			"type": "Microsoft.Synapse/workspaces/pipelines",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -20427,7 +20140,7 @@
 							},
 							"snapshot": true,
 							"sparkPool": {
-								"referenceName": "[parameters('servicenow-applications-daily-persist_pipelineSparkPoolNameRef')]",
+								"referenceName": "[parameters('servicenow-applications-daily_pipelineSparkPoolNameRef')]",
 								"type": "BigDataPoolReference"
 							},
 							"executorSize": "Large",
@@ -20447,7 +20160,7 @@
 				"variables": {
 					"storageAccount": {
 						"type": "String",
-						"defaultValue": "[parameters('servicenow-applications-daily-persist_pipelineStorageAccountVariable')]"
+						"defaultValue": "[parameters('servicenow-applications-daily_pipelineStorageAccountVariable')]"
 					}
 				},
 				"folder": {
@@ -20459,7 +20172,7 @@
 				"[concat(variables('workspaceId'), '/datasets/ServiceNowApplicationsDataset')]",
 				"[concat(variables('workspaceId'), '/datasets/NewServiceNowSinkDataset')]",
 				"[concat(variables('workspaceId'), '/notebooks/servicenow-application-processing')]",
-				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('servicenow-applications-daily-persist_pipelineSparkPoolNameRef'))]"
+				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('servicenow-applications-daily_pipelineSparkPoolNameRef'))]"
 			]
 		},
 		{
@@ -21807,83 +21520,6 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/linkedServices/', parameters('Parquet_for_Deletion_dataSetLinkedServiceName'))]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/Pricesheet_Json_src')]",
-			"type": "Microsoft.Synapse/workspaces/datasets",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "[parameters('Pricesheet_Json_src_dataSetLinkedServiceName')]",
-					"type": "LinkedServiceReference",
-					"parameters": {
-						"baseUrl": "https://consumption.azure.com"
-					}
-				},
-				"parameters": {
-					"Date_yyyyMM": {
-						"type": "string"
-					}
-				},
-				"folder": {
-					"name": "DatasetInProduction"
-				},
-				"annotations": [],
-				"type": "Json",
-				"typeProperties": {
-					"location": {
-						"type": "HttpServerLocation",
-						"relativeUrl": {
-							"value": "@concat('v3/enrollments/57950773/billingPeriods/',dataset().Date_yyyyMM,'/pricesheet')",
-							"type": "Expression"
-						}
-					}
-				},
-				"schema": {}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/linkedServices/', parameters('Pricesheet_Json_src_dataSetLinkedServiceName'))]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/Pricesheet_Parquet_dst')]",
-			"type": "Microsoft.Synapse/workspaces/datasets",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "[parameters('Pricesheet_Parquet_dst_dataSetLinkedServiceName')]",
-					"type": "LinkedServiceReference"
-				},
-				"parameters": {
-					"latest": {
-						"type": "bool"
-					},
-					"Date_yyyyMM": {
-						"type": "string"
-					}
-				},
-				"folder": {
-					"name": "DatasetInProduction"
-				},
-				"annotations": [],
-				"type": "Parquet",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobFSLocation",
-						"fileName": {
-							"value": "@concat('pricesheet-',dataset().Date_yyyyMM,'.parquet')",
-							"type": "Expression"
-						},
-						"folderPath": "pricesheet",
-						"fileSystem": "usage"
-					},
-					"compressionCodec": "snappy"
-				},
-				"schema": []
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/linkedServices/', parameters('Pricesheet_Parquet_dst_dataSetLinkedServiceName'))]"
 			]
 		},
 		{
@@ -24296,7 +23932,7 @@
 					},
 					{
 						"pipelineReference": {
-							"referenceName": "servicenow-applications-daily-persist",
+							"referenceName": "servicenow-applications-daily",
 							"type": "PipelineReference"
 						},
 						"parameters": {}
@@ -24329,46 +23965,8 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/pipelines/Prepare Daily HUB File')]",
-				"[concat(variables('workspaceId'), '/pipelines/servicenow-applications-daily-persist')]",
+				"[concat(variables('workspaceId'), '/pipelines/servicenow-applications-daily')]",
 				"[concat(variables('workspaceId'), '/pipelines/servicenow-subscriptions-daily')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/Daily at 3am')]",
-			"type": "Microsoft.Synapse/workspaces/triggers",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Started",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "Daily Cleanup",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Day",
-						"interval": 1,
-						"startTime": "2023-12-15T15:23:00",
-						"timeZone": "W. Europe Standard Time",
-						"schedule": {
-							"minutes": [
-								0
-							],
-							"hours": [
-								3
-							]
-						}
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/pipelines/Daily Cleanup')]"
 			]
 		},
 		{
@@ -24412,30 +24010,35 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/Total Amortized Cost Trigger - OnceAMonthAt12')]",
+			"name": "[concat(parameters('workspaceName'), '/daily-cost-trigger')]",
 			"type": "Microsoft.Synapse/workspaces/triggers",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
-				"description": "Since the monthly file is collected at the 4th date of each month and converted to parquet file at the 5th date of the month 06AM, this trigger will be trigged at 5th date of the month 12 AM.  ",
 				"annotations": [],
-				"runtimeState": "Stopped",
-				"pipelines": [],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Month",
-						"interval": 1,
-						"startTime": "2023-08-05T12:00:00",
-						"timeZone": "Romance Standard Time",
-						"schedule": {
-							"monthDays": [
-								5
-							]
-						}
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "Daily Cleanup",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
 					}
+				],
+				"type": "BlobEventsTrigger",
+				"typeProperties": {
+					"blobPathBeginsWith": "/usage/blobs/exports/daily/ACMDailyActualCost",
+					"blobPathEndsWith": ".csv",
+					"ignoreEmptyBlobs": true,
+					"scope": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt",
+					"events": [
+						"Microsoft.Storage.BlobCreated"
+					]
 				}
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/Daily Cleanup')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('workspaceName'), '/pricesheet-updates-trigger')]",
@@ -44892,6 +44495,31 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
+				},
+				"autoScale": {
+					"enabled": true,
+					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
+					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
+				},
+				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
+				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": true,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "northeurope"
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/sparkpool32')]",
 			"type": "Microsoft.Synapse/workspaces/bigDataPools",
 			"apiVersion": "2019-06-01-preview",
@@ -44914,31 +44542,6 @@
 					"filename": "requirements.txt",
 					"time": "2023-01-25T09:06:41.7702231Z"
 				},
-				"isComputeIsolationEnabled": false,
-				"sessionLevelPackagesEnabled": true,
-				"annotations": []
-			},
-			"dependsOn": [],
-			"location": "northeurope"
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
-			"type": "Microsoft.Synapse/workspaces/bigDataPools",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"autoPause": {
-					"enabled": true,
-					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
-				},
-				"autoScale": {
-					"enabled": true,
-					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
-					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
-				},
-				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
-				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
-				"nodeSizeFamily": "MemoryOptimized",
-				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
 				"isComputeIsolationEnabled": false,
 				"sessionLevelPackagesEnabled": true,
 				"annotations": []
