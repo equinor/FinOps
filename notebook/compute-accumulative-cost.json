@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "928f8c7e-c7e6-43f6-acf6-6d6b60664786"
+				"spark.autotune.trackingId": "076181e9-c106-42be-845c-df0f1bbf5298"
 			}
 		},
 		"metadata": {
@@ -70,7 +70,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 46
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -80,7 +80,7 @@
 					"import statsmodels.api as sm\r\n",
 					"import pandas as pd"
 				],
-				"execution_count": 47
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -99,7 +99,7 @@
 					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 					"df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 48
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -119,7 +119,25 @@
 					"df = df.withColumn('Date', F.date_trunc('month', 'Date'))\r\n",
 					"df = df.groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('Cost'))"
 				],
-				"execution_count": 49
+				"execution_count": 5
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"df = df.filter(F.col('Date') < F.concat(F.date_format(F.current_date(), 'yyyy'), F.lit('-'), F.date_format(F.current_date(), 'MM'), F.lit('-'), F.lit('01')))"
+				],
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -138,7 +156,7 @@
 					"window = W.Window.orderBy(\"Date\").rowsBetween(W.Window.unboundedPreceding, 0)\r\n",
 					"df = df.withColumn(\"AccumulatedCost\", F.sum(\"Cost\").over(window))"
 				],
-				"execution_count": 50
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -159,7 +177,7 @@
 					"# Set the month column as the index\r\n",
 					"pdf.set_index(\"Date\", inplace=True)"
 				],
-				"execution_count": 51
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -188,7 +206,7 @@
 					"# Convert the dataframe back to a pyspark dataframe\r\n",
 					"future_df = spark.createDataFrame(future_df)"
 				],
-				"execution_count": 55
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -207,7 +225,7 @@
 					"joined_df = df.join(future_df, on='Date', how='outer')\r\n",
 					"joined_df = joined_df.withColumn('Date', F.to_date('Date'))"
 				],
-				"execution_count": 56
+				"execution_count": 12
 			},
 			{
 				"cell_type": "code",
@@ -226,7 +244,7 @@
 					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/accumulated-cost-prediction.parquet\"\r\n",
 					"joined_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 				],
-				"execution_count": 57
+				"execution_count": 13
 			}
 		]
 	}
