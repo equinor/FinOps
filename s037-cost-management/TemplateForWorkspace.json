@@ -41,10 +41,6 @@
 			"type": "string",
 			"defaultValue": "s037costmgmt"
 		},
-		"Compute HUB RI Savings_pipelineStorageAccountParameter": {
-			"type": "string",
-			"defaultValue": "s037costmgmt"
-		},
 		"Daily Cleanup_pipelineSparkPoolNameRef": {
 			"type": "string",
 			"defaultValue": "sprkpool33large"
@@ -2885,7 +2881,7 @@
 					"elapsedTimeMetric": {}
 				},
 				"folder": {
-					"name": "PipelinesInProduction/Management API (New)"
+					"name": "PipelinesInProduction"
 				},
 				"annotations": []
 			},
@@ -3599,7 +3595,7 @@
 					}
 				},
 				"folder": {
-					"name": "PipelinesInProduction/Management API (New)"
+					"name": "PipelinesInProduction/Cost"
 				},
 				"annotations": []
 			},
@@ -4960,66 +4956,6 @@
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/datasets/CSV_Source_File')]",
 				"[concat(variables('workspaceId'), '/datasets/Parquet_File')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/Compute HUB RI Savings')]",
-			"type": "Microsoft.Synapse/workspaces/pipelines",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"activities": [
-					{
-						"name": "Compute RI Savings",
-						"type": "SynapseNotebook",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"notebook": {
-								"referenceName": "compute-ri-savings",
-								"type": "NotebookReference"
-							},
-							"parameters": {
-								"storageAccount": {
-									"value": {
-										"value": "@pipeline().parameters.storageAccount",
-										"type": "Expression"
-									},
-									"type": "string"
-								}
-							},
-							"snapshot": true,
-							"conf": {
-								"spark.dynamicAllocation.enabled": null,
-								"spark.dynamicAllocation.minExecutors": null,
-								"spark.dynamicAllocation.maxExecutors": null
-							},
-							"numExecutors": null
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"parameters": {
-					"storageAccount": {
-						"type": "string",
-						"defaultValue": "[parameters('Compute HUB RI Savings_pipelineStorageAccountParameter')]"
-					}
-				},
-				"folder": {
-					"name": "PipelinesInProduction"
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/notebooks/compute-ri-savings')]"
 			]
 		},
 		{
@@ -7498,7 +7434,7 @@
 					}
 				},
 				"folder": {
-					"name": "PipelinesInProduction/Management API (New)"
+					"name": "PipelinesInProduction/Cost"
 				},
 				"annotations": [],
 				"lastPublishTime": "2023-02-01T10:07:38Z"
@@ -7773,7 +7709,7 @@
 					}
 				},
 				"folder": {
-					"name": "PipelinesInProduction/Management API (New)"
+					"name": "PipelinesInProduction/Cost"
 				},
 				"annotations": []
 			},
@@ -10487,7 +10423,7 @@
 					}
 				},
 				"folder": {
-					"name": "PipelinesInProduction/Management API (New)"
+					"name": "PipelinesInProduction/Cost"
 				},
 				"annotations": [],
 				"lastPublishTime": "2023-09-08T08:39:03Z"
@@ -19030,7 +18966,7 @@
 					}
 				},
 				"folder": {
-					"name": "PipelinesInProduction/Consumption API (Old)"
+					"name": "PipelinesNotInUse/Consumption API (Old)"
 				},
 				"annotations": [],
 				"lastPublishTime": "2023-06-20T14:42:07Z"
@@ -19421,7 +19357,7 @@
 					}
 				},
 				"folder": {
-					"name": "PipelinesInProduction/Management API (New)"
+					"name": "PipelinesInProduction/Cost"
 				},
 				"annotations": []
 			},
@@ -19575,6 +19511,40 @@
 							},
 							"numExecutors": null
 						}
+					},
+					{
+						"name": "Compute RI Savings",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "Compute VM and SQL HUB Savings",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "compute-ri-savings",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"storageAccount": {
+									"value": "s037costmgmt",
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"conf": {}
+						}
 					}
 				],
 				"policy": {
@@ -19587,7 +19557,7 @@
 					}
 				},
 				"folder": {
-					"name": "PipelinesInProduction/HUB"
+					"name": "PipelinesInProduction/HUB and RI"
 				},
 				"annotations": [],
 				"lastPublishTime": "2023-08-17T22:03:18Z"
@@ -19595,7 +19565,8 @@
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/notebooks/HUB_Daily_File')]",
 				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('compute-hub-and-ri-savings_pipelineSparkPoolNameRef'))]",
-				"[concat(variables('workspaceId'), '/notebooks/compute-hub-savings')]"
+				"[concat(variables('workspaceId'), '/notebooks/compute-hub-savings')]",
+				"[concat(variables('workspaceId'), '/notebooks/compute-ri-savings')]"
 			]
 		},
 		{
@@ -23784,13 +23755,6 @@
 							"type": "PipelineReference"
 						},
 						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "Compute HUB RI Savings",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
 					}
 				],
 				"type": "ScheduleTrigger",
@@ -23815,8 +23779,7 @@
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('workspaceId'), '/pipelines/Azure AD Users_v1')]",
-				"[concat(variables('workspaceId'), '/pipelines/Compute HUB RI Savings')]"
+				"[concat(variables('workspaceId'), '/pipelines/Azure AD Users_v1')]"
 			]
 		},
 		{
@@ -23928,6 +23891,13 @@
 							"type": "PipelineReference"
 						},
 						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "compute-hub-and-ri-savings",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
 					}
 				],
 				"type": "ScheduleTrigger",
@@ -23950,7 +23920,8 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/pipelines/servicenow-applications-daily')]",
-				"[concat(variables('workspaceId'), '/pipelines/servicenow-subscriptions-daily')]"
+				"[concat(variables('workspaceId'), '/pipelines/servicenow-subscriptions-daily')]",
+				"[concat(variables('workspaceId'), '/pipelines/compute-hub-and-ri-savings')]"
 			]
 		},
 		{
@@ -25639,7 +25610,7 @@
 					"name": "PowerBIViews"
 				},
 				"content": {
-					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW RISavings\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/savings/ri/ri-savings.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW RISavings\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/ri/ri-savings-past-two-years.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
 					"metadata": {
 						"language": "sql"
 					},
@@ -25709,29 +25680,6 @@
 				},
 				"content": {
 					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW tsc_ACMMonthlyAmortizedCost_overview_Threeyears\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_Threeyears.parquet/*/*/*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n\n\n",
-					"metadata": {
-						"language": "sql"
-					},
-					"currentConnection": {
-						"databaseName": "costmgmt",
-						"poolName": "Built-in"
-					},
-					"resultLimit": 5000
-				},
-				"type": "SqlQuery"
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/CreateUnusedRICostView')]",
-			"type": "Microsoft.Synapse/workspaces/sqlscripts",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"folder": {
-					"name": "PowerBIViews"
-				},
-				"content": {
-					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW UnusedRICost\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/savings/ri/unused-ri-cost.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
 					"metadata": {
 						"language": "sql"
 					},
@@ -39898,7 +39846,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "4f8cbbae-8e8c-4e41-81cc-10a968d7d67f"
+						"spark.autotune.trackingId": "9ab29fb4-2bba-43d5-9db4-f54b56d0b04c"
 					}
 				},
 				"metadata": {
@@ -39923,7 +39871,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -39943,6 +39892,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"from enum import Enum\r\n",
@@ -40970,7 +40920,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "38b480a5-93e9-4b66-8eaf-a6d309295e55"
+						"spark.autotune.trackingId": "0d33096b-0f44-46a6-9a87-ad2cf64df9a5"
 					}
 				},
 				"metadata": {
@@ -40995,7 +40945,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -41015,13 +40966,15 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"import pyspark.sql.types as T\r\n",
-							"from enum import Enum"
+							"from enum import Enum\r\n",
+							"from datetime import datetime, timedelta"
 						],
 						"outputs": [],
-						"execution_count": 21
+						"execution_count": 48
 					},
 					{
 						"cell_type": "code",
@@ -41043,7 +40996,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 22
+						"execution_count": 49
 					},
 					{
 						"cell_type": "code",
@@ -41061,10 +41014,14 @@
 						"source": [
 							"class RITypes(Enum):\r\n",
 							"    VM = \"VM\"\r\n",
-							"    SQL = \"SQL\""
+							"    SQL = \"SQL\"\r\n",
+							"\r\n",
+							"class ReservationType(Enum):\r\n",
+							"    S037 = \"S037\"\r\n",
+							"    SAP = \"SAP\""
 						],
 						"outputs": [],
-						"execution_count": 23
+						"execution_count": 50
 					},
 					{
 						"cell_type": "markdown",
@@ -41093,11 +41050,10 @@
 							}
 						},
 						"source": [
-							"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet/**'\r\n",
-							"cost_df = spark.read.format('parquet').load(cost_path)"
+							"date_two_year_ago = datetime.now().date()-timedelta(days=710)"
 						],
 						"outputs": [],
-						"execution_count": 24
+						"execution_count": 51
 					},
 					{
 						"cell_type": "code",
@@ -41113,19 +41069,40 @@
 							}
 						},
 						"source": [
-							"cost_df = cost_df.withColumn('Date', F.date_format('Date', 'yyyy-MM'))\r\n",
-							"cost_df = cost_df.withColumn(\"Date\", F.to_date(cost_df.Date, \"yyyy-MM\"))\r\n",
+							"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet/**'\r\n",
+							"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
+							"cost_df = cost_df.where(F.col('Date') >= date_two_year_ago)"
+						],
+						"outputs": [],
+						"execution_count": 52
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"cost_df = cost_df.withColumn('Date', F.date_trunc('month', 'Date'))\r\n",
 							"cost_df = cost_df.withColumn('CostSavings', (F.col('UnitPrice') - F.col('EffectivePrice')) * F.col('Quantity'))\r\n",
 							"cost_df = cost_df.withColumn('EffectiveCost', F.col('EffectivePrice') * F.col('Quantity'))\r\n",
-							"cost_df = cost_df.withColumn('IsS037Reservation', F.when(F.upper(F.col('benefitName')).like('%S037%'), True).otherwise(False))\r\n",
+							"cost_df = cost_df.withColumn('Reservation', F.when(F.upper(F.col('benefitName')).like('%S037%'), ReservationType.S037.value).otherwise(ReservationType.SAP.value))\r\n",
 							"cost_df = cost_df.withColumn('RIType', \r\n",
 							"    F.when(F.col('MeterCategory').like('%Virtual Machines%'), RITypes.VM.value)\r\n",
 							"    .when(F.col('MeterCategory').like('%SQL%'), RITypes.SQL.value)\r\n",
 							"    .otherwise(F.col('MeterCategory'))\r\n",
-							")"
+							")\r\n",
+							"cost_df = cost_df.withColumn('IsUnused', F.when(F.col('ChargeType') == 'UnusedReservation', True).otherwise(False))"
 						],
 						"outputs": [],
-						"execution_count": 25
+						"execution_count": 53
 					},
 					{
 						"cell_type": "markdown",
@@ -41154,39 +41131,15 @@
 							}
 						},
 						"source": [
-							"ri_df = cost_df.where(F.col('IsRIUsage') == 'RI Usage')\r\n",
-							"ri_df = ri_df \\\r\n",
-							"    .select('Date', 'IsS037Reservation', 'RIType', 'CostSavings') \\\r\n",
-							"    .groupBy('Date', 'IsS037Reservation', 'RIType') \\\r\n",
-							"    .agg(F.sum('CostSavings').alias('CostSavings')) \\\r\n",
-							"    .orderBy('Date', 'CostSavings')"
+							"cost_df = cost_df.where(F.col('IsRIUsage') == 'RI Usage')\r\n",
+							"cost_df = cost_df \\\r\n",
+							"    .select('Date', 'Reservation', 'RIType', 'IsUnused','CostSavings', 'EffectiveCost') \\\r\n",
+							"    .groupBy('Date', 'Reservation', 'RIType', 'IsUnused') \\\r\n",
+							"    .agg(F.sum('CostSavings').alias('CostSavings'), F.sum('EffectiveCost').alias('EffectiveCost')) \\\r\n",
+							"    .orderBy('Date')"
 						],
 						"outputs": [],
-						"execution_count": 26
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"unused_df = cost_df.where(F.col('ChargeType') == 'UnusedReservation')\r\n",
-							"unused_df = unused_df \\\r\n",
-							"    .select('Date', 'IsS037Reservation', 'EffectiveCost') \\\r\n",
-							"    .groupBy('Date', 'IsS037Reservation',) \\\r\n",
-							"    .agg(F.sum('EffectiveCost').alias('EffectiveCost')) \\\r\n",
-							"    .orderBy('Date', 'EffectiveCost')"
-						],
-						"outputs": [],
-						"execution_count": 27
+						"execution_count": 57
 					},
 					{
 						"cell_type": "markdown",
@@ -41212,18 +41165,14 @@
 								"transient": {
 									"deleting": false
 								}
-							},
-							"collapsed": false
+							}
 						},
 						"source": [
-							"ri_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/savings/ri/ri-savings.parquet\"\r\n",
-							"ri_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(ri_path)\r\n",
-							"\r\n",
-							"unused_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/savings/ri/unused-ri-cost.parquet\"\r\n",
-							"unused_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(unused_path)"
+							"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/ri/ri-savings-past-two-years.parquet\"\r\n",
+							"cost_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 						],
 						"outputs": [],
-						"execution_count": 28
+						"execution_count": 58
 					}
 				]
 			},
