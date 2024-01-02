@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "38b480a5-93e9-4b66-8eaf-a6d309295e55"
+				"spark.autotune.trackingId": "17b4333c-eeb0-44d7-a249-0f4acf19247b"
 			}
 		},
 		"metadata": {
@@ -71,7 +71,7 @@
 					"import pyspark.sql.types as T\r\n",
 					"from enum import Enum"
 				],
-				"execution_count": 21
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -92,7 +92,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 22
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -112,7 +112,7 @@
 					"    VM = \"VM\"\r\n",
 					"    SQL = \"SQL\""
 				],
-				"execution_count": 23
+				"execution_count": 4
 			},
 			{
 				"cell_type": "markdown",
@@ -144,7 +144,7 @@
 					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet/**'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 24
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -169,9 +169,10 @@
 					"    F.when(F.col('MeterCategory').like('%Virtual Machines%'), RITypes.VM.value)\r\n",
 					"    .when(F.col('MeterCategory').like('%SQL%'), RITypes.SQL.value)\r\n",
 					"    .otherwise(F.col('MeterCategory'))\r\n",
-					")"
+					")\r\n",
+					"cost_df = cost_df.withColumn('IsUnused', F.when(F.col('ChargeType') == 'UnusedReservation', True).otherwise(False))"
 				],
-				"execution_count": 25
+				"execution_count": 6
 			},
 			{
 				"cell_type": "markdown",
@@ -200,12 +201,12 @@
 					}
 				},
 				"source": [
-					"ri_df = cost_df.where(F.col('IsRIUsage') == 'RI Usage')\r\n",
-					"ri_df = ri_df \\\r\n",
-					"    .select('Date', 'IsS037Reservation', 'RIType', 'CostSavings') \\\r\n",
-					"    .groupBy('Date', 'IsS037Reservation', 'RIType') \\\r\n",
-					"    .agg(F.sum('CostSavings').alias('CostSavings')) \\\r\n",
-					"    .orderBy('Date', 'CostSavings')"
+					"# ri_df = cost_df.where(F.col('IsRIUsage') == 'RI Usage')\r\n",
+					"# ri_df = ri_df \\\r\n",
+					"#     .select('Date', 'IsS037Reservation', 'RIType', 'CostSavings') \\\r\n",
+					"#     .groupBy('Date', 'IsS037Reservation', 'RIType') \\\r\n",
+					"#     .agg(F.sum('CostSavings').alias('CostSavings')) \\\r\n",
+					"#     .orderBy('Date', 'CostSavings')"
 				],
 				"execution_count": 26
 			},
@@ -223,14 +224,37 @@
 					}
 				},
 				"source": [
-					"unused_df = cost_df.where(F.col('ChargeType') == 'UnusedReservation')\r\n",
-					"unused_df = unused_df \\\r\n",
-					"    .select('Date', 'IsS037Reservation', 'EffectiveCost') \\\r\n",
-					"    .groupBy('Date', 'IsS037Reservation',) \\\r\n",
-					"    .agg(F.sum('EffectiveCost').alias('EffectiveCost')) \\\r\n",
-					"    .orderBy('Date', 'EffectiveCost')"
+					"# unused_df = cost_df.where(F.col('ChargeType') == 'UnusedReservation')\r\n",
+					"# unused_df = unused_df \\\r\n",
+					"#     .select('Date', 'IsS037Reservation', 'EffectiveCost') \\\r\n",
+					"#     .groupBy('Date', 'IsS037Reservation',) \\\r\n",
+					"#     .agg(F.sum('EffectiveCost').alias('EffectiveCost')) \\\r\n",
+					"#     .orderBy('Date', 'EffectiveCost')"
 				],
 				"execution_count": 27
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cost_df = cost_df.where(F.col('IsRIUsage') == 'RI Usage')\r\n",
+					"cost_df = cost_df \\\r\n",
+					"    .select('Date', 'IsS037Reservation', 'RIType', 'IsUnused','CostSavings', 'EffectiveCost') \\\r\n",
+					"    .groupBy('Date', 'IsS037Reservation', 'RIType', 'IsUnused') \\\r\n",
+					"    .agg(F.sum('CostSavings').alias('CostSavings'), F.sum('EffectiveCost').alias('EffectiveCost')) \\\r\n",
+					"    .orderBy('Date')"
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",
