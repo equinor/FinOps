@@ -5,7 +5,7 @@
 			"name": "PowerBIViews"
 		},
 		"content": {
-			"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW RISavings\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/savings/ri/ri-savings.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
+			"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW RISavings\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/ri/ri-savings-past-two-years.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
 			"metadata": {
 				"language": "sql"
 			},
