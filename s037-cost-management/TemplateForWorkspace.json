@@ -39602,7 +39602,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "928f8c7e-c7e6-43f6-acf6-6d6b60664786"
+						"spark.autotune.trackingId": "88ce6961-fa3a-447a-9bf1-ad92f896d206"
 					}
 				},
 				"metadata": {
@@ -39627,7 +39627,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -39652,10 +39653,11 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 46
+						"execution_count": 2
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"import pyspark.sql.window as W\r\n",
@@ -39663,7 +39665,7 @@
 							"import pandas as pd"
 						],
 						"outputs": [],
-						"execution_count": 47
+						"execution_count": 3
 					},
 					{
 						"cell_type": "code",
@@ -39683,7 +39685,7 @@
 							"df = spark.read.format('parquet').load(cost_path)"
 						],
 						"outputs": [],
-						"execution_count": 48
+						"execution_count": 4
 					},
 					{
 						"cell_type": "code",
@@ -39704,7 +39706,26 @@
 							"df = df.groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('Cost'))"
 						],
 						"outputs": [],
-						"execution_count": 49
+						"execution_count": 5
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"df = df.filter(F.col('Date') < F.concat(F.date_format(F.current_date(), 'yyyy'), F.lit('-'), F.date_format(F.current_date(), 'MM'), F.lit('-'), F.lit('01')))"
+						],
+						"outputs": [],
+						"execution_count": 8
 					},
 					{
 						"cell_type": "code",
@@ -39724,7 +39745,7 @@
 							"df = df.withColumn(\"AccumulatedCost\", F.sum(\"Cost\").over(window))"
 						],
 						"outputs": [],
-						"execution_count": 50
+						"execution_count": 9
 					},
 					{
 						"cell_type": "code",
@@ -39746,7 +39767,7 @@
 							"pdf.set_index(\"Date\", inplace=True)"
 						],
 						"outputs": [],
-						"execution_count": 51
+						"execution_count": 10
 					},
 					{
 						"cell_type": "code",
@@ -39776,7 +39797,7 @@
 							"future_df = spark.createDataFrame(future_df)"
 						],
 						"outputs": [],
-						"execution_count": 55
+						"execution_count": 11
 					},
 					{
 						"cell_type": "code",
@@ -39796,7 +39817,7 @@
 							"joined_df = joined_df.withColumn('Date', F.to_date('Date'))"
 						],
 						"outputs": [],
-						"execution_count": 56
+						"execution_count": 12
 					},
 					{
 						"cell_type": "code",
@@ -39816,7 +39837,7 @@
 							"joined_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 						],
 						"outputs": [],
-						"execution_count": 57
+						"execution_count": 13
 					}
 				]
 			},
@@ -44512,6 +44533,52 @@
 			},
 			"dependsOn": [],
 			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ReservationRecommendationTestView')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "PowerBIViews"
+				},
+				"content": {
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW ReservationRecommendationTest\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/reservations/portal-export/FinOps-ReservationRecommendations-VMs-Daily/*/*.csv',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW = TRUE\n    ) AS [result]",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/CreatePricesheetView')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "PowerBIViews"
+				},
+				"content": {
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW Pricesheet\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/pricesheet/portal-export/pricesheet-latest/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
 		}
 	]
 }
