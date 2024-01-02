@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "17b4333c-eeb0-44d7-a249-0f4acf19247b"
+				"spark.autotune.trackingId": "7a9bc339-2931-4eda-94f8-7e777744c0b1"
 			}
 		},
 		"metadata": {
@@ -69,9 +69,10 @@
 				"source": [
 					"import pyspark.sql.functions as F\r\n",
 					"import pyspark.sql.types as T\r\n",
-					"from enum import Enum"
+					"from enum import Enum\r\n",
+					"from datetime import datetime, timedelta"
 				],
-				"execution_count": 2
+				"execution_count": 48
 			},
 			{
 				"cell_type": "code",
@@ -92,7 +93,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 3
+				"execution_count": 49
 			},
 			{
 				"cell_type": "code",
@@ -110,9 +111,13 @@
 				"source": [
 					"class RITypes(Enum):\r\n",
 					"    VM = \"VM\"\r\n",
-					"    SQL = \"SQL\""
+					"    SQL = \"SQL\"\r\n",
+					"\r\n",
+					"class ReservationType(Enum):\r\n",
+					"    S037 = \"S037\"\r\n",
+					"    SAP = \"SAP\""
 				],
-				"execution_count": 4
+				"execution_count": 50
 			},
 			{
 				"cell_type": "markdown",
@@ -141,10 +146,9 @@
 					}
 				},
 				"source": [
-					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet/**'\r\n",
-					"cost_df = spark.read.format('parquet').load(cost_path)"
+					"date_two_year_ago = datetime.now().date()-timedelta(days=710)"
 				],
-				"execution_count": 5
+				"execution_count": 51
 			},
 			{
 				"cell_type": "code",
@@ -160,11 +164,30 @@
 					}
 				},
 				"source": [
-					"cost_df = cost_df.withColumn('Date', F.date_format('Date', 'yyyy-MM'))\r\n",
-					"cost_df = cost_df.withColumn(\"Date\", F.to_date(cost_df.Date, \"yyyy-MM\"))\r\n",
+					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet/**'\r\n",
+					"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
+					"cost_df = cost_df.where(F.col('Date') >= date_two_year_ago)"
+				],
+				"execution_count": 52
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cost_df = cost_df.withColumn('Date', F.date_trunc('month', 'Date'))\r\n",
 					"cost_df = cost_df.withColumn('CostSavings', (F.col('UnitPrice') - F.col('EffectivePrice')) * F.col('Quantity'))\r\n",
 					"cost_df = cost_df.withColumn('EffectiveCost', F.col('EffectivePrice') * F.col('Quantity'))\r\n",
-					"cost_df = cost_df.withColumn('IsS037Reservation', F.when(F.upper(F.col('benefitName')).like('%S037%'), True).otherwise(False))\r\n",
+					"cost_df = cost_df.withColumn('Reservation', F.when(F.upper(F.col('benefitName')).like('%S037%'), ReservationType.S037.value).otherwise(ReservationType.SAP.value))\r\n",
 					"cost_df = cost_df.withColumn('RIType', \r\n",
 					"    F.when(F.col('MeterCategory').like('%Virtual Machines%'), RITypes.VM.value)\r\n",
 					"    .when(F.col('MeterCategory').like('%SQL%'), RITypes.SQL.value)\r\n",
@@ -172,7 +195,7 @@
 					")\r\n",
 					"cost_df = cost_df.withColumn('IsUnused', F.when(F.col('ChargeType') == 'UnusedReservation', True).otherwise(False))"
 				],
-				"execution_count": 6
+				"execution_count": 53
 			},
 			{
 				"cell_type": "markdown",
@@ -201,60 +224,14 @@
 					}
 				},
 				"source": [
-					"# ri_df = cost_df.where(F.col('IsRIUsage') == 'RI Usage')\r\n",
-					"# ri_df = ri_df \\\r\n",
-					"#     .select('Date', 'IsS037Reservation', 'RIType', 'CostSavings') \\\r\n",
-					"#     .groupBy('Date', 'IsS037Reservation', 'RIType') \\\r\n",
-					"#     .agg(F.sum('CostSavings').alias('CostSavings')) \\\r\n",
-					"#     .orderBy('Date', 'CostSavings')"
-				],
-				"execution_count": 26
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# unused_df = cost_df.where(F.col('ChargeType') == 'UnusedReservation')\r\n",
-					"# unused_df = unused_df \\\r\n",
-					"#     .select('Date', 'IsS037Reservation', 'EffectiveCost') \\\r\n",
-					"#     .groupBy('Date', 'IsS037Reservation',) \\\r\n",
-					"#     .agg(F.sum('EffectiveCost').alias('EffectiveCost')) \\\r\n",
-					"#     .orderBy('Date', 'EffectiveCost')"
-				],
-				"execution_count": 27
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
 					"cost_df = cost_df.where(F.col('IsRIUsage') == 'RI Usage')\r\n",
 					"cost_df = cost_df \\\r\n",
-					"    .select('Date', 'IsS037Reservation', 'RIType', 'IsUnused','CostSavings', 'EffectiveCost') \\\r\n",
-					"    .groupBy('Date', 'IsS037Reservation', 'RIType', 'IsUnused') \\\r\n",
+					"    .select('Date', 'Reservation', 'RIType', 'IsUnused','CostSavings', 'EffectiveCost') \\\r\n",
+					"    .groupBy('Date', 'Reservation', 'RIType', 'IsUnused') \\\r\n",
 					"    .agg(F.sum('CostSavings').alias('CostSavings'), F.sum('EffectiveCost').alias('EffectiveCost')) \\\r\n",
 					"    .orderBy('Date')"
 				],
-				"execution_count": null
+				"execution_count": 57
 			},
 			{
 				"cell_type": "markdown",
@@ -280,17 +257,13 @@
 						"transient": {
 							"deleting": false
 						}
-					},
-					"collapsed": false
+					}
 				},
 				"source": [
-					"ri_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/savings/ri/ri-savings.parquet\"\r\n",
-					"ri_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(ri_path)\r\n",
-					"\r\n",
-					"unused_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/savings/ri/unused-ri-cost.parquet\"\r\n",
-					"unused_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(unused_path)"
+					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/ri/ri-savings-past-two-years.parquet\"\r\n",
+					"cost_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 				],
-				"execution_count": 28
+				"execution_count": 58
 			}
 		]
 	}
