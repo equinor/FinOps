@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "d005dc00-d799-4336-a7e0-439a263eb78d"
+				"spark.autotune.trackingId": "f8961fba-91e9-4ce1-8d0c-4bdddea166fd"
 			}
 		},
 		"metadata": {
@@ -115,7 +115,8 @@
 					"\r\n",
 					"class ReservationType(Enum):\r\n",
 					"    S037 = \"S037\"\r\n",
-					"    SAP = \"SAP\""
+					"    SAP = \"SAP\"\r\n",
+					"    Other = \"Other\""
 				],
 				"execution_count": 50
 			},
@@ -187,8 +188,12 @@
 					"cost_df = cost_df.withColumn('Date', F.date_trunc('month', 'Date'))\r\n",
 					"cost_df = cost_df.withColumn('CostSavings', (F.col('UnitPrice') - F.col('EffectivePrice')) * F.col('Quantity'))\r\n",
 					"cost_df = cost_df.withColumn('EffectiveCost', F.col('EffectivePrice') * F.col('Quantity'))\r\n",
-					"# SAP reservations = (all start with S138) --> create three categories --> S037 + SAP + Other\r\n",
-					"cost_df = cost_df.withColumn('Reservation', F.when(F.upper(F.col('benefitName')).like('%S037%'), ReservationType.S037.value).otherwise(ReservationType.SAP.value))\r\n",
+					"\r\n",
+					"cost_df = cost_df.withColumn('Reservation', \r\n",
+					"    F.when(F.upper(F.col('benefitName')).like('%S037%'), ReservationType.S037.value)\r\n",
+					"    .when(F.upper(F.col('benefitName')).like('%S138%'), ReservationType.SAP.value)\r\n",
+					"    .otherwise(ReservationType.Other.value)\r\n",
+					")\r\n",
 					"cost_df = cost_df.withColumn('RIType', \r\n",
 					"    F.when(F.col('MeterCategory').like('%Virtual Machines%'), RITypes.VM.value)\r\n",
 					"    .when(F.col('MeterCategory').like('%SQL%'), RITypes.SQL.value)\r\n",
