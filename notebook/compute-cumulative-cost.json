@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "076181e9-c106-42be-845c-df0f1bbf5298"
+				"spark.autotune.trackingId": "e1d4f9f8-7029-4543-95f1-0a95b6eb70a5"
 			}
 		},
 		"metadata": {
@@ -45,7 +45,8 @@
 				"sparkVersion": "3.3",
 				"nodeCount": 3,
 				"cores": 16,
-				"memory": 112
+				"memory": 112,
+				"automaticScaleJobs": true
 			},
 			"sessionKeepAliveTimeout": 30
 		},
@@ -69,7 +70,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 2
+				"execution_count": 114
 			},
 			{
 				"cell_type": "code",
@@ -79,7 +80,7 @@
 					"import statsmodels.api as sm\r\n",
 					"import pandas as pd"
 				],
-				"execution_count": 3
+				"execution_count": 115
 			},
 			{
 				"cell_type": "code",
@@ -98,7 +99,7 @@
 					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 					"df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 4
+				"execution_count": 116
 			},
 			{
 				"cell_type": "code",
@@ -116,9 +117,9 @@
 				"source": [
 					"df = df.select('Date', 'CostInBillingCurrency')\r\n",
 					"df = df.withColumn('Date', F.date_trunc('month', 'Date'))\r\n",
-					"df = df.groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('Cost'))"
+					"df = df.groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('Cost')).orderBy('Date')"
 				],
-				"execution_count": 5
+				"execution_count": 117
 			},
 			{
 				"cell_type": "code",
@@ -136,7 +137,7 @@
 				"source": [
 					"df = df.filter(F.col('Date') < F.concat(F.date_format(F.current_date(), 'yyyy'), F.lit('-'), F.date_format(F.current_date(), 'MM'), F.lit('-'), F.lit('01')))"
 				],
-				"execution_count": 8
+				"execution_count": 118
 			},
 			{
 				"cell_type": "code",
@@ -155,7 +156,7 @@
 					"window = W.Window.orderBy(\"Date\").rowsBetween(W.Window.unboundedPreceding, 0)\r\n",
 					"df = df.withColumn(\"AccumulatedCost\", F.sum(\"Cost\").over(window))"
 				],
-				"execution_count": 9
+				"execution_count": 119
 			},
 			{
 				"cell_type": "code",
@@ -176,7 +177,116 @@
 					"# Set the month column as the index\r\n",
 					"pdf.set_index(\"Date\", inplace=True)"
 				],
-				"execution_count": 10
+				"execution_count": 120
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# def predict_cost(input_df, p, d, q):\r\n",
+					"#     model = sm.tsa.ARIMA(input_df[\"Cost\"], order=(p, d, q)).fit()\r\n",
+					"#     future_months = pd.date_range(start=input_df.index[-1], periods=72, freq=\"MS\")\r\n",
+					"#     predicted_cost = model.predict(start=input_df.index[-1], end=future_months[-1], typ=\"levels\")\r\n",
+					"#     predicted_df = pd.DataFrame({\"Date\": future_months, \"PredictedCost\": predicted_cost})\r\n",
+					"#     predicted_df = spark.createDataFrame(predicted_df)\r\n",
+					"#     return predicted_df"
+				],
+				"execution_count": 122
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# model = sm.OLS(pdf['Cost'], sm.add_constant(pdf.index)).fit()\r\n",
+					"# future_months = pd.date_range(start=input_df.index[-1], periods=72, freq=\"MS\")\r\n",
+					"# y_new = model.predict(future_months)"
+				],
+				"execution_count": 125
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# prediction1 = predict_cost(pdf, 1, 1, 1)\r\n",
+					"# prediction1 = prediction1.withColumnRenamed('PredictedCost', 'PredictedCost1')\r\n",
+					"# prediction5 = predict_cost(pdf, 0, 1, 0)\r\n",
+					"# prediction5 = prediction5.withColumnRenamed('PredictedCost', 'PredictedCost5')\r\n",
+					"# # prediction8 = predict_cost(pdf, 2, 1, 1)\r\n",
+					"# # prediction8 = prediction8.withColumnRenamed('PredictedCost', 'PredictedCost8')\r\n",
+					"# prediction9 = predict_cost(pdf, 3, 1, 1)\r\n",
+					"# prediction9 = prediction9.withColumnRenamed('PredictedCost', 'PredictedCost9')\r\n",
+					"# # prediction10 = predict_cost(pdf, 4, 1, 1)\r\n",
+					"# # prediction10 = prediction10.withColumnRenamed('PredictedCost', 'PredictedCost10')\r\n",
+					"# # prediction11 = predict_cost(pdf, 5, 1, 1)\r\n",
+					"# # prediction11 = prediction11.withColumnRenamed('PredictedCost', 'PredictedCost11')\r\n",
+					"# # prediction12 = predict_cost(pdf, 10, 1, 1)\r\n",
+					"# # prediction12 = prediction12.withColumnRenamed('PredictedCost', 'PredictedCost12')\r\n",
+					"# # prediction13 = predict_cost(pdf, 16, 1, 1)\r\n",
+					"# # prediction13 = prediction13.withColumnRenamed('PredictedCost', 'PredictedCost13')\r\n",
+					"# # prediction14 = predict_cost(pdf, 32, 1, 1)\r\n",
+					"# # prediction14 = prediction14.withColumnRenamed('PredictedCost', 'PredictedCost14')\r\n",
+					"\r\n",
+					"# joined_df = df.join(prediction1, on='Date', how='outer')\r\n",
+					"# joined_df = joined_df.join(prediction5, on='Date', how='outer')\r\n",
+					"# # joined_df = joined_df.join(prediction8, on='Date', how='outer')\r\n",
+					"# joined_df = joined_df.join(prediction9, on='Date', how='outer')\r\n",
+					"# # joined_df = joined_df.join(prediction10, on='Date', how='outer')\r\n",
+					"# # joined_df = joined_df.join(prediction11, on='Date', how='outer')\r\n",
+					"# # joined_df = joined_df.join(prediction12, on='Date', how='outer')\r\n",
+					"# # joined_df = joined_df.join(prediction13, on='Date', how='outer')\r\n",
+					"# # joined_df = joined_df.join(prediction14, on='Date', how='outer')\r\n",
+					"# joined_df = joined_df.withColumn('Date', F.to_date('Date'))"
+				],
+				"execution_count": 123
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"# display(joined_df)"
+				],
+				"execution_count": 124
 			},
 			{
 				"cell_type": "code",
