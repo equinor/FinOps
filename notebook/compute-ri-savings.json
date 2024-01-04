@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "7a9bc339-2931-4eda-94f8-7e777744c0b1"
+				"spark.autotune.trackingId": "d005dc00-d799-4336-a7e0-439a263eb78d"
 			}
 		},
 		"metadata": {
@@ -187,6 +187,7 @@
 					"cost_df = cost_df.withColumn('Date', F.date_trunc('month', 'Date'))\r\n",
 					"cost_df = cost_df.withColumn('CostSavings', (F.col('UnitPrice') - F.col('EffectivePrice')) * F.col('Quantity'))\r\n",
 					"cost_df = cost_df.withColumn('EffectiveCost', F.col('EffectivePrice') * F.col('Quantity'))\r\n",
+					"# SAP reservations = (all start with S138) --> create three categories --> S037 + SAP + Other\r\n",
 					"cost_df = cost_df.withColumn('Reservation', F.when(F.upper(F.col('benefitName')).like('%S037%'), ReservationType.S037.value).otherwise(ReservationType.SAP.value))\r\n",
 					"cost_df = cost_df.withColumn('RIType', \r\n",
 					"    F.when(F.col('MeterCategory').like('%Virtual Machines%'), RITypes.VM.value)\r\n",
