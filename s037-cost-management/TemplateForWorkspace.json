@@ -896,6 +896,14 @@
 		"Extend Daily Amortized Cost_pipelineStorageAccountVariable": {
 			"type": "string",
 			"defaultValue": "s037costmgmt"
+		},
+		"Extend Monthly Cost_pipelineSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"Extend Monthly Cost_pipelineStorageAccountVariable": {
+			"type": "string",
+			"defaultValue": "s037costmgmt"
 		}
 	},
 	"variables": {
@@ -7784,6 +7792,18 @@
 					"storageAccount": {
 						"type": "String",
 						"defaultValue": "[parameters('Extend Daily Actual Cost_pipelineStorageAccountVariable')]"
+					},
+					"Month": {
+						"type": "String"
+					},
+					"Year": {
+						"type": "String"
+					},
+					"fromDate": {
+						"type": "String"
+					},
+					"toDate": {
+						"type": "String"
 					}
 				},
 				"folder": {
@@ -24894,37 +24914,6 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/monthly-cost-trigger')]",
-			"type": "Microsoft.Synapse/workspaces/triggers",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Started",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "Monthly Cleanup",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "BlobEventsTrigger",
-				"typeProperties": {
-					"blobPathBeginsWith": "/usage/blobs/exports/monthly/ACMMonthlyActualCost",
-					"blobPathEndsWith": ".csv",
-					"ignoreEmptyBlobs": true,
-					"scope": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt",
-					"events": [
-						"Microsoft.Storage.BlobCreated"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/pipelines/Monthly Cleanup')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('workspaceName'), '/pricesheet-updates-trigger')]",
 			"type": "Microsoft.Synapse/workspaces/triggers",
 			"apiVersion": "2019-06-01-preview",
@@ -40869,7 +40858,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "e22ba3ab-97d5-4ce6-aa84-29f4fed30df7"
+						"spark.autotune.trackingId": "97bbc6c9-3467-4835-82be-9e3517a1a9ac"
 					}
 				},
 				"metadata": {
@@ -42742,7 +42731,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "03a51e88-d6a6-4217-8036-5c9113486842"
+						"spark.autotune.trackingId": "f4a9c807-cbdf-4e26-bf4c-f6db6f0a2aed"
 					}
 				},
 				"metadata": {
@@ -43081,7 +43070,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "e028155f-16c7-4043-b94e-9fadb4690ac5"
+						"spark.autotune.trackingId": "ba89b7e5-5c23-4ede-9778-86e7214eb027"
 					}
 				},
 				"metadata": {
@@ -43106,7 +43095,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -43135,7 +43125,8 @@
 							"toDate = '20231130'\n",
 							"fromDate = '20231101'\n",
 							"container = 'usage'\n",
-							"storageAccount = 's037costmgmt'"
+							"storageAccount = 's037costmgmt'\n",
+							"reportType = 'ActualCost'"
 						],
 						"outputs": [],
 						"execution_count": 14
@@ -43306,46 +43297,100 @@
 						"source": [
 							"print(f'fromDate: {fromDate}')\n",
 							"print(f'toDate: {toDate}')\n",
-							"report_types = ['ActualCost', 'AmortizedCost']\n",
 							"\n",
 							"print(f\"------ From: {fromDate}, To: {toDate} -----------\")\n",
 							"\n",
-							"for report_type in report_types:\n",
+							"print(f\"------ {reportType} -----------\")\n",
+							"formatted_to_date = f'{toDate[0:4]}-{toDate[4:6]}-{toDate[6:]}'\n",
+							"formatted_to_date = '2021-11-30' if str(formatted_to_date) < '2021-11-30' else formatted_to_date\n",
 							"\n",
-							"    print(f\"------ {report_type} -----------\")\n",
-							"    formatted_to_date = f'{toDate[0:4]}-{toDate[4:6]}-{toDate[6:]}'\n",
-							"    formatted_to_date = '2021-11-30' if str(formatted_to_date) < '2021-11-30' else formatted_to_date\n",
+							"print(f'longToDate: {formatted_to_date}')\n",
+							"date_range = fromDate + '-' + toDate\n",
+							"print(f'dateRange: {date_range}')\n",
 							"\n",
-							"    print(f'longToDate: {formatted_to_date}')\n",
-							"    date_range = fromDate + '-' + toDate\n",
-							"    print(f'dateRange: {date_range}')\n",
+							"cost_source_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthly{reportType}/{date_range}/ACMMonthly{reportType}_{date_range}.parquet'\n",
+							"cost_target_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthly{reportType}/{date_range}/Extended_v3_ACMMonthly{reportType}_{date_range}.parquet'\n",
 							"\n",
-							"    cost_source_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthly{report_type}/{date_range}/ACMMonthly{report_type}_{date_range}.parquet'\n",
-							"    cost_target_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthly{report_type}/{date_range}/Extended_v3_ACMMonthly{report_type}_{date_range}.parquet'\n",
+							"# Load subcsription data\n",
+							"solum_subscription_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/subscriptions/subscriptions_{formatted_to_date}.json'\n",
+							"servicenow_subscription_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/{formatted_to_date}-optimized.parquet'\n",
 							"\n",
-							"    # Load subcsription data\n",
-							"    solum_subscription_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/subscriptions/subscriptions_{formatted_to_date}.json'\n",
-							"    servicenow_subscription_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/{formatted_to_date}-optimized.parquet'\n",
+							"try:\n",
+							"    subscription_df = load_and_process_servicenow_subscriptions(servicenow_subscription_path)\n",
+							"except:\n",
+							"    subscription_df = load_and_process_solum_subscriptions(solum_subscription_path)\n",
 							"\n",
-							"    try:\n",
-							"        subscription_df = load_and_process_servicenow_subscriptions(servicenow_subscription_path)\n",
-							"    except:\n",
-							"        subscription_df = load_and_process_solum_subscriptions(solum_subscription_path)\n",
+							"# Load application data\n",
+							"application_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\n",
+							"application_df = load_and_process_applications(application_path)\n",
 							"\n",
-							"    # Load application data\n",
-							"    application_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\n",
-							"    application_df = load_and_process_applications(application_path)\n",
-							"\n",
-							"    # Process cost data\n",
-							"    cost_df = spark.read.format('parquet').load(cost_source_path)\n",
-							"    cost_df = transform_cost_data(cost_df)\n",
-							"    cost_df = cost_df.withColumn(\"ResourceLocation\", F.lower(F.trim(F.regexp_replace(F.col('ResourceLocation'), \"\\s+\", \"\"))))\n",
-							"    cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\n",
-							"    write_output_file(cost_df, cost_target_path)\n",
-							"    print(' ')"
+							"# Process cost data\n",
+							"cost_df = spark.read.format('parquet').load(cost_source_path)\n",
+							"cost_df = transform_cost_data(cost_df)\n",
+							"cost_df = cost_df.withColumn(\"ResourceLocation\", F.lower(F.trim(F.regexp_replace(F.col('ResourceLocation'), \"\\s+\", \"\"))))\n",
+							"cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\n",
+							"write_output_file(cost_df, cost_target_path)\n",
+							"print(' ')"
 						],
 						"outputs": [],
 						"execution_count": 19
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# print(f'fromDate: {fromDate}')\r\n",
+							"# print(f'toDate: {toDate}')\r\n",
+							"# report_types = ['ActualCost', 'AmortizedCost']\r\n",
+							"\r\n",
+							"# print(f\"------ From: {fromDate}, To: {toDate} -----------\")\r\n",
+							"\r\n",
+							"# for report_type in report_types:\r\n",
+							"\r\n",
+							"#     print(f\"------ {report_type} -----------\")\r\n",
+							"#     formatted_to_date = f'{toDate[0:4]}-{toDate[4:6]}-{toDate[6:]}'\r\n",
+							"#     formatted_to_date = '2021-11-30' if str(formatted_to_date) < '2021-11-30' else formatted_to_date\r\n",
+							"\r\n",
+							"#     print(f'longToDate: {formatted_to_date}')\r\n",
+							"#     date_range = fromDate + '-' + toDate\r\n",
+							"#     print(f'dateRange: {date_range}')\r\n",
+							"\r\n",
+							"#     cost_source_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthly{report_type}/{date_range}/ACMMonthly{report_type}_{date_range}.parquet'\r\n",
+							"#     cost_target_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthly{report_type}/{date_range}/Extended_v3_ACMMonthly{report_type}_{date_range}.parquet'\r\n",
+							"\r\n",
+							"#     # Load subcsription data\r\n",
+							"#     solum_subscription_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/subscriptions/subscriptions_{formatted_to_date}.json'\r\n",
+							"#     servicenow_subscription_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/{formatted_to_date}-optimized.parquet'\r\n",
+							"\r\n",
+							"#     try:\r\n",
+							"#         subscription_df = load_and_process_servicenow_subscriptions(servicenow_subscription_path)\r\n",
+							"#     except:\r\n",
+							"#         subscription_df = load_and_process_solum_subscriptions(solum_subscription_path)\r\n",
+							"\r\n",
+							"#     # Load application data\r\n",
+							"#     application_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\r\n",
+							"#     application_df = load_and_process_applications(application_path)\r\n",
+							"\r\n",
+							"#     # Process cost data\r\n",
+							"#     cost_df = spark.read.format('parquet').load(cost_source_path)\r\n",
+							"#     cost_df = transform_cost_data(cost_df)\r\n",
+							"#     cost_df = cost_df.withColumn(\"ResourceLocation\", F.lower(F.trim(F.regexp_replace(F.col('ResourceLocation'), \"\\s+\", \"\"))))\r\n",
+							"#     cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\r\n",
+							"#     write_output_file(cost_df, cost_target_path)\r\n",
+							"#     print(' ')"
+						],
+						"outputs": [],
+						"execution_count": null
 					}
 				]
 			},
@@ -45745,6 +45790,18 @@
 					"storageAccount": {
 						"type": "String",
 						"defaultValue": "[parameters('Extend Daily Amortized Cost_pipelineStorageAccountVariable')]"
+					},
+					"Month": {
+						"type": "String"
+					},
+					"Year": {
+						"type": "String"
+					},
+					"fromDate": {
+						"type": "String"
+					},
+					"toDate": {
+						"type": "String"
 					}
 				},
 				"folder": {
@@ -45819,6 +45876,957 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/pipelines/Extend Daily Actual Cost')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Extend Monthly Cost')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Set Month",
+						"type": "SetVariable",
+						"dependsOn": [],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "Month",
+							"value": {
+								"value": "@if(\n    equals(int(formatdatetime(utcnow(),'MM')),1),\n    '12',\n    if(\n        less(sub(int(formatdatetime(utcnow(),'MM')),10),1),\n            concat('0',string(sub(int(formatdatetime(utcnow(),'MM')),1))),\n            string(sub(int(formatdatetime(utcnow(),'MM')),1))))\n",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Set Year",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Set Month",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "Year",
+							"value": {
+								"value": "@if(\n    equals(int(formatDateTime(utcNow(), 'MM')), 01),\n     string(sub(int(formatDateTime(utcNow(), 'yyyy')),1)),\n     string(int(formatDateTime(utcNow(), 'yyyy'))))",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Set first day of month",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Set Year",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "fromDate",
+							"value": {
+								"value": "@concat(variables('Year'),variables('Month'),'01')",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Set last day of the month date",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Set first day of month",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "toDate",
+							"value": {
+								"value": "@replace(replace(adddays(formatDateTime(adddays(formatDateTime(concat(variables('Year'),'-',variables('Month'),'-01'), 'yyyy-MM-28'),5), 'yyyy-MM-01'),-1),'T00:00:00.0000000',''),'-','')",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Convert Amortised Cost CSV to Parquet",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Set last day of the month date",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"wildcardFolderPath": {
+										"value": "@concat('exports/monthly/ACMMonthly',pipeline().parameters.reportType,'/',variables('fromDate'),'-',variables('toDate'))",
+										"type": "Expression"
+									},
+									"wildcardFileName": "*.csv",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings",
+									"copyBehavior": "MergeFiles"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "InvoiceSectionName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "InvoiceSectionName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "AccountName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "AccountName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "AccountOwnerId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "AccountOwnerId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "SubscriptionId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "SubscriptionId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "SubscriptionName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "SubscriptionName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ResourceGroup",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ResourceGroup",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ResourceLocation",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ResourceLocation",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Date",
+											"type": "DateTime",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Date",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ProductName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ProductName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "MeterCategory",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "MeterCategory",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "MeterSubCategory",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "MeterSubCategory",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "MeterId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "MeterId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "MeterName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "MeterName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "MeterRegion",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "MeterRegion",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "UnitOfMeasure",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "UnitOfMeasure",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Quantity",
+											"type": "Double",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Quantity",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "EffectivePrice",
+											"type": "Double",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "EffectivePrice",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "CostInBillingCurrency",
+											"type": "Double",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "CostInBillingCurrency",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "CostCenter",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "CostCenter",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ConsumedService",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ConsumedService",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ResourceId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ResourceId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Tags",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Tags",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "OfferId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "OfferId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "AdditionalInfo",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "AdditionalInfo",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ServiceInfo1",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ServiceInfo1",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ServiceInfo2",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ServiceInfo2",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ResourceName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ResourceName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ReservationId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ReservationId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ReservationName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ReservationName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "UnitPrice",
+											"type": "Double",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "UnitPrice",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ProductOrderId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ProductOrderId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ProductOrderName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ProductOrderName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Term",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Term",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "PublisherType",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "PublisherType",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "PublisherName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "PublisherName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ChargeType",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ChargeType",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Frequency",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Frequency",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "PricingModel",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "PricingModel",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "AvailabilityZone",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "AvailabilityZone",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "BillingAccountId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "BillingAccountId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "BillingAccountName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "BillingAccountName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "BillingCurrencyCode",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "BillingCurrencyCode",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "BillingPeriodStartDate",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "BillingPeriodStartDate",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "BillingPeriodEndDate",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "BillingPeriodEndDate",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "BillingProfileId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "BillingProfileId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "BillingProfileName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "BillingProfileName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "InvoiceSectionId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "InvoiceSectionId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "IsAzureCreditEligible",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "IsAzureCreditEligible",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "PartNumber",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "PartNumber",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "PayGPrice",
+											"type": "Double",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "PayGPrice",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "PlanName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "PlanName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ServiceFamily",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ServiceFamily",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "CostAllocationRuleName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "CostAllocationRuleName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "benefitId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "benefitId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "benefitName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "benefitName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "Adhoc_CSV_Source",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "Monthly_Parquet",
+								"type": "DatasetReference",
+								"parameters": {
+									"Path": {
+										"value": "@concat('exports/monthly/ACMMonthly',pipeline().parameters.reportType,'/',variables('fromDate'),'-',variables('toDate'))",
+										"type": "Expression"
+									},
+									"Container": {
+										"value": "@variables('Container')",
+										"type": "Expression"
+									},
+									"toDate_fromDate": {
+										"value": "@concat(variables('fromDate'),'-',variables('toDate'))",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					},
+					{
+						"name": "Extend cost data v3",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "Convert Amortised Cost CSV to Parquet",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "monthly-cost-extend-v3",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"toDate": {
+									"value": {
+										"value": "@variables('toDate')",
+										"type": "Expression"
+									},
+									"type": "string"
+								},
+								"fromDate": {
+									"value": {
+										"value": "@variables('fromDate')",
+										"type": "Expression"
+									},
+									"type": "string"
+								},
+								"storageAccount": {
+									"value": {
+										"value": "@variables('storageAccount')",
+										"type": "Expression"
+									},
+									"type": "string"
+								},
+								"reportType": {
+									"value": {
+										"value": "@pipeline().parameters.reportType",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": "[parameters('Extend Monthly Cost_pipelineSparkPoolNameRef')]",
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Large",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Large"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"reportType": {
+						"type": "string",
+						"defaultValue": "ActualCost"
+					}
+				},
+				"variables": {
+					"Month": {
+						"type": "String"
+					},
+					"Year": {
+						"type": "String"
+					},
+					"fromDate": {
+						"type": "String"
+					},
+					"toDate": {
+						"type": "String"
+					},
+					"Container": {
+						"type": "String",
+						"defaultValue": "usage"
+					},
+					"storageAccount": {
+						"type": "String",
+						"defaultValue": "[parameters('Extend Monthly Cost_pipelineStorageAccountVariable')]"
+					}
+				},
+				"folder": {
+					"name": "PipelinesInProduction/Cost"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/Adhoc_CSV_Source')]",
+				"[concat(variables('workspaceId'), '/datasets/Monthly_Parquet')]",
+				"[concat(variables('workspaceId'), '/notebooks/monthly-cost-extend-v3')]",
+				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('Extend Monthly Cost_pipelineSparkPoolNameRef'))]"
 			]
 		}
 	]
