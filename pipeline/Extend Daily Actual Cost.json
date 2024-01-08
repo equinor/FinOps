@@ -1,0 +1,27 @@
+{
+	"name": "Extend Daily Actual Cost",
+	"properties": {
+		"activities": [
+			{
+				"name": "Extend Actual Cost",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Extend Daily Cost",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"ReportType": "ActualCost"
+					}
+				}
+			}
+		],
+		"folder": {
+			"name": "PipelinesInProduction/Cost"
+		},
+		"annotations": []
+	}
+}
