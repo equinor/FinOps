@@ -53,6 +53,18 @@
 			"type": "string",
 			"defaultValue": "s037costmgmt"
 		},
+		"Extend Daily Actual Cost_pipelineStorageAccountVariable": {
+			"type": "string",
+			"defaultValue": "s037costmgmt"
+		},
+		"Extend Daily Cost_pipelineSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"Extend Daily Cost_pipelineStorageAccountVariable": {
+			"type": "string",
+			"defaultValue": "s037costmgmt"
+		},
 		"Monthly Cleanup_pipelineSparkPoolNameRef": {
 			"type": "string",
 			"defaultValue": "sprkpool33large"
@@ -82,10 +94,6 @@
 			"defaultValue": "sprkpool33large"
 		},
 		"Run Notebook on Previous Dates_v1_pipelineStorageAccountParameter": {
-			"type": "string",
-			"defaultValue": "s037costmgmt"
-		},
-		"Update Cost Overview Datasets_pipelineStorageAccountVariable": {
 			"type": "string",
 			"defaultValue": "s037costmgmt"
 		},
@@ -7384,27 +7392,6 @@
 								}
 							]
 						}
-					},
-					{
-						"name": "Update 1r and 3yr datasets",
-						"type": "ExecutePipeline",
-						"dependsOn": [
-							{
-								"activity": "run cost extension v3 daily",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"pipeline": {
-								"referenceName": "Update Cost Overview Datasets",
-								"type": "PipelineReference"
-							},
-							"waitOnCompletion": true,
-							"parameters": {}
-						}
 					}
 				],
 				"policy": {
@@ -7446,7 +7433,6 @@
 				"[concat(variables('workspaceId'), '/datasets/ds_Daily_Parquet_File')]",
 				"[concat(variables('workspaceId'), '/notebooks/daily-cost-extend-v3')]",
 				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('Daily Cleanup_pipelineSparkPoolNameRef'))]",
-				"[concat(variables('workspaceId'), '/pipelines/Update Cost Overview Datasets')]",
 				"[concat(variables('workspaceId'), '/datasets/ds_Test_delete_file')]",
 				"[concat(variables('workspaceId'), '/datasets/Monthly_Parquet')]"
 			]
@@ -7720,6 +7706,1367 @@
 				"[concat(variables('workspaceId'), '/notebooks/VM-utilization-fetch')]",
 				"[concat(variables('workspaceId'), '/datasets/AzureSubscriptionResources')]",
 				"[concat(variables('workspaceId'), '/datasets/SubscriptionResourceLocations')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Extend Daily Actual Cost')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Extend Actual Cost",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Extend Daily Cost",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"ReportType": "ActualCost"
+							}
+						}
+					},
+					{
+						"name": "Run cumulative cost prediction",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "Extend Actual Cost",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "compute-cumulative-cost",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@variables('storageAccount')",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"numExecutors": null
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"storageAccount": {
+						"type": "String",
+						"defaultValue": "[parameters('Extend Daily Actual Cost_pipelineStorageAccountVariable')]"
+					}
+				},
+				"folder": {
+					"name": "PipelinesInProduction/Cost"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/Extend Daily Cost')]",
+				"[concat(variables('workspaceId'), '/notebooks/compute-cumulative-cost')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Extend Daily Cost')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Set last day in Month",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Set first day of month",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "toDate",
+							"value": {
+								"value": "@replace(replace(adddays(formatDateTime(adddays(formatDateTime(formatDateTime(utcnow(),'yyyy-MM-01'), 'yyyy-MM-28'),5), 'yyyy-MM-01'),-1),'T00:00:00.0000000',''),'-','')",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Set first day of month",
+						"description": "",
+						"type": "SetVariable",
+						"dependsOn": [],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "fromDate",
+							"value": {
+								"value": "@concat(formatDateTime(utcnow(),'yyyyMM01'))",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Set Date Range",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Set last day in Month",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "dateRange",
+							"value": {
+								"value": "@concat(replace(variables('fromDate'),'-',''),'-',replace(variables('toDate'),'-',''))",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Delete Actual Cost Files modified more than 1 day ago",
+						"type": "Delete",
+						"dependsOn": [
+							{
+								"activity": "Set Date Range",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "ds_test_delete_files",
+								"type": "DatasetReference",
+								"parameters": {
+									"ReportType": {
+										"value": "@pipeline().parameters.ReportType",
+										"type": "Expression"
+									}
+								}
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobFSReadSettings",
+								"recursive": true,
+								"modifiedDatetimeEnd": {
+									"value": "@addHours(utcnow(),-12)",
+									"type": "Expression"
+								},
+								"wildcardFileName": "*",
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Get Actual Cost folders modied more than 1 day ago",
+						"type": "GetMetadata",
+						"dependsOn": [
+							{
+								"activity": "Delete Actual Cost Files modified more than 1 day ago",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "Older_Files_For_Deletion_Binary",
+								"type": "DatasetReference",
+								"parameters": {
+									"ReportType": {
+										"value": "@pipeline().parameters.ReportType",
+										"type": "Expression"
+									}
+								}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobFSReadSettings",
+								"recursive": true,
+								"modifiedDatetimeEnd": {
+									"value": "@addHours(utcnow(),-12)",
+									"type": "Expression"
+								},
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "BinaryReadSettings"
+							}
+						}
+					},
+					{
+						"name": "For Each AC Folder",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get Actual Cost folders modied more than 1 day ago",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get Actual Cost folders modied more than 1 day ago').output.childItems",
+								"type": "Expression"
+							},
+							"isSequential": false,
+							"activities": [
+								{
+									"name": "Get AC Item Metadata",
+									"type": "GetMetadata",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataset": {
+											"referenceName": "ds_Test_delete_file",
+											"type": "DatasetReference",
+											"parameters": {
+												"Path": {
+													"value": "@item().name",
+													"type": "Expression"
+												},
+												"ReportType": {
+													"value": "@pipeline().parameters.ReportType",
+													"type": "Expression"
+												}
+											}
+										},
+										"fieldList": [
+											"childItems"
+										],
+										"storeSettings": {
+											"type": "AzureBlobFSReadSettings",
+											"recursive": true,
+											"enablePartitionDiscovery": false
+										},
+										"formatSettings": {
+											"type": "BinaryReadSettings"
+										}
+									}
+								},
+								{
+									"name": "If AC Folder Empty",
+									"type": "IfCondition",
+									"dependsOn": [
+										{
+											"activity": "Get AC Item Metadata",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"userProperties": [],
+									"typeProperties": {
+										"expression": {
+											"value": "@empty(activity('Get AC Item Metadata').output.childItems)",
+											"type": "Expression"
+										},
+										"ifTrueActivities": [
+											{
+												"name": "Delete Empty AC Folder",
+												"type": "Delete",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"dataset": {
+														"referenceName": "ds_Test_delete_file",
+														"type": "DatasetReference",
+														"parameters": {
+															"Path": {
+																"value": "@item().name",
+																"type": "Expression"
+															},
+															"ReportType": {
+																"value": "@pipeline().parameters.ReportType",
+																"type": "Expression"
+															}
+														}
+													},
+													"enableLogging": false,
+													"storeSettings": {
+														"type": "AzureBlobFSReadSettings",
+														"recursive": true,
+														"enablePartitionDiscovery": false
+													}
+												}
+											}
+										]
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "Create Actual Cost Parquet File",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "For Each AC Folder",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": false,
+									"wildcardFolderPath": {
+										"value": "@concat('exports/daily/ACMDaily',pipeline().parameters.ReportType,'/*')",
+										"type": "Expression"
+									},
+									"wildcardFileName": "*.csv",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "InvoiceSectionName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "InvoiceSectionName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "AccountName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "AccountName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "AccountOwnerId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "AccountOwnerId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "SubscriptionId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "SubscriptionId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "SubscriptionName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "SubscriptionName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ResourceGroup",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ResourceGroup",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ResourceLocation",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ResourceLocation",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Date",
+											"type": "DateTime",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Date",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ProductName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ProductName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "MeterCategory",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "MeterCategory",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "MeterSubCategory",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "MeterSubCategory",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "MeterId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "MeterId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "MeterName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "MeterName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "MeterRegion",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "MeterRegion",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "UnitOfMeasure",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "UnitOfMeasure",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Quantity",
+											"type": "Double",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Quantity",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "EffectivePrice",
+											"type": "Double",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "EffectivePrice",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "CostInBillingCurrency",
+											"type": "Double",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "CostInBillingCurrency",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "CostCenter",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "CostCenter",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ConsumedService",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ConsumedService",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ResourceId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ResourceId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Tags",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Tags",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "OfferId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "OfferId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "AdditionalInfo",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "AdditionalInfo",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ServiceInfo1",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ServiceInfo1",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ServiceInfo2",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ServiceInfo2",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ResourceName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ResourceName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ReservationId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ReservationId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ReservationName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ReservationName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "UnitPrice",
+											"type": "Double",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "UnitPrice",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ProductOrderId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ProductOrderId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ProductOrderName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ProductOrderName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Term",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Term",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "PublisherType",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "PublisherType",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "PublisherName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "PublisherName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ChargeType",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ChargeType",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Frequency",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Frequency",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "PricingModel",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "PricingModel",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "AvailabilityZone",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "AvailabilityZone",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "BillingAccountId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "BillingAccountId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "BillingAccountName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "BillingAccountName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "BillingCurrencyCode",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "BillingCurrencyCode",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "BillingPeriodStartDate",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "BillingPeriodStartDate",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "BillingPeriodEndDate",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "BillingPeriodEndDate",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "BillingProfileId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "BillingProfileId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "BillingProfileName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "BillingProfileName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "InvoiceSectionId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "InvoiceSectionId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "IsAzureCreditEligible",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "IsAzureCreditEligible",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "PartNumber",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "PartNumber",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "PayGPrice",
+											"type": "Double",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "PayGPrice",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "PlanName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "PlanName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ServiceFamily",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ServiceFamily",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "CostAllocationRuleName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "CostAllocationRuleName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "benefitId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "benefitId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "benefitName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "benefitName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_CSV_File",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ds_Daily_Parquet_File",
+								"type": "DatasetReference",
+								"parameters": {
+									"Path": {
+										"value": "@concat('exports/daily/ACMDaily',pipeline().parameters.ReportType)",
+										"type": "Expression"
+									},
+									"reportType": {
+										"value": "@pipeline().parameters.ReportType",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					},
+					{
+						"name": "If today is the 1st of the Month",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "Create Actual Cost Parquet File",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@equals(dayOfMonth(utcnow()),1)",
+								"type": "Expression"
+							},
+							"ifTrueActivities": [
+								{
+									"name": "Get last day of previous month",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "Get first day of previous month",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "toDate",
+										"value": {
+											"value": "@concat(formatDateTime(addDays(utcnow(), -1),'yyyyMMdd'))",
+											"type": "Expression"
+										}
+									}
+								},
+								{
+									"name": "Get first day of previous month",
+									"type": "SetVariable",
+									"dependsOn": [],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "fromDate",
+										"value": {
+											"value": "@concat(formatDateTime(addDays(utcnow(), -1),'yyyyMM01'))",
+											"type": "Expression"
+										}
+									}
+								},
+								{
+									"name": "Copy daily file to Monthly folder",
+									"description": "Copy daily file to monthly folder as it is 1st of the month. This places a file in the monthly folder so the union SQL queries will work. This file will be overwritten when Microsoft pushes the official monthly file on the 5th of every month.",
+									"type": "Copy",
+									"dependsOn": [
+										{
+											"activity": "Get last day of previous month",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "ParquetSource",
+											"storeSettings": {
+												"type": "AzureBlobFSReadSettings",
+												"recursive": false,
+												"enablePartitionDiscovery": false
+											},
+											"formatSettings": {
+												"type": "ParquetReadSettings"
+											}
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_Daily_Parquet_File",
+											"type": "DatasetReference",
+											"parameters": {
+												"Path": {
+													"value": "@concat('exports/daily/ACMDaily',pipeline().parameters.ReportType)",
+													"type": "Expression"
+												},
+												"reportType": {
+													"value": "@pipeline().parameters.ReportType",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "Monthly_Parquet",
+											"type": "DatasetReference",
+											"parameters": {
+												"Path": {
+													"value": "@concat('exports/monthly/ACMMonthly',pipeline().parameters.ReportType,'/',variables('fromDate'),'-',variables('toDate'))",
+													"type": "Expression"
+												},
+												"Container": "usage",
+												"toDate_fromDate": {
+													"value": "@concat(variables('fromDate'),'-',variables('toDate'))",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					},
+					{
+						"name": "run cost extension v3 daily",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "If today is the 1st of the Month",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "daily-cost-extend-v3",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"toDate": {
+									"value": {
+										"value": "@variables('toDate')",
+										"type": "Expression"
+									},
+									"type": "string"
+								},
+								"fromDate": {
+									"value": {
+										"value": "@variables('fromDate')",
+										"type": "Expression"
+									},
+									"type": "string"
+								},
+								"storageAccount": {
+									"value": {
+										"value": "@variables('storageAccount')",
+										"type": "Expression"
+									},
+									"type": "string"
+								},
+								"reportType": {
+									"value": {
+										"value": "@pipeline().parameters.ReportType",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": "[parameters('Extend Daily Cost_pipelineSparkPoolNameRef')]",
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"driverSize": "Medium",
+							"numExecutors": null
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"ReportType": {
+						"type": "string"
+					}
+				},
+				"variables": {
+					"fromDate": {
+						"type": "String"
+					},
+					"toDate": {
+						"type": "String"
+					},
+					"dateRange": {
+						"type": "String"
+					},
+					"storageAccount": {
+						"type": "String",
+						"defaultValue": "[parameters('Extend Daily Cost_pipelineStorageAccountVariable')]"
+					}
+				},
+				"folder": {
+					"name": "PipelinesInProduction/Cost"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/ds_test_delete_files')]",
+				"[concat(variables('workspaceId'), '/datasets/Older_Files_For_Deletion_Binary')]",
+				"[concat(variables('workspaceId'), '/datasets/ds_CSV_File')]",
+				"[concat(variables('workspaceId'), '/datasets/ds_Daily_Parquet_File')]",
+				"[concat(variables('workspaceId'), '/notebooks/daily-cost-extend-v3')]",
+				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('Extend Daily Cost_pipelineSparkPoolNameRef'))]",
+				"[concat(variables('workspaceId'), '/datasets/ds_Test_delete_file')]",
+				"[concat(variables('workspaceId'), '/datasets/Monthly_Parquet')]"
 			]
 		},
 		{
@@ -18781,202 +20128,6 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/RI Charges')]",
-			"type": "Microsoft.Synapse/workspaces/pipelines",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"activities": [
-					{
-						"name": "Convert data to Parquet",
-						"type": "Copy",
-						"dependsOn": [
-							{
-								"activity": "Set Last Day of Month",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "7.00:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "RestSource",
-								"httpRequestTimeout": "00:01:40",
-								"requestInterval": "00.00:00:00.010",
-								"requestMethod": "GET",
-								"paginationRules": {
-									"supportRFC5988": "true"
-								}
-							},
-							"sink": {
-								"type": "ParquetSink",
-								"storeSettings": {
-									"type": "AzureBlobFSWriteSettings"
-								},
-								"formatSettings": {
-									"type": "ParquetWriteSettings"
-								}
-							},
-							"enableStaging": false
-						},
-						"inputs": [
-							{
-								"referenceName": "retrieve_cost_report_ms_billing_source",
-								"type": "DatasetReference",
-								"parameters": {
-									"fromDate": {
-										"value": "@variables('fromDate')",
-										"type": "Expression"
-									},
-									"toDate": {
-										"value": "@variables('toDate')",
-										"type": "Expression"
-									}
-								}
-							}
-						],
-						"outputs": [
-							{
-								"referenceName": "ReservationFileTransform_dst",
-								"type": "DatasetReference",
-								"parameters": {
-									"Year": {
-										"value": "@variables('Year')",
-										"type": "Expression"
-									},
-									"Month": {
-										"value": "@variables('Month')",
-										"type": "Expression"
-									}
-								}
-							}
-						]
-					},
-					{
-						"name": "Set fromDate",
-						"type": "SetVariable",
-						"dependsOn": [
-							{
-								"activity": "Set Month",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							},
-							{
-								"activity": "Set Year",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"variableName": "fromDate",
-							"value": {
-								"value": "@concat(variables('Year'),'-',variables('Month'),'-01')",
-								"type": "Expression"
-							}
-						}
-					},
-					{
-						"name": "Set Last Day of Month",
-						"type": "SetVariable",
-						"dependsOn": [
-							{
-								"activity": "Set fromDate",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"variableName": "toDate",
-							"value": {
-								"value": "@replace(adddays(formatDateTime(adddays(formatDateTime(variables('fromDate'), 'yyyy-MM-28'),5), 'yyyy-MM-01'),-1),'T00:00:00.0000000','')",
-								"type": "Expression"
-							}
-						}
-					},
-					{
-						"name": "Set Month",
-						"type": "SetVariable",
-						"dependsOn": [],
-						"policy": {
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"variableName": "Month",
-							"value": {
-								"value": "@if(less(sub(int(formatdatetime(utcnow(),'MM')),11),0),concat('0',string(sub(int(formatdatetime(utcnow(),'MM')),1))),string(sub(int(formatdatetime(utcnow(),'MM')),1)))",
-								"type": "Expression"
-							}
-						}
-					},
-					{
-						"name": "Set Year",
-						"type": "SetVariable",
-						"dependsOn": [],
-						"policy": {
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"variableName": "Year",
-							"value": {
-								"value": "@formatDateTime(utcNow(),'yyyy')",
-								"type": "Expression"
-							}
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"variables": {
-					"fromDate": {
-						"type": "String"
-					},
-					"toDate": {
-						"type": "String"
-					},
-					"Year": {
-						"type": "String"
-					},
-					"Month": {
-						"type": "String"
-					}
-				},
-				"folder": {
-					"name": "PipelinesNotInUse/Consumption API (Old)"
-				},
-				"annotations": [],
-				"lastPublishTime": "2023-06-20T14:42:07Z"
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/datasets/retrieve_cost_report_ms_billing_source')]",
-				"[concat(variables('workspaceId'), '/datasets/ReservationFileTransform_dst')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('workspaceName'), '/RI Recommendations')]",
 			"type": "Microsoft.Synapse/workspaces/pipelines",
 			"apiVersion": "2019-06-01-preview",
@@ -19177,195 +20328,6 @@
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/notebooks/Run Notebook on Previous Dates_v1')]",
 				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('Run Notebook on Previous Dates_v1_pipelineSparkPoolNameRef'))]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/Update Cost Overview Datasets')]",
-			"type": "Microsoft.Synapse/workspaces/pipelines",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"activities": [
-					{
-						"name": "Amortized_Monthly_Cost_Update_ThreeYears",
-						"type": "SynapseNotebook",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"notebook": {
-								"referenceName": "Prod_Extended_Amortized_Cost-Threeyears",
-								"type": "NotebookReference"
-							},
-							"parameters": {
-								"storageAccount": {
-									"value": {
-										"value": "@variables('storageAccount')",
-										"type": "Expression"
-									},
-									"type": "string"
-								}
-							},
-							"snapshot": true,
-							"conf": {
-								"spark.dynamicAllocation.enabled": null,
-								"spark.dynamicAllocation.minExecutors": null,
-								"spark.dynamicAllocation.maxExecutors": null
-							},
-							"numExecutors": null
-						}
-					},
-					{
-						"name": "Amortized_Monthly_Cost_Update_OneYear",
-						"type": "SynapseNotebook",
-						"dependsOn": [
-							{
-								"activity": "Amortized_Monthly_Cost_Update_ThreeYears",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"notebook": {
-								"referenceName": "Prod_Extended_Amortized_Cost-Oneyear",
-								"type": "NotebookReference"
-							},
-							"parameters": {
-								"storageAccount": {
-									"value": {
-										"value": "@variables('storageAccount')",
-										"type": "Expression"
-									},
-									"type": "string"
-								}
-							},
-							"snapshot": true,
-							"conf": {
-								"spark.dynamicAllocation.enabled": null,
-								"spark.dynamicAllocation.minExecutors": null,
-								"spark.dynamicAllocation.maxExecutors": null
-							},
-							"numExecutors": null
-						}
-					},
-					{
-						"name": "Run anomaly detection V2",
-						"type": "SynapseNotebook",
-						"dependsOn": [
-							{
-								"activity": "Amortized_Monthly_Cost_Update_OneYear",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"notebook": {
-								"referenceName": "Anomaly_Detection_v2",
-								"type": "NotebookReference"
-							},
-							"parameters": {
-								"storageAccount": {
-									"value": {
-										"value": "@variables('storageAccount')",
-										"type": "Expression"
-									},
-									"type": "string"
-								}
-							},
-							"snapshot": true,
-							"conf": {
-								"spark.dynamicAllocation.enabled": null,
-								"spark.dynamicAllocation.minExecutors": null,
-								"spark.dynamicAllocation.maxExecutors": null
-							},
-							"numExecutors": null
-						}
-					},
-					{
-						"name": "Run cumulative cost prediction",
-						"type": "SynapseNotebook",
-						"dependsOn": [
-							{
-								"activity": "Run anomaly detection V2",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"notebook": {
-								"referenceName": "compute-cumulative-cost",
-								"type": "NotebookReference"
-							},
-							"parameters": {
-								"storageAccount": {
-									"value": {
-										"value": "@variables('storageAccount')",
-										"type": "Expression"
-									},
-									"type": "string"
-								}
-							},
-							"snapshot": true,
-							"conf": {
-								"spark.dynamicAllocation.enabled": null,
-								"spark.dynamicAllocation.minExecutors": null,
-								"spark.dynamicAllocation.maxExecutors": null
-							},
-							"numExecutors": null
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"variables": {
-					"storageAccount": {
-						"type": "String",
-						"defaultValue": "[parameters('Update Cost Overview Datasets_pipelineStorageAccountVariable')]"
-					}
-				},
-				"folder": {
-					"name": "PipelinesInProduction/Cost"
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/notebooks/Prod_Extended_Amortized_Cost-Threeyears')]",
-				"[concat(variables('workspaceId'), '/notebooks/Prod_Extended_Amortized_Cost-Oneyear')]",
-				"[concat(variables('workspaceId'), '/notebooks/Anomaly_Detection_v2')]",
-				"[concat(variables('workspaceId'), '/notebooks/compute-cumulative-cost')]"
 			]
 		},
 		{
@@ -23788,48 +24750,6 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/7th of every month')]",
-			"type": "Microsoft.Synapse/workspaces/triggers",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"description": "Runs the Monthly pipelin on the 7th of each month",
-				"annotations": [],
-				"runtimeState": "Stopped",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "RI Charges",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Month",
-						"interval": 1,
-						"startTime": "2022-08-19T15:15:00Z",
-						"timeZone": "UTC",
-						"schedule": {
-							"minutes": [
-								0
-							],
-							"hours": [
-								6
-							],
-							"monthDays": [
-								7
-							]
-						}
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/pipelines/RI Charges')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('workspaceName'), '/Daily at 12am')]",
 			"type": "Microsoft.Synapse/workspaces/triggers",
 			"apiVersion": "2019-06-01-preview",
@@ -23967,37 +24887,6 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/pipelines/Daily VM Utilization')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/daily-cost-trigger')]",
-			"type": "Microsoft.Synapse/workspaces/triggers",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Started",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "Daily Cleanup",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "BlobEventsTrigger",
-				"typeProperties": {
-					"blobPathBeginsWith": "/usage/blobs/exports/daily/ACMDailyActualCost",
-					"blobPathEndsWith": ".csv",
-					"ignoreEmptyBlobs": true,
-					"scope": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt",
-					"events": [
-						"Microsoft.Storage.BlobCreated"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/pipelines/Daily Cleanup')]"
 			]
 		},
 		{
@@ -25422,29 +26311,6 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/CreateAccumulatedCostView')]",
-			"type": "Microsoft.Synapse/workspaces/sqlscripts",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"folder": {
-					"name": "PowerBIViews"
-				},
-				"content": {
-					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW AccumulatedCost\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/accumulated-cost-prediction.parquet/',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
-					"metadata": {
-						"language": "sql"
-					},
-					"currentConnection": {
-						"databaseName": "costmgmt",
-						"poolName": "Built-in"
-					},
-					"resultLimit": 5000
-				},
-				"type": "SqlQuery"
-			},
-			"dependsOn": []
-		},
-		{
 			"name": "[concat(parameters('workspaceName'), '/CreateAdvisorRecommendationsView')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
@@ -25547,6 +26413,29 @@
 				},
 				"content": {
 					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW Calendar_New\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/Calendar/delta/Calendar.delta/',\n        FORMAT = 'DELTA'\n    ) AS [result]\n\nGO\nSELECT TOP 10 * FROM Calendar_New",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/CreateCumulativeCostView')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "PowerBIViews"
+				},
+				"content": {
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW CumulativeCost\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/cumulative-cost-prediction.parquet/',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
 					"metadata": {
 						"language": "sql"
 					},
@@ -39653,7 +40542,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "14a47663-9257-42f1-bb11-9de797e3c9ad"
+						"spark.autotune.trackingId": "2320f631-09ab-4afc-b62c-33fa9673a908"
 					}
 				},
 				"metadata": {
@@ -39678,8 +40567,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -39704,19 +40592,19 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 114
+						"execution_count": 107
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"import pyspark.sql.window as W\r\n",
 							"import statsmodels.api as sm\r\n",
-							"import pandas as pd"
+							"import pandas as pd\r\n",
+							"import numpy as np"
 						],
 						"outputs": [],
-						"execution_count": 115
+						"execution_count": 108
 					},
 					{
 						"cell_type": "code",
@@ -39736,7 +40624,7 @@
 							"df = spark.read.format('parquet').load(cost_path)"
 						],
 						"outputs": [],
-						"execution_count": 116
+						"execution_count": 109
 					},
 					{
 						"cell_type": "code",
@@ -39757,7 +40645,7 @@
 							"df = df.groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('Cost')).orderBy('Date')"
 						],
 						"outputs": [],
-						"execution_count": 117
+						"execution_count": 110
 					},
 					{
 						"cell_type": "code",
@@ -39776,7 +40664,7 @@
 							"df = df.filter(F.col('Date') < F.concat(F.date_format(F.current_date(), 'yyyy'), F.lit('-'), F.date_format(F.current_date(), 'MM'), F.lit('-'), F.lit('01')))"
 						],
 						"outputs": [],
-						"execution_count": 118
+						"execution_count": 111
 					},
 					{
 						"cell_type": "code",
@@ -39793,10 +40681,10 @@
 						},
 						"source": [
 							"window = W.Window.orderBy(\"Date\").rowsBetween(W.Window.unboundedPreceding, 0)\r\n",
-							"df = df.withColumn(\"AccumulatedCost\", F.sum(\"Cost\").over(window))"
+							"df = df.withColumn(\"CumulativeCost\", F.sum(\"Cost\").over(window))"
 						],
 						"outputs": [],
-						"execution_count": 119
+						"execution_count": 112
 					},
 					{
 						"cell_type": "code",
@@ -39818,7 +40706,111 @@
 							"pdf.set_index(\"Date\", inplace=True)"
 						],
 						"outputs": [],
-						"execution_count": 120
+						"execution_count": 113
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"def compute_ols_prediction(input_df, lookback, prediction_interval):\r\n",
+							"    input_df['x'] = range(len(input_df))\r\n",
+							"\r\n",
+							"    # Estimate OLS model\r\n",
+							"    y = input_df['Cost'].values if lookback == -1 else input_df['Cost'].tail(lookback)\r\n",
+							"    x = input_df['x'].values if lookback == -1 else input_df['x'].tail(lookback)\r\n",
+							"    model = sm.OLS(y, sm.add_constant(x))\r\n",
+							"    result = model.fit()\r\n",
+							"\r\n",
+							"    # Configure prediction period\r\n",
+							"    future_months = pd.date_range(start=input_df.index[-1], periods=prediction_interval, freq=\"MS\")\r\n",
+							"    # future_months = future_months[1:]\r\n",
+							"    future_x = np.arange(input_df['x'][-1] + 1, input_df['x'][-1] + prediction_interval + 1)\r\n",
+							"\r\n",
+							"    # Predict future cost\r\n",
+							"    x = sm.add_constant(future_x)\r\n",
+							"    predicted_cost = result.predict(x)\r\n",
+							"\r\n",
+							"    # Create the predicted cost column label\r\n",
+							"    column_label = \"FullLookback\" if lookback == -1 else f'{lookback}MonthLookback'\r\n",
+							"\r\n",
+							"    predicted_df = pd.DataFrame({\"Date\": future_months, f\"PredictedCost{column_label}\": predicted_cost})\r\n",
+							"    predicted_df = spark.createDataFrame(predicted_df)\r\n",
+							"    predicted_df = predicted_df.withColumn(f'PredictedCumulativeCost{column_label}',  F.sum(f\"PredictedCost{column_label}\").over(window) + input_df['CumulativeCost'][-1])\r\n",
+							"    return predicted_df"
+						],
+						"outputs": [],
+						"execution_count": 116
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"four_month_lookback_df = compute_ols_prediction(pdf, lookback=6, prediction_interval=72)\r\n",
+							"eight_month_lookback_df = compute_ols_prediction(pdf, lookback=12, prediction_interval=72)\r\n",
+							"twelve_month_lookback_df = compute_ols_prediction(pdf, lookback=24, prediction_interval=72)\r\n",
+							"sixteen_month_lookback_df = compute_ols_prediction(pdf, lookback=-1, prediction_interval=72)\r\n",
+							"\r\n",
+							"joined_df = df.join(four_month_lookback_df, on='Date', how='outer')\r\n",
+							"joined_df = joined_df.join(eight_month_lookback_df, on='Date', how='outer')\r\n",
+							"joined_df = joined_df.join(twelve_month_lookback_df, on='Date', how='outer')\r\n",
+							"joined_df = joined_df.join(sixteen_month_lookback_df, on='Date', how='outer')\r\n",
+							"joined_df = joined_df.withColumn('Date', F.to_date('Date'))"
+						],
+						"outputs": [],
+						"execution_count": 117
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/cumulative-cost-prediction.parquet\"\r\n",
+							"joined_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
+						],
+						"outputs": [],
+						"execution_count": 119
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"### ARIMA Model"
+						]
 					},
 					{
 						"cell_type": "code",
@@ -39843,165 +40835,7 @@
 							"#     return predicted_df"
 						],
 						"outputs": [],
-						"execution_count": 122
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"# model = sm.OLS(pdf['Cost'], sm.add_constant(pdf.index)).fit()\r\n",
-							"# future_months = pd.date_range(start=input_df.index[-1], periods=72, freq=\"MS\")\r\n",
-							"# y_new = model.predict(future_months)"
-						],
-						"outputs": [],
-						"execution_count": 125
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"# prediction1 = predict_cost(pdf, 1, 1, 1)\r\n",
-							"# prediction1 = prediction1.withColumnRenamed('PredictedCost', 'PredictedCost1')\r\n",
-							"# prediction5 = predict_cost(pdf, 0, 1, 0)\r\n",
-							"# prediction5 = prediction5.withColumnRenamed('PredictedCost', 'PredictedCost5')\r\n",
-							"# # prediction8 = predict_cost(pdf, 2, 1, 1)\r\n",
-							"# # prediction8 = prediction8.withColumnRenamed('PredictedCost', 'PredictedCost8')\r\n",
-							"# prediction9 = predict_cost(pdf, 3, 1, 1)\r\n",
-							"# prediction9 = prediction9.withColumnRenamed('PredictedCost', 'PredictedCost9')\r\n",
-							"# # prediction10 = predict_cost(pdf, 4, 1, 1)\r\n",
-							"# # prediction10 = prediction10.withColumnRenamed('PredictedCost', 'PredictedCost10')\r\n",
-							"# # prediction11 = predict_cost(pdf, 5, 1, 1)\r\n",
-							"# # prediction11 = prediction11.withColumnRenamed('PredictedCost', 'PredictedCost11')\r\n",
-							"# # prediction12 = predict_cost(pdf, 10, 1, 1)\r\n",
-							"# # prediction12 = prediction12.withColumnRenamed('PredictedCost', 'PredictedCost12')\r\n",
-							"# # prediction13 = predict_cost(pdf, 16, 1, 1)\r\n",
-							"# # prediction13 = prediction13.withColumnRenamed('PredictedCost', 'PredictedCost13')\r\n",
-							"# # prediction14 = predict_cost(pdf, 32, 1, 1)\r\n",
-							"# # prediction14 = prediction14.withColumnRenamed('PredictedCost', 'PredictedCost14')\r\n",
-							"\r\n",
-							"# joined_df = df.join(prediction1, on='Date', how='outer')\r\n",
-							"# joined_df = joined_df.join(prediction5, on='Date', how='outer')\r\n",
-							"# # joined_df = joined_df.join(prediction8, on='Date', how='outer')\r\n",
-							"# joined_df = joined_df.join(prediction9, on='Date', how='outer')\r\n",
-							"# # joined_df = joined_df.join(prediction10, on='Date', how='outer')\r\n",
-							"# # joined_df = joined_df.join(prediction11, on='Date', how='outer')\r\n",
-							"# # joined_df = joined_df.join(prediction12, on='Date', how='outer')\r\n",
-							"# # joined_df = joined_df.join(prediction13, on='Date', how='outer')\r\n",
-							"# # joined_df = joined_df.join(prediction14, on='Date', how='outer')\r\n",
-							"# joined_df = joined_df.withColumn('Date', F.to_date('Date'))"
-						],
-						"outputs": [],
-						"execution_count": 123
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							},
-							"collapsed": false
-						},
-						"source": [
-							"# display(joined_df)"
-						],
-						"outputs": [],
-						"execution_count": 124
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"# Fit an ARIMA model to the accumulated cost data\r\n",
-							"model = sm.tsa.ARIMA(pdf[\"AccumulatedCost\"], order=(1, 1, 1)).fit()\r\n",
-							"\r\n",
-							"# Predict future accumulated values\r\n",
-							"future_months = pd.date_range(start=pdf.index[-1], periods=72, freq=\"MS\")\r\n",
-							"future_accumulated = model.predict(start=pdf.index[-1], end=future_months[-1], typ=\"levels\")\r\n",
-							"\r\n",
-							"# Convert the predicted values to a dataframe\r\n",
-							"future_df = pd.DataFrame({\"Date\": future_months, \"PredictedCost\": future_accumulated})\r\n",
-							"\r\n",
-							"# Convert the dataframe back to a pyspark dataframe\r\n",
-							"future_df = spark.createDataFrame(future_df)"
-						],
-						"outputs": [],
-						"execution_count": 11
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"joined_df = df.join(future_df, on='Date', how='outer')\r\n",
-							"joined_df = joined_df.withColumn('Date', F.to_date('Date'))"
-						],
-						"outputs": [],
-						"execution_count": 12
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/accumulated-cost-prediction.parquet\"\r\n",
-							"joined_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
-						],
-						"outputs": [],
-						"execution_count": 13
+						"execution_count": null
 					}
 				]
 			},
@@ -41103,7 +41937,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "1f330b27-994f-42a8-b606-5bd26b9ee37e"
+						"spark.autotune.trackingId": "c89281ce-bb89-43ac-b61e-ef9034cf2e50"
 					}
 				},
 				"metadata": {
@@ -41128,8 +41962,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -41149,7 +41982,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"import pyspark.sql.types as T\r\n",
@@ -41904,7 +42736,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "a7da27e6-4de9-4596-b496-75eed0d9eb13"
+						"spark.autotune.trackingId": "1c56c460-69f3-4a73-8f14-d0afecd13ecc"
 					}
 				},
 				"metadata": {
@@ -41958,7 +42790,8 @@
 							"toDate = '20231231'\n",
 							"fromDate = '20231201'\n",
 							"container = 'usage'\n",
-							"storageAccount = 's037costmgmt'"
+							"storageAccount = 's037costmgmt'\n",
+							"reportType = 'ActualCost'"
 						],
 						"outputs": [],
 						"execution_count": 2
@@ -42095,57 +42928,119 @@
 								"transient": {
 									"deleting": false
 								}
+							}
+						},
+						"source": [
+							"print(f'fromDate: {fromDate}')\r\n",
+							"print(f'toDate: {toDate}')\r\n",
+							"\r\n",
+							"print(f\"------ From: {fromDate}, To: {toDate} -----------\")\r\n",
+							"\r\n",
+							"print(f\"------ {reportType} -----------\")\r\n",
+							"date_range = fromDate + '-' + toDate\r\n",
+							"print(f'dateRange: {date_range}')\r\n",
+							"\r\n",
+							"cost_source_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/daily/ACMDaily{reportType}/{date_range}/*.csv'\r\n",
+							"cost_target_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthly{reportType}/{date_range}/Extended_v3_ACMMonthly{reportType}_{date_range}.parquet'\r\n",
+							"print(f\"Cost data path: {cost_source_path}\")\r\n",
+							"print(f\"Cost destination path: {cost_target_path}\")\r\n",
+							"\r\n",
+							"previous_month_date = get_last_day_prev_month(toDate)\r\n",
+							"print(f'Using {previous_month_date} ServiceNow subscription file')\r\n",
+							"subscription_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/{previous_month_date}-optimized.parquet'\r\n",
+							"print(f\"Subscription path: {subscription_path}\")\r\n",
+							"\r\n",
+							"application_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\r\n",
+							"print(f\"Application path: {application_path}\")\r\n",
+							"\r\n",
+							"# Load cost file\r\n",
+							"csv_options = {'header' : True,\r\n",
+							"                'delimiter' : ',',\r\n",
+							"                'quote' : '\"',\r\n",
+							"                'escape' : '\"'}\r\n",
+							"cost_df = spark.read.options(**csv_options).csv(cost_source_path)\r\n",
+							"\r\n",
+							"# Load subscription file\r\n",
+							"subscription_df = spark.read.format('parquet').load(subscription_path)\r\n",
+							"subscription_df = pre_process_subscriptions(subscription_df)\r\n",
+							"\r\n",
+							"# Load application file\r\n",
+							"application_df = spark.read.format('parquet').load(application_path)\r\n",
+							"application_df = application_df.withColumn('AppID', F.col('AppID').cast(\"int\"))\r\n",
+							"\r\n",
+							"# Transform data\r\n",
+							"cost_df = transform_cost_data(cost_df)\r\n",
+							"cost_df = cost_df.withColumn(\"ResourceLocation\", F.lower(F.trim(F.regexp_replace(F.col('ResourceLocation'), \"\\s+\", \"\"))))\r\n",
+							"cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\r\n",
+							"write_output_file(cost_df, cost_target_path)\r\n",
+							"\r\n",
+							"print(' ')"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
 							},
 							"collapsed": false
 						},
 						"source": [
-							"print(f'fromDate: {fromDate}')\n",
-							"print(f'toDate: {toDate}')\n",
-							"report_types = ['ActualCost', 'AmortizedCost']\n",
+							"# print(f'fromDate: {fromDate}')\n",
+							"# print(f'toDate: {toDate}')\n",
+							"# report_types = ['ActualCost', 'AmortizedCost']\n",
 							"\n",
-							"print(f\"------ From: {fromDate}, To: {toDate} -----------\")\n",
+							"# print(f\"------ From: {fromDate}, To: {toDate} -----------\")\n",
 							"\n",
-							"for report_type in report_types:\n",
+							"# for report_type in report_types:\n",
 							"\n",
-							"    print(f\"------ {report_type} -----------\")\n",
-							"    date_range = fromDate + '-' + toDate\n",
-							"    print(f'dateRange: {date_range}')\n",
+							"#     print(f\"------ {report_type} -----------\")\n",
+							"#     date_range = fromDate + '-' + toDate\n",
+							"#     print(f'dateRange: {date_range}')\n",
 							"\n",
-							"    cost_source_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/daily/ACMDaily{report_type}/{date_range}/*.csv'\n",
-							"    cost_target_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthly{report_type}/{date_range}/Extended_v3_ACMMonthly{report_type}_{date_range}.parquet'\n",
-							"    print(f\"Cost data path: {cost_source_path}\")\n",
-							"    print(f\"Cost destination path: {cost_target_path}\")\n",
+							"#     cost_source_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/daily/ACMDaily{report_type}/{date_range}/*.csv'\n",
+							"#     cost_target_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthly{report_type}/{date_range}/Extended_v3_ACMMonthly{report_type}_{date_range}.parquet'\n",
+							"#     print(f\"Cost data path: {cost_source_path}\")\n",
+							"#     print(f\"Cost destination path: {cost_target_path}\")\n",
 							"\n",
-							"    previous_month_date = get_last_day_prev_month(toDate)\n",
-							"    print(f'Using {previous_month_date} ServiceNow subscription file')\n",
-							"    subscription_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/{previous_month_date}-optimized.parquet'\n",
-							"    print(f\"Subscription path: {subscription_path}\")\n",
+							"#     previous_month_date = get_last_day_prev_month(toDate)\n",
+							"#     print(f'Using {previous_month_date} ServiceNow subscription file')\n",
+							"#     subscription_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/{previous_month_date}-optimized.parquet'\n",
+							"#     print(f\"Subscription path: {subscription_path}\")\n",
 							"\n",
-							"    application_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\n",
-							"    print(f\"Application path: {application_path}\")\n",
+							"#     application_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\n",
+							"#     print(f\"Application path: {application_path}\")\n",
 							"\n",
-							"    # Load cost file\n",
-							"    csv_options = {'header' : True,\n",
-							"                   'delimiter' : ',',\n",
-							"                   'quote' : '\"',\n",
-							"                   'escape' : '\"'}\n",
-							"    cost_df = spark.read.options(**csv_options).csv(cost_source_path)\n",
+							"#     # Load cost file\n",
+							"#     csv_options = {'header' : True,\n",
+							"#                    'delimiter' : ',',\n",
+							"#                    'quote' : '\"',\n",
+							"#                    'escape' : '\"'}\n",
+							"#     cost_df = spark.read.options(**csv_options).csv(cost_source_path)\n",
 							"\n",
-							"    # Load subscription file\n",
-							"    subscription_df = spark.read.format('parquet').load(subscription_path)\n",
-							"    subscription_df = pre_process_subscriptions(subscription_df)\n",
+							"#     # Load subscription file\n",
+							"#     subscription_df = spark.read.format('parquet').load(subscription_path)\n",
+							"#     subscription_df = pre_process_subscriptions(subscription_df)\n",
 							"\n",
-							"    # Load application file\n",
-							"    application_df = spark.read.format('parquet').load(application_path)\n",
-							"    application_df = application_df.withColumn('AppID', F.col('AppID').cast(\"int\"))\n",
+							"#     # Load application file\n",
+							"#     application_df = spark.read.format('parquet').load(application_path)\n",
+							"#     application_df = application_df.withColumn('AppID', F.col('AppID').cast(\"int\"))\n",
 							"\n",
-							"    # Transform data\n",
-							"    cost_df = transform_cost_data(cost_df)\n",
-							"    cost_df = cost_df.withColumn(\"ResourceLocation\", F.lower(F.trim(F.regexp_replace(F.col('ResourceLocation'), \"\\s+\", \"\"))))\n",
-							"    cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\n",
-							"    write_output_file(cost_df, cost_target_path)\n",
+							"#     # Transform data\n",
+							"#     cost_df = transform_cost_data(cost_df)\n",
+							"#     cost_df = cost_df.withColumn(\"ResourceLocation\", F.lower(F.trim(F.regexp_replace(F.col('ResourceLocation'), \"\\s+\", \"\"))))\n",
+							"#     cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\n",
+							"#     write_output_file(cost_df, cost_target_path)\n",
 							"    \n",
-							"    print(' ')"
+							"#     print(' ')"
 						],
 						"outputs": [],
 						"execution_count": 12
