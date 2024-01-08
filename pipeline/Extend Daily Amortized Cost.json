@@ -1,0 +1,141 @@
+{
+	"name": "Extend Daily Amortized Cost",
+	"properties": {
+		"activities": [
+			{
+				"name": "Extend Amortized COst",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Extend Daily Cost",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"ReportType": "AmortizedCost"
+					}
+				}
+			},
+			{
+				"name": "Update 3year cost file",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "Extend Amortized COst",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "Prod_Extended_Amortized_Cost-Threeyears",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"storageAccount": {
+							"value": {
+								"value": "@variables('storageAccount')",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true
+				}
+			},
+			{
+				"name": "Update 1year cost file",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "Update 3year cost file",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "Prod_Extended_Amortized_Cost-Oneyear",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"storageAccount": {
+							"value": {
+								"value": "@variables('storageAccount')",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true
+				}
+			},
+			{
+				"name": "Run anomaly detection",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "Update 1year cost file",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "Anomaly_Detection_v2",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"storageAccount": {
+							"value": {
+								"value": "@variables('storageAccount')",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true
+				}
+			}
+		],
+		"variables": {
+			"storageAccount": {
+				"type": "String",
+				"defaultValue": "s037costmgmt"
+			}
+		},
+		"folder": {
+			"name": "PipelinesInProduction/Cost"
+		},
+		"annotations": []
+	}
+}
