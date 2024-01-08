@@ -40858,7 +40858,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "97bbc6c9-3467-4835-82be-9e3517a1a9ac"
+						"spark.autotune.trackingId": "e30c6c76-1bf6-4a62-adef-36516f359f7b"
 					}
 				},
 				"metadata": {
@@ -42731,7 +42731,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "f4a9c807-cbdf-4e26-bf4c-f6db6f0a2aed"
+						"spark.autotune.trackingId": "7a9dd8c0-812c-46be-8b07-ef5e14959be8"
 					}
 				},
 				"metadata": {
@@ -43070,7 +43070,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "ba89b7e5-5c23-4ede-9778-86e7214eb027"
+						"spark.autotune.trackingId": "bec2482b-695a-4182-9f45-3c0583e79fa6"
 					}
 				},
 				"metadata": {
@@ -46827,6 +46827,138 @@
 				"[concat(variables('workspaceId'), '/datasets/Monthly_Parquet')]",
 				"[concat(variables('workspaceId'), '/notebooks/monthly-cost-extend-v3')]",
 				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('Extend Monthly Cost_pipelineSparkPoolNameRef'))]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Extend Monthly Actual Cost')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Extend Monthly Actual Cost",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Extend Monthly Cost",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"reportType": "ActualCost"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "PipelinesInProduction/Cost"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/Extend Monthly Cost')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/monthly-actual-cost-trigger')]",
+			"type": "Microsoft.Synapse/workspaces/triggers",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "Extend Monthly Actual Cost",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "BlobEventsTrigger",
+				"typeProperties": {
+					"blobPathBeginsWith": "/usage/blobs/exports/monthly/ACMMonthlyActualCost",
+					"blobPathEndsWith": ".csv",
+					"ignoreEmptyBlobs": true,
+					"scope": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt",
+					"events": [
+						"Microsoft.Storage.BlobCreated"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/Extend Monthly Actual Cost')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Extend Monthly Amortized Cost')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Extend Monthly Amortized Cost",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Extend Monthly Cost",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"reportType": "AmortizedCost"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "PipelinesInProduction/Cost"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/Extend Monthly Cost')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/monthly-amortized-cost-trigger')]",
+			"type": "Microsoft.Synapse/workspaces/triggers",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "Extend Monthly Amortized Cost",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "BlobEventsTrigger",
+				"typeProperties": {
+					"blobPathBeginsWith": "/usage/blobs/exports/monthly/ACMMonthlyAmortizedCost",
+					"blobPathEndsWith": ".csv",
+					"ignoreEmptyBlobs": true,
+					"scope": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt",
+					"events": [
+						"Microsoft.Storage.BlobCreated"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/Extend Monthly Amortized Cost')]"
 			]
 		}
 	]
