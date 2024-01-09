@@ -1,5 +1,5 @@
 {
-	"name": "autofit-combometer-retrieval",
+	"name": "build-ri-recommendations",
 	"properties": {
 		"activities": [
 			{
@@ -168,8 +168,50 @@
 						"type": "DatasetReference"
 					}
 				]
+			},
+			{
+				"name": "Combine RI recommendations and Autofit Combometer data",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "Retrieve autofit combometer data from CCM blob storage",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "combine-recommendations-and-autofitcombometer",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"storageAccount": {
+							"value": {
+								"value": "@variables('storageAccount')",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true
+				}
 			}
 		],
+		"variables": {
+			"storageAccount": {
+				"type": "String",
+				"defaultValue": "s037costmgmt"
+			}
+		},
 		"folder": {
 			"name": "PipelinesInProduction"
 		},
