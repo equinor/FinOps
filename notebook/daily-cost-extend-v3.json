@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "1c56c460-69f3-4a73-8f14-d0afecd13ecc"
+				"spark.autotune.trackingId": "244fc658-11f5-4ef6-a641-2e3561769f2f"
 			}
 		},
 		"metadata": {
@@ -258,71 +258,6 @@
 					"print(' ')"
 				],
 				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"# print(f'fromDate: {fromDate}')\n",
-					"# print(f'toDate: {toDate}')\n",
-					"# report_types = ['ActualCost', 'AmortizedCost']\n",
-					"\n",
-					"# print(f\"------ From: {fromDate}, To: {toDate} -----------\")\n",
-					"\n",
-					"# for report_type in report_types:\n",
-					"\n",
-					"#     print(f\"------ {report_type} -----------\")\n",
-					"#     date_range = fromDate + '-' + toDate\n",
-					"#     print(f'dateRange: {date_range}')\n",
-					"\n",
-					"#     cost_source_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/daily/ACMDaily{report_type}/{date_range}/*.csv'\n",
-					"#     cost_target_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthly{report_type}/{date_range}/Extended_v3_ACMMonthly{report_type}_{date_range}.parquet'\n",
-					"#     print(f\"Cost data path: {cost_source_path}\")\n",
-					"#     print(f\"Cost destination path: {cost_target_path}\")\n",
-					"\n",
-					"#     previous_month_date = get_last_day_prev_month(toDate)\n",
-					"#     print(f'Using {previous_month_date} ServiceNow subscription file')\n",
-					"#     subscription_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/{previous_month_date}-optimized.parquet'\n",
-					"#     print(f\"Subscription path: {subscription_path}\")\n",
-					"\n",
-					"#     application_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\n",
-					"#     print(f\"Application path: {application_path}\")\n",
-					"\n",
-					"#     # Load cost file\n",
-					"#     csv_options = {'header' : True,\n",
-					"#                    'delimiter' : ',',\n",
-					"#                    'quote' : '\"',\n",
-					"#                    'escape' : '\"'}\n",
-					"#     cost_df = spark.read.options(**csv_options).csv(cost_source_path)\n",
-					"\n",
-					"#     # Load subscription file\n",
-					"#     subscription_df = spark.read.format('parquet').load(subscription_path)\n",
-					"#     subscription_df = pre_process_subscriptions(subscription_df)\n",
-					"\n",
-					"#     # Load application file\n",
-					"#     application_df = spark.read.format('parquet').load(application_path)\n",
-					"#     application_df = application_df.withColumn('AppID', F.col('AppID').cast(\"int\"))\n",
-					"\n",
-					"#     # Transform data\n",
-					"#     cost_df = transform_cost_data(cost_df)\n",
-					"#     cost_df = cost_df.withColumn(\"ResourceLocation\", F.lower(F.trim(F.regexp_replace(F.col('ResourceLocation'), \"\\s+\", \"\"))))\n",
-					"#     cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\n",
-					"#     write_output_file(cost_df, cost_target_path)\n",
-					"    \n",
-					"#     print(' ')"
-				],
-				"execution_count": 12
 			}
 		]
 	}
