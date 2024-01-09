@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "ba0c4c0a-cd61-44fd-8068-7fabbf6c6440"
+				"spark.autotune.trackingId": "485b05af-0c35-4b08-b6ab-b2e944192f09"
 			}
 		},
 		"metadata": {
@@ -213,6 +213,7 @@
 					"                     .withColumn('Date', F.to_date(F.col('Date'), 'MM/dd/yyyy'))\\\r\n",
 					"                     .withColumn('BillingPeriodStartDate', F.to_date(F.col('BillingPeriodStartDate'), 'MM/dd/yyyy'))\\\r\n",
 					"                     .withColumn('BillingPeriodEndDate', F.to_date(F.col('BillingPeriodEndDate'), 'MM/dd/yyyy'))\r\n",
+					"                     .withColumn('CPUHours', F.col('ai_VCPUs') * F.col('Quantity'))\r\n",
 					"\r\n",
 					"    return cost_df"
 				],
@@ -461,6 +462,7 @@
 					"    cost_df = cost_AHB_column(cost_df)\r\n",
 					"    cost_df = cost_set_instance_name(cost_df)\r\n",
 					"    cost_df = expand_cost_tags(cost_df)\r\n",
+					"    cost_df = cost_df.withColumn(\"ResourceLocation\", F.lower(F.trim(F.regexp_replace(F.col('ResourceLocation'), \"\\s+\", \"\"))))\r\n",
 					"\r\n",
 					"    return cost_df"
 				],
