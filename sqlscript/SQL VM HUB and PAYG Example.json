@@ -5,7 +5,7 @@
 			"name": "--RI & HUB Savings"
 		},
 		"content": {
-			"query": "SELECT\n    TOP 100 *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/2024*/Extended_v3_ACMMonthlyActualCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where ResourceId = '/subscriptions/8b96ae86-c1d5-4668-bf1c-e1b120b18b17/resourceGroups/S077-NOE-EMI-TST/providers/Microsoft.Compute/virtualMachines/S077WEMID1T'\n    and [Date] in ('2024-01-07', '2024-01-08', '2024-01-09')\n    \n",
+			"query": "SELECT\n    TOP 100 *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/2024*/Extended_v3_ACMMonthlyActualCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where \n    MeterCategory = 'Virtual Machines Licenses'\n    and ResourceId = '/subscriptions/8b96ae86-c1d5-4668-bf1c-e1b120b18b17/resourceGroups/S077-NOE-EMI-TST/providers/Microsoft.Compute/virtualMachines/S077WEMID1T'\n    and [Date] in ('2024-01-07', '2024-01-08', '2024-01-09')\n    \n",
 			"metadata": {
 				"language": "sql"
 			},
