@@ -41,19 +41,15 @@
 			"type": "string",
 			"defaultValue": "s037costmgmt"
 		},
-		"Daily Cleanup_pipelineSparkPoolNameRef": {
-			"type": "string",
-			"defaultValue": "sprkpool33large"
-		},
-		"Daily Cleanup_pipelineStorageAccountVariable": {
-			"type": "string",
-			"defaultValue": "s037costmgmt"
-		},
 		"Daily VM Utilization_pipelineStorageAccountParameter": {
 			"type": "string",
 			"defaultValue": "s037costmgmt"
 		},
 		"Extend Daily Actual Cost_pipelineStorageAccountVariable": {
+			"type": "string",
+			"defaultValue": "s037costmgmt"
+		},
+		"Extend Daily Amortized Cost_pipelineStorageAccountVariable": {
 			"type": "string",
 			"defaultValue": "s037costmgmt"
 		},
@@ -65,11 +61,11 @@
 			"type": "string",
 			"defaultValue": "s037costmgmt"
 		},
-		"Monthly Cleanup_pipelineSparkPoolNameRef": {
+		"Extend Monthly Cost_pipelineSparkPoolNameRef": {
 			"type": "string",
 			"defaultValue": "sprkpool33large"
 		},
-		"Monthly Cleanup_pipelineStorageAccountVariable": {
+		"Extend Monthly Cost_pipelineStorageAccountVariable": {
 			"type": "string",
 			"defaultValue": "s037costmgmt"
 		},
@@ -845,30 +841,6 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
-		"sparkpool32_delayInMinutes": {
-			"type": "int",
-			"defaultValue": 15
-		},
-		"sparkpool32_maxNodeCount": {
-			"type": "int",
-			"defaultValue": 5
-		},
-		"sparkpool32_minNodeCount": {
-			"type": "int",
-			"defaultValue": 3
-		},
-		"sparkpool32_nodeCount": {
-			"type": "int",
-			"defaultValue": 0
-		},
-		"sparkpool32_nodeSize": {
-			"type": "string",
-			"defaultValue": "Medium"
-		},
-		"sparkpool32_sparkVersion": {
-			"type": "string",
-			"defaultValue": "3.2"
-		},
 		"sprkpool33large_delayInMinutes": {
 			"type": "int",
 			"defaultValue": 10
@@ -893,17 +865,29 @@
 			"type": "string",
 			"defaultValue": "3.3"
 		},
-		"Extend Daily Amortized Cost_pipelineStorageAccountVariable": {
-			"type": "string",
-			"defaultValue": "s037costmgmt"
+		"sparkpool32_delayInMinutes": {
+			"type": "int",
+			"defaultValue": 15
 		},
-		"Extend Monthly Cost_pipelineSparkPoolNameRef": {
-			"type": "string",
-			"defaultValue": "sprkpool33large"
+		"sparkpool32_maxNodeCount": {
+			"type": "int",
+			"defaultValue": 5
 		},
-		"Extend Monthly Cost_pipelineStorageAccountVariable": {
+		"sparkpool32_minNodeCount": {
+			"type": "int",
+			"defaultValue": 3
+		},
+		"sparkpool32_nodeCount": {
+			"type": "int",
+			"defaultValue": 0
+		},
+		"sparkpool32_nodeSize": {
 			"type": "string",
-			"defaultValue": "s037costmgmt"
+			"defaultValue": "Medium"
+		},
+		"sparkpool32_sparkVersion": {
+			"type": "string",
+			"defaultValue": "3.2"
 		}
 	},
 	"variables": {
@@ -5083,2373 +5067,6 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/Daily Cleanup')]",
-			"type": "Microsoft.Synapse/workspaces/pipelines",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"activities": [
-					{
-						"name": "Get Actual Cost folders modied more than 1 day ago",
-						"type": "GetMetadata",
-						"dependsOn": [
-							{
-								"activity": "Delete Actual Cost Files modified more than 1 day ago",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataset": {
-								"referenceName": "Older_Files_For_Deletion_Binary",
-								"type": "DatasetReference",
-								"parameters": {
-									"ReportType": {
-										"value": "@variables('ActualCost')",
-										"type": "Expression"
-									}
-								}
-							},
-							"fieldList": [
-								"childItems"
-							],
-							"storeSettings": {
-								"type": "AzureBlobFSReadSettings",
-								"recursive": true,
-								"modifiedDatetimeEnd": {
-									"value": "@addHours(utcnow(),-12)",
-									"type": "Expression"
-								},
-								"enablePartitionDiscovery": false
-							},
-							"formatSettings": {
-								"type": "BinaryReadSettings"
-							}
-						}
-					},
-					{
-						"name": "For Each AC Folder",
-						"type": "ForEach",
-						"dependsOn": [
-							{
-								"activity": "Get Actual Cost folders modied more than 1 day ago",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@activity('Get Actual Cost folders modied more than 1 day ago').output.childItems",
-								"type": "Expression"
-							},
-							"isSequential": false,
-							"activities": [
-								{
-									"name": "Get AC Item Metadata",
-									"type": "GetMetadata",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"dataset": {
-											"referenceName": "ds_Test_delete_file",
-											"type": "DatasetReference",
-											"parameters": {
-												"Path": {
-													"value": "@item().name",
-													"type": "Expression"
-												},
-												"ReportType": {
-													"value": "@variables('ActualCost')",
-													"type": "Expression"
-												}
-											}
-										},
-										"fieldList": [
-											"childItems"
-										],
-										"storeSettings": {
-											"type": "AzureBlobFSReadSettings",
-											"recursive": true,
-											"enablePartitionDiscovery": false
-										},
-										"formatSettings": {
-											"type": "BinaryReadSettings"
-										}
-									}
-								},
-								{
-									"name": "If AC Folder Empty",
-									"type": "IfCondition",
-									"dependsOn": [
-										{
-											"activity": "Get AC Item Metadata",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"userProperties": [],
-									"typeProperties": {
-										"expression": {
-											"value": "@empty(activity('Get AC Item Metadata').output.childItems)",
-											"type": "Expression"
-										},
-										"ifTrueActivities": [
-											{
-												"name": "Delete Empty AC Folder",
-												"type": "Delete",
-												"dependsOn": [],
-												"policy": {
-													"timeout": "0.12:00:00",
-													"retry": 0,
-													"retryIntervalInSeconds": 30,
-													"secureOutput": false,
-													"secureInput": false
-												},
-												"userProperties": [],
-												"typeProperties": {
-													"dataset": {
-														"referenceName": "ds_Test_delete_file",
-														"type": "DatasetReference",
-														"parameters": {
-															"Path": {
-																"value": "@item().name",
-																"type": "Expression"
-															},
-															"ReportType": {
-																"value": "@variables('ActualCost')",
-																"type": "Expression"
-															}
-														}
-													},
-													"enableLogging": false,
-													"storeSettings": {
-														"type": "AzureBlobFSReadSettings",
-														"recursive": true,
-														"enablePartitionDiscovery": false
-													}
-												}
-											}
-										]
-									}
-								}
-							]
-						}
-					},
-					{
-						"name": "Delete Actual Cost Files modified more than 1 day ago",
-						"type": "Delete",
-						"dependsOn": [
-							{
-								"activity": "Set Date Range",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataset": {
-								"referenceName": "ds_test_delete_files",
-								"type": "DatasetReference",
-								"parameters": {
-									"ReportType": {
-										"value": "@variables('ActualCost')",
-										"type": "Expression"
-									}
-								}
-							},
-							"enableLogging": false,
-							"storeSettings": {
-								"type": "AzureBlobFSReadSettings",
-								"recursive": true,
-								"modifiedDatetimeEnd": {
-									"value": "@addHours(utcnow(),-12)",
-									"type": "Expression"
-								},
-								"wildcardFileName": "*",
-								"enablePartitionDiscovery": false
-							}
-						}
-					},
-					{
-						"name": "Get Amortized Cost folders modied more than 1 day ago",
-						"type": "GetMetadata",
-						"dependsOn": [
-							{
-								"activity": "Delete Amortized Cost Files modfied more than 1 day ago",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataset": {
-								"referenceName": "Older_Files_For_Deletion_Binary",
-								"type": "DatasetReference",
-								"parameters": {
-									"ReportType": "@variables('AmortizedCost')"
-								}
-							},
-							"fieldList": [
-								"childItems"
-							],
-							"storeSettings": {
-								"type": "AzureBlobFSReadSettings",
-								"recursive": true,
-								"modifiedDatetimeEnd": {
-									"value": "@addHours(utcnow(),-12)",
-									"type": "Expression"
-								},
-								"enablePartitionDiscovery": false
-							},
-							"formatSettings": {
-								"type": "BinaryReadSettings"
-							}
-						}
-					},
-					{
-						"name": "For Amortized Folder",
-						"type": "ForEach",
-						"dependsOn": [
-							{
-								"activity": "Get Amortized Cost folders modied more than 1 day ago",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@activity('Get Amortized Cost folders modied more than 1 day ago').output.childItems",
-								"type": "Expression"
-							},
-							"isSequential": false,
-							"activities": [
-								{
-									"name": "Get Amortized Item Metadata",
-									"type": "GetMetadata",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"dataset": {
-											"referenceName": "ds_Test_delete_file",
-											"type": "DatasetReference",
-											"parameters": {
-												"Path": {
-													"value": "@item().name",
-													"type": "Expression"
-												},
-												"ReportType": {
-													"value": "@variables('AmortizedCost')",
-													"type": "Expression"
-												}
-											}
-										},
-										"fieldList": [
-											"childItems"
-										],
-										"storeSettings": {
-											"type": "AzureBlobFSReadSettings",
-											"recursive": true,
-											"enablePartitionDiscovery": false
-										},
-										"formatSettings": {
-											"type": "BinaryReadSettings"
-										}
-									}
-								},
-								{
-									"name": "If Amortized Folder Empty",
-									"type": "IfCondition",
-									"dependsOn": [
-										{
-											"activity": "Get Amortized Item Metadata",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"userProperties": [],
-									"typeProperties": {
-										"expression": {
-											"value": "@empty(activity('Get Amortized Item Metadata').output.childItems)",
-											"type": "Expression"
-										},
-										"ifTrueActivities": [
-											{
-												"name": "Delete Empty Amortized Folder",
-												"type": "Delete",
-												"dependsOn": [],
-												"policy": {
-													"timeout": "0.12:00:00",
-													"retry": 0,
-													"retryIntervalInSeconds": 30,
-													"secureOutput": false,
-													"secureInput": false
-												},
-												"userProperties": [],
-												"typeProperties": {
-													"dataset": {
-														"referenceName": "ds_Test_delete_file",
-														"type": "DatasetReference",
-														"parameters": {
-															"Path": {
-																"value": "@item().name",
-																"type": "Expression"
-															},
-															"ReportType": {
-																"value": "@variables('AmortizedCost')",
-																"type": "Expression"
-															}
-														}
-													},
-													"enableLogging": false,
-													"storeSettings": {
-														"type": "AzureBlobFSReadSettings",
-														"recursive": true,
-														"enablePartitionDiscovery": false
-													}
-												}
-											}
-										]
-									}
-								}
-							]
-						}
-					},
-					{
-						"name": "Delete Amortized Cost Files modfied more than 1 day ago",
-						"type": "Delete",
-						"dependsOn": [
-							{
-								"activity": "Set Date Range",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataset": {
-								"referenceName": "ds_test_delete_files",
-								"type": "DatasetReference",
-								"parameters": {
-									"ReportType": {
-										"value": "@variables('AmortizedCost')",
-										"type": "Expression"
-									}
-								}
-							},
-							"enableLogging": false,
-							"storeSettings": {
-								"type": "AzureBlobFSReadSettings",
-								"recursive": true,
-								"modifiedDatetimeEnd": {
-									"value": "@addHours(utcnow(),-12)",
-									"type": "Expression"
-								},
-								"wildcardFileName": "*",
-								"enablePartitionDiscovery": false
-							}
-						}
-					},
-					{
-						"name": "Create Actual Cost Parquet File",
-						"type": "Copy",
-						"dependsOn": [
-							{
-								"activity": "For Each AC Folder",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "DelimitedTextSource",
-								"storeSettings": {
-									"type": "AzureBlobFSReadSettings",
-									"recursive": false,
-									"wildcardFolderPath": "exports/daily/ACMDailyActualCost/*",
-									"wildcardFileName": "*.csv",
-									"enablePartitionDiscovery": false
-								},
-								"formatSettings": {
-									"type": "DelimitedTextReadSettings"
-								}
-							},
-							"sink": {
-								"type": "ParquetSink",
-								"storeSettings": {
-									"type": "AzureBlobFSWriteSettings"
-								},
-								"formatSettings": {
-									"type": "ParquetWriteSettings"
-								}
-							},
-							"enableStaging": false,
-							"translator": {
-								"type": "TabularTranslator",
-								"mappings": [
-									{
-										"source": {
-											"name": "InvoiceSectionName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "InvoiceSectionName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "AccountName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "AccountName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "AccountOwnerId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "AccountOwnerId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "SubscriptionId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "SubscriptionId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "SubscriptionName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "SubscriptionName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ResourceGroup",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ResourceGroup",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ResourceLocation",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ResourceLocation",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Date",
-											"type": "DateTime",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Date",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ProductName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ProductName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "MeterCategory",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "MeterCategory",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "MeterSubCategory",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "MeterSubCategory",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "MeterId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "MeterId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "MeterName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "MeterName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "MeterRegion",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "MeterRegion",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "UnitOfMeasure",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "UnitOfMeasure",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Quantity",
-											"type": "Double",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Quantity",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "EffectivePrice",
-											"type": "Double",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "EffectivePrice",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "CostInBillingCurrency",
-											"type": "Double",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "CostInBillingCurrency",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "CostCenter",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "CostCenter",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ConsumedService",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ConsumedService",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ResourceId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ResourceId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Tags",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Tags",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "OfferId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "OfferId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "AdditionalInfo",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "AdditionalInfo",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ServiceInfo1",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ServiceInfo1",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ServiceInfo2",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ServiceInfo2",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ResourceName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ResourceName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ReservationId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ReservationId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ReservationName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ReservationName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "UnitPrice",
-											"type": "Double",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "UnitPrice",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ProductOrderId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ProductOrderId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ProductOrderName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ProductOrderName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Term",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Term",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PublisherType",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PublisherType",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PublisherName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PublisherName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ChargeType",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ChargeType",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Frequency",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Frequency",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PricingModel",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PricingModel",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "AvailabilityZone",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "AvailabilityZone",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingAccountId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingAccountId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingAccountName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingAccountName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingCurrencyCode",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingCurrencyCode",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingPeriodStartDate",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingPeriodStartDate",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingPeriodEndDate",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingPeriodEndDate",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingProfileId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingProfileId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingProfileName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingProfileName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "InvoiceSectionId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "InvoiceSectionId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "IsAzureCreditEligible",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "IsAzureCreditEligible",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PartNumber",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PartNumber",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PayGPrice",
-											"type": "Double",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PayGPrice",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PlanName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PlanName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ServiceFamily",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ServiceFamily",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "CostAllocationRuleName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "CostAllocationRuleName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "benefitId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "benefitId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "benefitName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "benefitName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									}
-								],
-								"typeConversion": true,
-								"typeConversionSettings": {
-									"allowDataTruncation": true,
-									"treatBooleanAsNumber": false
-								}
-							}
-						},
-						"inputs": [
-							{
-								"referenceName": "ds_CSV_File",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						],
-						"outputs": [
-							{
-								"referenceName": "ds_Daily_Parquet_File",
-								"type": "DatasetReference",
-								"parameters": {
-									"Path": {
-										"value": "@concat('exports/daily/ACMDaily',variables('ActualCost'))",
-										"type": "Expression"
-									},
-									"reportType": {
-										"value": "@variables('ActualCost')",
-										"type": "Expression"
-									}
-								}
-							}
-						]
-					},
-					{
-						"name": "Set last day in Month",
-						"type": "SetVariable",
-						"dependsOn": [
-							{
-								"activity": "Set first day of month",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"variableName": "toDate",
-							"value": {
-								"value": "@replace(replace(adddays(formatDateTime(adddays(formatDateTime(formatDateTime(utcnow(),'yyyy-MM-01'), 'yyyy-MM-28'),5), 'yyyy-MM-01'),-1),'T00:00:00.0000000',''),'-','')",
-								"type": "Expression"
-							}
-						}
-					},
-					{
-						"name": "Set first day of month",
-						"description": "",
-						"type": "SetVariable",
-						"dependsOn": [],
-						"policy": {
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"variableName": "fromDate",
-							"value": {
-								"value": "@concat(formatDateTime(utcnow(),'yyyyMM01'))",
-								"type": "Expression"
-							}
-						}
-					},
-					{
-						"name": "Set Date Range",
-						"type": "SetVariable",
-						"dependsOn": [
-							{
-								"activity": "Set last day in Month",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"variableName": "dateRange",
-							"value": {
-								"value": "@concat(replace(variables('fromDate'),'-',''),'-',replace(variables('toDate'),'-',''))",
-								"type": "Expression"
-							}
-						}
-					},
-					{
-						"name": "Create Amortized Cost Parquet File",
-						"type": "Copy",
-						"dependsOn": [
-							{
-								"activity": "For Amortized Folder",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "DelimitedTextSource",
-								"storeSettings": {
-									"type": "AzureBlobFSReadSettings",
-									"recursive": false,
-									"wildcardFolderPath": "exports/daily/ACMDailyAmortizedCost/*",
-									"wildcardFileName": "*.csv",
-									"enablePartitionDiscovery": false
-								},
-								"formatSettings": {
-									"type": "DelimitedTextReadSettings"
-								}
-							},
-							"sink": {
-								"type": "ParquetSink",
-								"storeSettings": {
-									"type": "AzureBlobFSWriteSettings"
-								},
-								"formatSettings": {
-									"type": "ParquetWriteSettings"
-								}
-							},
-							"enableStaging": false,
-							"translator": {
-								"type": "TabularTranslator",
-								"mappings": [
-									{
-										"source": {
-											"name": "InvoiceSectionName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "InvoiceSectionName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "AccountName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "AccountName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "AccountOwnerId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "AccountOwnerId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "SubscriptionId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "SubscriptionId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "SubscriptionName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "SubscriptionName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ResourceGroup",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ResourceGroup",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ResourceLocation",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ResourceLocation",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Date",
-											"type": "DateTime",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Date",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ProductName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ProductName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "MeterCategory",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "MeterCategory",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "MeterSubCategory",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "MeterSubCategory",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "MeterId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "MeterId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "MeterName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "MeterName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "MeterRegion",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "MeterRegion",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "UnitOfMeasure",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "UnitOfMeasure",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Quantity",
-											"type": "Double",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Quantity",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "EffectivePrice",
-											"type": "Double",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "EffectivePrice",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "CostInBillingCurrency",
-											"type": "Double",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "CostInBillingCurrency",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "CostCenter",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "CostCenter",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ConsumedService",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ConsumedService",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ResourceId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ResourceId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Tags",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Tags",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "OfferId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "OfferId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "AdditionalInfo",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "AdditionalInfo",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ServiceInfo1",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ServiceInfo1",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ServiceInfo2",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ServiceInfo2",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ResourceName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ResourceName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ReservationId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ReservationId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ReservationName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ReservationName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "UnitPrice",
-											"type": "Double",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "UnitPrice",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ProductOrderId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ProductOrderId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ProductOrderName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ProductOrderName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Term",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Term",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PublisherType",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PublisherType",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PublisherName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PublisherName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ChargeType",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ChargeType",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Frequency",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Frequency",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PricingModel",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PricingModel",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "AvailabilityZone",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "AvailabilityZone",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingAccountId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingAccountId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingAccountName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingAccountName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingCurrencyCode",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingCurrencyCode",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingPeriodStartDate",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingPeriodStartDate",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingPeriodEndDate",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingPeriodEndDate",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingProfileId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingProfileId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingProfileName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingProfileName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "InvoiceSectionId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "InvoiceSectionId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "IsAzureCreditEligible",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "IsAzureCreditEligible",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PartNumber",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PartNumber",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PayGPrice",
-											"type": "Double",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PayGPrice",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PlanName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PlanName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ServiceFamily",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ServiceFamily",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "CostAllocationRuleName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "CostAllocationRuleName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "benefitId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "benefitId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "benefitName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "benefitName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									}
-								],
-								"typeConversion": true,
-								"typeConversionSettings": {
-									"allowDataTruncation": true,
-									"treatBooleanAsNumber": false
-								}
-							}
-						},
-						"inputs": [
-							{
-								"referenceName": "ds_CSV_File",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						],
-						"outputs": [
-							{
-								"referenceName": "ds_Daily_Parquet_File",
-								"type": "DatasetReference",
-								"parameters": {
-									"Path": {
-										"value": "@concat('exports/daily/ACMDaily',variables('AmortizedCost'))",
-										"type": "Expression"
-									},
-									"reportType": {
-										"value": "@variables('AmortizedCost')",
-										"type": "Expression"
-									}
-								}
-							}
-						]
-					},
-					{
-						"name": "If today is the 1st of the Month",
-						"type": "IfCondition",
-						"dependsOn": [
-							{
-								"activity": "Create Actual Cost Parquet File",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"expression": {
-								"value": "@equals(dayOfMonth(utcnow()),1)",
-								"type": "Expression"
-							},
-							"ifTrueActivities": [
-								{
-									"name": "Get last day of previous month",
-									"type": "SetVariable",
-									"dependsOn": [
-										{
-											"activity": "Get first day of previous month",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"policy": {
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"variableName": "toDate",
-										"value": {
-											"value": "@concat(formatDateTime(addDays(utcnow(), -1),'yyyyMMdd'))",
-											"type": "Expression"
-										}
-									}
-								},
-								{
-									"name": "Get first day of previous month",
-									"type": "SetVariable",
-									"dependsOn": [],
-									"policy": {
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"variableName": "fromDate",
-										"value": {
-											"value": "@concat(formatDateTime(addDays(utcnow(), -1),'yyyyMM01'))",
-											"type": "Expression"
-										}
-									}
-								},
-								{
-									"name": "Copy daily file to Monthly folder",
-									"description": "Copy daily file to monthly folder as it is 1st of the month. This places a file in the monthly folder so the union SQL queries will work. This file will be overwritten when Microsoft pushes the official monthly file on the 5th of every month.",
-									"type": "Copy",
-									"dependsOn": [
-										{
-											"activity": "Get last day of previous month",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "ParquetSource",
-											"storeSettings": {
-												"type": "AzureBlobFSReadSettings",
-												"recursive": false,
-												"enablePartitionDiscovery": false
-											},
-											"formatSettings": {
-												"type": "ParquetReadSettings"
-											}
-										},
-										"sink": {
-											"type": "ParquetSink",
-											"storeSettings": {
-												"type": "AzureBlobFSWriteSettings"
-											},
-											"formatSettings": {
-												"type": "ParquetWriteSettings"
-											}
-										},
-										"enableStaging": false,
-										"translator": {
-											"type": "TabularTranslator",
-											"typeConversion": true,
-											"typeConversionSettings": {
-												"allowDataTruncation": true,
-												"treatBooleanAsNumber": false
-											}
-										}
-									},
-									"inputs": [
-										{
-											"referenceName": "ds_Daily_Parquet_File",
-											"type": "DatasetReference",
-											"parameters": {
-												"Path": {
-													"value": "@concat('exports/daily/ACMDaily',variables('ActualCost'))",
-													"type": "Expression"
-												},
-												"reportType": {
-													"value": "@variables('ActualCost')",
-													"type": "Expression"
-												}
-											}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "Monthly_Parquet",
-											"type": "DatasetReference",
-											"parameters": {
-												"Path": {
-													"value": "@concat('exports/monthly/ACMMonthlyActualCost/',variables('fromDate'),'-',variables('toDate'))",
-													"type": "Expression"
-												},
-												"Container": "usage",
-												"toDate_fromDate": {
-													"value": "@concat(variables('fromDate'),'-',variables('toDate'))",
-													"type": "Expression"
-												}
-											}
-										}
-									]
-								}
-							]
-						}
-					},
-					{
-						"name": "run cost extension v3 daily",
-						"type": "SynapseNotebook",
-						"dependsOn": [
-							{
-								"activity": "If today is the 1st of the Month",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							},
-							{
-								"activity": "If today is the 1st of the Month_copy1",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"notebook": {
-								"referenceName": "daily-cost-extend-v3",
-								"type": "NotebookReference"
-							},
-							"parameters": {
-								"toDate": {
-									"value": {
-										"value": "@variables('toDate')",
-										"type": "Expression"
-									},
-									"type": "string"
-								},
-								"fromDate": {
-									"value": {
-										"value": "@variables('fromDate')",
-										"type": "Expression"
-									},
-									"type": "string"
-								},
-								"storageAccount": {
-									"value": {
-										"value": "@variables('storageAccount')",
-										"type": "Expression"
-									},
-									"type": "string"
-								}
-							},
-							"snapshot": true,
-							"sparkPool": {
-								"referenceName": "[parameters('Daily Cleanup_pipelineSparkPoolNameRef')]",
-								"type": "BigDataPoolReference"
-							},
-							"executorSize": "Medium",
-							"conf": {
-								"spark.dynamicAllocation.enabled": null,
-								"spark.dynamicAllocation.minExecutors": null,
-								"spark.dynamicAllocation.maxExecutors": null
-							},
-							"driverSize": "Medium",
-							"numExecutors": null
-						}
-					},
-					{
-						"name": "If today is the 1st of the Month_copy1",
-						"type": "IfCondition",
-						"dependsOn": [
-							{
-								"activity": "Create Amortized Cost Parquet File",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"expression": {
-								"value": "@equals(dayOfMonth(utcnow()),1)",
-								"type": "Expression"
-							},
-							"ifTrueActivities": [
-								{
-									"name": "Get last day of previous month Amortized",
-									"type": "SetVariable",
-									"dependsOn": [
-										{
-											"activity": "Get first day of previous month Amortized",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"policy": {
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"variableName": "toDate",
-										"value": {
-											"value": "@concat(formatDateTime(addDays(utcnow(), -1),'yyyyMMdd'))",
-											"type": "Expression"
-										}
-									}
-								},
-								{
-									"name": "Get first day of previous month Amortized",
-									"type": "SetVariable",
-									"dependsOn": [],
-									"policy": {
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"variableName": "fromDate",
-										"value": {
-											"value": "@concat(formatDateTime(addDays(utcnow(), -1),'yyyyMM01'))",
-											"type": "Expression"
-										}
-									}
-								},
-								{
-									"name": "Copy daily file to Monthly folder Amortized",
-									"description": "Copy daily file to monthly folder as it is 1st of the month. This places a file in the monthly folder so the union SQL queries will work. This file will be overwritten when Microsoft pushes the official monthly file on the 5th of every month.",
-									"type": "Copy",
-									"dependsOn": [
-										{
-											"activity": "Get last day of previous month Amortized",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "ParquetSource",
-											"storeSettings": {
-												"type": "AzureBlobFSReadSettings",
-												"recursive": false,
-												"enablePartitionDiscovery": false
-											},
-											"formatSettings": {
-												"type": "ParquetReadSettings"
-											}
-										},
-										"sink": {
-											"type": "ParquetSink",
-											"storeSettings": {
-												"type": "AzureBlobFSWriteSettings"
-											},
-											"formatSettings": {
-												"type": "ParquetWriteSettings"
-											}
-										},
-										"enableStaging": false,
-										"translator": {
-											"type": "TabularTranslator",
-											"typeConversion": true,
-											"typeConversionSettings": {
-												"allowDataTruncation": true,
-												"treatBooleanAsNumber": false
-											}
-										}
-									},
-									"inputs": [
-										{
-											"referenceName": "ds_Daily_Parquet_File",
-											"type": "DatasetReference",
-											"parameters": {
-												"Path": {
-													"value": "@concat('exports/daily/ACMDaily',variables('AmortizedCost'))",
-													"type": "Expression"
-												},
-												"reportType": {
-													"value": "@variables('AmortizedCost')",
-													"type": "Expression"
-												}
-											}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "Monthly_Parquet",
-											"type": "DatasetReference",
-											"parameters": {
-												"Path": {
-													"value": "@concat('exports/monthly/ACMMonthlyAmortizedCost/',variables('fromDate'),'-',variables('toDate'))",
-													"type": "Expression"
-												},
-												"Container": "usage",
-												"toDate_fromDate": {
-													"value": "@concat(variables('fromDate'),'-',variables('toDate'))",
-													"type": "Expression"
-												}
-											}
-										}
-									]
-								}
-							]
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"variables": {
-					"ActualCost": {
-						"type": "String",
-						"defaultValue": "ActualCost"
-					},
-					"AmortizedCost": {
-						"type": "String",
-						"defaultValue": "AmortizedCost"
-					},
-					"fromDate": {
-						"type": "String"
-					},
-					"toDate": {
-						"type": "String"
-					},
-					"dateRange": {
-						"type": "String"
-					},
-					"storageAccount": {
-						"type": "String",
-						"defaultValue": "[parameters('Daily Cleanup_pipelineStorageAccountVariable')]"
-					}
-				},
-				"folder": {
-					"name": "PipelinesInProduction/Cost"
-				},
-				"annotations": [],
-				"lastPublishTime": "2023-02-01T10:07:38Z"
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/datasets/Older_Files_For_Deletion_Binary')]",
-				"[concat(variables('workspaceId'), '/datasets/ds_test_delete_files')]",
-				"[concat(variables('workspaceId'), '/datasets/ds_CSV_File')]",
-				"[concat(variables('workspaceId'), '/datasets/ds_Daily_Parquet_File')]",
-				"[concat(variables('workspaceId'), '/notebooks/daily-cost-extend-v3')]",
-				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('Daily Cleanup_pipelineSparkPoolNameRef'))]",
-				"[concat(variables('workspaceId'), '/datasets/ds_Test_delete_file')]",
-				"[concat(variables('workspaceId'), '/datasets/Monthly_Parquet')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('workspaceName'), '/Daily VM Utilization')]",
 			"type": "Microsoft.Synapse/workspaces/pipelines",
 			"apiVersion": "2019-06-01-preview",
@@ -7792,18 +5409,6 @@
 					"storageAccount": {
 						"type": "String",
 						"defaultValue": "[parameters('Extend Daily Actual Cost_pipelineStorageAccountVariable')]"
-					},
-					"Month": {
-						"type": "String"
-					},
-					"Year": {
-						"type": "String"
-					},
-					"fromDate": {
-						"type": "String"
-					},
-					"toDate": {
-						"type": "String"
 					}
 				},
 				"folder": {
@@ -7814,6 +5419,176 @@
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/pipelines/Extend Daily Cost')]",
 				"[concat(variables('workspaceId'), '/notebooks/compute-cumulative-cost')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Extend Daily Amortized Cost')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Extend Amortized COst",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Extend Daily Cost",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"ReportType": "AmortizedCost"
+							}
+						}
+					},
+					{
+						"name": "Update 3year cost file",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "Extend Amortized COst",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "Prod_Extended_Amortized_Cost-Threeyears",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@variables('storageAccount')",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"numExecutors": null
+						}
+					},
+					{
+						"name": "Update 1year cost file",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "Update 3year cost file",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "Prod_Extended_Amortized_Cost-Oneyear",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@variables('storageAccount')",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"numExecutors": null
+						}
+					},
+					{
+						"name": "Run anomaly detection",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "Update 1year cost file",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "Anomaly_Detection_v2",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@variables('storageAccount')",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"numExecutors": null
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"storageAccount": {
+						"type": "String",
+						"defaultValue": "[parameters('Extend Daily Amortized Cost_pipelineStorageAccountVariable')]"
+					}
+				},
+				"folder": {
+					"name": "PipelinesInProduction/Cost"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/Extend Daily Cost')]",
+				"[concat(variables('workspaceId'), '/notebooks/Prod_Extended_Amortized_Cost-Threeyears')]",
+				"[concat(variables('workspaceId'), '/notebooks/Prod_Extended_Amortized_Cost-Oneyear')]",
+				"[concat(variables('workspaceId'), '/notebooks/Anomaly_Detection_v2')]"
 			]
 		},
 		{
@@ -9094,6 +6869,1027 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/Extend Monthly Actual Cost')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Extend Monthly Actual Cost",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Extend Monthly Cost",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"reportType": "ActualCost"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "PipelinesInProduction/Cost"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/Extend Monthly Cost')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Extend Monthly Amortized Cost')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Extend Monthly Amortized Cost",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Extend Monthly Cost",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"reportType": "AmortizedCost"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "PipelinesInProduction/Cost"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/Extend Monthly Cost')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Extend Monthly Cost')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Set Month",
+						"type": "SetVariable",
+						"dependsOn": [],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "Month",
+							"value": {
+								"value": "@if(\n    equals(int(formatdatetime(utcnow(),'MM')),1),\n    '12',\n    if(\n        less(sub(int(formatdatetime(utcnow(),'MM')),10),1),\n            concat('0',string(sub(int(formatdatetime(utcnow(),'MM')),1))),\n            string(sub(int(formatdatetime(utcnow(),'MM')),1))))\n",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Set Year",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Set Month",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "Year",
+							"value": {
+								"value": "@if(\n    equals(int(formatDateTime(utcNow(), 'MM')), 01),\n     string(sub(int(formatDateTime(utcNow(), 'yyyy')),1)),\n     string(int(formatDateTime(utcNow(), 'yyyy'))))",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Set first day of month",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Set Year",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "fromDate",
+							"value": {
+								"value": "@concat(variables('Year'),variables('Month'),'01')",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Set last day of the month date",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Set first day of month",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "toDate",
+							"value": {
+								"value": "@replace(replace(adddays(formatDateTime(adddays(formatDateTime(concat(variables('Year'),'-',variables('Month'),'-01'), 'yyyy-MM-28'),5), 'yyyy-MM-01'),-1),'T00:00:00.0000000',''),'-','')",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Convert Amortised Cost CSV to Parquet",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Set last day of the month date",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"wildcardFolderPath": {
+										"value": "@concat('exports/monthly/ACMMonthly',pipeline().parameters.reportType,'/',variables('fromDate'),'-',variables('toDate'))",
+										"type": "Expression"
+									},
+									"wildcardFileName": "*.csv",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings",
+									"copyBehavior": "MergeFiles"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "InvoiceSectionName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "InvoiceSectionName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "AccountName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "AccountName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "AccountOwnerId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "AccountOwnerId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "SubscriptionId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "SubscriptionId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "SubscriptionName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "SubscriptionName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ResourceGroup",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ResourceGroup",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ResourceLocation",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ResourceLocation",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Date",
+											"type": "DateTime",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Date",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ProductName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ProductName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "MeterCategory",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "MeterCategory",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "MeterSubCategory",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "MeterSubCategory",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "MeterId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "MeterId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "MeterName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "MeterName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "MeterRegion",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "MeterRegion",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "UnitOfMeasure",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "UnitOfMeasure",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Quantity",
+											"type": "Double",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Quantity",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "EffectivePrice",
+											"type": "Double",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "EffectivePrice",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "CostInBillingCurrency",
+											"type": "Double",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "CostInBillingCurrency",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "CostCenter",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "CostCenter",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ConsumedService",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ConsumedService",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ResourceId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ResourceId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Tags",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Tags",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "OfferId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "OfferId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "AdditionalInfo",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "AdditionalInfo",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ServiceInfo1",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ServiceInfo1",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ServiceInfo2",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ServiceInfo2",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ResourceName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ResourceName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ReservationId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ReservationId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ReservationName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ReservationName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "UnitPrice",
+											"type": "Double",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "UnitPrice",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ProductOrderId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ProductOrderId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ProductOrderName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ProductOrderName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Term",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Term",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "PublisherType",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "PublisherType",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "PublisherName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "PublisherName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ChargeType",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ChargeType",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Frequency",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Frequency",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "PricingModel",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "PricingModel",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "AvailabilityZone",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "AvailabilityZone",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "BillingAccountId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "BillingAccountId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "BillingAccountName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "BillingAccountName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "BillingCurrencyCode",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "BillingCurrencyCode",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "BillingPeriodStartDate",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "BillingPeriodStartDate",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "BillingPeriodEndDate",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "BillingPeriodEndDate",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "BillingProfileId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "BillingProfileId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "BillingProfileName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "BillingProfileName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "InvoiceSectionId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "InvoiceSectionId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "IsAzureCreditEligible",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "IsAzureCreditEligible",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "PartNumber",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "PartNumber",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "PayGPrice",
+											"type": "Double",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "PayGPrice",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "PlanName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "PlanName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ServiceFamily",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ServiceFamily",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "CostAllocationRuleName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "CostAllocationRuleName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "benefitId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "benefitId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "benefitName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "benefitName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "Adhoc_CSV_Source",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "Monthly_Parquet",
+								"type": "DatasetReference",
+								"parameters": {
+									"Path": {
+										"value": "@concat('exports/monthly/ACMMonthly',pipeline().parameters.reportType,'/',variables('fromDate'),'-',variables('toDate'))",
+										"type": "Expression"
+									},
+									"Container": {
+										"value": "@variables('Container')",
+										"type": "Expression"
+									},
+									"toDate_fromDate": {
+										"value": "@concat(variables('fromDate'),'-',variables('toDate'))",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					},
+					{
+						"name": "Extend cost data v3",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "Convert Amortised Cost CSV to Parquet",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "monthly-cost-extend-v3",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"toDate": {
+									"value": {
+										"value": "@variables('toDate')",
+										"type": "Expression"
+									},
+									"type": "string"
+								},
+								"fromDate": {
+									"value": {
+										"value": "@variables('fromDate')",
+										"type": "Expression"
+									},
+									"type": "string"
+								},
+								"storageAccount": {
+									"value": {
+										"value": "@variables('storageAccount')",
+										"type": "Expression"
+									},
+									"type": "string"
+								},
+								"reportType": {
+									"value": {
+										"value": "@pipeline().parameters.reportType",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": "[parameters('Extend Monthly Cost_pipelineSparkPoolNameRef')]",
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Large",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Large"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"reportType": {
+						"type": "string",
+						"defaultValue": "ActualCost"
+					}
+				},
+				"variables": {
+					"Month": {
+						"type": "String"
+					},
+					"Year": {
+						"type": "String"
+					},
+					"fromDate": {
+						"type": "String"
+					},
+					"toDate": {
+						"type": "String"
+					},
+					"Container": {
+						"type": "String",
+						"defaultValue": "usage"
+					},
+					"storageAccount": {
+						"type": "String",
+						"defaultValue": "[parameters('Extend Monthly Cost_pipelineStorageAccountVariable')]"
+					}
+				},
+				"folder": {
+					"name": "PipelinesInProduction/Cost"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/Adhoc_CSV_Source')]",
+				"[concat(variables('workspaceId'), '/datasets/Monthly_Parquet')]",
+				"[concat(variables('workspaceId'), '/notebooks/monthly-cost-extend-v3')]",
+				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('Extend Monthly Cost_pipelineSparkPoolNameRef'))]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/Loop - Get Daily Usage Data')]",
 			"type": "Microsoft.Synapse/workspaces/pipelines",
 			"apiVersion": "2019-06-01-preview",
@@ -10106,1704 +8902,6 @@
 				"[concat(variables('workspaceId'), '/datasets/S037CSVSourceDataset')]",
 				"[concat(variables('workspaceId'), '/datasets/S037Parquet')]",
 				"[concat(variables('workspaceId'), '/datasets/S037_Cleaned_CSV_Dest')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/Monthly Cleanup')]",
-			"type": "Microsoft.Synapse/workspaces/pipelines",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"activities": [
-					{
-						"name": "Convert Amortised Cost CSV to Parquet",
-						"type": "Copy",
-						"dependsOn": [
-							{
-								"activity": "Set last day of the month date",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "DelimitedTextSource",
-								"storeSettings": {
-									"type": "AzureBlobFSReadSettings",
-									"recursive": true,
-									"wildcardFolderPath": {
-										"value": "@concat(variables('AmortizedCost_Path'),variables('fromDate'),'-',variables('toDate'))",
-										"type": "Expression"
-									},
-									"wildcardFileName": "*.csv",
-									"enablePartitionDiscovery": false
-								},
-								"formatSettings": {
-									"type": "DelimitedTextReadSettings"
-								}
-							},
-							"sink": {
-								"type": "ParquetSink",
-								"storeSettings": {
-									"type": "AzureBlobFSWriteSettings",
-									"copyBehavior": "MergeFiles"
-								},
-								"formatSettings": {
-									"type": "ParquetWriteSettings"
-								}
-							},
-							"enableStaging": false,
-							"translator": {
-								"type": "TabularTranslator",
-								"mappings": [
-									{
-										"source": {
-											"name": "InvoiceSectionName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "InvoiceSectionName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "AccountName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "AccountName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "AccountOwnerId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "AccountOwnerId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "SubscriptionId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "SubscriptionId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "SubscriptionName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "SubscriptionName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ResourceGroup",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ResourceGroup",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ResourceLocation",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ResourceLocation",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Date",
-											"type": "DateTime",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Date",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ProductName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ProductName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "MeterCategory",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "MeterCategory",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "MeterSubCategory",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "MeterSubCategory",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "MeterId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "MeterId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "MeterName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "MeterName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "MeterRegion",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "MeterRegion",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "UnitOfMeasure",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "UnitOfMeasure",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Quantity",
-											"type": "Double",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Quantity",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "EffectivePrice",
-											"type": "Double",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "EffectivePrice",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "CostInBillingCurrency",
-											"type": "Double",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "CostInBillingCurrency",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "CostCenter",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "CostCenter",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ConsumedService",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ConsumedService",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ResourceId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ResourceId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Tags",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Tags",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "OfferId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "OfferId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "AdditionalInfo",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "AdditionalInfo",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ServiceInfo1",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ServiceInfo1",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ServiceInfo2",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ServiceInfo2",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ResourceName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ResourceName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ReservationId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ReservationId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ReservationName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ReservationName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "UnitPrice",
-											"type": "Double",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "UnitPrice",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ProductOrderId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ProductOrderId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ProductOrderName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ProductOrderName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Term",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Term",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PublisherType",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PublisherType",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PublisherName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PublisherName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ChargeType",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ChargeType",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Frequency",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Frequency",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PricingModel",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PricingModel",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "AvailabilityZone",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "AvailabilityZone",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingAccountId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingAccountId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingAccountName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingAccountName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingCurrencyCode",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingCurrencyCode",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingPeriodStartDate",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingPeriodStartDate",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingPeriodEndDate",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingPeriodEndDate",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingProfileId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingProfileId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingProfileName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingProfileName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "InvoiceSectionId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "InvoiceSectionId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "IsAzureCreditEligible",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "IsAzureCreditEligible",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PartNumber",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PartNumber",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PayGPrice",
-											"type": "Double",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PayGPrice",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PlanName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PlanName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ServiceFamily",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ServiceFamily",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "CostAllocationRuleName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "CostAllocationRuleName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "benefitId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "benefitId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "benefitName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "benefitName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									}
-								],
-								"typeConversion": true,
-								"typeConversionSettings": {
-									"allowDataTruncation": true,
-									"treatBooleanAsNumber": false
-								}
-							}
-						},
-						"inputs": [
-							{
-								"referenceName": "Adhoc_CSV_Source",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						],
-						"outputs": [
-							{
-								"referenceName": "Monthly_Parquet",
-								"type": "DatasetReference",
-								"parameters": {
-									"Path": {
-										"value": "@concat(variables('AmortizedCost_Path'),variables('fromDate'),'-',variables('toDate'))",
-										"type": "Expression"
-									},
-									"Container": {
-										"value": "@variables('Container')",
-										"type": "Expression"
-									},
-									"toDate_fromDate": {
-										"value": "@concat(variables('fromDate'),'-',variables('toDate'))",
-										"type": "Expression"
-									}
-								}
-							}
-						]
-					},
-					{
-						"name": "Set last day of the month date",
-						"type": "SetVariable",
-						"dependsOn": [
-							{
-								"activity": "Set first day of month",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"variableName": "toDate",
-							"value": {
-								"value": "@replace(replace(adddays(formatDateTime(adddays(formatDateTime(concat(variables('Year'),'-',variables('Month'),'-01'), 'yyyy-MM-28'),5), 'yyyy-MM-01'),-1),'T00:00:00.0000000',''),'-','')",
-								"type": "Expression"
-							}
-						}
-					},
-					{
-						"name": "Set first day of month",
-						"type": "SetVariable",
-						"dependsOn": [
-							{
-								"activity": "Set Month",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							},
-							{
-								"activity": "Set Year",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"variableName": "fromDate",
-							"value": {
-								"value": "@concat(variables('Year'),variables('Month'),'01')",
-								"type": "Expression"
-							}
-						}
-					},
-					{
-						"name": "Set Month",
-						"type": "SetVariable",
-						"dependsOn": [],
-						"policy": {
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"variableName": "Month",
-							"value": {
-								"value": "@if(\n    equals(int(formatdatetime(utcnow(),'MM')),1),\n    '12',\n    if(\n        less(sub(int(formatdatetime(utcnow(),'MM')),10),1),\n            concat('0',string(sub(int(formatdatetime(utcnow(),'MM')),1))),\n            string(sub(int(formatdatetime(utcnow(),'MM')),1))))\n",
-								"type": "Expression"
-							}
-						}
-					},
-					{
-						"name": "Set Year",
-						"type": "SetVariable",
-						"dependsOn": [],
-						"policy": {
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"variableName": "Year",
-							"value": {
-								"value": "@if(\n    equals(int(formatDateTime(utcNow(), 'MM')), 01),\n     string(sub(int(formatDateTime(utcNow(), 'yyyy')),1)),\n     string(int(formatDateTime(utcNow(), 'yyyy'))))",
-								"type": "Expression"
-							}
-						}
-					},
-					{
-						"name": "Convert Actual Cost CSV to Parquet",
-						"type": "Copy",
-						"dependsOn": [
-							{
-								"activity": "Set last day of the month date",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "DelimitedTextSource",
-								"storeSettings": {
-									"type": "AzureBlobFSReadSettings",
-									"recursive": true,
-									"wildcardFolderPath": {
-										"value": "@concat(variables('ActualCost_Path'),variables('fromDate'),'-',variables('toDate'))",
-										"type": "Expression"
-									},
-									"wildcardFileName": "*.csv",
-									"enablePartitionDiscovery": false
-								},
-								"formatSettings": {
-									"type": "DelimitedTextReadSettings"
-								}
-							},
-							"sink": {
-								"type": "ParquetSink",
-								"storeSettings": {
-									"type": "AzureBlobFSWriteSettings",
-									"copyBehavior": "MergeFiles"
-								},
-								"formatSettings": {
-									"type": "ParquetWriteSettings"
-								}
-							},
-							"enableStaging": false,
-							"translator": {
-								"type": "TabularTranslator",
-								"mappings": [
-									{
-										"source": {
-											"name": "InvoiceSectionName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "InvoiceSectionName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "AccountName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "AccountName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "AccountOwnerId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "AccountOwnerId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "SubscriptionId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "SubscriptionId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "SubscriptionName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "SubscriptionName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ResourceGroup",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ResourceGroup",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ResourceLocation",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ResourceLocation",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Date",
-											"type": "DateTime",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Date",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ProductName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ProductName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "MeterCategory",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "MeterCategory",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "MeterSubCategory",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "MeterSubCategory",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "MeterId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "MeterId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "MeterName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "MeterName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "MeterRegion",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "MeterRegion",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "UnitOfMeasure",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "UnitOfMeasure",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Quantity",
-											"type": "Double",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Quantity",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "EffectivePrice",
-											"type": "Double",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "EffectivePrice",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "CostInBillingCurrency",
-											"type": "Double",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "CostInBillingCurrency",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "CostCenter",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "CostCenter",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ConsumedService",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ConsumedService",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ResourceId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ResourceId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Tags",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Tags",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "OfferId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "OfferId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "AdditionalInfo",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "AdditionalInfo",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ServiceInfo1",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ServiceInfo1",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ServiceInfo2",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ServiceInfo2",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ResourceName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ResourceName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ReservationId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ReservationId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ReservationName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ReservationName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "UnitPrice",
-											"type": "Double",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "UnitPrice",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ProductOrderId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ProductOrderId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ProductOrderName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ProductOrderName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Term",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Term",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PublisherType",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PublisherType",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PublisherName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PublisherName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ChargeType",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ChargeType",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Frequency",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Frequency",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PricingModel",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PricingModel",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "AvailabilityZone",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "AvailabilityZone",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingAccountId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingAccountId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingAccountName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingAccountName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingCurrencyCode",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingCurrencyCode",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingPeriodStartDate",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingPeriodStartDate",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingPeriodEndDate",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingPeriodEndDate",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingProfileId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingProfileId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingProfileName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingProfileName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "InvoiceSectionId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "InvoiceSectionId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "IsAzureCreditEligible",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "IsAzureCreditEligible",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PartNumber",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PartNumber",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PayGPrice",
-											"type": "Double",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PayGPrice",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PlanName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PlanName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ServiceFamily",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ServiceFamily",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "CostAllocationRuleName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "CostAllocationRuleName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "benefitId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "benefitId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "benefitName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "benefitName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									}
-								],
-								"typeConversion": true,
-								"typeConversionSettings": {
-									"allowDataTruncation": true,
-									"treatBooleanAsNumber": false
-								}
-							}
-						},
-						"inputs": [
-							{
-								"referenceName": "Adhoc_CSV_Source",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						],
-						"outputs": [
-							{
-								"referenceName": "Monthly_Parquet",
-								"type": "DatasetReference",
-								"parameters": {
-									"Path": {
-										"value": "@concat(variables('ActualCost_Path'),variables('fromDate'),'-',variables('toDate'))",
-										"type": "Expression"
-									},
-									"Container": {
-										"value": "@variables('Container')",
-										"type": "Expression"
-									},
-									"toDate_fromDate": {
-										"value": "@concat(variables('fromDate'),'-',variables('toDate'))",
-										"type": "Expression"
-									}
-								}
-							}
-						]
-					},
-					{
-						"name": "Extend cost data v3",
-						"type": "SynapseNotebook",
-						"dependsOn": [
-							{
-								"activity": "Convert Amortised Cost CSV to Parquet",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							},
-							{
-								"activity": "Convert Actual Cost CSV to Parquet",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"notebook": {
-								"referenceName": "monthly-cost-extend-v3",
-								"type": "NotebookReference"
-							},
-							"parameters": {
-								"toDate": {
-									"value": {
-										"value": "@variables('toDate')",
-										"type": "Expression"
-									},
-									"type": "string"
-								},
-								"fromDate": {
-									"value": {
-										"value": "@variables('fromDate')",
-										"type": "Expression"
-									},
-									"type": "string"
-								},
-								"storageAccount": {
-									"value": {
-										"value": "@variables('storageAccount')",
-										"type": "Expression"
-									},
-									"type": "string"
-								}
-							},
-							"snapshot": true,
-							"sparkPool": {
-								"referenceName": "[parameters('Monthly Cleanup_pipelineSparkPoolNameRef')]",
-								"type": "BigDataPoolReference"
-							},
-							"executorSize": "Large",
-							"conf": {
-								"spark.dynamicAllocation.enabled": true
-							},
-							"driverSize": "Large"
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"variables": {
-					"Month": {
-						"type": "String"
-					},
-					"Year": {
-						"type": "String"
-					},
-					"toDate": {
-						"type": "String"
-					},
-					"fromDate": {
-						"type": "String"
-					},
-					"AmortizedCost_Path": {
-						"type": "String",
-						"defaultValue": "exports/monthly/ACMMonthlyAmortizedCost/"
-					},
-					"Container": {
-						"type": "String",
-						"defaultValue": "usage"
-					},
-					"ActualCost_Path": {
-						"type": "String",
-						"defaultValue": "exports/monthly/ACMMonthlyActualCost/"
-					},
-					"storageAccount": {
-						"type": "String",
-						"defaultValue": "[parameters('Monthly Cleanup_pipelineStorageAccountVariable')]"
-					}
-				},
-				"folder": {
-					"name": "PipelinesInProduction/Cost"
-				},
-				"annotations": [],
-				"lastPublishTime": "2023-09-08T08:39:03Z"
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/datasets/Adhoc_CSV_Source')]",
-				"[concat(variables('workspaceId'), '/datasets/Monthly_Parquet')]",
-				"[concat(variables('workspaceId'), '/notebooks/monthly-cost-extend-v3')]",
-				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('Monthly Cleanup_pipelineSparkPoolNameRef'))]"
 			]
 		},
 		{
@@ -24914,6 +22012,130 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/daily-actual-cost-trigger')]",
+			"type": "Microsoft.Synapse/workspaces/triggers",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "Extend Daily Actual Cost",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "BlobEventsTrigger",
+				"typeProperties": {
+					"blobPathBeginsWith": "/usage/blobs/exports/daily/ACMDailyActualCost",
+					"blobPathEndsWith": ".csv",
+					"ignoreEmptyBlobs": true,
+					"scope": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt",
+					"events": [
+						"Microsoft.Storage.BlobCreated"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/Extend Daily Actual Cost')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/daily-amortized-cost-trigger')]",
+			"type": "Microsoft.Synapse/workspaces/triggers",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "Extend Daily Amortized Cost",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "BlobEventsTrigger",
+				"typeProperties": {
+					"blobPathBeginsWith": "/usage/blobs/exports/daily/ACMDailyAmortizedCost",
+					"blobPathEndsWith": ".csv",
+					"ignoreEmptyBlobs": true,
+					"scope": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt",
+					"events": [
+						"Microsoft.Storage.BlobCreated"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/Extend Daily Amortized Cost')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/monthly-actual-cost-trigger')]",
+			"type": "Microsoft.Synapse/workspaces/triggers",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "Extend Monthly Actual Cost",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "BlobEventsTrigger",
+				"typeProperties": {
+					"blobPathBeginsWith": "/usage/blobs/exports/monthly/ACMMonthlyActualCost",
+					"blobPathEndsWith": ".csv",
+					"ignoreEmptyBlobs": true,
+					"scope": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt",
+					"events": [
+						"Microsoft.Storage.BlobCreated"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/Extend Monthly Actual Cost')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/monthly-amortized-cost-trigger')]",
+			"type": "Microsoft.Synapse/workspaces/triggers",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "Extend Monthly Amortized Cost",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "BlobEventsTrigger",
+				"typeProperties": {
+					"blobPathBeginsWith": "/usage/blobs/exports/monthly/ACMMonthlyAmortizedCost",
+					"blobPathEndsWith": ".csv",
+					"ignoreEmptyBlobs": true,
+					"scope": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt",
+					"events": [
+						"Microsoft.Storage.BlobCreated"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/Extend Monthly Amortized Cost')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/pricesheet-updates-trigger')]",
 			"type": "Microsoft.Synapse/workspaces/triggers",
 			"apiVersion": "2019-06-01-preview",
@@ -26512,6 +23734,29 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/CreateRIRecommendationsView')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "PowerBIViews"
+				},
+				"content": {
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW RIRecommendations\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/reservations/portal-export/FinOps-ReservationRecommendations-VMs-Daily/*/*.csv',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW = TRUE\n    ) AS [result]",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/CreateRISavingsView')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
@@ -27933,29 +25178,6 @@
 						"poolName": "Built-in"
 					},
 					"resultLimit": -1
-				},
-				"type": "SqlQuery"
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/ReservationRecommendationTestView')]",
-			"type": "Microsoft.Synapse/workspaces/sqlscripts",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"folder": {
-					"name": "PowerBIViews"
-				},
-				"content": {
-					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW ReservationRecommendationTest\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/reservations/portal-export/FinOps-ReservationRecommendations-VMs-Daily/*/*.csv',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW = TRUE\n    ) AS [result]",
-					"metadata": {
-						"language": "sql"
-					},
-					"currentConnection": {
-						"databaseName": "costmgmt",
-						"poolName": "Built-in"
-					},
-					"resultLimit": 5000
 				},
 				"type": "SqlQuery"
 			},
@@ -37801,7 +35023,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "5f2c8690-6419-46a7-8203-91ba44eaf55a"
+						"spark.autotune.trackingId": "3c1b28da-ea6b-42ee-9153-dfb1d7267009"
 					}
 				},
 				"metadata": {
@@ -37826,7 +35048,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -37945,9 +35168,20 @@
 							"                              timeout_seconds=600,\r\n",
 							"                              arguments={'fromDate' : fromDate, \r\n",
 							"                                         'toDate' : toDate, \r\n",
-							"                                         'container' : container})\r\n",
+							"                                         'container' : container,\r\n",
+							"                                         'reportType': 'ActualCost'})\r\n",
 							"    end_time = time.time()\r\n",
-							"    print(f\"The runtime of the notebook was: {round(end_time - start_time, 2)} seconds.\")\r\n",
+							"    print(f\"The runtime of the actual cost notebook was: {round(end_time - start_time, 2)} seconds.\")\r\n",
+							"\r\n",
+							"    start_time = time.time()\r\n",
+							"    mssparkutils.notebook.run(path='monthly-cost-extend-v3', \r\n",
+							"                              timeout_seconds=600,\r\n",
+							"                              arguments={'fromDate' : fromDate, \r\n",
+							"                                         'toDate' : toDate, \r\n",
+							"                                         'container' : container,\r\n",
+							"                                         'reportType': 'AmortizedCost'})\r\n",
+							"    end_time = time.time()\r\n",
+							"    print(f\"The runtime of the actual cost notebook was: {round(end_time - start_time, 2)} seconds.\")\r\n",
 							"    \r\n",
 							"    # # For testing purposes\r\n",
 							"    # n += 1\r\n",
@@ -40858,7 +38092,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "e30c6c76-1bf6-4a62-adef-36516f359f7b"
+						"spark.autotune.trackingId": "4f8cbbae-8e8c-4e41-81cc-10a968d7d67f"
 					}
 				},
 				"metadata": {
@@ -40883,8 +38117,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -40904,7 +38137,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"from enum import Enum\r\n",
@@ -42218,7 +39450,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "ba0c4c0a-cd61-44fd-8068-7fabbf6c6440"
+						"spark.autotune.trackingId": "355c7aba-e4f3-4f73-bba8-b4167abbf4f5"
 					}
 				},
 				"metadata": {
@@ -42243,7 +39475,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -42272,6 +39505,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"def get_last_day_prev_month(to_date):\r\n",
 							"    current_month = int(to_date[4:6])\r\n",
@@ -42731,7 +39965,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "7a9dd8c0-812c-46be-8b07-ef5e14959be8"
+						"spark.autotune.trackingId": "17ef7138-ccc5-47ec-9601-0f26b0860d8c"
 					}
 				},
 				"metadata": {
@@ -42974,72 +40208,6 @@
 						],
 						"outputs": [],
 						"execution_count": null
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							},
-							"collapsed": false
-						},
-						"source": [
-							"# print(f'fromDate: {fromDate}')\n",
-							"# print(f'toDate: {toDate}')\n",
-							"# report_types = ['ActualCost', 'AmortizedCost']\n",
-							"\n",
-							"# print(f\"------ From: {fromDate}, To: {toDate} -----------\")\n",
-							"\n",
-							"# for report_type in report_types:\n",
-							"\n",
-							"#     print(f\"------ {report_type} -----------\")\n",
-							"#     date_range = fromDate + '-' + toDate\n",
-							"#     print(f'dateRange: {date_range}')\n",
-							"\n",
-							"#     cost_source_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/daily/ACMDaily{report_type}/{date_range}/*.csv'\n",
-							"#     cost_target_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthly{report_type}/{date_range}/Extended_v3_ACMMonthly{report_type}_{date_range}.parquet'\n",
-							"#     print(f\"Cost data path: {cost_source_path}\")\n",
-							"#     print(f\"Cost destination path: {cost_target_path}\")\n",
-							"\n",
-							"#     previous_month_date = get_last_day_prev_month(toDate)\n",
-							"#     print(f'Using {previous_month_date} ServiceNow subscription file')\n",
-							"#     subscription_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/{previous_month_date}-optimized.parquet'\n",
-							"#     print(f\"Subscription path: {subscription_path}\")\n",
-							"\n",
-							"#     application_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\n",
-							"#     print(f\"Application path: {application_path}\")\n",
-							"\n",
-							"#     # Load cost file\n",
-							"#     csv_options = {'header' : True,\n",
-							"#                    'delimiter' : ',',\n",
-							"#                    'quote' : '\"',\n",
-							"#                    'escape' : '\"'}\n",
-							"#     cost_df = spark.read.options(**csv_options).csv(cost_source_path)\n",
-							"\n",
-							"#     # Load subscription file\n",
-							"#     subscription_df = spark.read.format('parquet').load(subscription_path)\n",
-							"#     subscription_df = pre_process_subscriptions(subscription_df)\n",
-							"\n",
-							"#     # Load application file\n",
-							"#     application_df = spark.read.format('parquet').load(application_path)\n",
-							"#     application_df = application_df.withColumn('AppID', F.col('AppID').cast(\"int\"))\n",
-							"\n",
-							"#     # Transform data\n",
-							"#     cost_df = transform_cost_data(cost_df)\n",
-							"#     cost_df = cost_df.withColumn(\"ResourceLocation\", F.lower(F.trim(F.regexp_replace(F.col('ResourceLocation'), \"\\s+\", \"\"))))\n",
-							"#     cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\n",
-							"#     write_output_file(cost_df, cost_target_path)\n",
-							"    \n",
-							"#     print(' ')"
-						],
-						"outputs": [],
-						"execution_count": 12
 					}
 				]
 			},
@@ -43070,7 +40238,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "bec2482b-695a-4182-9f45-3c0583e79fa6"
+						"spark.autotune.trackingId": "4967eec1-9494-4a3a-ad2f-68b9f47dfee4"
 					}
 				},
 				"metadata": {
@@ -43334,63 +40502,6 @@
 						],
 						"outputs": [],
 						"execution_count": 19
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"# print(f'fromDate: {fromDate}')\r\n",
-							"# print(f'toDate: {toDate}')\r\n",
-							"# report_types = ['ActualCost', 'AmortizedCost']\r\n",
-							"\r\n",
-							"# print(f\"------ From: {fromDate}, To: {toDate} -----------\")\r\n",
-							"\r\n",
-							"# for report_type in report_types:\r\n",
-							"\r\n",
-							"#     print(f\"------ {report_type} -----------\")\r\n",
-							"#     formatted_to_date = f'{toDate[0:4]}-{toDate[4:6]}-{toDate[6:]}'\r\n",
-							"#     formatted_to_date = '2021-11-30' if str(formatted_to_date) < '2021-11-30' else formatted_to_date\r\n",
-							"\r\n",
-							"#     print(f'longToDate: {formatted_to_date}')\r\n",
-							"#     date_range = fromDate + '-' + toDate\r\n",
-							"#     print(f'dateRange: {date_range}')\r\n",
-							"\r\n",
-							"#     cost_source_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthly{report_type}/{date_range}/ACMMonthly{report_type}_{date_range}.parquet'\r\n",
-							"#     cost_target_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthly{report_type}/{date_range}/Extended_v3_ACMMonthly{report_type}_{date_range}.parquet'\r\n",
-							"\r\n",
-							"#     # Load subcsription data\r\n",
-							"#     solum_subscription_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/subscriptions/subscriptions_{formatted_to_date}.json'\r\n",
-							"#     servicenow_subscription_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/{formatted_to_date}-optimized.parquet'\r\n",
-							"\r\n",
-							"#     try:\r\n",
-							"#         subscription_df = load_and_process_servicenow_subscriptions(servicenow_subscription_path)\r\n",
-							"#     except:\r\n",
-							"#         subscription_df = load_and_process_solum_subscriptions(solum_subscription_path)\r\n",
-							"\r\n",
-							"#     # Load application data\r\n",
-							"#     application_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\r\n",
-							"#     application_df = load_and_process_applications(application_path)\r\n",
-							"\r\n",
-							"#     # Process cost data\r\n",
-							"#     cost_df = spark.read.format('parquet').load(cost_source_path)\r\n",
-							"#     cost_df = transform_cost_data(cost_df)\r\n",
-							"#     cost_df = cost_df.withColumn(\"ResourceLocation\", F.lower(F.trim(F.regexp_replace(F.col('ResourceLocation'), \"\\s+\", \"\"))))\r\n",
-							"#     cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\r\n",
-							"#     write_output_file(cost_df, cost_target_path)\r\n",
-							"#     print(' ')"
-						],
-						"outputs": [],
-						"execution_count": null
 					}
 				]
 			},
@@ -45595,6 +42706,31 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
+				},
+				"autoScale": {
+					"enabled": true,
+					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
+					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
+				},
+				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
+				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": true,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "northeurope"
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/sparkpool32')]",
 			"type": "Microsoft.Synapse/workspaces/bigDataPools",
 			"apiVersion": "2019-06-01-preview",
@@ -45623,1343 +42759,6 @@
 			},
 			"dependsOn": [],
 			"location": "northeurope"
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
-			"type": "Microsoft.Synapse/workspaces/bigDataPools",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"autoPause": {
-					"enabled": true,
-					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
-				},
-				"autoScale": {
-					"enabled": true,
-					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
-					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
-				},
-				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
-				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
-				"nodeSizeFamily": "MemoryOptimized",
-				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
-				"isComputeIsolationEnabled": false,
-				"sessionLevelPackagesEnabled": true,
-				"annotations": []
-			},
-			"dependsOn": [],
-			"location": "northeurope"
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/Extend Daily Amortized Cost')]",
-			"type": "Microsoft.Synapse/workspaces/pipelines",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"activities": [
-					{
-						"name": "Extend Amortized COst",
-						"type": "ExecutePipeline",
-						"dependsOn": [],
-						"userProperties": [],
-						"typeProperties": {
-							"pipeline": {
-								"referenceName": "Extend Daily Cost",
-								"type": "PipelineReference"
-							},
-							"waitOnCompletion": true,
-							"parameters": {
-								"ReportType": "AmortizedCost"
-							}
-						}
-					},
-					{
-						"name": "Update 3year cost file",
-						"type": "SynapseNotebook",
-						"dependsOn": [
-							{
-								"activity": "Extend Amortized COst",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"notebook": {
-								"referenceName": "Prod_Extended_Amortized_Cost-Threeyears",
-								"type": "NotebookReference"
-							},
-							"parameters": {
-								"storageAccount": {
-									"value": {
-										"value": "@variables('storageAccount')",
-										"type": "Expression"
-									},
-									"type": "string"
-								}
-							},
-							"snapshot": true,
-							"conf": {}
-						}
-					},
-					{
-						"name": "Update 1year cost file",
-						"type": "SynapseNotebook",
-						"dependsOn": [
-							{
-								"activity": "Update 3year cost file",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"notebook": {
-								"referenceName": "Prod_Extended_Amortized_Cost-Oneyear",
-								"type": "NotebookReference"
-							},
-							"parameters": {
-								"storageAccount": {
-									"value": {
-										"value": "@variables('storageAccount')",
-										"type": "Expression"
-									},
-									"type": "string"
-								}
-							},
-							"snapshot": true,
-							"conf": {}
-						}
-					},
-					{
-						"name": "Run anomaly detection",
-						"type": "SynapseNotebook",
-						"dependsOn": [
-							{
-								"activity": "Update 1year cost file",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"notebook": {
-								"referenceName": "Anomaly_Detection_v2",
-								"type": "NotebookReference"
-							},
-							"parameters": {
-								"storageAccount": {
-									"value": {
-										"value": "@variables('storageAccount')",
-										"type": "Expression"
-									},
-									"type": "string"
-								}
-							},
-							"snapshot": true,
-							"conf": {}
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"variables": {
-					"storageAccount": {
-						"type": "String",
-						"defaultValue": "[parameters('Extend Daily Amortized Cost_pipelineStorageAccountVariable')]"
-					},
-					"Month": {
-						"type": "String"
-					},
-					"Year": {
-						"type": "String"
-					},
-					"fromDate": {
-						"type": "String"
-					},
-					"toDate": {
-						"type": "String"
-					}
-				},
-				"folder": {
-					"name": "PipelinesInProduction/Cost"
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/pipelines/Extend Daily Cost')]",
-				"[concat(variables('workspaceId'), '/notebooks/Prod_Extended_Amortized_Cost-Threeyears')]",
-				"[concat(variables('workspaceId'), '/notebooks/Prod_Extended_Amortized_Cost-Oneyear')]",
-				"[concat(variables('workspaceId'), '/notebooks/Anomaly_Detection_v2')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/daily-amortized-cost-trigger')]",
-			"type": "Microsoft.Synapse/workspaces/triggers",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Started",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "Extend Daily Amortized Cost",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "BlobEventsTrigger",
-				"typeProperties": {
-					"blobPathBeginsWith": "/usage/blobs/exports/daily/ACMDailyAmortizedCost",
-					"blobPathEndsWith": ".csv",
-					"ignoreEmptyBlobs": true,
-					"scope": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt",
-					"events": [
-						"Microsoft.Storage.BlobCreated"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/pipelines/Extend Daily Amortized Cost')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/daily-actual-cost-trigger')]",
-			"type": "Microsoft.Synapse/workspaces/triggers",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Started",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "Extend Daily Actual Cost",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "BlobEventsTrigger",
-				"typeProperties": {
-					"blobPathBeginsWith": "/usage/blobs/exports/daily/ACMDailyActualCost",
-					"blobPathEndsWith": ".csv",
-					"ignoreEmptyBlobs": true,
-					"scope": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt",
-					"events": [
-						"Microsoft.Storage.BlobCreated"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/pipelines/Extend Daily Actual Cost')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/Extend Monthly Cost')]",
-			"type": "Microsoft.Synapse/workspaces/pipelines",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"activities": [
-					{
-						"name": "Set Month",
-						"type": "SetVariable",
-						"dependsOn": [],
-						"policy": {
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"variableName": "Month",
-							"value": {
-								"value": "@if(\n    equals(int(formatdatetime(utcnow(),'MM')),1),\n    '12',\n    if(\n        less(sub(int(formatdatetime(utcnow(),'MM')),10),1),\n            concat('0',string(sub(int(formatdatetime(utcnow(),'MM')),1))),\n            string(sub(int(formatdatetime(utcnow(),'MM')),1))))\n",
-								"type": "Expression"
-							}
-						}
-					},
-					{
-						"name": "Set Year",
-						"type": "SetVariable",
-						"dependsOn": [
-							{
-								"activity": "Set Month",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"variableName": "Year",
-							"value": {
-								"value": "@if(\n    equals(int(formatDateTime(utcNow(), 'MM')), 01),\n     string(sub(int(formatDateTime(utcNow(), 'yyyy')),1)),\n     string(int(formatDateTime(utcNow(), 'yyyy'))))",
-								"type": "Expression"
-							}
-						}
-					},
-					{
-						"name": "Set first day of month",
-						"type": "SetVariable",
-						"dependsOn": [
-							{
-								"activity": "Set Year",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"variableName": "fromDate",
-							"value": {
-								"value": "@concat(variables('Year'),variables('Month'),'01')",
-								"type": "Expression"
-							}
-						}
-					},
-					{
-						"name": "Set last day of the month date",
-						"type": "SetVariable",
-						"dependsOn": [
-							{
-								"activity": "Set first day of month",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"variableName": "toDate",
-							"value": {
-								"value": "@replace(replace(adddays(formatDateTime(adddays(formatDateTime(concat(variables('Year'),'-',variables('Month'),'-01'), 'yyyy-MM-28'),5), 'yyyy-MM-01'),-1),'T00:00:00.0000000',''),'-','')",
-								"type": "Expression"
-							}
-						}
-					},
-					{
-						"name": "Convert Amortised Cost CSV to Parquet",
-						"type": "Copy",
-						"dependsOn": [
-							{
-								"activity": "Set last day of the month date",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "DelimitedTextSource",
-								"storeSettings": {
-									"type": "AzureBlobFSReadSettings",
-									"recursive": true,
-									"wildcardFolderPath": {
-										"value": "@concat('exports/monthly/ACMMonthly',pipeline().parameters.reportType,'/',variables('fromDate'),'-',variables('toDate'))",
-										"type": "Expression"
-									},
-									"wildcardFileName": "*.csv",
-									"enablePartitionDiscovery": false
-								},
-								"formatSettings": {
-									"type": "DelimitedTextReadSettings"
-								}
-							},
-							"sink": {
-								"type": "ParquetSink",
-								"storeSettings": {
-									"type": "AzureBlobFSWriteSettings",
-									"copyBehavior": "MergeFiles"
-								},
-								"formatSettings": {
-									"type": "ParquetWriteSettings"
-								}
-							},
-							"enableStaging": false,
-							"translator": {
-								"type": "TabularTranslator",
-								"mappings": [
-									{
-										"source": {
-											"name": "InvoiceSectionName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "InvoiceSectionName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "AccountName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "AccountName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "AccountOwnerId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "AccountOwnerId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "SubscriptionId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "SubscriptionId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "SubscriptionName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "SubscriptionName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ResourceGroup",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ResourceGroup",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ResourceLocation",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ResourceLocation",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Date",
-											"type": "DateTime",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Date",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ProductName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ProductName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "MeterCategory",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "MeterCategory",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "MeterSubCategory",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "MeterSubCategory",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "MeterId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "MeterId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "MeterName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "MeterName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "MeterRegion",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "MeterRegion",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "UnitOfMeasure",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "UnitOfMeasure",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Quantity",
-											"type": "Double",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Quantity",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "EffectivePrice",
-											"type": "Double",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "EffectivePrice",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "CostInBillingCurrency",
-											"type": "Double",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "CostInBillingCurrency",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "CostCenter",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "CostCenter",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ConsumedService",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ConsumedService",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ResourceId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ResourceId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Tags",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Tags",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "OfferId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "OfferId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "AdditionalInfo",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "AdditionalInfo",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ServiceInfo1",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ServiceInfo1",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ServiceInfo2",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ServiceInfo2",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ResourceName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ResourceName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ReservationId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ReservationId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ReservationName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ReservationName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "UnitPrice",
-											"type": "Double",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "UnitPrice",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ProductOrderId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ProductOrderId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ProductOrderName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ProductOrderName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Term",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Term",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PublisherType",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PublisherType",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PublisherName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PublisherName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ChargeType",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ChargeType",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Frequency",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Frequency",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PricingModel",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PricingModel",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "AvailabilityZone",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "AvailabilityZone",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingAccountId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingAccountId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingAccountName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingAccountName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingCurrencyCode",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingCurrencyCode",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingPeriodStartDate",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingPeriodStartDate",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingPeriodEndDate",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingPeriodEndDate",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingProfileId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingProfileId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "BillingProfileName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "BillingProfileName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "InvoiceSectionId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "InvoiceSectionId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "IsAzureCreditEligible",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "IsAzureCreditEligible",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PartNumber",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PartNumber",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PayGPrice",
-											"type": "Double",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PayGPrice",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "PlanName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "PlanName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ServiceFamily",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ServiceFamily",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "CostAllocationRuleName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "CostAllocationRuleName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "benefitId",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "benefitId",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "benefitName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "benefitName",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									}
-								],
-								"typeConversion": true,
-								"typeConversionSettings": {
-									"allowDataTruncation": true,
-									"treatBooleanAsNumber": false
-								}
-							}
-						},
-						"inputs": [
-							{
-								"referenceName": "Adhoc_CSV_Source",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						],
-						"outputs": [
-							{
-								"referenceName": "Monthly_Parquet",
-								"type": "DatasetReference",
-								"parameters": {
-									"Path": {
-										"value": "@concat('exports/monthly/ACMMonthly',pipeline().parameters.reportType,'/',variables('fromDate'),'-',variables('toDate'))",
-										"type": "Expression"
-									},
-									"Container": {
-										"value": "@variables('Container')",
-										"type": "Expression"
-									},
-									"toDate_fromDate": {
-										"value": "@concat(variables('fromDate'),'-',variables('toDate'))",
-										"type": "Expression"
-									}
-								}
-							}
-						]
-					},
-					{
-						"name": "Extend cost data v3",
-						"type": "SynapseNotebook",
-						"dependsOn": [
-							{
-								"activity": "Convert Amortised Cost CSV to Parquet",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"notebook": {
-								"referenceName": "monthly-cost-extend-v3",
-								"type": "NotebookReference"
-							},
-							"parameters": {
-								"toDate": {
-									"value": {
-										"value": "@variables('toDate')",
-										"type": "Expression"
-									},
-									"type": "string"
-								},
-								"fromDate": {
-									"value": {
-										"value": "@variables('fromDate')",
-										"type": "Expression"
-									},
-									"type": "string"
-								},
-								"storageAccount": {
-									"value": {
-										"value": "@variables('storageAccount')",
-										"type": "Expression"
-									},
-									"type": "string"
-								},
-								"reportType": {
-									"value": {
-										"value": "@pipeline().parameters.reportType",
-										"type": "Expression"
-									},
-									"type": "string"
-								}
-							},
-							"snapshot": true,
-							"sparkPool": {
-								"referenceName": "[parameters('Extend Monthly Cost_pipelineSparkPoolNameRef')]",
-								"type": "BigDataPoolReference"
-							},
-							"executorSize": "Large",
-							"conf": {
-								"spark.dynamicAllocation.enabled": true
-							},
-							"driverSize": "Large"
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"parameters": {
-					"reportType": {
-						"type": "string",
-						"defaultValue": "ActualCost"
-					}
-				},
-				"variables": {
-					"Month": {
-						"type": "String"
-					},
-					"Year": {
-						"type": "String"
-					},
-					"fromDate": {
-						"type": "String"
-					},
-					"toDate": {
-						"type": "String"
-					},
-					"Container": {
-						"type": "String",
-						"defaultValue": "usage"
-					},
-					"storageAccount": {
-						"type": "String",
-						"defaultValue": "[parameters('Extend Monthly Cost_pipelineStorageAccountVariable')]"
-					}
-				},
-				"folder": {
-					"name": "PipelinesInProduction/Cost"
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/datasets/Adhoc_CSV_Source')]",
-				"[concat(variables('workspaceId'), '/datasets/Monthly_Parquet')]",
-				"[concat(variables('workspaceId'), '/notebooks/monthly-cost-extend-v3')]",
-				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('Extend Monthly Cost_pipelineSparkPoolNameRef'))]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/Extend Monthly Actual Cost')]",
-			"type": "Microsoft.Synapse/workspaces/pipelines",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"activities": [
-					{
-						"name": "Extend Monthly Actual Cost",
-						"type": "ExecutePipeline",
-						"dependsOn": [],
-						"userProperties": [],
-						"typeProperties": {
-							"pipeline": {
-								"referenceName": "Extend Monthly Cost",
-								"type": "PipelineReference"
-							},
-							"waitOnCompletion": true,
-							"parameters": {
-								"reportType": "ActualCost"
-							}
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"folder": {
-					"name": "PipelinesInProduction/Cost"
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/pipelines/Extend Monthly Cost')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/monthly-actual-cost-trigger')]",
-			"type": "Microsoft.Synapse/workspaces/triggers",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Started",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "Extend Monthly Actual Cost",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "BlobEventsTrigger",
-				"typeProperties": {
-					"blobPathBeginsWith": "/usage/blobs/exports/monthly/ACMMonthlyActualCost",
-					"blobPathEndsWith": ".csv",
-					"ignoreEmptyBlobs": true,
-					"scope": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt",
-					"events": [
-						"Microsoft.Storage.BlobCreated"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/pipelines/Extend Monthly Actual Cost')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/Extend Monthly Amortized Cost')]",
-			"type": "Microsoft.Synapse/workspaces/pipelines",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"activities": [
-					{
-						"name": "Extend Monthly Amortized Cost",
-						"type": "ExecutePipeline",
-						"dependsOn": [],
-						"userProperties": [],
-						"typeProperties": {
-							"pipeline": {
-								"referenceName": "Extend Monthly Cost",
-								"type": "PipelineReference"
-							},
-							"waitOnCompletion": true,
-							"parameters": {
-								"reportType": "AmortizedCost"
-							}
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"folder": {
-					"name": "PipelinesInProduction/Cost"
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/pipelines/Extend Monthly Cost')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/monthly-amortized-cost-trigger')]",
-			"type": "Microsoft.Synapse/workspaces/triggers",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Started",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "Extend Monthly Amortized Cost",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "BlobEventsTrigger",
-				"typeProperties": {
-					"blobPathBeginsWith": "/usage/blobs/exports/monthly/ACMMonthlyAmortizedCost",
-					"blobPathEndsWith": ".csv",
-					"ignoreEmptyBlobs": true,
-					"scope": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt",
-					"events": [
-						"Microsoft.Storage.BlobCreated"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/pipelines/Extend Monthly Amortized Cost')]"
-			]
 		}
 	]
 }
