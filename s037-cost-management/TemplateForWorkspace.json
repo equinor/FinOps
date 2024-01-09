@@ -97,6 +97,10 @@
 			"type": "string",
 			"defaultValue": "s037costmgmt"
 		},
+		"build-ri-recommendations_pipelineStorageAccountVariable": {
+			"type": "string",
+			"defaultValue": "s037costmgmt"
+		},
 		"compute-hub-and-ri-savings_pipelineSparkPoolNameRef": {
 			"type": "string",
 			"defaultValue": "sprkpool33large"
@@ -120,6 +124,14 @@
 		"Adhoc_CSV_Source_dataSetLinkedServiceName": {
 			"type": "string",
 			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
+		},
+		"AutofitCombometerSink_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
+		},
+		"AutofitCombometerSource_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "CCM Storage"
 		},
 		"AzureAD_Users_dataSetLinkedServiceName": {
 			"type": "string",
@@ -685,6 +697,18 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
+		"combine-recommendations-and-autofitcombometer_notebookSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"combine-recommendations-and-autofitcombometer_notebookSparkPoolIdRef": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"combine-recommendations-and-autofitcombometer_notebookSparkPoolEndpointRef": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
 		"compute-cumulative-cost_notebookSparkPoolNameRef": {
 			"type": "string",
 			"defaultValue": "sprkpool33large"
@@ -841,30 +865,6 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
-		"sprkpool33large_delayInMinutes": {
-			"type": "int",
-			"defaultValue": 10
-		},
-		"sprkpool33large_maxNodeCount": {
-			"type": "int",
-			"defaultValue": 12
-		},
-		"sprkpool33large_minNodeCount": {
-			"type": "int",
-			"defaultValue": 3
-		},
-		"sprkpool33large_nodeCount": {
-			"type": "int",
-			"defaultValue": 3
-		},
-		"sprkpool33large_nodeSize": {
-			"type": "string",
-			"defaultValue": "Large"
-		},
-		"sprkpool33large_sparkVersion": {
-			"type": "string",
-			"defaultValue": "3.3"
-		},
 		"sparkpool32_delayInMinutes": {
 			"type": "int",
 			"defaultValue": 15
@@ -888,6 +888,30 @@
 		"sparkpool32_sparkVersion": {
 			"type": "string",
 			"defaultValue": "3.2"
+		},
+		"sprkpool33large_delayInMinutes": {
+			"type": "int",
+			"defaultValue": 10
+		},
+		"sprkpool33large_maxNodeCount": {
+			"type": "int",
+			"defaultValue": 12
+		},
+		"sprkpool33large_minNodeCount": {
+			"type": "int",
+			"defaultValue": 3
+		},
+		"sprkpool33large_nodeCount": {
+			"type": "int",
+			"defaultValue": 3
+		},
+		"sprkpool33large_nodeSize": {
+			"type": "string",
+			"defaultValue": "Large"
+		},
+		"sprkpool33large_sparkVersion": {
+			"type": "string",
+			"defaultValue": "3.3"
 		}
 	},
 	"variables": {
@@ -17514,6 +17538,239 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/build-ri-recommendations')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Retrieve autofit combometer data from CCM blob storage",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings",
+									"copyBehavior": "MergeFiles"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "InstanceSizeFlexibilityGroup",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "InstanceSizeFlexibilityGroup",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ResourceLocation",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ResourceLocation",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ArmSkuName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ArmSkuName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Ratio",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Ratio",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ComboMeter",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ComboMeter",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "HardwareMeter",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "HardwareMeter",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "SoftwareMeter",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "SoftwareMeter",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "CompositeKey",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "CompositeKey",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "NormalizedSKU",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "NormalizedSKU",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "AutofitCombometerSource",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "AutofitCombometerSink",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "Combine RI recommendations and Autofit Combometer data",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "Retrieve autofit combometer data from CCM blob storage",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "combine-recommendations-and-autofitcombometer",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@variables('storageAccount')",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"conf": {}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"storageAccount": {
+						"type": "String",
+						"defaultValue": "[parameters('build-ri-recommendations_pipelineStorageAccountVariable')]"
+					}
+				},
+				"folder": {
+					"name": "PipelinesInProduction/HUB and RI"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/AutofitCombometerSource')]",
+				"[concat(variables('workspaceId'), '/datasets/AutofitCombometerSink')]",
+				"[concat(variables('workspaceId'), '/notebooks/combine-recommendations-and-autofitcombometer')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/compute-hub-and-ri-savings')]",
 			"type": "Microsoft.Synapse/workspaces/pipelines",
 			"apiVersion": "2019-06-01-preview",
@@ -18777,6 +19034,97 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/linkedServices/', parameters('Adhoc_CSV_Source_dataSetLinkedServiceName'))]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/AutofitCombometerSink')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('AutofitCombometerSink_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "autofitcombometer.parquet",
+						"folderPath": "ccm",
+						"fileSystem": "usage"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('AutofitCombometerSink_dataSetLinkedServiceName'))]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/AutofitCombometerSource')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('AutofitCombometerSource_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "AutofitComboMeterData.csv",
+						"container": "costmanagementconnector-data"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "InstanceSizeFlexibilityGroup",
+						"type": "String"
+					},
+					{
+						"name": "ResourceLocation",
+						"type": "String"
+					},
+					{
+						"name": "ArmSkuName",
+						"type": "String"
+					},
+					{
+						"name": "Ratio",
+						"type": "String"
+					},
+					{
+						"name": "ComboMeter",
+						"type": "String"
+					},
+					{
+						"name": "HardwareMeter",
+						"type": "String"
+					},
+					{
+						"name": "SoftwareMeter",
+						"type": "String"
+					},
+					{
+						"name": "CompositeKey",
+						"type": "String"
+					},
+					{
+						"name": "NormalizedSKU",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('AutofitCombometerSource_dataSetLinkedServiceName'))]"
 			]
 		},
 		{
@@ -21437,6 +21785,26 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/CCM Storage')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"containerUri": "https://ccmstorageprod.blob.core.windows.net/costmanagementconnector-data",
+					"authenticationType": "Anonymous"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/HUB Storage Account')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
@@ -23742,7 +24110,7 @@
 					"name": "PowerBIViews"
 				},
 				"content": {
-					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW RIRecommendations\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/reservations/portal-export/FinOps-ReservationRecommendations-VMs-Daily/*/*.csv',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW = TRUE\n    ) AS [result]",
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW RIRecommendations\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/ri/ri-recommendations-with-autofit-combometer.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
 					"metadata": {
 						"language": "sql"
 					},
@@ -35023,7 +35391,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "3c1b28da-ea6b-42ee-9153-dfb1d7267009"
+						"spark.autotune.trackingId": "3a7c3e06-556f-43cb-acee-848dccbda356"
 					}
 				},
 				"metadata": {
@@ -35048,8 +35416,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -37746,6 +38113,188 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/combine-recommendations-and-autofitcombometer')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "NotebookInProduction/RI Recommendations"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "[parameters('combine-recommendations-and-autofitcombometer_notebookSparkPoolNameRef')]",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "112g",
+					"driverCores": 16,
+					"executorMemory": "112g",
+					"executorCores": 16,
+					"numExecutors": 1,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "5",
+						"spark.autotune.trackingId": "fea80180-3006-463f-b387-eedf3d2583fe"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "[parameters('combine-recommendations-and-autofitcombometer_notebookSparkPoolIdRef')]",
+						"name": "[parameters('combine-recommendations-and-autofitcombometer_notebookSparkPoolNameRef')]",
+						"type": "Spark",
+						"endpoint": "[parameters('combine-recommendations-and-autofitcombometer_notebookSparkPoolEndpointRef')]",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 16,
+						"memory": 112,
+						"automaticScaleJobs": true
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"import pyspark.sql.functions as F"
+						],
+						"outputs": [],
+						"execution_count": 1
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": 2
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"autofit_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/ccm/autofitcombometer.parquet'\r\n",
+							"autofit_df = spark.read.format('parquet').load(autofit_path)"
+						],
+						"outputs": [],
+						"execution_count": 21
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"rec_path = f'abfss://reservations@{storageAccount}.dfs.core.windows.net/portal-export/FinOps-ReservationRecommendations-VMs-Daily/*/*.csv'\r\n",
+							"csv_options = {'header' : True,\r\n",
+							"                'delimiter' : ',',\r\n",
+							"                'quote' : '\"',\r\n",
+							"                'escape' : '\"'}\r\n",
+							"rec_df = spark.read.options(**csv_options).csv(rec_path)"
+						],
+						"outputs": [],
+						"execution_count": 22
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Create join keys for each table\r\n",
+							"autofit_df = autofit_df.withColumn('AutofitJoinKey', F.concat(F.col('NormalizedSKU'), F.col('HardwareMeter')))\r\n",
+							"rec_df = rec_df.withColumn('RecommendationJoinKey', F.concat(F.col('NormalizedSize'), F.col('MeterId')))\r\n",
+							"\r\n",
+							"autofit_df = autofit_df.select('AutofitJoinKey', 'ResourceLocation', 'ArmSkuName', 'NormalizedSKU')\r\n",
+							"\r\n",
+							"# Join tables on composite key\r\n",
+							"new_df = rec_df.join(autofit_df, rec_df.RecommendationJoinKey == autofit_df.AutofitJoinKey, how='left')\r\n",
+							"new_df = new_df.drop('RecommendationJoinKey', 'AutofitJoinKey')"
+						],
+						"outputs": [],
+						"execution_count": 23
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"new_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/ri/ri-recommendations-with-autofit-combometer.parquet\"\r\n",
+							"new_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(new_path)"
+						],
+						"outputs": [],
+						"execution_count": 25
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/compute-cumulative-cost')]",
 			"type": "Microsoft.Synapse/workspaces/notebooks",
 			"apiVersion": "2019-06-01-preview",
@@ -38092,7 +38641,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "4f8cbbae-8e8c-4e41-81cc-10a968d7d67f"
+						"spark.autotune.trackingId": "da8b4823-0680-4b1d-84a8-52d5120b9bb5"
 					}
 				},
 				"metadata": {
@@ -38143,7 +38692,7 @@
 							"from datetime import datetime, timedelta"
 						],
 						"outputs": [],
-						"execution_count": 278
+						"execution_count": 53
 					},
 					{
 						"cell_type": "code",
@@ -38165,7 +38714,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 279
+						"execution_count": 54
 					},
 					{
 						"cell_type": "code",
@@ -38204,7 +38753,7 @@
 							"    Unknown = \"Unknown\""
 						],
 						"outputs": [],
-						"execution_count": 280
+						"execution_count": 55
 					},
 					{
 						"cell_type": "markdown",
@@ -38236,7 +38785,7 @@
 							"date_two_year_ago = datetime.now().date()-timedelta(days=710)"
 						],
 						"outputs": [],
-						"execution_count": 281
+						"execution_count": 56
 					},
 					{
 						"cell_type": "code",
@@ -38257,7 +38806,7 @@
 							"cost_df = cost_df.where(F.col('Date') >= date_two_year_ago)"
 						],
 						"outputs": [],
-						"execution_count": 282
+						"execution_count": 57
 					},
 					{
 						"cell_type": "code",
@@ -38295,7 +38844,7 @@
 							"cost_df = cost_df.withColumnRenamed('ai_VCPUs', 'VCPUs')"
 						],
 						"outputs": [],
-						"execution_count": 283
+						"execution_count": 58
 					},
 					{
 						"cell_type": "markdown",
@@ -38329,7 +38878,7 @@
 							"vm_df = vm_df.withColumn('Date', F.date_trunc('month', 'Date'))"
 						],
 						"outputs": [],
-						"execution_count": 284
+						"execution_count": 59
 					},
 					{
 						"cell_type": "code",
@@ -38352,7 +38901,7 @@
 							")"
 						],
 						"outputs": [],
-						"execution_count": 285
+						"execution_count": 60
 					},
 					{
 						"cell_type": "code",
@@ -38375,7 +38924,7 @@
 							"# vm_df = vm_df.withColumn('ServiceHours', F.col('UnitHours') * F.col('Quantity'))"
 						],
 						"outputs": [],
-						"execution_count": 286
+						"execution_count": 61
 					},
 					{
 						"cell_type": "code",
@@ -38401,7 +38950,7 @@
 							")"
 						],
 						"outputs": [],
-						"execution_count": 287
+						"execution_count": 62
 					},
 					{
 						"cell_type": "code",
@@ -38425,7 +38974,7 @@
 							"))"
 						],
 						"outputs": [],
-						"execution_count": 288
+						"execution_count": 63
 					},
 					{
 						"cell_type": "code",
@@ -38448,7 +38997,7 @@
 							"    .orderBy('Date', 'Quantity', 'ResourceCost')"
 						],
 						"outputs": [],
-						"execution_count": 289
+						"execution_count": 64
 					},
 					{
 						"cell_type": "code",
@@ -38467,7 +39016,7 @@
 							"vm_df = vm_df.withColumn('HUBType', F.lit(HUBType.VM.value))"
 						],
 						"outputs": [],
-						"execution_count": 290
+						"execution_count": 65
 					},
 					{
 						"cell_type": "code",
@@ -38486,7 +39035,7 @@
 							"vm_df = vm_df.withColumn('DBType', F.lit(None))"
 						],
 						"outputs": [],
-						"execution_count": 291
+						"execution_count": 66
 					},
 					{
 						"cell_type": "markdown",
@@ -38516,11 +39065,10 @@
 						},
 						"source": [
 							"sql_df = cost_df.alias('sql_df')\r\n",
-							"sql_df = sql_df.withColumn('IsHUB', F.when((F.col('ai_AHB').isNull()) | (F.col('ai_AHB') == False), False).otherwise(True))\r\n",
 							"sql_df = sql_df.withColumn('Date', F.date_trunc('month', 'Date'))"
 						],
 						"outputs": [],
-						"execution_count": 292
+						"execution_count": 67
 					},
 					{
 						"cell_type": "code",
@@ -38545,7 +39093,7 @@
 							"sql_df = sql_df.where(F.col('MeterSubCategory') != 'SQL Server Express Edition')"
 						],
 						"outputs": [],
-						"execution_count": 293
+						"execution_count": 68
 					},
 					{
 						"cell_type": "code",
@@ -38571,7 +39119,7 @@
 							"# sql_df = sql_df.withColumn('ServiceHours', F.col('UnitHours') * F.col('Quantity'))"
 						],
 						"outputs": [],
-						"execution_count": 294
+						"execution_count": 69
 					},
 					{
 						"cell_type": "code",
@@ -38597,7 +39145,30 @@
 							"sql_df = sql_df.where(F.col('DBType') != DBTypes.Unknown.value)"
 						],
 						"outputs": [],
-						"execution_count": 295
+						"execution_count": 70
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"sql_df = sql_df.withColumn('IsHUB', \r\n",
+							"    F.when((F.col('DBType') == DBTypes.VM.value) & (F.col('MeterSubCategory') == 'SQL Server Azure Hybrid Benefit'), True)\r\n",
+							"    .when(F.col('ai_AHB') == True, True)\r\n",
+							"    .otherwise(False)\r\n",
+							")"
+						],
+						"outputs": [],
+						"execution_count": 71
 					},
 					{
 						"cell_type": "code",
@@ -38622,7 +39193,7 @@
 							"sql_df = sql_df.where(F.col('LicenseType') != LicenseTypes.Unknown.value)"
 						],
 						"outputs": [],
-						"execution_count": 296
+						"execution_count": 72
 					},
 					{
 						"cell_type": "code",
@@ -38647,7 +39218,7 @@
 							")"
 						],
 						"outputs": [],
-						"execution_count": 297
+						"execution_count": 73
 					},
 					{
 						"cell_type": "code",
@@ -38676,7 +39247,7 @@
 							")"
 						],
 						"outputs": [],
-						"execution_count": 298
+						"execution_count": 74
 					},
 					{
 						"cell_type": "code",
@@ -38699,7 +39270,7 @@
 							"    .orderBy('Date', 'Quantity', 'ResourceCost')"
 						],
 						"outputs": [],
-						"execution_count": 299
+						"execution_count": 75
 					},
 					{
 						"cell_type": "code",
@@ -38718,7 +39289,7 @@
 							"sql_df = sql_df.withColumn('HUBType', F.lit(HUBType.SQL.value))"
 						],
 						"outputs": [],
-						"execution_count": 300
+						"execution_count": 76
 					},
 					{
 						"cell_type": "markdown",
@@ -38753,7 +39324,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 301
+						"execution_count": 77
 					},
 					{
 						"cell_type": "code",
@@ -38772,7 +39343,7 @@
 							"hub_df = vm_df.union(sql_df)"
 						],
 						"outputs": [],
-						"execution_count": 302
+						"execution_count": 78
 					},
 					{
 						"cell_type": "markdown",
@@ -38805,7 +39376,7 @@
 							"hub_df = hub_df.withColumn(\"TempDate\", F.date_format(\"Date\", \"yyyyMM\"))"
 						],
 						"outputs": [],
-						"execution_count": 303
+						"execution_count": 79
 					},
 					{
 						"cell_type": "markdown",
@@ -38837,7 +39408,7 @@
 							"PROD_OFFER_ID = 'MS-AZR-0017P'"
 						],
 						"outputs": [],
-						"execution_count": 304
+						"execution_count": 80
 					},
 					{
 						"cell_type": "code",
@@ -38865,7 +39436,7 @@
 							"old_pricesheet_df = old_pricesheet_df.select('ProductMapping', 'UnitOfMeasure', 'UnitQuantity', 'UnitPrice', 'PricePerUnit', 'BillingPeriodId')"
 						],
 						"outputs": [],
-						"execution_count": 305
+						"execution_count": 81
 					},
 					{
 						"cell_type": "markdown",
@@ -38905,7 +39476,7 @@
 							"new_pricesheet_df = new_pricesheet_df.select('ProductMapping', 'UnitOfMeasure', 'UnitQuantity', 'UnitPrice', 'PricePerUnit', 'BillingPeriodId')"
 						],
 						"outputs": [],
-						"execution_count": 306
+						"execution_count": 82
 					},
 					{
 						"cell_type": "markdown",
@@ -38937,7 +39508,7 @@
 							"pricesheet_df = new_pricesheet_df.union(old_pricesheet_df)"
 						],
 						"outputs": [],
-						"execution_count": 307
+						"execution_count": 83
 					},
 					{
 						"cell_type": "code",
@@ -38959,7 +39530,7 @@
 							"hub_df = hub_df.withColumn('PAYGLicenseCost', F.col('Quantity') * F.col('PricePerUnit'))"
 						],
 						"outputs": [],
-						"execution_count": 308
+						"execution_count": 84
 					},
 					{
 						"cell_type": "code",
@@ -38985,7 +39556,7 @@
 							"hub_df = hub_df.withColumn('PotentialSavings', F.col('ResourceCost') - F.col('CostWithHub'))"
 						],
 						"outputs": [],
-						"execution_count": 309
+						"execution_count": 85
 					},
 					{
 						"cell_type": "code",
@@ -39004,7 +39575,7 @@
 							"hub_df = hub_df.drop('UnitOfMeasure', 'UnitQuantity', 'UnitPrice', 'PricePerUnit')"
 						],
 						"outputs": [],
-						"execution_count": 310
+						"execution_count": 86
 					},
 					{
 						"cell_type": "markdown",
@@ -39037,7 +39608,7 @@
 							"hub_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(hub_path)"
 						],
 						"outputs": [],
-						"execution_count": 311
+						"execution_count": 88
 					},
 					{
 						"cell_type": "markdown",
@@ -39450,7 +40021,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "355c7aba-e4f3-4f73-bba8-b4167abbf4f5"
+						"spark.autotune.trackingId": "ba0c4c0a-cd61-44fd-8068-7fabbf6c6440"
 					}
 				},
 				"metadata": {
@@ -39475,8 +40046,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -39505,7 +40075,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"def get_last_day_prev_month(to_date):\r\n",
 							"    current_month = int(to_date[4:6])\r\n",
@@ -39965,7 +40534,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "17ef7138-ccc5-47ec-9601-0f26b0860d8c"
+						"spark.autotune.trackingId": "244fc658-11f5-4ef6-a641-2e3561769f2f"
 					}
 				},
 				"metadata": {
@@ -39990,8 +40559,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -40238,7 +40806,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "4967eec1-9494-4a3a-ad2f-68b9f47dfee4"
+						"spark.autotune.trackingId": "783f164b-afcd-4216-b1f1-245617e283a5"
 					}
 				},
 				"metadata": {
@@ -40263,8 +40831,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -42706,31 +43273,6 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
-			"type": "Microsoft.Synapse/workspaces/bigDataPools",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"autoPause": {
-					"enabled": true,
-					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
-				},
-				"autoScale": {
-					"enabled": true,
-					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
-					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
-				},
-				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
-				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
-				"nodeSizeFamily": "MemoryOptimized",
-				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
-				"isComputeIsolationEnabled": false,
-				"sessionLevelPackagesEnabled": true,
-				"annotations": []
-			},
-			"dependsOn": [],
-			"location": "northeurope"
-		},
-		{
 			"name": "[concat(parameters('workspaceName'), '/sparkpool32')]",
 			"type": "Microsoft.Synapse/workspaces/bigDataPools",
 			"apiVersion": "2019-06-01-preview",
@@ -42759,6 +43301,63 @@
 			},
 			"dependsOn": [],
 			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
+				},
+				"autoScale": {
+					"enabled": true,
+					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
+					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
+				},
+				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
+				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": true,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ri-recommendation-update-trigger')]",
+			"type": "Microsoft.Synapse/workspaces/triggers",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"description": "Run trigger when the RI recommendation dataset is updated, i.e when the dataset is exported into the storage account from Azure.",
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "build-ri-recommendations",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "BlobEventsTrigger",
+				"typeProperties": {
+					"blobPathBeginsWith": "/reservations/blobs/portal-export/FinOps-ReservationRecommendations-VMs-Daily",
+					"blobPathEndsWith": "manifest.json",
+					"ignoreEmptyBlobs": true,
+					"scope": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt",
+					"events": [
+						"Microsoft.Storage.BlobCreated"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/build-ri-recommendations')]"
+			]
 		}
 	]
 }
