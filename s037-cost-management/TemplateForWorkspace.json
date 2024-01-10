@@ -17746,7 +17746,12 @@
 								}
 							},
 							"snapshot": true,
-							"conf": {}
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"numExecutors": null
 						}
 					}
 				],
@@ -22536,6 +22541,38 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/ri-recommendation-update-trigger')]",
+			"type": "Microsoft.Synapse/workspaces/triggers",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"description": "Run trigger when the RI recommendation dataset is updated, i.e when the dataset is exported into the storage account from Azure.",
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "build-ri-recommendations",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "BlobEventsTrigger",
+				"typeProperties": {
+					"blobPathBeginsWith": "/reservations/blobs/portal-export/FinOps-ReservationRecommendations-VMs-Daily",
+					"blobPathEndsWith": "manifest.json",
+					"ignoreEmptyBlobs": true,
+					"scope": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt",
+					"events": [
+						"Microsoft.Storage.BlobCreated"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/build-ri-recommendations')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/AutoResolveIntegrationRuntime')]",
 			"type": "Microsoft.Synapse/workspaces/integrationRuntimes",
 			"apiVersion": "2019-06-01-preview",
@@ -24616,7 +24653,7 @@
 					"name": "--RI & HUB Savings"
 				},
 				"content": {
-					"query": "-- This is auto-generated code\nSELECT\n    TOP 100 *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/20231101-20231130/Extended_v3_ACMMonthlyActualCost_20231101-20231130.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where MeterCategory like 'Virtual Machines%'\n    --and Azure_Hybrid_Benefit = 'Enabled' and IsRIUsage = 'RI Usage' -- HUB enabled and RI assigned to VM\n    --AND IsRIUsage != 'RI Usage' and Azure_Hybrid_Benefit = 'Enabled' -- No RI assigned, HUB assigned\n    --and MeterCategory = 'Virtual Machines Licenses' and MeterSubCategory like 'Windows Server%' -- RI applied but PAYG Windows Licence\n    and MeterSubCategory like 'Windows Server%' and IsRIUsage != 'RI Usage' -- No RI, No HUB\n    \n",
+					"query": "-- This is auto-generated code\nSELECT\n    TOP 100 *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/20231101-20231130/Extended_v3_ACMMonthlyActualCost_20231101-20231130.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where MeterCategory like 'Virtual Machines%'\n    --and Azure_Hybrid_Benefit = 'Enabled' and IsRIUsage = 'RI Usage' -- HUB enabled and RI assigned to VM\n    --and MeterCategory = 'Virtual Machines Licenses' and MeterSubCategory = 'Windows Server' -- RI applied but PAYG Windows Licence\n    --AND IsRIUsage != 'RI Usage' and Azure_Hybrid_Benefit = 'Enabled' -- No RI assigned, HUB assigned\n    and MeterSubCategory = 'Windows Server' and IsRIUsage != 'RI Usage' -- No HUB, No RI\n    \n",
 					"metadata": {
 						"language": "sql"
 					},
@@ -25975,6 +26012,29 @@
 				},
 				"content": {
 					"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 \n    ReservationName\n    ,format([Date],'yyyy-MM') as [Date]\n    --,JSON_VALUE(AdditionalInfo, '$.ServiceType') as ServiceType\n    ,avg(UnitPrice) as UnitPrice\n    --,EffectivePrice as EffectivePrice\n    ,sum(Quantity) as Quantity\n    ,sum(UnitPrice * Quantity) as [PAYG Cost]\n    ,sum(EffectivePrice * Quantity) as [RI Cost]\n    ,sum((UnitPrice - EffectivePrice) * Quantity) as TotalUsedSavings\n    \nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAm*/2022*/A*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nwhere ChargeType = 'Usage' and PricingModel = 'Reservation' and ConsumedService = 'Microsoft.Sql'\ngroup by ReservationName, format([Date],'yyyy-MM')\norder by format([Date],'yyyy-MM'), ReservationName\n\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQL VM HUB and PAYG Example')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "--RI & HUB Savings"
+				},
+				"content": {
+					"query": "SELECT\n    TOP 100 *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/2024*/Extended_v3_ACMMonthlyActualCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where \n    MeterCategory = 'Virtual Machines Licenses'\n    and ResourceId = '/subscriptions/8b96ae86-c1d5-4668-bf1c-e1b120b18b17/resourceGroups/S077-NOE-EMI-TST/providers/Microsoft.Compute/virtualMachines/S077WEMID1T'\n    and [Date] in ('2024-01-07', '2024-01-08', '2024-01-09')\n    \n",
 					"metadata": {
 						"language": "sql"
 					},
@@ -38136,7 +38196,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "fea80180-3006-463f-b387-eedf3d2583fe"
+						"spark.autotune.trackingId": "51ea4477-0981-4ad3-8d97-1c3dc3762453"
 					}
 				},
 				"metadata": {
@@ -38161,8 +38221,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -40021,7 +40080,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "ba0c4c0a-cd61-44fd-8068-7fabbf6c6440"
+						"spark.autotune.trackingId": "485b05af-0c35-4b08-b6ab-b2e944192f09"
 					}
 				},
 				"metadata": {
@@ -40218,6 +40277,7 @@
 							"                     .withColumn('Date', F.to_date(F.col('Date'), 'MM/dd/yyyy'))\\\r\n",
 							"                     .withColumn('BillingPeriodStartDate', F.to_date(F.col('BillingPeriodStartDate'), 'MM/dd/yyyy'))\\\r\n",
 							"                     .withColumn('BillingPeriodEndDate', F.to_date(F.col('BillingPeriodEndDate'), 'MM/dd/yyyy'))\r\n",
+							"                     .withColumn('CPUHours', F.col('ai_VCPUs') * F.col('Quantity'))\r\n",
 							"\r\n",
 							"    return cost_df"
 						],
@@ -40470,6 +40530,7 @@
 							"    cost_df = cost_AHB_column(cost_df)\r\n",
 							"    cost_df = cost_set_instance_name(cost_df)\r\n",
 							"    cost_df = expand_cost_tags(cost_df)\r\n",
+							"    cost_df = cost_df.withColumn(\"ResourceLocation\", F.lower(F.trim(F.regexp_replace(F.col('ResourceLocation'), \"\\s+\", \"\"))))\r\n",
 							"\r\n",
 							"    return cost_df"
 						],
@@ -40534,7 +40595,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "244fc658-11f5-4ef6-a641-2e3561769f2f"
+						"spark.autotune.trackingId": "a7593c3a-3b29-4057-9f01-7925b6db07ea"
 					}
 				},
 				"metadata": {
@@ -40585,14 +40646,14 @@
 							]
 						},
 						"source": [
-							"toDate = '20231231'\n",
-							"fromDate = '20231201'\n",
+							"toDate = '20240131'\n",
+							"fromDate = '20240101'\n",
 							"container = 'usage'\n",
 							"storageAccount = 's037costmgmt'\n",
 							"reportType = 'ActualCost'"
 						],
 						"outputs": [],
-						"execution_count": 2
+						"execution_count": 7
 					},
 					{
 						"cell_type": "code",
@@ -40620,7 +40681,7 @@
 							"import pyspark.sql.types as T"
 						],
 						"outputs": [],
-						"execution_count": 3
+						"execution_count": 8
 					},
 					{
 						"cell_type": "markdown",
@@ -40652,7 +40713,7 @@
 							"%run /cost-extend-utilities"
 						],
 						"outputs": [],
-						"execution_count": 7
+						"execution_count": 9
 					},
 					{
 						"cell_type": "code",
@@ -40676,7 +40737,7 @@
 							"    return subscriptions_df"
 						],
 						"outputs": [],
-						"execution_count": 11
+						"execution_count": 10
 					},
 					{
 						"cell_type": "code",
@@ -40700,7 +40761,7 @@
 							"    print('File write complete!')"
 						],
 						"outputs": [],
-						"execution_count": 9
+						"execution_count": 11
 					},
 					{
 						"cell_type": "markdown",
@@ -40768,14 +40829,13 @@
 							"\r\n",
 							"# Transform data\r\n",
 							"cost_df = transform_cost_data(cost_df)\r\n",
-							"cost_df = cost_df.withColumn(\"ResourceLocation\", F.lower(F.trim(F.regexp_replace(F.col('ResourceLocation'), \"\\s+\", \"\"))))\r\n",
 							"cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\r\n",
 							"write_output_file(cost_df, cost_target_path)\r\n",
 							"\r\n",
 							"print(' ')"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 12
 					}
 				]
 			},
@@ -40806,7 +40866,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "783f164b-afcd-4216-b1f1-245617e283a5"
+						"spark.autotune.trackingId": "4a3bc50c-ab8f-44da-b69d-4c0c1b93cef1"
 					}
 				},
 				"metadata": {
@@ -40831,7 +40891,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -41062,7 +41123,6 @@
 							"# Process cost data\n",
 							"cost_df = spark.read.format('parquet').load(cost_source_path)\n",
 							"cost_df = transform_cost_data(cost_df)\n",
-							"cost_df = cost_df.withColumn(\"ResourceLocation\", F.lower(F.trim(F.regexp_replace(F.col('ResourceLocation'), \"\\s+\", \"\"))))\n",
 							"cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\n",
 							"write_output_file(cost_df, cost_target_path)\n",
 							"print(' ')"
@@ -43326,38 +43386,6 @@
 			},
 			"dependsOn": [],
 			"location": "northeurope"
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/ri-recommendation-update-trigger')]",
-			"type": "Microsoft.Synapse/workspaces/triggers",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"description": "Run trigger when the RI recommendation dataset is updated, i.e when the dataset is exported into the storage account from Azure.",
-				"annotations": [],
-				"runtimeState": "Started",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "build-ri-recommendations",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "BlobEventsTrigger",
-				"typeProperties": {
-					"blobPathBeginsWith": "/reservations/blobs/portal-export/FinOps-ReservationRecommendations-VMs-Daily",
-					"blobPathEndsWith": "manifest.json",
-					"ignoreEmptyBlobs": true,
-					"scope": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt",
-					"events": [
-						"Microsoft.Storage.BlobCreated"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/pipelines/build-ri-recommendations')]"
-			]
 		}
 	]
 }
