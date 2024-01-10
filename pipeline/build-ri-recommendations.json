@@ -1,0 +1,220 @@
+{
+	"name": "build-ri-recommendations",
+	"properties": {
+		"activities": [
+			{
+				"name": "Retrieve autofit combometer data from CCM blob storage",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings",
+							"copyBehavior": "MergeFiles"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "InstanceSizeFlexibilityGroup",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "InstanceSizeFlexibilityGroup",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ResourceLocation",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "ResourceLocation",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ArmSkuName",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "ArmSkuName",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "Ratio",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "Ratio",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ComboMeter",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "ComboMeter",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "HardwareMeter",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "HardwareMeter",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "SoftwareMeter",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "SoftwareMeter",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "CompositeKey",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "CompositeKey",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "NormalizedSKU",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "NormalizedSKU",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "AutofitCombometerSource",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "AutofitCombometerSink",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Combine RI recommendations and Autofit Combometer data",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "Retrieve autofit combometer data from CCM blob storage",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "combine-recommendations-and-autofitcombometer",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"storageAccount": {
+							"value": {
+								"value": "@variables('storageAccount')",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true
+				}
+			}
+		],
+		"variables": {
+			"storageAccount": {
+				"type": "String",
+				"defaultValue": "s037costmgmt"
+			}
+		},
+		"folder": {
+			"name": "PipelinesInProduction/HUB and RI"
+		},
+		"annotations": []
+	}
+}

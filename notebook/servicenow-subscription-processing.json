@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "73837d20-d614-477b-b491-58ff8a6418c7"
+				"spark.autotune.trackingId": "7e419aa2-26d1-4175-9607-4e215981d359"
 			}
 		},
 		"metadata": {
@@ -69,7 +69,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 12
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -89,7 +89,7 @@
 					"import calendar\r\n",
 					"import datetime"
 				],
-				"execution_count": 13
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -115,7 +115,7 @@
 					"    last_day_of_month = calendar.monthrange(today.year, today.month)[1]\r\n",
 					"    return today.day == last_day_of_month"
 				],
-				"execution_count": 14
+				"execution_count": 4
 			},
 			{
 				"cell_type": "markdown",
@@ -147,7 +147,7 @@
 					"source_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/latest.csv\"\r\n",
 					"subscription_df = spark.read.csv(source_path, header=True, inferSchema=True)"
 				],
-				"execution_count": 15
+				"execution_count": 5
 			},
 			{
 				"cell_type": "markdown",
@@ -176,9 +176,9 @@
 					}
 				},
 				"source": [
-					"subscription_df = subscription_df.where(subscription_df.OperationalStatus != 'Ignored')"
+					"# subscription_df = subscription_df.where(subscription_df.OperationalStatus != 'Ignored')"
 				],
-				"execution_count": 16
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -198,7 +198,7 @@
 					"subscription_df = subscription_df.withColumn(\"TechnicalOwnerUserName\", F.split(subscription_df[\"TechnicalOwnerEmail\"], \"@\").getItem(0))\r\n",
 					"subscription_df = subscription_df.drop(\"ProductOwnerEmail\", \"TechnicalOwnerEmail\")"
 				],
-				"execution_count": 17
+				"execution_count": 7
 			},
 			{
 				"cell_type": "code",
@@ -216,7 +216,7 @@
 				"source": [
 					"subscription_df = subscription_df.where(F.col('SubscriptionId').isNotNull())"
 				],
-				"execution_count": 18
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -236,7 +236,7 @@
 					"# Compute duplicates\r\n",
 					"# duplicates = subscription_df.groupBy('SubscriptionId').count().filter(F.col('count') > 1)"
 				],
-				"execution_count": 19
+				"execution_count": 9
 			},
 			{
 				"cell_type": "markdown",
@@ -268,7 +268,7 @@
 					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/latest-optimized.parquet\"\r\n",
 					"subscription_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 				],
-				"execution_count": 20
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -291,7 +291,7 @@
 					"    subscription_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)\r\n",
 					""
 				],
-				"execution_count": 21
+				"execution_count": 11
 			}
 		]
 	}

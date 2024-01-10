@@ -1,8 +1,8 @@
 {
-	"name": "compute-win-hub-savings",
+	"name": "calculate-missing-application-cost",
 	"properties": {
 		"folder": {
-			"name": "NotebookInProduction/HUB Savings"
+			"name": "NotebookInProduction/Utilities"
 		},
 		"nbformat": 4,
 		"nbformat_minor": 2,
@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "aa37b2ac-82cb-441f-967c-ae270e364000"
+				"spark.autotune.trackingId": "ff3d28f5-d377-4ead-b8e7-d6067c81dfd9"
 			}
 		},
 		"metadata": {
@@ -52,27 +52,6 @@
 		},
 		"cells": [
 			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"## Initialize script"
-				]
-			},
-			{
-				"cell_type": "code",
-				"source": [
-					"import pyspark.sql.functions as F\r\n",
-					"import pyspark.sql.types as T"
-				],
-				"execution_count": 54
-			},
-			{
 				"cell_type": "code",
 				"metadata": {
 					"jupyter": {
@@ -83,15 +62,20 @@
 						"transient": {
 							"deleting": false
 						}
-					},
-					"tags": [
-						"parameters"
-					]
+					}
 				},
 				"source": [
-					"storageAccount = 's037costmgmt'"
+					"from pyspark.sql import functions as F"
 				],
-				"execution_count": 55
+				"execution_count": 24
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"source_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear.parquet\" \r\n",
+					"df = spark.read.format('parquet').load(source_path)"
+				],
+				"execution_count": 25
 			},
 			{
 				"cell_type": "code",
@@ -107,24 +91,9 @@
 					}
 				},
 				"source": [
-					"# Constants \r\n",
-					"WINDOWS_ANNUAL_LICENSE_COST = 1782344.33\r\n",
-					"PROD_OFFER_ID = 'MS-AZR-0017P'"
+					"df = df.where(F.col('ApplicationName') == 'Application not defined or not found')"
 				],
-				"execution_count": 56
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"## Load and pre-process entire cost data history"
-				]
+				"execution_count": 26
 			},
 			{
 				"cell_type": "code",
@@ -140,10 +109,9 @@
 					}
 				},
 				"source": [
-					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
-					"cost_df = spark.read.format('parquet').load(cost_path)"
+					"df = df.withColumnRenamed('SubscriptionServiceNow-App', 'Application')"
 				],
-				"execution_count": 57
+				"execution_count": 27
 			},
 			{
 				"cell_type": "code",
@@ -159,46 +127,9 @@
 					}
 				},
 				"source": [
-					"cost_df = cost_df.where((F.col('MeterCategory') == 'Virtual Machines') & (F.col('ServiceInfo2') == 'Windows Server BYOL'))\r\n",
-					"cost_df = cost_df.withColumn('Date', F.date_format('Date', 'yyyy-MM'))\r\n",
-					"cost_df = cost_df.withColumn(\"Date\", F.to_date(cost_df.Date, \"yyyy-MM\"))\r\n",
-					"cost_df = cost_df.withColumnRenamed('ai_ServiceType', 'ServiceType')\r\n",
-					"cost_df = cost_df.withColumnRenamed('ai_VCPUs', 'VCPUs')"
+					"df = df.where((F.col('Report_Date') >= '2023-09-01 00:00:00') & (F.col('Report_Date') <= '2023-11-01 00:00:00'))"
 				],
-				"execution_count": 58
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"## Load and pre-process pricesheet data"
-				]
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/pricesheet-20*.parquet'\r\n",
-					"pricesheet_df = spark.read.format('parquet').load(pricesheet_path)\r\n",
-					"pricesheet_df = pricesheet_df.where(F.col('offerId') == PROD_OFFER_ID)"
-				],
-				"execution_count": 59
+				"execution_count": 28
 			},
 			{
 				"cell_type": "code",
@@ -215,24 +146,9 @@
 					"collapsed": false
 				},
 				"source": [
-					"pricesheet_df = pricesheet_df.withColumn('unitQuantity', F.split('unitOfMeasure', ' ')[0])\r\n",
-					"pricesheet_df = pricesheet_df.withColumn('pricePerUnit', F.col('unitPrice') / F.col('unitQuantity'))\r\n",
-					"pricesheet_df = pricesheet_df.select('meterName', 'unitOfMeasure', 'unitQuantity', 'unitPrice', 'pricePerUnit', 'billingPeriodId')"
+					"display(df.agg(F.sum('CostInBillingCurrency')))"
 				],
-				"execution_count": 60
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"## Compute Windows HUB Savings"
-				]
+				"execution_count": 30
 			},
 			{
 				"cell_type": "code",
@@ -248,43 +164,12 @@
 					}
 				},
 				"source": [
-					"hub_df = cost_df \\\r\n",
-					"    .select('ServiceType', 'VCPUs', 'Date', 'Quantity', 'PartNumber', 'ProductName', 'MeterCategory', 'ServiceInfo2') \\\r\n",
-					"    .groupBy('ServiceType', 'Date', 'PartNumber', 'ProductName', 'MeterCategory', 'VCPUs', 'ServiceInfo2') \\\r\n",
-					"    .agg(F.sum('Quantity').alias('Quantity')) \\\r\n",
-					"    .orderBy('Date', 'Quantity')\r\n",
-					"\r\n",
-					"hub_df = hub_df.where(F.col('VCPUs') != 0)\r\n",
-					"hub_df = hub_df.withColumn('pricesheetService', F.concat(F.lit('Windows Server - '), F.col('VCPUs'), F.lit(' vCPU VM License')))\r\n",
-					"\r\n",
-					"# Create dummy date column for pricesheet join operation\r\n",
-					"hub_df = hub_df.withColumn(\"tempDate\", \r\n",
-					"                   F.when(F.date_format(\"Date\", \"yyyy-MM-dd\") >= \"2023-11-01\", \"202310\")\r\n",
-					"                   .otherwise(F.date_format(\"Date\", \"yyyyMM\")))"
+					"df = df \\\r\n",
+					"    .select('Report_Date', 'CostInBillingCurrency','SubscriptionName', 'Application') \\\r\n",
+					"    .groupBy('Report_Date', 'SubscriptionName', 'Application') \\\r\n",
+					"    .agg(F.sum('CostInBillingCurrency').alias('Cost'))"
 				],
-				"execution_count": 61
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"hub_df = hub_df.join(pricesheet_df, (pricesheet_df.meterName == hub_df.pricesheetService) & (pricesheet_df.billingPeriodId == hub_df.tempDate), \"left\")\r\n",
-					"hub_df = hub_df.drop('priceSheetService', 'tempDate')\r\n",
-					"\r\n",
-					"hub_df = hub_df.withColumn('totalCost', F.col('Quantity') * F.col('pricePerUnit'))\r\n",
-					"hub_df = hub_df.where(F.col('meterName').isNotNull())"
-				],
-				"execution_count": 62
+				"execution_count": 31
 			},
 			{
 				"cell_type": "code",
@@ -301,14 +186,17 @@
 					"collapsed": false
 				},
 				"source": [
-					"license_df = hub_df.select('Date').distinct()\r\n",
-					"license_df = license_df.withColumn('LicenseCost', F.lit(WINDOWS_ANNUAL_LICENSE_COST / 12))"
+					"display(df)"
 				],
-				"execution_count": 63
+				"execution_count": 32
 			},
 			{
-				"cell_type": "markdown",
+				"cell_type": "code",
 				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
 					"nteract": {
 						"transient": {
 							"deleting": false
@@ -316,8 +204,9 @@
 					}
 				},
 				"source": [
-					"## Write HUB savings to ASDL"
-				]
+					"print(df.count())"
+				],
+				"execution_count": 33
 			},
 			{
 				"cell_type": "code",
@@ -334,13 +223,125 @@
 					"collapsed": false
 				},
 				"source": [
-					"hub_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/savings/hub/windows-hub-savings.parquet\"\r\n",
-					"hub_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(hub_path)\r\n",
-					"\r\n",
-					"license_cost_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/savings/hub/windows-server-license-cost.parquet\"\r\n",
-					"license_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(license_cost_path)"
+					"display(df.select('Application', 'SubscriptionName').distinct())"
 				],
-				"execution_count": 64
+				"execution_count": 34
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(df.select('Application').distinct())"
+				],
+				"execution_count": 35
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(df.select('SubscriptionName').distinct())"
+				],
+				"execution_count": 36
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(df.select('Cost', 'Application').groupBy('Application').agg(F.sum('Cost').alias('Cost')))"
+				],
+				"execution_count": 37
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(df.select('Cost', 'SubscriptionName').groupBy('SubscriptionName').agg(F.sum('Cost').alias('Cost')))"
+				],
+				"execution_count": 38
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"pivot = df.select('SubscriptionName', 'Application', 'Cost').groupBy('SubscriptionName', 'Application').agg(F.sum('Cost').alias('Cost'))\r\n",
+					"display(pivot)"
+				],
+				"execution_count": 39
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"danske = df.where(F.upper(F.col('SubscriptionName')).like('%DANSKE%')).agg(F.sum('Cost').alias('Cost'))\r\n",
+					"display(danske)"
+				],
+				"execution_count": 40
 			}
 		]
 	}

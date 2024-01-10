@@ -1,0 +1,26 @@
+{
+	"name": "ri-recommendation-update-trigger",
+	"properties": {
+		"description": "Run trigger when the RI recommendation dataset is updated, i.e when the dataset is exported into the storage account from Azure.",
+		"annotations": [],
+		"runtimeState": "Started",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "build-ri-recommendations",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "BlobEventsTrigger",
+		"typeProperties": {
+			"blobPathBeginsWith": "/reservations/blobs/portal-export/FinOps-ReservationRecommendations-VMs-Daily",
+			"blobPathEndsWith": "manifest.json",
+			"ignoreEmptyBlobs": true,
+			"scope": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt",
+			"events": [
+				"Microsoft.Storage.BlobCreated"
+			]
+		}
+	}
+}

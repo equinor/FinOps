@@ -1,0 +1,310 @@
+{
+	"name": "compute-cumulative-cost",
+	"properties": {
+		"folder": {
+			"name": "NotebookInProduction"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sprkpool33large",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "112g",
+			"driverCores": 16,
+			"executorMemory": "112g",
+			"executorCores": 16,
+			"numExecutors": 1,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "true",
+				"spark.dynamicAllocation.minExecutors": "1",
+				"spark.dynamicAllocation.maxExecutors": "5",
+				"spark.autotune.trackingId": "2320f631-09ab-4afc-b62c-33fa9673a908"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
+				"name": "sprkpool33large",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 16,
+				"memory": 112,
+				"automaticScaleJobs": true
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"storageAccount = 's037costmgmt'"
+				],
+				"execution_count": 107
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"import pyspark.sql.functions as F\r\n",
+					"import pyspark.sql.window as W\r\n",
+					"import statsmodels.api as sm\r\n",
+					"import pandas as pd\r\n",
+					"import numpy as np"
+				],
+				"execution_count": 108
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
+					"df = spark.read.format('parquet').load(cost_path)"
+				],
+				"execution_count": 109
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"df = df.select('Date', 'CostInBillingCurrency')\r\n",
+					"df = df.withColumn('Date', F.date_trunc('month', 'Date'))\r\n",
+					"df = df.groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('Cost')).orderBy('Date')"
+				],
+				"execution_count": 110
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"df = df.filter(F.col('Date') < F.concat(F.date_format(F.current_date(), 'yyyy'), F.lit('-'), F.date_format(F.current_date(), 'MM'), F.lit('-'), F.lit('01')))"
+				],
+				"execution_count": 111
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"window = W.Window.orderBy(\"Date\").rowsBetween(W.Window.unboundedPreceding, 0)\r\n",
+					"df = df.withColumn(\"CumulativeCost\", F.sum(\"Cost\").over(window))"
+				],
+				"execution_count": 112
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"pdf = df.toPandas()\r\n",
+					"\r\n",
+					"# Set the month column as the index\r\n",
+					"pdf.set_index(\"Date\", inplace=True)"
+				],
+				"execution_count": 113
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def compute_ols_prediction(input_df, lookback, prediction_interval):\r\n",
+					"    input_df['x'] = range(len(input_df))\r\n",
+					"\r\n",
+					"    # Estimate OLS model\r\n",
+					"    y = input_df['Cost'].values if lookback == -1 else input_df['Cost'].tail(lookback)\r\n",
+					"    x = input_df['x'].values if lookback == -1 else input_df['x'].tail(lookback)\r\n",
+					"    model = sm.OLS(y, sm.add_constant(x))\r\n",
+					"    result = model.fit()\r\n",
+					"\r\n",
+					"    # Configure prediction period\r\n",
+					"    future_months = pd.date_range(start=input_df.index[-1], periods=prediction_interval, freq=\"MS\")\r\n",
+					"    # future_months = future_months[1:]\r\n",
+					"    future_x = np.arange(input_df['x'][-1] + 1, input_df['x'][-1] + prediction_interval + 1)\r\n",
+					"\r\n",
+					"    # Predict future cost\r\n",
+					"    x = sm.add_constant(future_x)\r\n",
+					"    predicted_cost = result.predict(x)\r\n",
+					"\r\n",
+					"    # Create the predicted cost column label\r\n",
+					"    column_label = \"FullLookback\" if lookback == -1 else f'{lookback}MonthLookback'\r\n",
+					"\r\n",
+					"    predicted_df = pd.DataFrame({\"Date\": future_months, f\"PredictedCost{column_label}\": predicted_cost})\r\n",
+					"    predicted_df = spark.createDataFrame(predicted_df)\r\n",
+					"    predicted_df = predicted_df.withColumn(f'PredictedCumulativeCost{column_label}',  F.sum(f\"PredictedCost{column_label}\").over(window) + input_df['CumulativeCost'][-1])\r\n",
+					"    return predicted_df"
+				],
+				"execution_count": 116
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"four_month_lookback_df = compute_ols_prediction(pdf, lookback=6, prediction_interval=72)\r\n",
+					"eight_month_lookback_df = compute_ols_prediction(pdf, lookback=12, prediction_interval=72)\r\n",
+					"twelve_month_lookback_df = compute_ols_prediction(pdf, lookback=24, prediction_interval=72)\r\n",
+					"sixteen_month_lookback_df = compute_ols_prediction(pdf, lookback=-1, prediction_interval=72)\r\n",
+					"\r\n",
+					"joined_df = df.join(four_month_lookback_df, on='Date', how='outer')\r\n",
+					"joined_df = joined_df.join(eight_month_lookback_df, on='Date', how='outer')\r\n",
+					"joined_df = joined_df.join(twelve_month_lookback_df, on='Date', how='outer')\r\n",
+					"joined_df = joined_df.join(sixteen_month_lookback_df, on='Date', how='outer')\r\n",
+					"joined_df = joined_df.withColumn('Date', F.to_date('Date'))"
+				],
+				"execution_count": 117
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/cumulative-cost-prediction.parquet\"\r\n",
+					"joined_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
+				],
+				"execution_count": 119
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"### ARIMA Model"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# def predict_cost(input_df, p, d, q):\r\n",
+					"#     model = sm.tsa.ARIMA(input_df[\"Cost\"], order=(p, d, q)).fit()\r\n",
+					"#     future_months = pd.date_range(start=input_df.index[-1], periods=72, freq=\"MS\")\r\n",
+					"#     predicted_cost = model.predict(start=input_df.index[-1], end=future_months[-1], typ=\"levels\")\r\n",
+					"#     predicted_df = pd.DataFrame({\"Date\": future_months, \"PredictedCost\": predicted_cost})\r\n",
+					"#     predicted_df = spark.createDataFrame(predicted_df)\r\n",
+					"#     return predicted_df"
+				],
+				"execution_count": null
+			}
+		]
+	}
+}

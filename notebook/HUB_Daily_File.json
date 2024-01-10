@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "06eb2233-fa27-411b-b820-aedc3376a12e"
+				"spark.autotune.trackingId": "b33fa18a-6263-4d84-915c-85c3c4c4268d"
 			}
 		},
 		"metadata": {
@@ -62,7 +62,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 73
+				"execution_count": 1
 			},
 			{
 				"cell_type": "code",
@@ -86,7 +86,7 @@
 					"from notebookutils import mssparkutils\n",
 					"from azure.storage.blob import BlobServiceClient"
 				],
-				"execution_count": 74
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -105,7 +105,7 @@
 					"KEY_VAULT_NAME = 'acm-toolkit-kv'\r\n",
 					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'"
 				],
-				"execution_count": 75
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -123,7 +123,7 @@
 				"source": [
 					"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 				],
-				"execution_count": 76
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -147,7 +147,7 @@
 					"    print(end_date)\r\n",
 					"    return start_date, end_date"
 				],
-				"execution_count": 77
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -175,7 +175,7 @@
 					"\r\n",
 					"    return last_month_start, last_month_end"
 				],
-				"execution_count": 78
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -206,7 +206,7 @@
 					"    cost_df = cost_df.loc[(cost_df['Date'] >= start_date)]\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 79
+				"execution_count": 7
 			},
 			{
 				"cell_type": "markdown",
@@ -235,15 +235,15 @@
 					}
 				},
 				"source": [
-					"pricesheet_source_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/New/ArmPriceSheet_Enrollment_LATEST.csv'\r\n",
+					"pricesheet_source_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/pricesheet-latest'\r\n",
 					"pricesheet_target_path = 'abfss://win-activity@hubautomation.dfs.core.windows.net/usage_details/pricesheet.csv'\r\n",
 					"\r\n",
 					"print('Loading the latest pricesheet from source parquet')\r\n",
-					"pricesheet = pd.read_csv(pricesheet_source_path)\r\n",
+					"pricesheet = pd.read_parquet(pricesheet_source_path)\r\n",
 					"print('Writing pricesheet to destination csv file')\r\n",
 					"pricesheet.to_csv(pricesheet_target_path)"
 				],
-				"execution_count": 80
+				"execution_count": 9
 			},
 			{
 				"cell_type": "markdown",
@@ -276,7 +276,7 @@
 					"vm_cost_df = load_cost_data(start_date)\r\n",
 					"sql_cost_df = vm_cost_df.copy()"
 				],
-				"execution_count": 81
+				"execution_count": 10
 			},
 			{
 				"cell_type": "markdown",
@@ -310,7 +310,7 @@
 					"    'CostInBillingCurrency', 'ServiceInfo2', 'PartNumber', 'AdditionalInfo']\n",
 					"vm_cost_df.drop(columns=vm_cost_df.columns.difference(vm_columns_to_keep), inplace=True)"
 				],
-				"execution_count": 82
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -338,7 +338,7 @@
 					"print(len(vm_cost_df))\n",
 					"print(vm_cost_df)"
 				],
-				"execution_count": 83
+				"execution_count": 12
 			},
 			{
 				"cell_type": "markdown",
@@ -384,7 +384,7 @@
 					"sql_metersubcategory_array = sql_config['MeterSubCategory']\r\n",
 					"print(sql_metersubcategory_array)"
 				],
-				"execution_count": 84
+				"execution_count": 13
 			},
 			{
 				"cell_type": "markdown",
@@ -419,7 +419,7 @@
 					"\r\n",
 					"sql_cost_df.drop(columns=sql_cost_df.columns.difference(sql_columns_to_keep), inplace=True)"
 				],
-				"execution_count": 85
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -443,7 +443,7 @@
 					"print(len(sql_cost_df))\r\n",
 					"print(sql_cost_df)"
 				],
-				"execution_count": 86
+				"execution_count": 15
 			},
 			{
 				"cell_type": "markdown",
@@ -491,7 +491,7 @@
 					"\n",
 					"print('File write complete.')"
 				],
-				"execution_count": 88
+				"execution_count": 16
 			}
 		]
 	}

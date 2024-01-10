@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "a7da27e6-4de9-4596-b496-75eed0d9eb13"
+				"spark.autotune.trackingId": "a7593c3a-3b29-4057-9f01-7925b6db07ea"
 			}
 		},
 		"metadata": {
@@ -73,12 +73,13 @@
 					]
 				},
 				"source": [
-					"toDate = '20231231'\n",
-					"fromDate = '20231201'\n",
+					"toDate = '20240131'\n",
+					"fromDate = '20240101'\n",
 					"container = 'usage'\n",
-					"storageAccount = 's037costmgmt'"
+					"storageAccount = 's037costmgmt'\n",
+					"reportType = 'ActualCost'"
 				],
-				"execution_count": 2
+				"execution_count": 7
 			},
 			{
 				"cell_type": "code",
@@ -105,7 +106,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 3
+				"execution_count": 8
 			},
 			{
 				"cell_type": "markdown",
@@ -136,7 +137,7 @@
 				"source": [
 					"%run /cost-extend-utilities"
 				],
-				"execution_count": 7
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -159,7 +160,7 @@
 					"    subscriptions_df = subscriptions_df.withColumnRenamed('Application', 'SubscriptionServiceNow-App')\r\n",
 					"    return subscriptions_df"
 				],
-				"execution_count": 11
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -182,7 +183,7 @@
 					"    cost_df.write.format('parquet').mode('overwrite').option('path', destinationFilename).save()\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": 9
+				"execution_count": 11
 			},
 			{
 				"cell_type": "markdown",
@@ -208,57 +209,52 @@
 						"transient": {
 							"deleting": false
 						}
-					},
-					"collapsed": false
+					}
 				},
 				"source": [
-					"print(f'fromDate: {fromDate}')\n",
-					"print(f'toDate: {toDate}')\n",
-					"report_types = ['ActualCost', 'AmortizedCost']\n",
-					"\n",
-					"print(f\"------ From: {fromDate}, To: {toDate} -----------\")\n",
-					"\n",
-					"for report_type in report_types:\n",
-					"\n",
-					"    print(f\"------ {report_type} -----------\")\n",
-					"    date_range = fromDate + '-' + toDate\n",
-					"    print(f'dateRange: {date_range}')\n",
-					"\n",
-					"    cost_source_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/daily/ACMDaily{report_type}/{date_range}/*.csv'\n",
-					"    cost_target_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthly{report_type}/{date_range}/Extended_v3_ACMMonthly{report_type}_{date_range}.parquet'\n",
-					"    print(f\"Cost data path: {cost_source_path}\")\n",
-					"    print(f\"Cost destination path: {cost_target_path}\")\n",
-					"\n",
-					"    previous_month_date = get_last_day_prev_month(toDate)\n",
-					"    print(f'Using {previous_month_date} ServiceNow subscription file')\n",
-					"    subscription_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/{previous_month_date}-optimized.parquet'\n",
-					"    print(f\"Subscription path: {subscription_path}\")\n",
-					"\n",
-					"    application_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\n",
-					"    print(f\"Application path: {application_path}\")\n",
-					"\n",
-					"    # Load cost file\n",
-					"    csv_options = {'header' : True,\n",
-					"                   'delimiter' : ',',\n",
-					"                   'quote' : '\"',\n",
-					"                   'escape' : '\"'}\n",
-					"    cost_df = spark.read.options(**csv_options).csv(cost_source_path)\n",
-					"\n",
-					"    # Load subscription file\n",
-					"    subscription_df = spark.read.format('parquet').load(subscription_path)\n",
-					"    subscription_df = pre_process_subscriptions(subscription_df)\n",
-					"\n",
-					"    # Load application file\n",
-					"    application_df = spark.read.format('parquet').load(application_path)\n",
-					"    application_df = application_df.withColumn('AppID', F.col('AppID').cast(\"int\"))\n",
-					"\n",
-					"    # Transform data\n",
-					"    cost_df = transform_cost_data(cost_df)\n",
-					"    cost_df = cost_df.withColumn(\"ResourceLocation\", F.lower(F.trim(F.regexp_replace(F.col('ResourceLocation'), \"\\s+\", \"\"))))\n",
-					"    cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\n",
-					"    write_output_file(cost_df, cost_target_path)\n",
-					"    \n",
-					"    print(' ')"
+					"print(f'fromDate: {fromDate}')\r\n",
+					"print(f'toDate: {toDate}')\r\n",
+					"\r\n",
+					"print(f\"------ From: {fromDate}, To: {toDate} -----------\")\r\n",
+					"\r\n",
+					"print(f\"------ {reportType} -----------\")\r\n",
+					"date_range = fromDate + '-' + toDate\r\n",
+					"print(f'dateRange: {date_range}')\r\n",
+					"\r\n",
+					"cost_source_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/daily/ACMDaily{reportType}/{date_range}/*.csv'\r\n",
+					"cost_target_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthly{reportType}/{date_range}/Extended_v3_ACMMonthly{reportType}_{date_range}.parquet'\r\n",
+					"print(f\"Cost data path: {cost_source_path}\")\r\n",
+					"print(f\"Cost destination path: {cost_target_path}\")\r\n",
+					"\r\n",
+					"previous_month_date = get_last_day_prev_month(toDate)\r\n",
+					"print(f'Using {previous_month_date} ServiceNow subscription file')\r\n",
+					"subscription_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/{previous_month_date}-optimized.parquet'\r\n",
+					"print(f\"Subscription path: {subscription_path}\")\r\n",
+					"\r\n",
+					"application_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\r\n",
+					"print(f\"Application path: {application_path}\")\r\n",
+					"\r\n",
+					"# Load cost file\r\n",
+					"csv_options = {'header' : True,\r\n",
+					"                'delimiter' : ',',\r\n",
+					"                'quote' : '\"',\r\n",
+					"                'escape' : '\"'}\r\n",
+					"cost_df = spark.read.options(**csv_options).csv(cost_source_path)\r\n",
+					"\r\n",
+					"# Load subscription file\r\n",
+					"subscription_df = spark.read.format('parquet').load(subscription_path)\r\n",
+					"subscription_df = pre_process_subscriptions(subscription_df)\r\n",
+					"\r\n",
+					"# Load application file\r\n",
+					"application_df = spark.read.format('parquet').load(application_path)\r\n",
+					"application_df = application_df.withColumn('AppID', F.col('AppID').cast(\"int\"))\r\n",
+					"\r\n",
+					"# Transform data\r\n",
+					"cost_df = transform_cost_data(cost_df)\r\n",
+					"cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\r\n",
+					"write_output_file(cost_df, cost_target_path)\r\n",
+					"\r\n",
+					"print(' ')"
 				],
 				"execution_count": 12
 			}

@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "6f45c4bc-d5cc-4cd8-b580-61a4d3502bba"
+				"spark.autotune.trackingId": "485b05af-0c35-4b08-b6ab-b2e944192f09"
 			}
 		},
 		"metadata": {
@@ -70,7 +70,7 @@
 					"import pyspark.sql.functions as F\r\n",
 					"import warnings"
 				],
-				"execution_count": 2
+				"execution_count": 1
 			},
 			{
 				"cell_type": "code",
@@ -88,7 +88,7 @@
 					"    # Creating a string date for last month\r\n",
 					"    return f\"{previous_year}-{str(previous_month).zfill(2)}-{str(last_day).zfill(2)}\""
 				],
-				"execution_count": 3
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -115,7 +115,7 @@
 					"                                  .otherwise('RI Usage'))\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 4
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -156,7 +156,7 @@
 					"        cost_df = cost_df.withColumn('ai_' + col, F.coalesce(F.col(f'AdditionalInfo.{col}'), F.lit(None)))\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 5
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -184,7 +184,7 @@
 					"                                              .otherwise(0))\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 6
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -213,10 +213,11 @@
 					"                     .withColumn('Date', F.to_date(F.col('Date'), 'MM/dd/yyyy'))\\\r\n",
 					"                     .withColumn('BillingPeriodStartDate', F.to_date(F.col('BillingPeriodStartDate'), 'MM/dd/yyyy'))\\\r\n",
 					"                     .withColumn('BillingPeriodEndDate', F.to_date(F.col('BillingPeriodEndDate'), 'MM/dd/yyyy'))\r\n",
+					"                     .withColumn('CPUHours', F.col('ai_VCPUs') * F.col('Quantity'))\r\n",
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 7
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -250,7 +251,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 8
+				"execution_count": 7
 			},
 			{
 				"cell_type": "code",
@@ -349,7 +350,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 9
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -419,17 +420,25 @@
 					"    cost_df = cost_df.drop('Application_Name_upper','ApplicationName','ServiceNowAppID','ServiceNowApplicationName_upper','ApplicationName_upper')\r\n",
 					"\r\n",
 					"\r\n",
-					"    # Application Name will be \"Application not defined or not found\" when SubscriptionServiceNow-App is equal to Application_name as well as AppID is empty.\r\n",
+					"    # Application Name will be \"Unknown\" when SubscriptionServiceNow-App is equal to Application_name as well as AppID is empty.\r\n",
 					"    # This indicates that application from subscription.json file can not be found in ServiceNow. One of Application example is DATAHUB - MARKETING AND SUPPLY, not found in ServiceNow.\r\n",
-					"    cost_df = cost_df.withColumn('Application_Name', F.when((F.upper(F.col('SubscriptionServiceNow-App'))==F.upper(F.col('Application_Name'))) & (F.col('AppID').isNull()),F.lit('Application not defined or not found'))\\\r\n",
-					"                                                    .otherwise(F.col('Application_Name')))\r\n",
+					"    # cost_df = cost_df.withColumn('Application_Name', F.when((F.upper(F.col('SubscriptionServiceNow-App'))==F.upper(F.col('Application_Name'))) & (F.col('AppID').isNull()),F.lit('Uknown'))\\\r\n",
+					"    #                                                 .otherwise(F.col('Application_Name')))\r\n",
 					"\r\n",
-					"    # For anything that left ApplicationName will be \"Application not defined or not found\" and For anything that left AppID will be 0.\r\n",
-					"    cost_df = cost_df.na.fill({'AppID': 0, 'Application_Name': 'Application not defined or not found'})\r\n",
+					"    # If Subscription Application is empty or null - set application name to 'Unknown' and AppId to null\r\n",
+					"    cost_df = cost_df.withColumn('Application_Name', \r\n",
+					"        F.when((F.col('Application_Name').isNull()) | (F.col('Application_Name') == ''), F.lit('Unknown')).otherwise(F.col('Application_Name'))\r\n",
+					"    )\r\n",
+					"\r\n",
+					"    # Setup dummy application reference for Danske Commodities related cost\r\n",
+					"    cost_df = cost_df.withColumn('Application_Name', \r\n",
+					"        F.when((F.upper(F.col('SubscriptionName')).contains('DANSKE')) & (F.col('Application_Name') == 'Unknown'), 'Danske Commodities')\r\n",
+					"        .otherwise(F.col('Application_Name'))\r\n",
+					"    )\r\n",
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 10
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -453,10 +462,11 @@
 					"    cost_df = cost_AHB_column(cost_df)\r\n",
 					"    cost_df = cost_set_instance_name(cost_df)\r\n",
 					"    cost_df = expand_cost_tags(cost_df)\r\n",
+					"    cost_df = cost_df.withColumn(\"ResourceLocation\", F.lower(F.trim(F.regexp_replace(F.col('ResourceLocation'), \"\\s+\", \"\"))))\r\n",
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 11
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -484,7 +494,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 12
+				"execution_count": 11
 			}
 		]
 	}

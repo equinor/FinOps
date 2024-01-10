@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "5f2c8690-6419-46a7-8203-91ba44eaf55a"
+				"spark.autotune.trackingId": "3a7c3e06-556f-43cb-acee-848dccbda356"
 			}
 		},
 		"metadata": {
@@ -163,9 +163,20 @@
 					"                              timeout_seconds=600,\r\n",
 					"                              arguments={'fromDate' : fromDate, \r\n",
 					"                                         'toDate' : toDate, \r\n",
-					"                                         'container' : container})\r\n",
+					"                                         'container' : container,\r\n",
+					"                                         'reportType': 'ActualCost'})\r\n",
 					"    end_time = time.time()\r\n",
-					"    print(f\"The runtime of the notebook was: {round(end_time - start_time, 2)} seconds.\")\r\n",
+					"    print(f\"The runtime of the actual cost notebook was: {round(end_time - start_time, 2)} seconds.\")\r\n",
+					"\r\n",
+					"    start_time = time.time()\r\n",
+					"    mssparkutils.notebook.run(path='monthly-cost-extend-v3', \r\n",
+					"                              timeout_seconds=600,\r\n",
+					"                              arguments={'fromDate' : fromDate, \r\n",
+					"                                         'toDate' : toDate, \r\n",
+					"                                         'container' : container,\r\n",
+					"                                         'reportType': 'AmortizedCost'})\r\n",
+					"    end_time = time.time()\r\n",
+					"    print(f\"The runtime of the actual cost notebook was: {round(end_time - start_time, 2)} seconds.\")\r\n",
 					"    \r\n",
 					"    # # For testing purposes\r\n",
 					"    # n += 1\r\n",

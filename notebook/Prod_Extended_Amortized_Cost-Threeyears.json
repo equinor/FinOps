@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "d9e70b70-43c7-4570-933f-0df75687fcde"
+				"spark.autotune.trackingId": "85d236e5-0ca2-47e0-9ff8-459936b2df23"
 			}
 		},
 		"metadata": {
@@ -333,45 +333,9 @@
 				},
 				"source": [
 					"# Change the column name\r\n",
-					"df = df.withColumnRenamed(\"Application_Name\", \"ApplicationName\")\r\n",
-					"\r\n",
-					"# Applied Unknown label in ApplicationName field. \r\n",
-					"condition_1 = (F.col('ApplicationName').isNull()| (F.col('ApplicationName') == \"\")) & (F.col('SubscriptionName').contains('Danske Commodities'))\r\n",
-					"condition_2 = (F.col('ApplicationName').isNull()| (F.col('ApplicationName') == \"\")) & (~(F.col('SubscriptionName').contains('Danske Commodities')))\r\n",
-					"\r\n",
-					"df = df.withColumn(\r\n",
-					"    'ApplicationName',\r\n",
-					"    F.when(condition_1,'Danske Commodities'\r\n",
-					"    ).when(condition_2,'Unknown'\r\n",
-					"    ).otherwise(F.col('ApplicationName'))\r\n",
-					")\r\n",
-					"\r\n",
-					""
+					"df = df.withColumnRenamed(\"Application_Name\", \"ApplicationName\")"
 				],
 				"execution_count": 7
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"#print('Number of rows in the appended dataframe:',df.count())\r\n",
-					"#display(df)\r\n",
-					"#display(df.filter((F.col('ApplicationName').isNull())|(F.col('ApplicationName')=='')))\r\n",
-					"#display(df.filter((F.col('ApplicationName')).contains('Danske Commodities')))\r\n",
-					"#display(df.filter((F.col('ApplicationName')).contains('Unknown')))"
-				],
-				"execution_count": 8
 			},
 			{
 				"cell_type": "markdown",
