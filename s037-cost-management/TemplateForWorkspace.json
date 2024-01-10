@@ -31227,7 +31227,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "80d4d23a-8611-47f9-a8d8-a1a742844ecd"
+						"spark.autotune.trackingId": "b33fa18a-6263-4d84-915c-85c3c4c4268d"
 					}
 				},
 				"metadata": {
@@ -31252,8 +31252,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -38701,7 +38700,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "ae171cb8-18e3-4ceb-9b28-3873b30b190a"
+						"spark.autotune.trackingId": "62fa57de-ac6e-4f32-9218-55b35030c2a2"
 					}
 				},
 				"metadata": {
@@ -40083,7 +40082,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "9ce3f9a4-3518-489c-bbcd-3ff18cdcd493"
+						"spark.autotune.trackingId": "0cef3830-8e17-412e-8a1f-0cee022ab6f3"
 					}
 				},
 				"metadata": {
@@ -40171,20 +40170,29 @@
 						},
 						"source": [
 							"def cost_populate_vm_columns(cost_df):\r\n",
-							"    # Populating the Azure Hybrid Benefit Columns\r\n",
-							"    cost_df = cost_df.withColumn('Azure_Hybrid_Benefit', F.when(F.col('MeterSubCategory').contains('Windows'), \"Not Enabled\")\\\r\n",
-							"                                                         .when(F.col('ServiceInfo2') == 'Windows Server BYOL', \"Enabled\")\\\r\n",
-							"                                                         .otherwise('Not Supported'))\r\n",
+							"    # Compute if cost has Windows Server Azure Hybrid Benefit enabled\r\n",
+							"    cost_df = cost_df.withColumn('WindowsAHB', F.when(F.col('MeterSubCategory').contains('Windows'), \"Not Enabled\")\\\r\n",
+							"                                                            .when(F.col('ServiceInfo2') == 'Windows Server BYOL', \"Enabled\")\\\r\n",
+							"                                                            .otherwise('Not Supported'))\r\n",
 							"\r\n",
-							"    # cost_df = cost_df.withColumn('SQLAHB', F.when((F.col('ResourceId').like('%Microsoft.Compute/virtualMachines%') & (F.col('MeterSubCategory') == 'SQL Server Azure Hybrid Benefit'), 'Enabled')\r\n",
-							"    #                                             .when(F.col('ai_AHB') == True, 'Enabled')\r\n",
-							"    #                                             .when(F.col('ai_AHB') == False, 'Not Enabled')\r\n",
-							"    #                                             .otherwise('Not'))\r\n",
+							"    # Compute if cost has SQL Server Azure Hybrid Benefit enabled\r\n",
+							"    is_sql_db = (F.col('ResourceId').like('%Microsoft.Sql/servers%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
+							"    is_sql_mi = (F.col('ResourceId').like('%Microsoft.Sql/managedInstances%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
+							"    is_sql_vm = (F.col('MeterCategory') == 'Virtual Machines Licenses') & (F.col('MeterSubCategory').like('SQL Server%'))\r\n",
+							"    is_sql_cost = is_sql_db | is_sql_mi | is_sql_vm\r\n",
 							"\r\n",
-							"    # Populating the isRIUsage Column\r\n",
-							"    cost_df = cost_df.withColumn('IsRIUsage',\r\n",
-							"                                 F.when(F.col('ReservationId').isNull(), 'On Demand Usage')\\\r\n",
-							"                                  .otherwise('RI Usage'))\r\n",
+							"    is_vm = F.col('ResourceId').like('%Microsoft.Compute/virtualMachines%')\r\n",
+							"    is_vm_ahb = is_vm & (F.col('MeterSubCategory') == 'SQL Server Azure Hybrid Benefit')\r\n",
+							"    is_vm_not_supported = is_vm & (F.col('MeterSubCategory') == 'SQL Server Express Edition')\r\n",
+							"\r\n",
+							"    cost_df = cost_df.withColumn('SQLAHB', \r\n",
+							"        F.when(is_sql_cost & is_vm_ahb, 'Enabled')\r\n",
+							"        .when(is_sql_cost & is_vm_not_supported, 'Not Supported')\r\n",
+							"        .when(is_sql_cost & is_vm, 'Not Enabled')\r\n",
+							"        .when(F.col('ai_AHB') == True, 'Enabled')\r\n",
+							"        .when(F.col('ai_AHB') == False, 'Not Enabled')\r\n",
+							"        .otherwise('Not Supported')\r\n",
+							"    )\r\n",
 							"    return cost_df"
 						],
 						"outputs": [],
@@ -40536,8 +40544,8 @@
 							"def transform_cost_data(cost_df):\r\n",
 							"\r\n",
 							"    warnings.simplefilter(action='ignore', category=FutureWarning)\r\n",
-							"    cost_df = cost_populate_vm_columns(cost_df)\r\n",
 							"    cost_df = cost_extend_additional_info(cost_df)\r\n",
+							"    cost_df = cost_populate_vm_columns(cost_df)\r\n",
 							"    cost_df = cost_AHB_column(cost_df)\r\n",
 							"    cost_df = cost_set_instance_name(cost_df)\r\n",
 							"    cost_df = expand_cost_tags(cost_df)\r\n",
@@ -40606,7 +40614,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "67e49962-ee2d-4d84-ac59-e9d0a24d5996"
+						"spark.autotune.trackingId": "921cfb7b-610b-404c-a62e-e3193f39a8e9"
 					}
 				},
 				"metadata": {
@@ -40665,7 +40673,7 @@
 							"reportType = 'ActualCost'"
 						],
 						"outputs": [],
-						"execution_count": 7
+						"execution_count": 1
 					},
 					{
 						"cell_type": "code",
@@ -40693,7 +40701,7 @@
 							"import pyspark.sql.types as T"
 						],
 						"outputs": [],
-						"execution_count": 8
+						"execution_count": 2
 					},
 					{
 						"cell_type": "markdown",
@@ -40725,7 +40733,7 @@
 							"%run /cost-extend-utilities"
 						],
 						"outputs": [],
-						"execution_count": 9
+						"execution_count": 3
 					},
 					{
 						"cell_type": "code",
@@ -40749,7 +40757,7 @@
 							"    return subscriptions_df"
 						],
 						"outputs": [],
-						"execution_count": 10
+						"execution_count": 4
 					},
 					{
 						"cell_type": "code",
@@ -40773,7 +40781,7 @@
 							"    print('File write complete!')"
 						],
 						"outputs": [],
-						"execution_count": 11
+						"execution_count": 5
 					},
 					{
 						"cell_type": "markdown",
@@ -40847,7 +40855,7 @@
 							"print(' ')"
 						],
 						"outputs": [],
-						"execution_count": 12
+						"execution_count": 6
 					}
 				]
 			},
@@ -40878,7 +40886,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "8b839254-d20d-4efc-a150-3c52ba8d2a33"
+						"spark.autotune.trackingId": "d32f0fad-a68f-40ed-be83-19daf905d021"
 					}
 				},
 				"metadata": {
@@ -40903,8 +40911,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
