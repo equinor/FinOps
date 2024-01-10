@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "b5522209-7291-41bf-9da1-1dbc4a89bfa6"
+				"spark.autotune.trackingId": "d74d6924-ab9e-4110-91d4-b1f7d0969e5f"
 			}
 		},
 		"metadata": {
@@ -105,10 +105,16 @@
 				},
 				"source": [
 					"def cost_populate_vm_columns(cost_df):\r\n",
-					"    # Populating the Azure Hybrid Benefit Column\r\n",
+					"    # Populating the Azure Hybrid Benefit Columns\r\n",
 					"    cost_df = cost_df.withColumn('Azure_Hybrid_Benefit', F.when(F.col('MeterSubCategory').contains('Windows'), \"Not Enabled\")\\\r\n",
 					"                                                         .when(F.col('ServiceInfo2') == 'Windows Server BYOL', \"Enabled\")\\\r\n",
 					"                                                         .otherwise('Not Supported'))\r\n",
+					"\r\n",
+					"    # cost_df = cost_df.withColumn('SQLAHB', F.when((F.col('ResourceId').like('%Microsoft.Compute/virtualMachines%') & (F.col('MeterSubCategory') == 'SQL Server Azure Hybrid Benefit'), 'Enabled')\r\n",
+					"    #                                             .when(F.col('ai_AHB') == True, 'Enabled')\r\n",
+					"    #                                             .when(F.col('ai_AHB') == False, 'Not Enabled')\r\n",
+					"    #                                             .otherwise('Not'))\r\n",
+					"\r\n",
 					"    # Populating the isRIUsage Column\r\n",
 					"    cost_df = cost_df.withColumn('IsRIUsage',\r\n",
 					"                                 F.when(F.col('ReservationId').isNull(), 'On Demand Usage')\\\r\n",
