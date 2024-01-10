@@ -31227,7 +31227,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "b33fa18a-6263-4d84-915c-85c3c4c4268d"
+						"spark.autotune.trackingId": "80d4d23a-8611-47f9-a8d8-a1a742844ecd"
 					}
 				},
 				"metadata": {
@@ -31252,7 +31252,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -38700,7 +38701,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "da8b4823-0680-4b1d-84a8-52d5120b9bb5"
+						"spark.autotune.trackingId": "ae171cb8-18e3-4ceb-9b28-3873b30b190a"
 					}
 				},
 				"metadata": {
@@ -38725,7 +38726,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -38745,6 +38747,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"from enum import Enum\r\n",
@@ -40080,7 +40083,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "485b05af-0c35-4b08-b6ab-b2e944192f09"
+						"spark.autotune.trackingId": "9ce3f9a4-3518-489c-bbcd-3ff18cdcd493"
 					}
 				},
 				"metadata": {
@@ -40105,7 +40108,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -40134,6 +40138,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"def get_last_day_prev_month(to_date):\r\n",
 							"    current_month = int(to_date[4:6])\r\n",
@@ -40166,10 +40171,16 @@
 						},
 						"source": [
 							"def cost_populate_vm_columns(cost_df):\r\n",
-							"    # Populating the Azure Hybrid Benefit Column\r\n",
+							"    # Populating the Azure Hybrid Benefit Columns\r\n",
 							"    cost_df = cost_df.withColumn('Azure_Hybrid_Benefit', F.when(F.col('MeterSubCategory').contains('Windows'), \"Not Enabled\")\\\r\n",
 							"                                                         .when(F.col('ServiceInfo2') == 'Windows Server BYOL', \"Enabled\")\\\r\n",
 							"                                                         .otherwise('Not Supported'))\r\n",
+							"\r\n",
+							"    # cost_df = cost_df.withColumn('SQLAHB', F.when((F.col('ResourceId').like('%Microsoft.Compute/virtualMachines%') & (F.col('MeterSubCategory') == 'SQL Server Azure Hybrid Benefit'), 'Enabled')\r\n",
+							"    #                                             .when(F.col('ai_AHB') == True, 'Enabled')\r\n",
+							"    #                                             .when(F.col('ai_AHB') == False, 'Not Enabled')\r\n",
+							"    #                                             .otherwise('Not'))\r\n",
+							"\r\n",
 							"    # Populating the isRIUsage Column\r\n",
 							"    cost_df = cost_df.withColumn('IsRIUsage',\r\n",
 							"                                 F.when(F.col('ReservationId').isNull(), 'On Demand Usage')\\\r\n",
@@ -40276,7 +40287,7 @@
 							"                     .withColumn('CostInBillingCurrency', F.col('CostInBillingCurrency').cast(T.DoubleType()))\\\r\n",
 							"                     .withColumn('Date', F.to_date(F.col('Date'), 'MM/dd/yyyy'))\\\r\n",
 							"                     .withColumn('BillingPeriodStartDate', F.to_date(F.col('BillingPeriodStartDate'), 'MM/dd/yyyy'))\\\r\n",
-							"                     .withColumn('BillingPeriodEndDate', F.to_date(F.col('BillingPeriodEndDate'), 'MM/dd/yyyy'))\r\n",
+							"                     .withColumn('BillingPeriodEndDate', F.to_date(F.col('BillingPeriodEndDate'), 'MM/dd/yyyy'))\\\r\n",
 							"                     .withColumn('CPUHours', F.col('ai_VCPUs') * F.col('Quantity'))\r\n",
 							"\r\n",
 							"    return cost_df"
@@ -40595,7 +40606,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "a7593c3a-3b29-4057-9f01-7925b6db07ea"
+						"spark.autotune.trackingId": "67e49962-ee2d-4d84-ac59-e9d0a24d5996"
 					}
 				},
 				"metadata": {
@@ -40620,7 +40631,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -40866,7 +40878,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "4a3bc50c-ab8f-44da-b69d-4c0c1b93cef1"
+						"spark.autotune.trackingId": "8b839254-d20d-4efc-a150-3c52ba8d2a33"
 					}
 				},
 				"metadata": {
