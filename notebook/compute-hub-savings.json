@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "57484751-a104-4269-a11c-cd8be24c7a2b"
+				"spark.autotune.trackingId": "e5093c52-949e-4ad8-a08a-9aa6970b9a52"
 			}
 		},
 		"metadata": {
@@ -524,8 +524,8 @@
 				},
 				"source": [
 					"sql_df = sql_df.withColumn('LicenseType',\r\n",
-					"    F.when(F.col('Productname').like('%Standard%') | F.col('Productname').like('%General%'), LicenseTypes.Standard.value)\r\n",
-					"    .when(F.col('Productname').like('%Enterprise%') | F.col('Productname').like('%Critical%'), LicenseTypes.Enterprise.value)\r\n",
+					"    F.when(F.col('ProductName').like('%Standard%') | F.col('ProductName').like('%General%'), LicenseTypes.Standard.value)\r\n",
+					"    .when(F.col('ProductName').like('%Enterprise%') | F.col('ProductName').like('%Critical%'), LicenseTypes.Enterprise.value)\r\n",
 					"    .otherwise(LicenseTypes.Unknown.value)\r\n",
 					")\r\n",
 					"\r\n",
