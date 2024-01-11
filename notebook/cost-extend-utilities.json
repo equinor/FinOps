@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "a802e8cc-4af5-4b2f-9155-c9dd83a40545"
+				"spark.autotune.trackingId": "1fd23df4-f2ce-4f90-879d-2d5fec3aba64"
 			}
 		},
 		"metadata": {
@@ -70,7 +70,7 @@
 					"import pyspark.sql.functions as F\r\n",
 					"import warnings"
 				],
-				"execution_count": 1
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -88,7 +88,7 @@
 					"    # Creating a string date for last month\r\n",
 					"    return f\"{previous_year}-{str(previous_month).zfill(2)}-{str(last_day).zfill(2)}\""
 				],
-				"execution_count": 2
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -137,7 +137,7 @@
 					"    )\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 3
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -178,7 +178,7 @@
 					"        cost_df = cost_df.withColumn('ai_' + col, F.coalesce(F.col(f'AdditionalInfo.{col}'), F.lit(None)))\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 4
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -198,15 +198,30 @@
 					"\r\n",
 					"    cost_df = cost_df.withColumn('ai_VCPUs', F.col('ai_VCPUs').cast('int'))\r\n",
 					"    cost_df = cost_df.na.fill({'ai_VCPUs' : 0})\r\n",
-					"    cost_df = cost_df.withColumn('AHB_CPUs', F.when(F.col('ai_VCPUs') == 0, 0)\\\r\n",
-					"                                              .when(F.col('ai_VCPUs') < 8, 8)\\\r\n",
-					"                                              .when(F.col('ai_VCPUs') < 16, 16)\\\r\n",
+					"\r\n",
+					"    # Compute the Windows AHB equivalent VCPUs\r\n",
+					"    cost_df = cost_df.withColumn('WindowsAHB_VCPUS', F.when(F.col('ai_VCPUs') == 0, 0)\\\r\n",
+					"                                              .when(F.col('ai_VCPUs') <= 8, 8)\\\r\n",
+					"                                              .when(F.col('ai_VCPUs') <= 16, 16)\\\r\n",
 					"                                              .when(F.col('ai_VCPUs') == 20, 24)\\\r\n",
 					"                                              .when(F.col('ai_VCPUs') > 20, F.col('ai_VCPUs'))\\\r\n",
 					"                                              .otherwise(0))\r\n",
+					"\r\n",
+					"    # Compute the SQL AHB equivalent VCPUs\r\n",
+					"    is_standard_sql_license = F.col('ProductName').like('%Standard%') | F.col('ProductName').like('%General%')\r\n",
+					"    is_enterprise_sql_license = F.col('ProductName').like('%Enterprise%') | F.col('ProductName').like('%Critical%')\r\n",
+					"\r\n",
+					"    cost_df = cost_df.withColumn('AHBSQL_VCPUS', \r\n",
+					"        F.when(F.col('ai_VCPUs') == 0, 0)\r\n",
+					"        .when(is_standard_sql_license & (F.col('ai_VCPUs') <= 4), 4)\r\n",
+					"        .when(is_standard_sql_license & (F.col('ai_VCPUs') > 4), F.col('ai_VCPUs'))\r\n",
+					"        .when(is_enterprise_sql_license, F.col('ai_VCPUs') * 4)\r\n",
+					"        .otherwise(0)\r\n",
+					"    )\r\n",
+					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 5
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -239,7 +254,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 6
+				"execution_count": 7
 			},
 			{
 				"cell_type": "code",
@@ -273,7 +288,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 7
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -372,7 +387,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 8
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -460,7 +475,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 9
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -488,7 +503,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 10
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -516,7 +531,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 11
+				"execution_count": 12
 			}
 		]
 	}
