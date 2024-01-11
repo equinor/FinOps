@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "41c34959-207f-4090-b875-5c1819f97ff8"
+				"spark.autotune.trackingId": "a50d0cf2-e812-4d41-bcf7-e604901aaca1"
 			}
 		},
 		"metadata": {
@@ -154,8 +154,8 @@
 					"# n = 0\r\n",
 					"# For each date, we run the notebook for the specific period\r\n",
 					"for (fromDate, toDate) in dates:\r\n",
-					"\r\n",
-					"    print(f'{fromDate}-{toDate}')\r\n",
+					"    notebook_reference = 'monthly-cost-extend-v3' if fromDate != dates[-1][0] else 'daily-cost-extend-v3'\r\n",
+					"    print(f'Running {notebook_reference} notebook with date range {fromDate}-{toDate}')\r\n",
 					"    # Checking the run-time of the notebook for timeout-purposes\r\n",
 					"    start_time = time.time()\r\n",
 					"    # Running Monthly Extend-notebook with the variable arguments as inputs to the notebook.\r\n",
