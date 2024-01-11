@@ -38700,7 +38700,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "b049c8f3-8b8c-4bfa-a7d5-985bde14252f"
+						"spark.autotune.trackingId": "cb884131-9b4c-48bf-ada2-a6f47dce2fb4"
 					}
 				},
 				"metadata": {
@@ -40059,7 +40059,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "1204751f-95f8-4e5f-89c8-7b6ac2d2fadb"
+						"spark.autotune.trackingId": "7ca51256-63ee-437e-b7f8-21c10be3d338"
 					}
 				},
 				"metadata": {
@@ -40259,7 +40259,8 @@
 							"        F.when(F.col('ai_VCPUs') == 0, 0)\r\n",
 							"        .when(is_standard_sql_license & (F.col('ai_VCPUs') <= 4), 4)\r\n",
 							"        .when(is_standard_sql_license & (F.col('ai_VCPUs') > 4), F.col('ai_VCPUs'))\r\n",
-							"        .when(is_enterprise_sql_license, F.col('ai_VCPUs') * 4)\r\n",
+							"        .when(is_enterprise_sql_license & (F.col('ai_VCPUs') <= 4), 16)\r\n",
+							"        .when(is_enterprise_sql_license & (F.col('ai_VCPUs') > 4), F.col('ai_VCPUs') * 4)\r\n",
 							"        .otherwise(0)\r\n",
 							"    )\r\n",
 							"\r\n",
@@ -40613,7 +40614,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "b9f9b059-ca16-4a50-824b-a93c2942a66c"
+						"spark.autotune.trackingId": "87ce1037-3d33-4ad0-9ff4-96f3012b6bfc"
 					}
 				},
 				"metadata": {
@@ -40885,7 +40886,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "d32f0fad-a68f-40ed-be83-19daf905d021"
+						"spark.autotune.trackingId": "05fe885d-8d8a-4002-b0b1-8948c3e582aa"
 					}
 				},
 				"metadata": {
@@ -40910,7 +40911,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
