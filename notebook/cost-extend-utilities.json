@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "1fd23df4-f2ce-4f90-879d-2d5fec3aba64"
+				"spark.autotune.trackingId": "e3d0fd1f-5502-40dc-a390-8b0c1ccd2d5a"
 			}
 		},
 		"metadata": {
@@ -215,7 +215,8 @@
 					"        F.when(F.col('ai_VCPUs') == 0, 0)\r\n",
 					"        .when(is_standard_sql_license & (F.col('ai_VCPUs') <= 4), 4)\r\n",
 					"        .when(is_standard_sql_license & (F.col('ai_VCPUs') > 4), F.col('ai_VCPUs'))\r\n",
-					"        .when(is_enterprise_sql_license, F.col('ai_VCPUs') * 4)\r\n",
+					"        .when(is_enterprise_sql_license & (F.col('ai_VCPUs') <= 4), 16)\r\n",
+					"        .when(is_enterprise_sql_license & (F.col('ai_VCPUs') > 4), F.col('ai_VCPUs') * 4)\r\n",
 					"        .otherwise(0)\r\n",
 					"    )\r\n",
 					"\r\n",
