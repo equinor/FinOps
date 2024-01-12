@@ -5,7 +5,7 @@
 			"name": "PowerBIViews"
 		},
 		"content": {
-			"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW tsc_ACMMonthlyAmortizedCost_overview_Oneyear\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear.parquet/*/*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n\n\n",
+			"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW tsc_ACMMonthlyAmortizedCost_overview_Oneyear\nAS\n\nSELECT [Date]\n,[Report_Date]\n,[UnitPrice]\n,[Quantity]\n,[CostInBillingCurrency]\n,[EffectivePrice]\n,[ActiveWBS]\n,[ai_VMName]\n,[AppID]\n,[ApplicationName]\n,[ChargeType]\n,[ConsumedService]\n,[MeterSubCategory]\n,[PricingModel]\n,[CostAllocationCode]\n,[CostAllocationType]\n,[IsRIUsage]\n,[ResourceLocation]\n,[ServiceFamily]\n,[SubscriptionId]\n,[MeterCategory]\n,[MeterName]\n,[MeterRegion]\n,[SubscriptionName]\n,[SubscriptionWBS]\n,[UnitOfMeasure]\n,[ResourceGroup]\n,[ResourceId]\n,[ResourceName]\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear.parquet/*/*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n\n\n",
 			"metadata": {
 				"language": "sql"
 			},
