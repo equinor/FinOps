@@ -1,0 +1,122 @@
+{
+	"name": "testparquet",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "s037-cost-management-WorkspaceDefaultStorage",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"date": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@concat('pricesheet-', dataset().date)",
+					"type": "Expression"
+				},
+				"folderPath": "pricesheet",
+				"fileSystem": "usage"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": [
+			{
+				"name": "EnrollmentNumber",
+				"type": "INT32"
+			},
+			{
+				"name": "MeterID",
+				"type": "UTF8"
+			},
+			{
+				"name": "MeterName",
+				"type": "UTF8"
+			},
+			{
+				"name": "MeterType",
+				"type": "UTF8"
+			},
+			{
+				"name": "MeterCategory",
+				"type": "UTF8"
+			},
+			{
+				"name": "MeterSubCategory",
+				"type": "UTF8"
+			},
+			{
+				"name": "ServiceFamily",
+				"type": "UTF8"
+			},
+			{
+				"name": "Product",
+				"type": "UTF8"
+			},
+			{
+				"name": "SkuID",
+				"type": "UTF8"
+			},
+			{
+				"name": "ProductID",
+				"type": "UTF8"
+			},
+			{
+				"name": "MeterRegion",
+				"type": "UTF8"
+			},
+			{
+				"name": "UnitOfMeasure",
+				"type": "UTF8"
+			},
+			{
+				"name": "PartNumber",
+				"type": "UTF8"
+			},
+			{
+				"name": "EffectiveStartDate",
+				"type": "UTF8"
+			},
+			{
+				"name": "EffectiveEndDate",
+				"type": "UTF8"
+			},
+			{
+				"name": "UnitPrice",
+				"type": "DOUBLE"
+			},
+			{
+				"name": "BasePrice",
+				"type": "DOUBLE"
+			},
+			{
+				"name": "MarketPrice",
+				"type": "DOUBLE"
+			},
+			{
+				"name": "CurrencyCode",
+				"type": "UTF8"
+			},
+			{
+				"name": "IncludedQuantity",
+				"type": "DOUBLE"
+			},
+			{
+				"name": "OfferID",
+				"type": "UTF8"
+			},
+			{
+				"name": "Term",
+				"type": "UTF8"
+			},
+			{
+				"name": "PriceType",
+				"type": "UTF8"
+			}
+		]
+	}
+}
