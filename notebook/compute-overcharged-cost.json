@@ -1,0 +1,327 @@
+{
+	"name": "compute-overcharged-cost",
+	"properties": {
+		"folder": {
+			"name": "NotebookInProduction/Pricesheet"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sprkpool33large",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "112g",
+			"driverCores": 16,
+			"executorMemory": "112g",
+			"executorCores": 16,
+			"numExecutors": 1,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "true",
+				"spark.dynamicAllocation.minExecutors": "1",
+				"spark.dynamicAllocation.maxExecutors": "5",
+				"spark.autotune.trackingId": "b348dd39-5fd2-4160-b3ca-c5295b16a68f"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
+				"name": "sprkpool33large",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 16,
+				"memory": 112,
+				"automaticScaleJobs": true
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "code",
+				"source": [
+					"import pyspark.sql.functions as F"
+				],
+				"execution_count": 85
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"storageAccount = 's037costmgmt'"
+				],
+				"execution_count": 86
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"PROD_OFFER_ID = 'MS-AZR-0017P'"
+				],
+				"execution_count": 91
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def load_pricesheet(year, month):\r\n",
+					"    pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/pricesheet-{year}{month:02d}.parquet'\r\n",
+					"    pricesheet_df = spark.read.format('parquet').load(pricesheet_path)\r\n",
+					"    pricesheet_df = pricesheet_df.where(F.col('offerId') == PROD_OFFER_ID)\r\n",
+					"    pricesheet_df = pricesheet_df.select([F.col(c).alias('p_'+c) for c in pricesheet_df.columns])\r\n",
+					"    return pricesheet_df"
+				],
+				"execution_count": 148
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"pricesheet_path = load_pricesheet(2021, 2)"
+				],
+				"execution_count": 120
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(pricesheet_df.where(F.col('p_meterId') == '64a37289-bab1-57df-b1c6-4a42cb68ebcb'))"
+				],
+				"execution_count": 121
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
+					"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
+					"cost_df = cost_df.where(F.col('Date') >= '2021-02-01')\r\n",
+					"cost_df = cost_df.where(F.col('MeterId') != '00000000-0000-0000-0000-000000000000')\r\n",
+					"cost_df = cost_df.select('SubscriptionName', 'ResourceGroup', 'ResourceLocation', 'Date', 'ProductName', 'MeterCategory', 'MeterSubCategory', 'MeterId', 'MeterName', 'MeterRegion', 'UnitOfMeasure', 'Quantity', 'EffectivePrice', 'CostInBillingCurrency', 'ResourceName', 'UnitPrice', 'PartNumber')"
+				],
+				"execution_count": 142
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"combined_df = cost_df.join(pricesheet_df, cost_df.PartNumber == pricesheet_df.p_partNumber, how='left')"
+				],
+				"execution_count": 143
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"next_pricesheet = load_pricesheet(2022, 7)\r\n",
+					"next_pricesheet = next_pricesheet.select([F.col(c).alias('temp_'+c) for c in pricesheet_df.columns])\r\n",
+					"combined_df = combined_df.join(next_pricesheet, (combined_df.PartNumber == next_pricesheet.temp_p_partNumber) & (combined_df.p_partNumber == None), how='left')\r\n",
+					"combined_df = combined_df.withColumn(\"p_meterId\", F.coalesce(combined_df.p_meterId, combined_df.temp_p_meterId))\r\n",
+					"combined_df = combined_df.withColumn(\"p_meterName\", F.coalesce(combined_df.p_meterName, combined_df.temp_p_meterName))\r\n",
+					"combined_df = combined_df.withColumn(\"p_meterCategory\", F.coalesce(combined_df.p_meterCategory, combined_df.temp_p_meterCategory))\r\n",
+					"combined_df = combined_df.withColumn(\"p_meterSubCategory\", F.coalesce(combined_df.p_meterSubCategory, combined_df.temp_p_meterSubCategory))\r\n",
+					"combined_df = combined_df.withColumn(\"p_meterRegion\", F.coalesce(combined_df.p_meterRegion, combined_df.temp_p_meterRegion))\r\n",
+					"combined_df = combined_df.withColumn(\"p_unit\", F.coalesce(combined_df.p_unit, combined_df.temp_p_unit))\r\n",
+					"combined_df = combined_df.withColumn(\"p_unitOfMeasure\", F.coalesce(combined_df.p_unitOfMeasure, combined_df.temp_p_unitOfMeasure))\r\n",
+					"combined_df = combined_df.withColumn(\"p_partNumber\", F.coalesce(combined_df.p_partNumber, combined_df.temp_p_partNumber))\r\n",
+					"combined_df = combined_df.withColumn(\"p_unitPrice\", F.coalesce(combined_df.p_unitPrice, combined_df.temp_p_unitPrice))\r\n",
+					"combined_df = combined_df.withColumn(\"p_currencyCode\", F.coalesce(combined_df.p_currencyCode, combined_df.temp_p_currencyCode))\r\n",
+					"combined_df = combined_df.withColumn(\"p_includedQuantity\", F.coalesce(combined_df.p_includedQuantity, combined_df.temp_p_includedQuantity))\r\n",
+					"combined_df = combined_df.withColumn(\"p_offerId\", F.coalesce(combined_df.p_offerId, combined_df.temp_p_offerId))\r\n",
+					"combined_df = combined_df.withColumn(\"p_term\", F.coalesce(combined_df.p_term, combined_df.temp_p_term))\r\n",
+					"combined_df = combined_df.withColumn(\"p_priceType\", F.coalesce(combined_df.p_priceType, combined_df.temp_p_priceType))\r\n",
+					"combined_df = combined_df.drop('temp_p_meterId', 'temp_p_meterName', 'temp_p_meterCategory', 'temp_p_meterSubCategory', 'temp_p_meterRegion', 'temp_p_unit', 'temp_p_unitOfMeasure', 'temp_p_partNumber', 'temp_p_unitPrice', 'temp_p_currencyCode', 'temp_p_includedQuantity', 'temp_p_offerId', 'temp_p_term', 'temp_p_priceType')"
+				],
+				"execution_count": 149
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(combined_df)"
+				],
+				"execution_count": 145
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"display(combined_df.where(F.col('p_unitPrice').isNull()).count())"
+				],
+				"execution_count": 146
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"5744315 \r\n",
+					"\r\n",
+					"5744315"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(combined_df.where(F.col('p_unitPrice').isNull() & (F.col('Date') < '2021-03-01')))"
+				],
+				"execution_count": 83
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(combined_df.where(F.col('p_unitPrice').isNull()).select('Date').distinct())"
+				],
+				"execution_count": 84
+			}
+		]
+	}
+}
