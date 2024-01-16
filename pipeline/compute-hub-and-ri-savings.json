@@ -41,7 +41,7 @@
 				}
 			},
 			{
-				"name": "Compute VM and SQL HUB Savings",
+				"name": "Compute HUB and RI Savings",
 				"type": "SynapseNotebook",
 				"dependsOn": [
 					{
@@ -77,39 +77,6 @@
 						"spark.dynamicAllocation.maxExecutors": null
 					},
 					"numExecutors": null
-				}
-			},
-			{
-				"name": "Compute RI Savings",
-				"type": "SynapseNotebook",
-				"dependsOn": [
-					{
-						"activity": "Compute VM and SQL HUB Savings",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"notebook": {
-						"referenceName": "compute-ri-savings",
-						"type": "NotebookReference"
-					},
-					"parameters": {
-						"storageAccount": {
-							"value": "s037costmgmt",
-							"type": "string"
-						}
-					},
-					"snapshot": true
 				}
 			}
 		],
