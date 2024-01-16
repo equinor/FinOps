@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "a989019f-5dc6-4c2d-93fd-9d032cfe5746"
+				"spark.autotune.trackingId": "b796c181-ddff-4ae4-b198-c8808f8da863"
 			}
 		},
 		"metadata": {
@@ -755,7 +755,7 @@
 					}
 				},
 				"source": [
-					"old_pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/pricesheet-2022*.parquet'\r\n",
+					"old_pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/v2_schema/pricesheet-2022*.parquet'\r\n",
 					"old_pricesheet_df = spark.read.format('parquet').load(old_pricesheet_path)\r\n",
 					"old_pricesheet_df = old_pricesheet_df.where(F.col('offerId') == PROD_OFFER_ID)\r\n",
 					"old_pricesheet_df = old_pricesheet_df.withColumnRenamed('meterName', 'ProductMapping')\r\n",
