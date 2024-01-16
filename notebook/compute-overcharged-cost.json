@@ -1,0 +1,606 @@
+{
+	"name": "compute-overcharged-cost",
+	"properties": {
+		"folder": {
+			"name": "NotebookInProduction/Pricesheet"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sprkpool33large",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "112g",
+			"driverCores": 16,
+			"executorMemory": "112g",
+			"executorCores": 16,
+			"numExecutors": 1,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "true",
+				"spark.dynamicAllocation.minExecutors": "1",
+				"spark.dynamicAllocation.maxExecutors": "5",
+				"spark.autotune.trackingId": "9067f396-e573-471d-83ae-5ffe8dbe0495"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
+				"name": "sprkpool33large",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 16,
+				"memory": 112,
+				"automaticScaleJobs": true
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "code",
+				"source": [
+					"import pyspark.sql.functions as F"
+				],
+				"execution_count": 153
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"storageAccount = 's037costmgmt'"
+				],
+				"execution_count": 154
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"PROD_OFFER_ID = 'MS-AZR-0017P'"
+				],
+				"execution_count": 155
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"old_pricesheet_cols = ['meterId', 'meterName', 'unitOfMeasure', 'partNumber', 'unitPrice', 'currencyCode', 'includedQuantity', 'offerId']\r\n",
+					"new_pricesheet_cols = ['MeterID', 'MeterName', 'UnitOfMeasure', 'PartNumber', 'UnitPrice', 'CurrencyCode', 'IncludedQuantity', 'OfferID']"
+				],
+				"execution_count": 156
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/v1_schema/pricesheet-*.parquet'\r\n",
+					"pricesheet_df = spark.read.format('parquet').load(pricesheet_path)\r\n",
+					"pricesheet_df = pricesheet_df.where(F.col('offerId') == PROD_OFFER_ID)\r\n",
+					"pricesheet_df = pricesheet_df.select(*old_pricesheet_cols)\r\n",
+					"pricesheet_df = pricesheet_df \\\r\n",
+					"        .withColumnRenamed('meterId', 'MeterID') \\\r\n",
+					"        .withColumnRenamed('meterName', 'MeterName') \\\r\n",
+					"        .withColumnRenamed('unitOfMeasure', 'UnitOfMeasure') \\\r\n",
+					"        .withColumnRenamed('partNumber', 'PartNumber') \\\r\n",
+					"        .withColumnRenamed('unitPrice', 'UnitPrice') \\\r\n",
+					"        .withColumnRenamed('currencyCode', 'CurrencyCode') \\\r\n",
+					"        .withColumnRenamed('includedQuantity', 'IncludedQuantity') \\\r\n",
+					"        .withColumnRenamed('offerId', 'OfferID')"
+				],
+				"execution_count": 163
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"new_test = pricesheet_df.groupBy('PartNumber', 'OfferID', 'UnitOfMeasure').agg(F.min('UnitPrice').alias('UnitPrice'))"
+				],
+				"execution_count": 168
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"# display(new_test.where(F.col('PartNumber') == 'AAJ-86987'))\r\n",
+					"display(new_test.where(F.col('UnitPrice') == 0))"
+				],
+				"execution_count": 172
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"duplicates = new_test.groupBy('PartNumber').count().filter('count > 1')\r\n",
+					"display(duplicates)"
+				],
+				"execution_count": 170
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(new_test)"
+				],
+				"execution_count": 169
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(pricesheet_df.where(F.col('PartNumber') == '3Q7-00088'))"
+				],
+				"execution_count": 165
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql.functions import min\r\n",
+					"\r\n",
+					"# assuming your original dataframe is named 'df'\r\n",
+					"new_df = df.groupBy('ID').agg(min('price').alias('price')).select('ID', 'price')"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def add_prefix_to_cols(df, prefix):\r\n",
+					"    return df.select([F.col(c).alias(f'{prefix}_'+c) for c in df.columns])"
+				],
+				"execution_count": 141
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def load_old_pricesheet(year, month):\r\n",
+					"    # Read old pricesheet\r\n",
+					"    pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/pricesheet-{year}{month:02d}.parquet'\r\n",
+					"    pricesheet_df = spark.read.format('parquet').load(pricesheet_path)\r\n",
+					"    pricesheet_df = pricesheet_df.where(F.col('offerId') == PROD_OFFER_ID)\r\n",
+					"    pricesheet_df = pricesheet_df.select(*old_pricesheet_cols)\r\n",
+					"\r\n",
+					"    # Convert old schema to new schema\r\n",
+					"    pricesheet_df = pricesheet_df \\\r\n",
+					"        .withColumnRenamed('meterId', 'MeterID') \\\r\n",
+					"        .withColumnRenamed('meterName', 'MeterName') \\\r\n",
+					"        .withColumnRenamed('unitOfMeasure', 'UnitOfMeasure') \\\r\n",
+					"        .withColumnRenamed('partNumber', 'PartNumber') \\\r\n",
+					"        .withColumnRenamed('unitPrice', 'UnitPrice') \\\r\n",
+					"        .withColumnRenamed('currencyCode', 'CurrencyCode') \\\r\n",
+					"        .withColumnRenamed('includedQuantity', 'IncludedQuantity') \\\r\n",
+					"        .withColumnRenamed('offerId', 'OfferID')\r\n",
+					"\r\n",
+					"    # Prefix pricesheet columns with p to distinguish pricesheet columns when combined with usage file\r\n",
+					"    pricesheet_df = add_prefix_to_cols(pricesheet_df, 'p')\r\n",
+					"    return pricesheet_df"
+				],
+				"execution_count": 142
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def load_new_pricesheet(date_range):\r\n",
+					"    # Load new pricesheet\r\n",
+					"    new_pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/FinOps-Pricesheet-Monthly/{date_range}/*/*.csv'\r\n",
+					"    pricesheet_df = spark.read.csv(new_pricesheet_path, header=True, inferSchema=True)\r\n",
+					"    pricesheet_df = pricesheet_df.where(F.col('OfferID') == PROD_OFFER_ID)\r\n",
+					"    pricesheet_df = pricesheet_df.select(*new_pricesheet_cols)\r\n",
+					"\r\n",
+					"    # Prefix pricesheet columns with p to distinguish pricesheet columns when combined with usage file\r\n",
+					"    pricesheet_df = add_prefix_to_cols(pricesheet_df, 'p')\r\n",
+					"    return pricesheet_df"
+				],
+				"execution_count": 143
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def merge_cost_and_price(cost_df, price_df):\r\n",
+					"    # Rename pricesheet columns to be prefixed with temp\r\n",
+					"    price_df = add_prefix_to_cols(price_df, 'temp')\r\n",
+					"\r\n",
+					"    # Join temporary part number column on usage file part number \r\n",
+					"    cost_df = cost_df.join(price_df, (cost_df.PartNumber == price_df.temp_p_PartNumber), how='left')\r\n",
+					"\r\n",
+					"    # At this point the joined table will contain duplicate pricesheet column (p_ and temp_p_)\r\n",
+					"    for col in new_pricesheet_cols:\r\n",
+					"        p_col = f\"p_{col}\"\r\n",
+					"        temp_col = f\"temp_{p_col}\"\r\n",
+					"\r\n",
+					"        # Merge individual pricesheet columns\r\n",
+					"        cost_df = cost_df.withColumn(p_col, F.coalesce(cost_df[p_col], cost_df[temp_col]))\r\n",
+					"\r\n",
+					"        # Drop the temp column after merge (only left with p_ column)\r\n",
+					"        cost_df = cost_df.drop(temp_col)\r\n",
+					"    return cost_df"
+				],
+				"execution_count": 144
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Load usage file\r\n",
+					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
+					"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
+					"\r\n",
+					"# Only look at usage data from the initial price increase (first of march 2021)\r\n",
+					"cost_df = cost_df.where(F.col('Date') >= '2021-02-01')\r\n",
+					"\r\n",
+					"# Filter out unassigned cost\r\n",
+					"cost_df = cost_df.where(F.col('MeterId') != '00000000-0000-0000-0000-000000000000')\r\n",
+					"cost_df = cost_df.select('SubscriptionName', 'ResourceGroup', 'ResourceLocation', 'Date', 'ProductName', 'MeterCategory', 'MeterSubCategory', 'MeterId', 'MeterName', 'MeterRegion', 'UnitOfMeasure', 'Quantity', 'EffectivePrice', 'CostInBillingCurrency', 'ResourceName', 'UnitPrice', 'PartNumber')"
+				],
+				"execution_count": 145
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Set initial pricesheet to February 2021 - The month ahead of 9% price increase\r\n",
+					"pricesheet_df = load_old_pricesheet(2021, 2)\r\n",
+					"combined_df = cost_df.join(pricesheet_df, cost_df.PartNumber == pricesheet_df.p_PartNumber, how='left')"
+				],
+				"execution_count": 146
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Merge usage data with old pricesheet data\r\n",
+					"\r\n",
+					"END_YEAR = 2022\r\n",
+					"END_MONTH = 12\r\n",
+					"\r\n",
+					"INITIAL_YEAR = 2021\r\n",
+					"INITIAL_MONTH = 4\r\n",
+					"\r\n",
+					"year = INITIAL_YEAR\r\n",
+					"month = INITIAL_MONTH\r\n",
+					"\r\n",
+					"while year < END_YEAR or (year == END_YEAR and month <= END_MONTH):\r\n",
+					"    print(f\"Loading pricesheet - year: {year} - month: {month}\")\r\n",
+					"    next_pricesheet = load_old_pricesheet(year, month)\r\n",
+					"    combined_df = merge_cost_and_price(combined_df, next_pricesheet)\r\n",
+					"    if (month == 12):\r\n",
+					"        year += 1\r\n",
+					"        month = 1\r\n",
+					"    else:\r\n",
+					"        month += 1"
+				],
+				"execution_count": 147
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Merge usage data with new pricesheet data\r\n",
+					"\r\n",
+					"new_pricesheet_root = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/FinOps-Pricesheet-Monthly'\r\n",
+					"paths = mssparkutils.fs.ls(new_pricesheet_root)\r\n",
+					"date_ranges = [files.name for files in paths]\r\n",
+					"\r\n",
+					"for date_range in date_ranges:\r\n",
+					"    print(f\"Loading pricesheet - date range: {date_range}\")\r\n",
+					"    next_pricesheet = load_new_pricesheet(date_range)\r\n",
+					"    combined_df = merge_cost_and_price(combined_df, next_pricesheet)"
+				],
+				"execution_count": 149
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"display(combined_df.where(F.col('p_unitPrice').isNull()).count())"
+				],
+				"execution_count": 150
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"print(combined_df.columns)"
+				],
+				"execution_count": 115
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(combined_df.select('UnitOfMeasure', 'p_UnitOfMeasure').limit(100))"
+				],
+				"execution_count": 135
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"5765059\r\n",
+					"\r\n",
+					"2646100"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(combined_df.where(F.col('p_unitPrice').isNull() & (F.col('Date') < '2021-03-01')))"
+				],
+				"execution_count": 83
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(combined_df.where(F.col('p_unitPrice').isNull()).select('Date').distinct())"
+				],
+				"execution_count": 84
+			}
+		]
+	}
+}

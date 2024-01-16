@@ -1,0 +1,37 @@
+{
+	"name": "csvtest",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "s037-cost-management-WorkspaceDefaultStorage",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"date": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@concat('pricesheet-',dataset().date, '.csv')",
+					"type": "Expression"
+				},
+				"folderPath": "pricesheet",
+				"fileSystem": "usage"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "Price Sheet Report for billing period - 201804",
+				"type": "String"
+			}
+		]
+	}
+}
