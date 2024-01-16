@@ -733,6 +733,18 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
+		"compute-overcharged-cost_notebookSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"compute-overcharged-cost_notebookSparkPoolIdRef": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"compute-overcharged-cost_notebookSparkPoolEndpointRef": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
 		"compute-ri-savings_notebookSparkPoolNameRef": {
 			"type": "string",
 			"defaultValue": "sprkpool33large"
@@ -17820,7 +17832,7 @@
 						}
 					},
 					{
-						"name": "Compute VM and SQL HUB Savings",
+						"name": "Compute HUB and RI Savings",
 						"type": "SynapseNotebook",
 						"dependsOn": [
 							{
@@ -17857,45 +17869,6 @@
 							},
 							"numExecutors": null
 						}
-					},
-					{
-						"name": "Compute RI Savings",
-						"type": "SynapseNotebook",
-						"dependsOn": [
-							{
-								"activity": "Compute VM and SQL HUB Savings",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"notebook": {
-								"referenceName": "compute-ri-savings",
-								"type": "NotebookReference"
-							},
-							"parameters": {
-								"storageAccount": {
-									"value": "s037costmgmt",
-									"type": "string"
-								}
-							},
-							"snapshot": true,
-							"conf": {
-								"spark.dynamicAllocation.enabled": null,
-								"spark.dynamicAllocation.minExecutors": null,
-								"spark.dynamicAllocation.maxExecutors": null
-							},
-							"numExecutors": null
-						}
 					}
 				],
 				"policy": {
@@ -17916,8 +17889,7 @@
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/notebooks/HUB_Daily_File')]",
 				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('compute-hub-and-ri-savings_pipelineSparkPoolNameRef'))]",
-				"[concat(variables('workspaceId'), '/notebooks/compute-hub-savings')]",
-				"[concat(variables('workspaceId'), '/notebooks/compute-ri-savings')]"
+				"[concat(variables('workspaceId'), '/notebooks/compute-hub-savings')]"
 			]
 		},
 		{
@@ -24070,7 +24042,7 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/CreateHUBSavingsView')]",
+			"name": "[concat(parameters('workspaceName'), '/CreateHUBandRISavingsView')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -24078,12 +24050,12 @@
 					"name": "PowerBIViews"
 				},
 				"content": {
-					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW HUBSavings\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/hub/hub-savings-past-two-years.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW HUBandRISavings\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/hub/hub-and-ri-savings-past-two-years.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
 					"metadata": {
 						"language": "sql"
 					},
 					"currentConnection": {
-						"databaseName": "master",
+						"databaseName": "costmgmt",
 						"poolName": "Built-in"
 					},
 					"resultLimit": 5000
@@ -24101,7 +24073,7 @@
 					"name": "PowerBIViews"
 				},
 				"content": {
-					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW tsc_ACMMonthlyAmortizedCost_overview_Oneyear\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear.parquet/*/*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n\n\n",
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW tsc_ACMMonthlyAmortizedCost_overview_Oneyear\nAS\n\nSELECT [Date]\n,[Report_Date]\n,[UnitPrice]\n,[Quantity]\n,[CostInBillingCurrency]\n,[EffectivePrice]\n,[ActiveWBS]\n,[ai_VMName]\n,[AppID]\n,[ApplicationName]\n,[ChargeType]\n,[ConsumedService]\n,[MeterSubCategory]\n,[PricingModel]\n,[CostAllocationCode]\n,[CostAllocationType]\n,[IsRIUsage]\n,[ResourceLocation]\n,[ServiceFamily]\n,[SubscriptionId]\n,[MeterCategory]\n,[MeterName]\n,[MeterRegion]\n,[SubscriptionName]\n,[SubscriptionWBS]\n,[UnitOfMeasure]\n,[ResourceGroup]\n,[ResourceId]\n,[ResourceName]\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear.parquet/*/*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n\n\n",
 					"metadata": {
 						"language": "sql"
 					},
@@ -34126,7 +34098,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "07a6e201-a533-495d-85d0-8c32ce794337"
+						"spark.autotune.trackingId": "e5b6255e-303f-4669-972d-c816668e1229"
 					}
 				},
 				"metadata": {
@@ -34290,6 +34262,39 @@
 							"# Load the data schema and add a new column for Report Date\r\n",
 							"df_schema_extended = spark.read.format('parquet').load(path)\r\n",
 							"\r\n",
+							"columns_to_keep = [\r\n",
+							"    'Date',\r\n",
+							"    'UnitPrice',\r\n",
+							"    'Quantity',\r\n",
+							"    'CostInBillingCurrency',\r\n",
+							"    'EffectivePrice',\r\n",
+							"    'ActiveWBS',\r\n",
+							"    'ai_VMName',\r\n",
+							"    'AppID',\r\n",
+							"    'ApplicationName',\r\n",
+							"    'ChargeType',\r\n",
+							"    'ConsumedService',\r\n",
+							"    'MeterSubCategory',\r\n",
+							"    'PricingModel',\r\n",
+							"    'CostAllocationCode',\r\n",
+							"    'CostAllocationType',\r\n",
+							"    'IsRIUsage',\r\n",
+							"    'ResourceLocation',\r\n",
+							"    'ServiceFamily',\r\n",
+							"    'SubscriptionId',\r\n",
+							"    'MeterCategory',\r\n",
+							"    'MeterName',\r\n",
+							"    'MeterRegion',\r\n",
+							"    'SubscriptionName',\r\n",
+							"    'SubscriptionWBS',\r\n",
+							"    'UnitOfMeasure',\r\n",
+							"    'ResourceGroup',\r\n",
+							"    'ResourceId',\r\n",
+							"    'ResourceName'\r\n",
+							"]\r\n",
+							"\r\n",
+							"df_schema_extended = df_schema_extended.select(*columns_to_keep) \r\n",
+							"\r\n",
 							"df_schema_extended = df_schema_extended.withColumn('Report_Date',lit('') )\r\n",
 							"df_schema_extended = df_schema_extended.withColumn('Report_Date_Partition',lit('') )"
 						],
@@ -34397,7 +34402,7 @@
 							"                    try:\r\n",
 							"                        # Add a Report date column in the dataframe\r\n",
 							"                        date = pd.to_datetime(folder.path.split('/')[-1].split('-')[0],format=\"%Y/%m/%d\")\r\n",
-							"                        df_temp = spark.read.format('parquet').load(file_path.path)\r\n",
+							"                        df_temp = spark.read.format('parquet').load(file_path.path).select(*columns_to_keep) \r\n",
 							"                        print(date)\r\n",
 							"                        print(\"Filepath:\", file_path.path)\r\n",
 							"                        df_temp = df_temp.withColumn('Report_Date', lit(date))\r\n",
@@ -35451,7 +35456,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "41c34959-207f-4090-b875-5c1819f97ff8"
+						"spark.autotune.trackingId": "a50d0cf2-e812-4d41-bcf7-e604901aaca1"
 					}
 				},
 				"metadata": {
@@ -35586,8 +35591,8 @@
 							"# n = 0\r\n",
 							"# For each date, we run the notebook for the specific period\r\n",
 							"for (fromDate, toDate) in dates:\r\n",
-							"\r\n",
-							"    print(f'{fromDate}-{toDate}')\r\n",
+							"    notebook_reference = 'monthly-cost-extend-v3' if fromDate != dates[-1][0] else 'daily-cost-extend-v3'\r\n",
+							"    print(f'Running {notebook_reference} notebook with date range {fromDate}-{toDate}')\r\n",
 							"    # Checking the run-time of the notebook for timeout-purposes\r\n",
 							"    start_time = time.time()\r\n",
 							"    # Running Monthly Extend-notebook with the variable arguments as inputs to the notebook.\r\n",
@@ -38700,7 +38705,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "cb884131-9b4c-48bf-ada2-a6f47dce2fb4"
+						"spark.autotune.trackingId": "4ca8d20b-a4e2-4264-bfaa-4470462faba0"
 					}
 				},
 				"metadata": {
@@ -38753,7 +38758,7 @@
 							"from datetime import datetime, timedelta"
 						],
 						"outputs": [],
-						"execution_count": 2
+						"execution_count": 35
 					},
 					{
 						"cell_type": "code",
@@ -38775,7 +38780,26 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 3
+						"execution_count": 36
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"PROD_OFFER_ID = 'MS-AZR-0017P'"
+						],
+						"outputs": [],
+						"execution_count": 37
 					},
 					{
 						"cell_type": "code",
@@ -38811,10 +38835,19 @@
 							"class LicenseTypes(Enum):\r\n",
 							"    Standard = \"Standard License\"\r\n",
 							"    Enterprise = \"Enterprise License\"\r\n",
-							"    Unknown = \"Unknown\""
+							"    Unknown = \"Unknown\"\r\n",
+							"\r\n",
+							"class RITypes(Enum):\r\n",
+							"    VM = \"VM\"\r\n",
+							"    SQL = \"SQL\"\r\n",
+							"\r\n",
+							"class ReservationType(Enum):\r\n",
+							"    S037 = \"S037\"\r\n",
+							"    SAP = \"SAP\"\r\n",
+							"    Other = \"Other\""
 						],
 						"outputs": [],
-						"execution_count": 4
+						"execution_count": 38
 					},
 					{
 						"cell_type": "markdown",
@@ -38846,7 +38879,7 @@
 							"date_two_year_ago = datetime.now().date()-timedelta(days=710)"
 						],
 						"outputs": [],
-						"execution_count": 5
+						"execution_count": 39
 					},
 					{
 						"cell_type": "code",
@@ -38867,7 +38900,7 @@
 							"cost_df = cost_df.where(F.col('Date') >= date_two_year_ago)"
 						],
 						"outputs": [],
-						"execution_count": 6
+						"execution_count": 40
 					},
 					{
 						"cell_type": "code",
@@ -38897,29 +38930,23 @@
 							"    'WindowsAHB',\r\n",
 							"    'SQLAHB', \r\n",
 							"    'IsRIUsage', \r\n",
-							"    'AHB_CPUs', \r\n",
+							"    'WindowsAHB_VCPUS',\r\n",
+							"    'AHBSQL_VCPUS',  \r\n",
 							"    'ai_DatabaseName',\r\n",
 							"    'ai_AHB', \r\n",
-							"    'ai_VCPUs'\r\n",
+							"    'ai_VCPUs',\r\n",
+							"    'UnitPrice',\r\n",
+							"    'EffectivePrice',\r\n",
+							"    'benefitName',\r\n",
+							"    'ChargeType'\r\n",
 							")\r\n",
 							"\r\n",
-							"cost_df = cost_df.withColumnRenamed('ai_VCPUs', 'VCPUs')"
+							"cost_df = cost_df \\\r\n",
+							"    .withColumn('Date', F.date_trunc('month', 'Date')) \\\r\n",
+							"    .withColumnRenamed('ai_VCPUs', 'VCPUs')"
 						],
 						"outputs": [],
-						"execution_count": 7
-					},
-					{
-						"cell_type": "markdown",
-						"metadata": {
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"## Compute VM related cost"
-						]
+						"execution_count": 41
 					},
 					{
 						"cell_type": "code",
@@ -38935,57 +38962,32 @@
 							}
 						},
 						"source": [
-							"vm_df = cost_df.alias('vm_df')\r\n",
-							"vm_df = vm_df.withColumn('Date', F.date_trunc('month', 'Date'))"
-						],
-						"outputs": [],
-						"execution_count": null
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"vm_df = vm_df.where(\r\n",
-							"    ((F.col('ResourceId').like('%/virtualMachines/%')) | (F.col('ResourceId').like('%/virtualMachineScaleSets/%'))) &\r\n",
-							"    ((F.col('MeterSubCategory').contains('Windows')) | (F.col('ServiceInfo2') == 'Windows Server BYOL')) &\r\n",
-							"    (~F.col('ResourceName').like('CVD-%'))\r\n",
-							")"
-						],
-						"outputs": [],
-						"execution_count": null
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"# Unit of measure should only have units on format x hours\r\n",
-							"# vm_df = vm_df.withColumn('UnitHours', F.split('UnitOfMeasure', ' ')[0])\r\n",
+							"is_ri_cost = F.col('IsRIUsage') == 'RI Usage'\r\n",
 							"\r\n",
-							"# Compute quantity in hours based on unit of measure\r\n",
-							"# vm_df = vm_df.withColumn('ServiceHours', F.col('UnitHours') * F.col('Quantity'))"
+							"cost_df = cost_df.withColumn('IsRICost', F.when(is_ri_cost, True).otherwise(False))\r\n",
+							"\r\n",
+							"cost_df = cost_df.withColumn('Reservation', \r\n",
+							"    F.when(is_ri_cost & F.upper(F.col('benefitName')).like('%S037%'), ReservationType.S037.value)\r\n",
+							"    .when(is_ri_cost & F.upper(F.col('benefitName')).like('%S138%'), ReservationType.SAP.value)\r\n",
+							"    .when(is_ri_cost, ReservationType.Other.value)\r\n",
+							"    .otherwise(None)\r\n",
+							")\r\n",
+							"cost_df = cost_df.withColumn('RIType', \r\n",
+							"    F.when(is_ri_cost & F.col('MeterCategory').like('%Virtual Machines%'), RITypes.VM.value)\r\n",
+							"    .when(is_ri_cost & F.col('MeterCategory').like('%SQL%'), RITypes.SQL.value)\r\n",
+							"    .otherwise(None)\r\n",
+							")\r\n",
+							"cost_df = cost_df.withColumn('IsReservationUnused', \r\n",
+							"    F.when(is_ri_cost & (F.col('ChargeType') == 'UnusedReservation'), True)\r\n",
+							"    .when(is_ri_cost, False)\r\n",
+							"    .otherwise(None)\r\n",
+							")\r\n",
+							"\r\n",
+							"cost_df = cost_df.withColumn('RICostSavings', F.when(is_ri_cost, (F.col('UnitPrice') - F.col('EffectivePrice')) * F.col('Quantity')).otherwise(0))\r\n",
+							"cost_df = cost_df.withColumn('RIEffectiveCost', F.when(is_ri_cost, F.col('EffectivePrice') * F.col('Quantity')).otherwise(0))"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 42
 					},
 					{
 						"cell_type": "code",
@@ -39001,17 +39003,82 @@
 							}
 						},
 						"source": [
-							"vm_df = vm_df.where(F.col('VCPUs') != 0)\r\n",
-							"vm_df = vm_df.withColumn('HUBCategory',\r\n",
-							"    F.when((F.col('IsRIUsage') == 'RI Usage') & (F.col('WindowsAHB') == 'Enabled'), HUBCategory.RI_HUB.value)\r\n",
-							"    .when((F.col('MeterCategory') == 'Virtual Machines Licenses') & (F.col('MeterSubCategory').like('Windows Server%')), HUBCategory.RI_nHUB.value)\r\n",
-							"    .when((F.col('IsRIUsage') == 'On Demand Usage') == (F.col('WindowsAHB') == 'Enabled'), HUBCategory.nRI_HUB.value)\r\n",
-							"    .when((F.col('IsRIUsage') == 'On Demand Usage') == (F.col('WindowsAHB') == 'Not Enabled'), HUBCategory.nRI_nHUB.value)\r\n",
+							"is_vm_cost = (F.col('ResourceId').like('%/virtualMachines/%') | F.col('ResourceId').like('%/virtualMachineScaleSets/%')) \\\r\n",
+							"    & (F.col('MeterSubCategory').contains('Windows') | (F.col('ServiceInfo2') == 'Windows Server BYOL')) \\\r\n",
+							"    & ~F.col('ResourceName').like('CVD-%')\r\n",
+							"\r\n",
+							"is_sql_cost = (F.col('ResourceId').like('%Microsoft.Sql/servers%') & F.col('MeterCategory').like('SQL%')) \\\r\n",
+							"    | (F.col('ResourceId').like('%Microsoft.Sql/managedInstances%') & F.col('MeterCategory').like('SQL%')) \\\r\n",
+							"    | ((F.col('MeterCategory') == 'Virtual Machines Licenses') & F.col('MeterSubCategory').like('SQL Server%'))"
+						],
+						"outputs": [],
+						"execution_count": 43
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"cost_df = cost_df.withColumn('HUBCategory',\r\n",
+							"    F.when(is_ri_cost & ((F.col('WindowsAHB') == 'Enabled') | (F.col('SQLAHB') == 'Enabled')), HUBCategory.RI_HUB.value)\r\n",
+							"    .when(((F.col('MeterCategory') == 'Virtual Machines Licenses') & F.col('MeterSubCategory').like('Windows Server%')) | (is_ri_cost & (F.col('SQLAHB') == 'Not Enabled')), HUBCategory.RI_nHUB.value)\r\n",
+							"    .when(~is_ri_cost & ((F.col('WindowsAHB') == 'Enabled') | (F.col('SQLAHB') == 'Enabled')), HUBCategory.nRI_HUB.value)\r\n",
+							"    .when(~is_ri_cost & ((F.col('WindowsAHB') == 'Not Enabled') | (F.col('SQLAHB') == 'Not Enabled')), HUBCategory.nRI_nHUB.value)\r\n",
 							"    .otherwise(HUBCategory.Unknown.value)\r\n",
+							")\r\n",
+							"\r\n",
+							"cost_df = cost_df.withColumn('HUBType',\r\n",
+							"    F.when(is_vm_cost, F.lit(HUBType.VM.value))\r\n",
+							"    .when(is_sql_cost, F.lit(HUBType.SQL.value))\r\n",
+							"    .otherwise(None)\r\n",
+							")\r\n",
+							"\r\n",
+							"cost_df = cost_df.withColumn('DBType',\r\n",
+							"    F.when(is_vm_cost, F.lit(None))\r\n",
+							"    .when(is_sql_cost & F.col('ResourceId').like('%Microsoft.Sql/servers%'), DBTypes.DB.value)\r\n",
+							"    .when(is_sql_cost & F.col('ResourceId').like('%Microsoft.Sql/managedInstances%'), DBTypes.MI.value)\r\n",
+							"    .when(is_sql_cost & F.col('ResourceId').like('%Microsoft.Compute/virtualMachines%'), DBTypes.VM.value)\r\n",
+							"    .otherwise(F.lit(None))\r\n",
+							")\r\n",
+							"\r\n",
+							"cost_df = cost_df.withColumn('LicenseType',\r\n",
+							"    F.when(is_sql_cost & (F.col('ProductName').like('%Standard%') | F.col('ProductName').like('%General%')), LicenseTypes.Standard.value)\r\n",
+							"    .when(is_sql_cost & (F.col('ProductName').like('%Enterprise%') | F.col('ProductName').like('%Critical%')), LicenseTypes.Enterprise.value)\r\n",
+							"    .when(is_sql_cost, LicenseTypes.Unknown.value)\r\n",
+							"    .otherwise(None)\r\n",
+							")\r\n",
+							"\r\n",
+							"cost_df = cost_df.withColumn('PricesheetJoinKey', \r\n",
+							"    F.when(is_vm_cost,\r\n",
+							"        F.concat(\r\n",
+							"            F.lit('Windows Server'),\r\n",
+							"            F.when(F.col('MeterSubCategory') == 'Windows Server Burst', ' Burst - ').otherwise(' - '), \r\n",
+							"            F.col('VCPUs'), \r\n",
+							"            F.lit(' vCPU VM License')\r\n",
+							"        )\r\n",
+							"    )\r\n",
+							"    .when(is_sql_cost & (F.col('DBType') == DBTypes.MI.value) & (F.col('LicenseType') == LicenseTypes.Standard.value), 'SQL Managed Instance General Purpose - SQL License - vCore')\r\n",
+							"    .when(is_sql_cost & (F.col('DBType') == DBTypes.MI.value) & (F.col('LicenseType') == LicenseTypes.Enterprise.value), 'SQL Managed Instance Business Critical - SQL License - vCore')\r\n",
+							"    .when(is_sql_cost & (F.col('DBType') == DBTypes.DB.value) & (F.col('LicenseType') == LicenseTypes.Standard.value), 'SQL Database Single/Elastic Pool General Purpose - SQL License - vCore')\r\n",
+							"    .when(is_sql_cost & (F.col('DBType') == DBTypes.DB.value) & (F.col('LicenseType') == LicenseTypes.Enterprise.value), 'SQL Database Single/Elastic Pool Business Critical - SQL License - vCore')\r\n",
+							"    .when(is_sql_cost & (F.col('DBType') == DBTypes.VM.value) & (F.col('LicenseType') == LicenseTypes.Standard.value) & (F.col('VCPUs') < 5), 'SQL Server Standard - 1-4 vCPU VM License')\r\n",
+							"    .when(is_sql_cost & (F.col('DBType') == DBTypes.VM.value) & (F.col('LicenseType') == LicenseTypes.Enterprise.value) & (F.col('VCPUs') < 5), 'SQL Server Enterprise - 1-4 vCPU VM License')\r\n",
+							"    .when(is_sql_cost & (F.col('DBType') == DBTypes.VM.value) & (F.col('LicenseType') == LicenseTypes.Standard.value) & (F.col('VCPUs') >= 5), F.concat(F.lit('SQL Server Standard - '), F.col('VCPUs'), F.lit(' vCPU VM License')))\r\n",
+							"    .when(is_sql_cost & (F.col('DBType') == DBTypes.VM.value) & (F.col('LicenseType') == LicenseTypes.Enterprise.value) & (F.col('VCPUs') >= 5), F.concat(F.lit('SQL Server Enterprise - '), F.col('VCPUs'), F.lit(' vCPU VM License')))\r\n",
+							"    .otherwise(None)\r\n",
 							")"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 44
 					},
 					{
 						"cell_type": "code",
@@ -39027,134 +39094,13 @@
 							}
 						},
 						"source": [
-							"vm_df = vm_df.withColumn('PricesheetService', F.concat(\r\n",
-							"    F.lit('Windows Server'),\r\n",
-							"    F.when(F.col('MeterSubCategory') == 'Windows Server Burst', ' Burst - ').otherwise(' - '), \r\n",
-							"    F.col('VCPUs'), \r\n",
-							"    F.lit(' vCPU VM License')\r\n",
-							"))"
-						],
-						"outputs": [],
-						"execution_count": null
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"vm_df = vm_df \\\r\n",
-							"    .select('VCPUs', 'Date', 'Quantity', 'ResourceName', 'CostInBillingCurrency', 'WindowsAHB', 'SQLAHB', 'IsRIUsage', 'AHB_CPUs', 'HUBCategory', 'PricesheetService') \\\r\n",
-							"    .groupBy('Date', 'ResourceName', 'WindowsAHB', 'SQLAHB', 'VCPUs', 'IsRIUsage', 'AHB_CPUs', 'HUBCategory', 'PricesheetService') \\\r\n",
-							"    .agg(F.sum('Quantity').alias('Quantity'), F.sum('CostInBillingCurrency').alias('ResourceCost')) \\\r\n",
-							"    .orderBy('Date', 'Quantity', 'ResourceCost')"
-						],
-						"outputs": [],
-						"execution_count": null
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"vm_df = vm_df.withColumn('HUBType', F.lit(HUBType.VM.value))"
-						],
-						"outputs": [],
-						"execution_count": null
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"vm_df = vm_df.withColumn('DBType', F.lit(None))"
-						],
-						"outputs": [],
-						"execution_count": null
-					},
-					{
-						"cell_type": "markdown",
-						"metadata": {
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"## Compute SQL related cost"
-						]
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"sql_df = cost_df.alias('sql_df')\r\n",
-							"sql_df = sql_df.withColumn('Date', F.date_trunc('month', 'Date'))"
-						],
-						"outputs": [],
-						"execution_count": null
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"sql_df = sql_df.where(\r\n",
-							"    ((F.col('ResourceId').like('%Microsoft.Sql/servers%')) & (F.col('MeterCategory').like('SQL%'))) | # SQL DB - RI - HUB\r\n",
-							"    ((F.col('ResourceId').like('%Microsoft.Sql/managedInstances%')) & (F.col('MeterCategory').like('SQL%'))) | # SQL MI - RI - HUB\r\n",
-							"    ((F.col('MeterCategory') == 'Virtual Machines Licenses') & (F.col('MeterSubCategory').like('SQL Server%'))) # SQL VM ---> HUB disabled (RI?)\r\n",
-							")\r\n",
+							"is_valid_vm_cost = is_vm_cost & (F.col('VCPUs') != 0)\r\n",
+							"is_valid_sql_cost = is_sql_cost & ~F.col('UnitOfMeasure').like('%GB%') & ~F.col('UnitOfMeasure').like('%/Day%') & (F.col('MeterSubCategory') != 'SQL Server Express Edition')\r\n",
 							"\r\n",
-							"sql_df = sql_df.where(F.col('MeterSubCategory') != 'SQL Server Express Edition')"
+							"cost_df = cost_df.where(is_ri_cost | is_valid_vm_cost | is_valid_sql_cost)"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 45
 					},
 					{
 						"cell_type": "code",
@@ -39170,231 +39116,34 @@
 							}
 						},
 						"source": [
-							"# Filter out cost with unit of measure on format x GB/Month or x/Day as these costs are storage/DTUs\r\n",
-							"sql_df = sql_df.where((~F.col('UnitOfMeasure').like('%GB%')) & (~F.col('UnitOfMeasure').like('%/Day%')))\r\n",
-							"\r\n",
-							"# Unit of measure should only have units on format x hours\r\n",
-							"# sql_df = sql_df.withColumn('UnitHours', F.split('UnitOfMeasure', ' ')[0])\r\n",
-							"\r\n",
-							"# Compute quantity in hours based on unit of measure\r\n",
-							"# sql_df = sql_df.withColumn('ServiceHours', F.col('UnitHours') * F.col('Quantity'))"
+							"cost_df = cost_df \\\r\n",
+							"    .select(\r\n",
+							"        'Date', \r\n",
+							"        'ResourceName', \r\n",
+							"        'CostInBillingCurrency', \r\n",
+							"        'Quantity', \r\n",
+							"        'WindowsAHB', \r\n",
+							"        'SQLAHB', \r\n",
+							"        'WindowsAHB_VCPUS', \r\n",
+							"        'AHBSQL_VCPUS', \r\n",
+							"        'VCPUs', \r\n",
+							"        'IsRICost', \r\n",
+							"        'Reservation', \r\n",
+							"        'RIType', \r\n",
+							"        'IsReservationUnused', \r\n",
+							"        'RICostSavings', \r\n",
+							"        'RIEffectiveCost', \r\n",
+							"        'HUBType',\r\n",
+							"        'HUBCategory', \r\n",
+							"        'DBType', \r\n",
+							"        'PricesheetJoinKey'\r\n",
+							"    ) \\\r\n",
+							"    .groupBy('Date', 'ResourceName', 'WindowsAHB', 'SQLAHB', 'VCPUs', 'WindowsAHB_VCPUS', 'AHBSQL_VCPUS', 'IsRICost', 'Reservation', 'RIType', 'IsReservationUnused', 'HUBType', 'HUBCategory', 'DBType', 'PricesheetJoinKey') \\\r\n",
+							"    .agg(F.sum('Quantity').alias('Quantity'), F.sum('CostInBillingCurrency').alias('ResourceCost'), F.sum('RICostSavings').alias('RICostSavings'), F.sum('RIEffectiveCost').alias('RIEffectiveCost'))\\\r\n",
+							"    .orderBy('Date')"
 						],
 						"outputs": [],
-						"execution_count": null
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"sql_df = sql_df.withColumn('DBType', \r\n",
-							"    F.when(F.col('ResourceId').like('%Microsoft.Sql/servers%'), DBTypes.DB.value)\r\n",
-							"    .when(F.col('ResourceId').like('%Microsoft.Sql/managedInstances%'), DBTypes.MI.value)\r\n",
-							"    .when(F.col('ResourceId').like('%Microsoft.Compute/virtualMachines%'), DBTypes.VM.value)\r\n",
-							"    .otherwise(DBTypes.Unknown.value)\r\n",
-							")\r\n",
-							"\r\n",
-							"sql_df = sql_df.where(F.col('DBType') != DBTypes.Unknown.value)"
-						],
-						"outputs": [],
-						"execution_count": null
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"sql_df = sql_df.withColumn('LicenseType',\r\n",
-							"    F.when(F.col('ProductName').like('%Standard%') | F.col('ProductName').like('%General%'), LicenseTypes.Standard.value)\r\n",
-							"    .when(F.col('ProductName').like('%Enterprise%') | F.col('ProductName').like('%Critical%'), LicenseTypes.Enterprise.value)\r\n",
-							"    .otherwise(LicenseTypes.Unknown.value)\r\n",
-							")\r\n",
-							"\r\n",
-							"sql_df = sql_df.where(F.col('LicenseType') != LicenseTypes.Unknown.value)"
-						],
-						"outputs": [],
-						"execution_count": null
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"sql_df = sql_df.withColumn('HUBCategory',\r\n",
-							"    F.when((F.col('IsRIUsage') == 'RI Usage') & (F.col('SQLAHB') == 'Enabled'), HUBCategory.RI_HUB.value)\r\n",
-							"    .when((F.col('IsRIUsage') == 'RI Usage') & (F.col('SQLAHB') == 'Not Enabled'), HUBCategory.RI_nHUB.value)\r\n",
-							"    .when((F.col('IsRIUsage') == 'On Demand Usage') == (F.col('SQLAHB') == 'Enabled'), HUBCategory.nRI_HUB.value)\r\n",
-							"    .when((F.col('IsRIUsage') == 'On Demand Usage') == (F.col('SQLAHB') == 'Not Enabled'), HUBCategory.nRI_nHUB.value)\r\n",
-							"    .otherwise(HUBCategory.Unknown.value)\r\n",
-							")"
-						],
-						"outputs": [],
-						"execution_count": null
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"sql_df = sql_df.withColumn('PricesheetService',\r\n",
-							"    F.when((F.col('DBType') == DBTypes.MI.value) & (F.col('LicenseType') == LicenseTypes.Standard.value), 'SQL Managed Instance General Purpose - SQL License - vCore')\r\n",
-							"    .when((F.col('DBType') == DBTypes.MI.value) & (F.col('LicenseType') == LicenseTypes.Enterprise.value), 'SQL Managed Instance Business Critical - SQL License - vCore')\r\n",
-							"    .when((F.col('DBType') == DBTypes.DB.value) & (F.col('LicenseType') == LicenseTypes.Standard.value), 'SQL Database Single/Elastic Pool General Purpose - SQL License - vCore')\r\n",
-							"    .when((F.col('DBType') == DBTypes.DB.value) & (F.col('LicenseType') == LicenseTypes.Enterprise.value), 'SQL Database Single/Elastic Pool Business Critical - SQL License - vCore')\r\n",
-							"    .when((F.col('DBType') == DBTypes.VM.value) & (F.col('LicenseType') == LicenseTypes.Standard.value) & (F.col('VCPUs') < 5), 'SQL Server Standard - 1-4 vCPU VM License')\r\n",
-							"    .when((F.col('DBType') == DBTypes.VM.value) & (F.col('LicenseType') == LicenseTypes.Enterprise.value) & (F.col('VCPUs') < 5), 'SQL Server Enterprise - 1-4 vCPU VM License')\r\n",
-							"    .when((F.col('DBType') == DBTypes.VM.value) & (F.col('LicenseType') == LicenseTypes.Standard.value) & (F.col('VCPUs') >= 5), F.concat(F.lit('SQL Server Standard - '), F.col('VCPUs'), F.lit(' vCPU VM License')))\r\n",
-							"    .when((F.col('DBType') == DBTypes.VM.value) & (F.col('LicenseType') == LicenseTypes.Enterprise.value) & (F.col('VCPUs') >= 5), F.concat(F.lit('SQL Server Enterprise - '), F.col('VCPUs'), F.lit(' vCPU VM License')))\r\n",
-							"    .otherwise('undefined')\r\n",
-							")"
-						],
-						"outputs": [],
-						"execution_count": null
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"sql_df = sql_df \\\r\n",
-							"    .select('VCPUs', 'Date', 'Quantity', 'ResourceName', 'CostInBillingCurrency', 'SQLAHB', 'WindowsAHB', 'IsRIUsage', 'AHB_CPUs', 'DBType', 'PricesheetService', 'HUBCategory') \\\r\n",
-							"    .groupBy('Date', 'ResourceName', 'SQLAHB', 'WindowsAHB', 'VCPUs', 'IsRIUsage', 'AHB_CPUs', 'DBType', 'PricesheetService', 'HUBCategory') \\\r\n",
-							"    .agg(F.sum('Quantity').alias('Quantity'), F.sum('CostInBillingCurrency').alias('ResourceCost')) \\\r\n",
-							"    .orderBy('Date', 'Quantity', 'ResourceCost')"
-						],
-						"outputs": [],
-						"execution_count": null
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"sql_df = sql_df.withColumn('HUBType', F.lit(HUBType.SQL.value))"
-						],
-						"outputs": [],
-						"execution_count": null
-					},
-					{
-						"cell_type": "markdown",
-						"metadata": {
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"## Combine dataframes"
-						]
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"columns = ['Date', 'ResourceName', 'VCPUs', 'Quantity', 'ResourceCost', 'HUBType', 'HUBCategory', 'DBType', 'IsRIUsage', 'WindowsAHB', 'SQLAHB', 'PricesheetService', 'AHB_CPUs']\r\n",
-							"vm_df = vm_df.select(*columns)\r\n",
-							"sql_df = sql_df.select(*columns)\r\n",
-							""
-						],
-						"outputs": [],
-						"execution_count": null
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"hub_df = vm_df.union(sql_df)"
-						],
-						"outputs": [],
-						"execution_count": null
-					},
-					{
-						"cell_type": "markdown",
-						"metadata": {
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"## Compute HUB Savings"
-						]
+						"execution_count": 46
 					},
 					{
 						"cell_type": "code",
@@ -39411,10 +39160,10 @@
 						},
 						"source": [
 							"# Create dummy date column for pricesheet join operation\r\n",
-							"hub_df = hub_df.withColumn(\"TempDate\", F.date_format(\"Date\", \"yyyyMM\"))"
+							"cost_df = cost_df.withColumn(\"TempDate\", F.date_format(\"Date\", \"yyyyMM\"))"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 47
 					},
 					{
 						"cell_type": "markdown",
@@ -39443,26 +39192,7 @@
 							}
 						},
 						"source": [
-							"PROD_OFFER_ID = 'MS-AZR-0017P'"
-						],
-						"outputs": [],
-						"execution_count": null
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"old_pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/pricesheet-2022*.parquet'\r\n",
+							"old_pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/v2_schema/pricesheet-2022*.parquet'\r\n",
 							"old_pricesheet_df = spark.read.format('parquet').load(old_pricesheet_path)\r\n",
 							"old_pricesheet_df = old_pricesheet_df.where(F.col('offerId') == PROD_OFFER_ID)\r\n",
 							"old_pricesheet_df = old_pricesheet_df.withColumnRenamed('meterName', 'ProductMapping')\r\n",
@@ -39474,7 +39204,7 @@
 							"old_pricesheet_df = old_pricesheet_df.select('ProductMapping', 'UnitOfMeasure', 'UnitQuantity', 'UnitPrice', 'PricePerUnit', 'BillingPeriodId')"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 48
 					},
 					{
 						"cell_type": "markdown",
@@ -39514,7 +39244,7 @@
 							"new_pricesheet_df = new_pricesheet_df.select('ProductMapping', 'UnitOfMeasure', 'UnitQuantity', 'UnitPrice', 'PricePerUnit', 'BillingPeriodId')"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 49
 					},
 					{
 						"cell_type": "markdown",
@@ -39546,7 +39276,7 @@
 							"pricesheet_df = new_pricesheet_df.union(old_pricesheet_df)"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 50
 					},
 					{
 						"cell_type": "code",
@@ -39562,13 +39292,13 @@
 							}
 						},
 						"source": [
-							"hub_df = hub_df.join(pricesheet_df, (pricesheet_df.ProductMapping == hub_df.PricesheetService) & (pricesheet_df.BillingPeriodId == hub_df.TempDate), \"left\")\r\n",
-							"hub_df = hub_df.drop('PriceSheetService', 'TempDate')\r\n",
+							"cost_df = cost_df.join(pricesheet_df, (pricesheet_df.ProductMapping == cost_df.PricesheetJoinKey) & (pricesheet_df.BillingPeriodId == cost_df.TempDate), \"left\")\r\n",
+							"cost_df = cost_df.drop('PricesheetJoinKey', 'TempDate')\r\n",
 							"\r\n",
-							"hub_df = hub_df.withColumn('PAYGLicenseCost', F.col('Quantity') * F.col('PricePerUnit'))"
+							"cost_df = cost_df.withColumn('PAYGLicenseCost', F.col('Quantity') * F.col('PricePerUnit'))"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 51
 					},
 					{
 						"cell_type": "code",
@@ -39584,17 +39314,17 @@
 							}
 						},
 						"source": [
-							"hub_df = hub_df.withColumn('CostWithHub', \r\n",
+							"cost_df = cost_df.withColumn('CostWithHub', \r\n",
 							"    F.when((F.col('HUBCategory') == HUBCategory.nRI_HUB.value) | (F.col('HUBCategory') == HUBCategory.RI_HUB.value), F.col('ResourceCost'))\r\n",
 							"    .when((F.col('HUBCategory') == HUBCategory.nRI_nHUB.value) | (F.col('HUBCategory') == HUBCategory.RI_nHUB.value), F.col('ResourceCost') - F.col('PAYGLicenseCost'))\r\n",
 							"    .otherwise(None)\r\n",
 							")\r\n",
 							"\r\n",
-							"hub_df = hub_df.withColumn('UnlockedSavings', F.when((F.col('HUBCategory') == HUBCategory.RI_HUB.value) | (F.col('HUBCategory') == HUBCategory.nRI_HUB.value), F.col('PAYGLicenseCost')).otherwise(0))\r\n",
-							"hub_df = hub_df.withColumn('PotentialSavings', F.col('ResourceCost') - F.col('CostWithHub'))"
+							"cost_df = cost_df.withColumn('UnlockedSavings', F.when((F.col('HUBCategory') == HUBCategory.RI_HUB.value) | (F.col('HUBCategory') == HUBCategory.nRI_HUB.value), F.col('PAYGLicenseCost')).otherwise(0))\r\n",
+							"cost_df = cost_df.withColumn('PotentialSavings', F.col('ResourceCost') - F.col('CostWithHub'))"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 52
 					},
 					{
 						"cell_type": "code",
@@ -39610,10 +39340,30 @@
 							}
 						},
 						"source": [
-							"hub_df = hub_df.drop('UnitOfMeasure', 'UnitQuantity', 'UnitPrice', 'PricePerUnit')"
+							"cost_df = cost_df.drop('UnitOfMeasure', 'UnitQuantity', 'UnitPrice', 'PricePerUnit', 'ProductMapping', 'BillingPeriodId')"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 53
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"display(cost_df)"
+						],
+						"outputs": [],
+						"execution_count": 56
 					},
 					{
 						"cell_type": "markdown",
@@ -39642,11 +39392,11 @@
 							}
 						},
 						"source": [
-							"hub_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/hub/hub-savings-past-two-years.parquet\"\r\n",
-							"hub_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(hub_path)"
+							"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/hub/hub-and-ri-savings-past-two-years.parquet\"\r\n",
+							"cost_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 57
 					},
 					{
 						"cell_type": "markdown",
@@ -39744,6 +39494,638 @@
 							"\r\n",
 							""
 						]
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/compute-overcharged-cost')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "NotebookInProduction/Pricesheet"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "[parameters('compute-overcharged-cost_notebookSparkPoolNameRef')]",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "112g",
+					"driverCores": 16,
+					"executorMemory": "112g",
+					"executorCores": 16,
+					"numExecutors": 1,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "5",
+						"spark.autotune.trackingId": "9067f396-e573-471d-83ae-5ffe8dbe0495"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "[parameters('compute-overcharged-cost_notebookSparkPoolIdRef')]",
+						"name": "[parameters('compute-overcharged-cost_notebookSparkPoolNameRef')]",
+						"type": "Spark",
+						"endpoint": "[parameters('compute-overcharged-cost_notebookSparkPoolEndpointRef')]",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 16,
+						"memory": 112
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"source": [
+							"import pyspark.sql.functions as F"
+						],
+						"outputs": [],
+						"execution_count": 153
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": 154
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"PROD_OFFER_ID = 'MS-AZR-0017P'"
+						],
+						"outputs": [],
+						"execution_count": 155
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"old_pricesheet_cols = ['meterId', 'meterName', 'unitOfMeasure', 'partNumber', 'unitPrice', 'currencyCode', 'includedQuantity', 'offerId']\r\n",
+							"new_pricesheet_cols = ['MeterID', 'MeterName', 'UnitOfMeasure', 'PartNumber', 'UnitPrice', 'CurrencyCode', 'IncludedQuantity', 'OfferID']"
+						],
+						"outputs": [],
+						"execution_count": 156
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/v1_schema/pricesheet-*.parquet'\r\n",
+							"pricesheet_df = spark.read.format('parquet').load(pricesheet_path)\r\n",
+							"pricesheet_df = pricesheet_df.where(F.col('offerId') == PROD_OFFER_ID)\r\n",
+							"pricesheet_df = pricesheet_df.select(*old_pricesheet_cols)\r\n",
+							"pricesheet_df = pricesheet_df \\\r\n",
+							"        .withColumnRenamed('meterId', 'MeterID') \\\r\n",
+							"        .withColumnRenamed('meterName', 'MeterName') \\\r\n",
+							"        .withColumnRenamed('unitOfMeasure', 'UnitOfMeasure') \\\r\n",
+							"        .withColumnRenamed('partNumber', 'PartNumber') \\\r\n",
+							"        .withColumnRenamed('unitPrice', 'UnitPrice') \\\r\n",
+							"        .withColumnRenamed('currencyCode', 'CurrencyCode') \\\r\n",
+							"        .withColumnRenamed('includedQuantity', 'IncludedQuantity') \\\r\n",
+							"        .withColumnRenamed('offerId', 'OfferID')"
+						],
+						"outputs": [],
+						"execution_count": 163
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"new_test = pricesheet_df.groupBy('PartNumber', 'OfferID', 'UnitOfMeasure').agg(F.min('UnitPrice').alias('UnitPrice'))"
+						],
+						"outputs": [],
+						"execution_count": 168
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"# display(new_test.where(F.col('PartNumber') == 'AAJ-86987'))\r\n",
+							"display(new_test.where(F.col('UnitPrice') == 0))"
+						],
+						"outputs": [],
+						"execution_count": 172
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"duplicates = new_test.groupBy('PartNumber').count().filter('count > 1')\r\n",
+							"display(duplicates)"
+						],
+						"outputs": [],
+						"execution_count": 170
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"display(new_test)"
+						],
+						"outputs": [],
+						"execution_count": 169
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"display(pricesheet_df.where(F.col('PartNumber') == '3Q7-00088'))"
+						],
+						"outputs": [],
+						"execution_count": 165
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"from pyspark.sql.functions import min\r\n",
+							"\r\n",
+							"# assuming your original dataframe is named 'df'\r\n",
+							"new_df = df.groupBy('ID').agg(min('price').alias('price')).select('ID', 'price')"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"def add_prefix_to_cols(df, prefix):\r\n",
+							"    return df.select([F.col(c).alias(f'{prefix}_'+c) for c in df.columns])"
+						],
+						"outputs": [],
+						"execution_count": 141
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"def load_old_pricesheet(year, month):\r\n",
+							"    # Read old pricesheet\r\n",
+							"    pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/pricesheet-{year}{month:02d}.parquet'\r\n",
+							"    pricesheet_df = spark.read.format('parquet').load(pricesheet_path)\r\n",
+							"    pricesheet_df = pricesheet_df.where(F.col('offerId') == PROD_OFFER_ID)\r\n",
+							"    pricesheet_df = pricesheet_df.select(*old_pricesheet_cols)\r\n",
+							"\r\n",
+							"    # Convert old schema to new schema\r\n",
+							"    pricesheet_df = pricesheet_df \\\r\n",
+							"        .withColumnRenamed('meterId', 'MeterID') \\\r\n",
+							"        .withColumnRenamed('meterName', 'MeterName') \\\r\n",
+							"        .withColumnRenamed('unitOfMeasure', 'UnitOfMeasure') \\\r\n",
+							"        .withColumnRenamed('partNumber', 'PartNumber') \\\r\n",
+							"        .withColumnRenamed('unitPrice', 'UnitPrice') \\\r\n",
+							"        .withColumnRenamed('currencyCode', 'CurrencyCode') \\\r\n",
+							"        .withColumnRenamed('includedQuantity', 'IncludedQuantity') \\\r\n",
+							"        .withColumnRenamed('offerId', 'OfferID')\r\n",
+							"\r\n",
+							"    # Prefix pricesheet columns with p to distinguish pricesheet columns when combined with usage file\r\n",
+							"    pricesheet_df = add_prefix_to_cols(pricesheet_df, 'p')\r\n",
+							"    return pricesheet_df"
+						],
+						"outputs": [],
+						"execution_count": 142
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"def load_new_pricesheet(date_range):\r\n",
+							"    # Load new pricesheet\r\n",
+							"    new_pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/FinOps-Pricesheet-Monthly/{date_range}/*/*.csv'\r\n",
+							"    pricesheet_df = spark.read.csv(new_pricesheet_path, header=True, inferSchema=True)\r\n",
+							"    pricesheet_df = pricesheet_df.where(F.col('OfferID') == PROD_OFFER_ID)\r\n",
+							"    pricesheet_df = pricesheet_df.select(*new_pricesheet_cols)\r\n",
+							"\r\n",
+							"    # Prefix pricesheet columns with p to distinguish pricesheet columns when combined with usage file\r\n",
+							"    pricesheet_df = add_prefix_to_cols(pricesheet_df, 'p')\r\n",
+							"    return pricesheet_df"
+						],
+						"outputs": [],
+						"execution_count": 143
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"def merge_cost_and_price(cost_df, price_df):\r\n",
+							"    # Rename pricesheet columns to be prefixed with temp\r\n",
+							"    price_df = add_prefix_to_cols(price_df, 'temp')\r\n",
+							"\r\n",
+							"    # Join temporary part number column on usage file part number \r\n",
+							"    cost_df = cost_df.join(price_df, (cost_df.PartNumber == price_df.temp_p_PartNumber), how='left')\r\n",
+							"\r\n",
+							"    # At this point the joined table will contain duplicate pricesheet column (p_ and temp_p_)\r\n",
+							"    for col in new_pricesheet_cols:\r\n",
+							"        p_col = f\"p_{col}\"\r\n",
+							"        temp_col = f\"temp_{p_col}\"\r\n",
+							"\r\n",
+							"        # Merge individual pricesheet columns\r\n",
+							"        cost_df = cost_df.withColumn(p_col, F.coalesce(cost_df[p_col], cost_df[temp_col]))\r\n",
+							"\r\n",
+							"        # Drop the temp column after merge (only left with p_ column)\r\n",
+							"        cost_df = cost_df.drop(temp_col)\r\n",
+							"    return cost_df"
+						],
+						"outputs": [],
+						"execution_count": 144
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Load usage file\r\n",
+							"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
+							"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
+							"\r\n",
+							"# Only look at usage data from the initial price increase (first of march 2021)\r\n",
+							"cost_df = cost_df.where(F.col('Date') >= '2021-02-01')\r\n",
+							"\r\n",
+							"# Filter out unassigned cost\r\n",
+							"cost_df = cost_df.where(F.col('MeterId') != '00000000-0000-0000-0000-000000000000')\r\n",
+							"cost_df = cost_df.select('SubscriptionName', 'ResourceGroup', 'ResourceLocation', 'Date', 'ProductName', 'MeterCategory', 'MeterSubCategory', 'MeterId', 'MeterName', 'MeterRegion', 'UnitOfMeasure', 'Quantity', 'EffectivePrice', 'CostInBillingCurrency', 'ResourceName', 'UnitPrice', 'PartNumber')"
+						],
+						"outputs": [],
+						"execution_count": 145
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Set initial pricesheet to February 2021 - The month ahead of 9% price increase\r\n",
+							"pricesheet_df = load_old_pricesheet(2021, 2)\r\n",
+							"combined_df = cost_df.join(pricesheet_df, cost_df.PartNumber == pricesheet_df.p_PartNumber, how='left')"
+						],
+						"outputs": [],
+						"execution_count": 146
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Merge usage data with old pricesheet data\r\n",
+							"\r\n",
+							"END_YEAR = 2022\r\n",
+							"END_MONTH = 12\r\n",
+							"\r\n",
+							"INITIAL_YEAR = 2021\r\n",
+							"INITIAL_MONTH = 4\r\n",
+							"\r\n",
+							"year = INITIAL_YEAR\r\n",
+							"month = INITIAL_MONTH\r\n",
+							"\r\n",
+							"while year < END_YEAR or (year == END_YEAR and month <= END_MONTH):\r\n",
+							"    print(f\"Loading pricesheet - year: {year} - month: {month}\")\r\n",
+							"    next_pricesheet = load_old_pricesheet(year, month)\r\n",
+							"    combined_df = merge_cost_and_price(combined_df, next_pricesheet)\r\n",
+							"    if (month == 12):\r\n",
+							"        year += 1\r\n",
+							"        month = 1\r\n",
+							"    else:\r\n",
+							"        month += 1"
+						],
+						"outputs": [],
+						"execution_count": 147
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Merge usage data with new pricesheet data\r\n",
+							"\r\n",
+							"new_pricesheet_root = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/FinOps-Pricesheet-Monthly'\r\n",
+							"paths = mssparkutils.fs.ls(new_pricesheet_root)\r\n",
+							"date_ranges = [files.name for files in paths]\r\n",
+							"\r\n",
+							"for date_range in date_ranges:\r\n",
+							"    print(f\"Loading pricesheet - date range: {date_range}\")\r\n",
+							"    next_pricesheet = load_new_pricesheet(date_range)\r\n",
+							"    combined_df = merge_cost_and_price(combined_df, next_pricesheet)"
+						],
+						"outputs": [],
+						"execution_count": 149
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"display(combined_df.where(F.col('p_unitPrice').isNull()).count())"
+						],
+						"outputs": [],
+						"execution_count": 150
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"print(combined_df.columns)"
+						],
+						"outputs": [],
+						"execution_count": 115
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"display(combined_df.select('UnitOfMeasure', 'p_UnitOfMeasure').limit(100))"
+						],
+						"outputs": [],
+						"execution_count": 135
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"5765059\r\n",
+							"\r\n",
+							"2646100"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"display(combined_df.where(F.col('p_unitPrice').isNull() & (F.col('Date') < '2021-03-01')))"
+						],
+						"outputs": [],
+						"execution_count": 83
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"display(combined_df.where(F.col('p_unitPrice').isNull()).select('Date').distinct())"
+						],
+						"outputs": [],
+						"execution_count": 84
 					}
 				]
 			},
@@ -40059,7 +40441,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "7ca51256-63ee-437e-b7f8-21c10be3d338"
+						"spark.autotune.trackingId": "e3d0fd1f-5502-40dc-a390-8b0c1ccd2d5a"
 					}
 				},
 				"metadata": {
@@ -40084,8 +40466,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -40114,7 +40495,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"def get_last_day_prev_month(to_date):\r\n",
 							"    current_month = int(to_date[4:6])\r\n",
@@ -40639,8 +41019,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -40886,7 +41265,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "05fe885d-8d8a-4002-b0b1-8948c3e582aa"
+						"spark.autotune.trackingId": "d32f0fad-a68f-40ed-be83-19daf905d021"
 					}
 				},
 				"metadata": {
@@ -40911,8 +41290,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
