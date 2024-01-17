@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "51ea4477-0981-4ad3-8d97-1c3dc3762453"
+				"spark.autotune.trackingId": "42fa1aa1-6229-474d-b46d-0e349decc5b3"
 			}
 		},
 		"metadata": {
@@ -65,9 +65,10 @@
 					}
 				},
 				"source": [
-					"import pyspark.sql.functions as F"
+					"import pyspark.sql.functions as F\r\n",
+					"import pyspark.sql.types as T"
 				],
-				"execution_count": 1
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -98,7 +99,7 @@
 					"autofit_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/ccm/autofitcombometer.parquet'\r\n",
 					"autofit_df = spark.read.format('parquet').load(autofit_path)"
 				],
-				"execution_count": 21
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -121,7 +122,7 @@
 					"                'escape' : '\"'}\r\n",
 					"rec_df = spark.read.options(**csv_options).csv(rec_path)"
 				],
-				"execution_count": 22
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -147,7 +148,28 @@
 					"new_df = rec_df.join(autofit_df, rec_df.RecommendationJoinKey == autofit_df.AutofitJoinKey, how='left')\r\n",
 					"new_df = new_df.drop('RecommendationJoinKey', 'AutofitJoinKey')"
 				],
-				"execution_count": 23
+				"execution_count": 5
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"new_df = new_df.withColumn(\"NetSavings\", F.col(\"NetSavings\").cast(T.FloatType()))\r\n",
+					"new_df = new_df.withColumn(\"RecommendedQuantity\", F.col(\"RecommendedQuantity\").cast(T.FloatType()))\r\n",
+					"new_df = new_df.withColumn(\"RecommendedQuantityNormalized\", F.col(\"RecommendedQuantityNormalized\").cast(T.FloatType()))\r\n",
+					"new_df = new_df.withColumn(\"TotalCostWithReservedInstances\", F.col(\"TotalCostWithReservedInstances\").cast(T.FloatType()))"
+				],
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -166,7 +188,7 @@
 					"new_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/ri/ri-recommendations-with-autofit-combometer.parquet\"\r\n",
 					"new_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(new_path)"
 				],
-				"execution_count": 25
+				"execution_count": 10
 			}
 		]
 	}
