@@ -877,30 +877,6 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
-		"sprkpool33large_delayInMinutes": {
-			"type": "int",
-			"defaultValue": 10
-		},
-		"sprkpool33large_maxNodeCount": {
-			"type": "int",
-			"defaultValue": 12
-		},
-		"sprkpool33large_minNodeCount": {
-			"type": "int",
-			"defaultValue": 3
-		},
-		"sprkpool33large_nodeCount": {
-			"type": "int",
-			"defaultValue": 3
-		},
-		"sprkpool33large_nodeSize": {
-			"type": "string",
-			"defaultValue": "Large"
-		},
-		"sprkpool33large_sparkVersion": {
-			"type": "string",
-			"defaultValue": "3.3"
-		},
 		"sparkpool32_delayInMinutes": {
 			"type": "int",
 			"defaultValue": 15
@@ -924,6 +900,30 @@
 		"sparkpool32_sparkVersion": {
 			"type": "string",
 			"defaultValue": "3.2"
+		},
+		"sprkpool33large_delayInMinutes": {
+			"type": "int",
+			"defaultValue": 10
+		},
+		"sprkpool33large_maxNodeCount": {
+			"type": "int",
+			"defaultValue": 12
+		},
+		"sprkpool33large_minNodeCount": {
+			"type": "int",
+			"defaultValue": 3
+		},
+		"sprkpool33large_nodeCount": {
+			"type": "int",
+			"defaultValue": 3
+		},
+		"sprkpool33large_nodeSize": {
+			"type": "string",
+			"defaultValue": "Large"
+		},
+		"sprkpool33large_sparkVersion": {
+			"type": "string",
+			"defaultValue": "3.3"
 		}
 	},
 	"variables": {
@@ -34098,7 +34098,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "e5b6255e-303f-4669-972d-c816668e1229"
+						"spark.autotune.trackingId": "de1e53e9-3cfe-44d3-89c6-3937e1d0b9ba"
 					}
 				},
 				"metadata": {
@@ -34123,7 +34123,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -34168,7 +34169,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 1
+						"execution_count": 4
 					},
 					{
 						"cell_type": "markdown",
@@ -34211,7 +34212,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 2
+						"execution_count": 5
 					},
 					{
 						"cell_type": "markdown",
@@ -34271,7 +34272,7 @@
 							"    'ActiveWBS',\r\n",
 							"    'ai_VMName',\r\n",
 							"    'AppID',\r\n",
-							"    'ApplicationName',\r\n",
+							"    'Application_Name',\r\n",
 							"    'ChargeType',\r\n",
 							"    'ConsumedService',\r\n",
 							"    'MeterSubCategory',\r\n",
@@ -34299,7 +34300,7 @@
 							"df_schema_extended = df_schema_extended.withColumn('Report_Date_Partition',lit('') )"
 						],
 						"outputs": [],
-						"execution_count": 3
+						"execution_count": 6
 					},
 					{
 						"cell_type": "code",
@@ -34319,7 +34320,7 @@
 							"len(df_schema_extended.columns)"
 						],
 						"outputs": [],
-						"execution_count": 4
+						"execution_count": 7
 					},
 					{
 						"cell_type": "code",
@@ -34341,7 +34342,7 @@
 							"#df_schema_extended = spark.createDataFrame(df_schema_extended_pd)"
 						],
 						"outputs": [],
-						"execution_count": 5
+						"execution_count": 8
 					},
 					{
 						"cell_type": "markdown",
@@ -34418,7 +34419,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 6
+						"execution_count": 9
 					},
 					{
 						"cell_type": "markdown",
@@ -34451,7 +34452,7 @@
 							"df = df.withColumn(\"Report_Date\", col(\"Report_Date\").cast(\"timestamp\"))"
 						],
 						"outputs": [],
-						"execution_count": 7
+						"execution_count": 10
 					},
 					{
 						"cell_type": "code",
@@ -34471,7 +34472,7 @@
 							"df = df.withColumnRenamed(\"Application_Name\", \"ApplicationName\")"
 						],
 						"outputs": [],
-						"execution_count": 8
+						"execution_count": 11
 					},
 					{
 						"cell_type": "markdown",
@@ -34507,7 +34508,7 @@
 							"df.write.format('parquet').mode('overwrite').partitionBy('Report_Date_Partition').option('overwriteSchema', 'true').save(optimized_path)"
 						],
 						"outputs": [],
-						"execution_count": 11
+						"execution_count": 12
 					}
 				]
 			},
@@ -34539,7 +34540,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "85d236e5-0ca2-47e0-9ff8-459936b2df23"
+						"spark.autotune.trackingId": "7d56f04c-97c8-4ae2-925e-204497c2dc7f"
 					}
 				},
 				"metadata": {
@@ -34564,7 +34565,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -38705,7 +38707,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "4ca8d20b-a4e2-4264-bfaa-4470462faba0"
+						"spark.autotune.trackingId": "9c0c5fa7-0564-4481-8a10-ab09b9c0bb32"
 					}
 				},
 				"metadata": {
@@ -38730,8 +38732,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -38751,7 +38752,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"from enum import Enum\r\n",
@@ -43731,31 +43731,6 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
-			"type": "Microsoft.Synapse/workspaces/bigDataPools",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"autoPause": {
-					"enabled": true,
-					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
-				},
-				"autoScale": {
-					"enabled": true,
-					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
-					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
-				},
-				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
-				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
-				"nodeSizeFamily": "MemoryOptimized",
-				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
-				"isComputeIsolationEnabled": false,
-				"sessionLevelPackagesEnabled": true,
-				"annotations": []
-			},
-			"dependsOn": [],
-			"location": "northeurope"
-		},
-		{
 			"name": "[concat(parameters('workspaceName'), '/sparkpool32')]",
 			"type": "Microsoft.Synapse/workspaces/bigDataPools",
 			"apiVersion": "2019-06-01-preview",
@@ -43778,6 +43753,31 @@
 					"filename": "requirements.txt",
 					"time": "2023-01-25T09:06:41.7702231Z"
 				},
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": true,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
+				},
+				"autoScale": {
+					"enabled": true,
+					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
+					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
+				},
+				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
+				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
 				"isComputeIsolationEnabled": false,
 				"sessionLevelPackagesEnabled": true,
 				"annotations": []
