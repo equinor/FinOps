@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "01988056-9293-48ca-a0ff-d8f057bf73fe"
+				"spark.autotune.trackingId": "19558068-0d11-49f7-b585-c195a2807896"
 			}
 		},
 		"metadata": {
@@ -66,9 +66,11 @@
 				},
 				"source": [
 					"import requests\r\n",
-					"import datetime"
+					"import datetime\r\n",
+					"import pyspark.sql.types as T\r\n",
+					"import pyspark.sql.functions as F"
 				],
-				"execution_count": 15
+				"execution_count": 39
 			},
 			{
 				"cell_type": "code",
@@ -80,7 +82,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 1
+				"execution_count": 40
 			},
 			{
 				"cell_type": "code",
@@ -99,25 +101,7 @@
 					"BASE_URL = \"https://management.azure.com/providers/Microsoft.Billing/\"\r\n",
 					"BILLING_ACCOUNT_ID = \"57950773\""
 				],
-				"execution_count": 8
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# https://management.azure.com/providers/Microsoft.Billing/billingAccounts/{{AccountID}}/billingPeriods/201805/providers/Microsoft.Consumption/balances?api-version=2019-10-01"
-				],
-				"execution_count": null
+				"execution_count": 41
 			},
 			{
 				"cell_type": "code",
@@ -150,7 +134,7 @@
 					"\r\n",
 					"    return billing_periods"
 				],
-				"execution_count": 24
+				"execution_count": 43
 			},
 			{
 				"cell_type": "code",
@@ -182,7 +166,7 @@
 					"    result = response.json()\r\n",
 					"    return result"
 				],
-				"execution_count": 6
+				"execution_count": 44
 			},
 			{
 				"cell_type": "code",
@@ -198,9 +182,9 @@
 					}
 				},
 				"source": [
-					"access_token = \"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6IjVCM25SeHRRN2ppOGVORGMzRnkwNUtmOTdaRSIsImtpZCI6IjVCM25SeHRRN2ppOGVORGMzRnkwNUtmOTdaRSJ9.eyJhdWQiOiJodHRwczovL21hbmFnZW1lbnQuY29yZS53aW5kb3dzLm5ldCIsImlzcyI6Imh0dHBzOi8vc3RzLndpbmRvd3MubmV0LzNhYTRhMjM1LWI2ZTItNDhkNS05MTk1LTdmY2YwNWI0NTliMC8iLCJpYXQiOjE3MDU2NjE5NjAsIm5iZiI6MTcwNTY2MTk2MCwiZXhwIjoxNzA1NjY3MzAyLCJhY3IiOiIxIiwiYWlvIjoiQVZRQXEvOFZBQUFBVmprejY1cmpCYytDWDUydWVjZElWdE85Z2hTeE9vYkc2RVlPQlRSMjE1bXRhSS9lQkFXM0dtUXp3a05FSHY5VFdZc1RZRkF5dkt5bzZqa1BHNTVZRWt4bng2OXl5NW1Rb3hzWklNQTJhUlE9IiwiYW1yIjpbInB3ZCIsIm1mYSJdLCJhcHBpZCI6IjE4ZmJjYTE2LTIyMjQtNDVmNi04NWIwLWY3YmYyYjM5YjNmMyIsImFwcGlkYWNyIjoiMCIsImRldmljZWlkIjoiMTFmMTYwNjUtNWI2YS00OGY3LWI2ZGEtNjA4NmMxMTJjMmY4IiwiZmFtaWx5X25hbWUiOiJGbG9vZCIsImdpdmVuX25hbWUiOiJEYXZpZCIsImdyb3VwcyI6WyI5NGNkZGYwMC1kZTBmLTRjNTgtYTAzNC1kZTM0NjQ1N2ZkYTAiLCI2YTBmNzMwMS0wMzhlLTQyMzEtYWQ1Ni02ZDAxYWRjYjg0ZWYiLCJkODYyY2EwMi05ZDk4LTQ3M2QtOTc2MC01MWM4ZWY2OWJlZmYiLCJmZmFlYTYwMy03NTlhLTQ0OTAtOTM3Yy04NzUyNmY0MmQzMWUiLCJlZjI5ZGEwNS1hNDg5LTRhODQtOTgzZC02ZTJjZTMyYTFjNGYiLCJmYWNiMDQwNi1hOTllLTRiMWMtOWJkMS1iNTg5MDNhZDYwYzkiLCJjYmI5ZmMwNi1jNWQ2LTQ4NzItOGM4NS00ODAyNGU4OWM2NDkiLCI5ZWIyNjMwOS0zNWUwLTRhODAtOTZhZC1lNGM5ZWM1NzExYmUiLCI5NjI5YTIwYS1lYWVjLTQ5YjMtOTc4NC0wYWU5YTY1NzBmYzkiLCIxZGI2YmEwYy0xZDJmLTRkNzYtOWRhZS0wODgxZTU5MTNjNWMiLCJjYjM4YzIwZC1mNGEzLTRlYzMtYjI1OC1lZDAyYzkzNjg0ZjAiLCJmYjNkY2IwZC0yMTJkLTRlNzgtYjUzZi0zYzdiOTMyZWUyNWIiLCIxOTNjZjEwZC03ZGQwLTQ2ZDctYTEwMS00NTU4MjAyMzRhNTYiLCJmNjM4NDgwZi1iMjk1LTQ3N2YtYmRlYS1iOTllZDQyMWRiYTIiLCIzMTk4OWUwZi1kNmU1LTQ4ZTctOTk1Mi0xMGE3ZmZhZTNiYjgiLCIwNzdlMzgxMS03ODNhLTRiOWEtOWE0Yi01Yjk5ZTdlNjcxYzAiLCIzMTAwNDcxMi1kOTBlLTQ5ZjYtOWU3OS0yZTk3ZjY4ZjZkNTAiLCIwNDdmYjAxMi02OTRjLTQ0YzMtOGQ0OC05MjdjYjM0OTc4OGMiLCJiNzJiNjgxNC1kMTcyLTRlMzYtYmI5MC0wYjNmMTVhOTE5NzciLCJmMmM5ODgxNS1lMTY2LTRmOTAtYTVmNC0xZjUzNWY1ZWRjYzgiLCIwNWI5NmQxNi1iNjQ0LTRmY2YtOGFlNS1mZjBjMGY4MjViNWYiLCJiYzM5ZjIxNy00NDE5LTQyOTEtOTUyNy0zNTYxNDc3YTJmYjciLCIwMDAzMTExYi0wYzJlLTQwNDEtYjFkZC0wYjJlZDFlZjZmNzgiLCJiZmMxMzkxYy02ODE0LTQxNDMtODNjNy0zYzQ2YWY4Yzc4YTgiLCIzMDcyOGUxZS00NmYwLTRiNjEtYTBiYy02YmMzZjczNjBiOGEiLCJjNjhlNTAxZi02ZDFmLTRiNGItOGYzNy0wYzQ2ODE1NmRkZjIiLCI1YWYwOTkyMS1mZDZhLTQ2MTEtOWVhOS1hM2JmYjFmMzViYmUiLCI3ZWYzNmMyMy0zZjZiLTQzMjEtYjAyOC1iODFhOWI0NTk5OTEiLCJkZjY1ZWEyMy04OGMzLTQzMWEtYTg3Zi02MDU1Y2Y5YmQ1NDkiLCIzYjk1ZGEyNy0zMzdhLTQ0YzEtYjY5ZC01NjQ0YjUxYTQ4MzYiLCI4ZmEzYmIyOC04NGY5LTRiMDYtYTRkNS0wODkwN2U4ZGQ2ZmEiLCJlMDQwYzQyOC1hYzU3LTQ1NDItYTMyOC0yZjY3MmEzNGNjYjgiLCJlMWNhYTQyYS1iZjY5LTQzOTEtOWE1ZS1jOGNmZGFlMWI0MTciLCI5ZmU2ZTYyYS0zMTE4LTQ3MDQtYWZiZS04MzQ4MjJjYjBkNDMiLCIwYjEwMmIyYy0zYzk3LTRiNzYtYjRkZi1lMDM5ODY4NmFmNTYiLCI3NDhhMDIyZS05NjhlLTRhOTQtYWRlMy05MjRlMjZiYWRhYTgiLCJkYTVhMzMyZS0xNDcwLTQwZjMtOTgwMy00OTc1ZTU2OTRlNWIiLCI0ZjZmNGUyZi1iMjIzLTRlNzMtYjMzMy01YmIxZjc2MDE0ZjQiLCIyOWUwMzUzMC1mODE4LTQwMzYtYjI4Yi05N2I4Yjk0ZjI2NTAiLCJhZDU3NzgzMi1hMGUxLTRhMDgtYmJmNC0xMjcyNDNjNmE3NTIiLCIxZGZlYmQzNS03ZTRkLTRmMzktOTIyNS0wMTFkYWRkZGRlYjAiLCIzMDQ5NGUzNi0yMDQxLTQwOTYtYWNmOC1iMzY4NGE2MzA5ZTQiLCI1ZGQ1NWMzNy0wYjg0LTQwYjQtODc2MS01M2JiOWE5M2FjOGYiLCJhNWVkZjAzOC02YzJmLTQ0MzgtOGYyZi1jZGY1YWViOTFhYzUiLCIzOTI3MDkzYS04ZDU5LTQxMTktODMzZS1lN2EwMmZiODg3OGMiLCI2MTJhY2IzZi1lMmQ4LTRiNTYtYjU1MC0wZmU1NTY4OTQyODQiLCJiNDA3NGY0Mi00MDFiLTRjNWUtODE3ZS02ZWY4MzM1OWI3YmYiLCI4NDljZjQ0My05YzVjLTRlMzItYTJlYS01NWVhZWRkOWU2YTYiLCIyNjE1NDA0NC0yYTc4LTRjODItOTk5My0xNmUwODQ1YzU1ODIiLCJiMzZiMjk0NS0xZDI0LTRjODMtOWJhNS0yNTE0YTU2ZjQ5YTMiLCI2YzRhMjU0OS04MGViLTQ2YTktOTk3Mi05MjcxNzhmNGM0ZmYiLCJjNWQyNjI0Yi02NWY4LTQzZDQtYTFhOC01MjhmMWM1Mjk3ZDMiLCIyNDFmMWM0Yy02MjExLTQ4YWMtYTA4OC1iNjJlMWMwYjMzYWMiLCI0NTIyYTQ0ZC02NjBkLTQ0ZWMtODA3My1hZmRjMTZlNGFkN2IiLCI1MzAxYjQ0ZC1mNTA1LTQ0MDctODc2ZC1lZmFlNWI3YmU5ODAiLCJlNzE2Nzc1MC01YzViLTRiNzYtODhiMi02NThlYmYyMTNmMWUiLCI5MWE0YWI1MC1jNDQxLTRhOWQtYmU0My1hMDJjNDg1Zjk1ZjMiLCIxYWIzMTg1MS1jMzZjLTQ5NmYtOGQ0Yy0zYTdhYTQ1OTM0YzgiLCIzMmRhZDg1MS0wYjZhLTQ1MzEtYjgzNS0zMDcwY2JlOTBjNTAiLCI2NDgwYzQ1NC01ZjZhLTRkMTktYWQ0Zi01ZDA0Yzg2NWJhODUiLCJhZjM0ZTA1NS0yZTg1LTQ0NzItOGI3My1lYWI0MTBhN2ExNWEiLCJiMWMyNjI1Ni05NmRmLTQzN2YtYTNhYi04ZTE2NjNlNjZhYjEiLCJmMjlmMjQ1Ny1jMDYwLTRjODMtYTY2Ni0zNDU5MmMyY2MxZmIiLCJkZGZjMjY1YS0wYmJmLTQ5Y2UtYmIwMi02N2Q1MTNiNzdjMmIiLCJlYWI3N2M1Yi0wZTZkLTQ1ZGYtODNmOC1hNjVkOTcwNzIxNWQiLCJiYzdmNmY1ZS1iNGIxLTRjZjMtYWQ4Ny1kZTZlMWVjMjdlNDMiLCJlMmNlOTM2MC1kYmQ2LTRkZDQtODU1Mi04MDYyYTUxN2I1ZGQiLCI3MzI5OWI2MC02MDIzLTRjZmQtOThjMS01ZDY1ZTJmY2I0N2YiLCIwZmUxZWU2MC02MzA1LTRkMGEtOWIxMC0zMWI1MDI2ZjI1YzciLCI5MDA3MGY2MS02NTcyLTRkNGYtOGQwNC0yNWE0YWViNWIzNzkiLCI3NTJhZjU2MS0yOTg2LTRkNDEtOTYwNC1mZTY5MjhhNmU1NjUiLCIzZTEzNjk2My0xZjM5LTQ4YjgtYjVmMi0yNjRkYTAxYTdhYTUiLCJiMDMxNTk2NC04Y2IzLTRkMTItOGFkNy05NGU4OGNhNmI3MDciLCIxMmVlYjk2NS1jNTVmLTRiYjQtOGRiYi1mNGU2ZTA4Y2MzMGEiLCI5MzQ1ZTg2Ni1mYWZmLTRlN2UtYjljMC02ZGIyZDY1OGY3OTMiLCI0OGVkNGM2Ny1jN2E3LTQ3M2ItYWI3YS02NTEyMWE3NDczNzkiLCI5YjYxNzU2OS02NzQ1LTQ1YTUtYTdmMi0yMGE3NmZjZGE4MGYiLCI2OGI2ZDQ2YS05NjkyLTQ5ZTEtYTFhNi1iMDc1ZjZhMmU5ZDkiLCI5ZjYyZWM2Yy1lZTQxLTQ0ZTktOTEzMS05OWI3OTI1NDEzODIiLCJmYzY0MzQ2ZS0wZjUyLTRjZDItOTU0Ni01OTY1ZmQ0MmRlMjUiLCIxYWMxMzc2ZS1mMDRhLTQ0YjYtYmU1OC1hYTE2MDAzZWE5NmUiLCI5YzM4ZmE2Zi00YThmLTQyNWQtYWI0OC1iNzc5N2FjY2Y4ZGUiLCJmZWNlNGE3MC1hOTY4LTRiN2QtOThiYS05YWUxMzA5NzhjOWMiLCIyYzg4Zjk3MS05NzJjLTRjNDgtYjZjNi0wODYzMWMxOTE0YTciLCIwZGY1Mjk3NS1kYjE5LTRmYTMtYmNkOC02MWQ4YjJlMjgyZDgiLCJjNzZlMWU3Ni1hZjZmLTQyYzUtOGRiMi1jYWVjOGRjODFjYmUiLCJkYWVmMDQ3Ny0zNDFiLTRkZGUtOTNmYy00YjgxOTAxMWIyOTQiLCI4OTQ5YTI3Ny1kYTM0LTRiYjAtYWYwMS1iZGJkZmY2NWViNmEiLCJjNDBkZTA3OS0yYTU2LTQ5MzItOGYzNS0wNTI5NzliZGMwZmMiLCIxYjRjOGU3Yi1hYzBjLTQxOWEtYjg3MS03ODllZmE2MWE2N2UiLCJmYjdiNjU3ZS1iYTU5LTQ4YzMtODY1Ni0yMjQ0Zjc3MDMzY2QiLCIzMDAxNjA4MC0yODVjLTQ3YzctODhkMC0yMGYyYWI1OGI3MzAiLCI0NzMxM2Y4MS0wNmNkLTQ5NzktODAwOC00MWNhNmE5MDdhZTciLCI0MTIxN2E4Ni1lNTVlLTRkODgtYmM3Yy1hMWUxMDExZjc2NGIiLCI3OThmOWM4OC0wZTFhLTQyODgtYjcwNC0wZDY4MzQ1MDcwZTQiLCJiZjNjMGY4YS1iNDlhLTQzYzQtYjg3YS04ZDgyZTQ4ZGRhOGIiLCJmMmM4Y2I4Yi0yNzY5LTRiNDYtYTk2Ni02NzhhMjVhOTFkM2MiLCI2YzU4ZWY4Yi1jNGIyLTQzOGYtOTQ3NS1iOWRmMWNhYjhjMGYiLCIzZWFiOTk4Yy04MjRkLTRhYjktODVhNS1lNDI0YTBhMjExYzEiLCJlNDExYzA4ZC03MDQzLTRkMWItYmJjMS0xMTY1MGVjMmUyYWUiLCI3ZDYzZGE4ZC00NzMwLTRiYTAtOTZiZS1hZWVhYmU2NmVmODEiLCIxYWJjYjM5MC04MDEyLTQ1MGYtODlkZS1iOWYwZmQ3ZjIwMzIiLCJjY2MzZjc5MC0yNmMyLTQyMDgtYmM1Zi05NzNmNmVjY2JlNDciLCIwMDA1ZDM5Mi03NTdkLTRhYzUtOTNjMi1mYTQxNTg2YmIzYmYiLCJiYjIzZmE5Ni1lODU5LTQwZmUtOWU1Yy0zOTVmYzYwZmFiYWQiLCI4MDY3ZDI5OC0zZjU1LTQ0MjItOWU2MS01NzFhYzhkYjY4NGIiLCIwMDliNTM5Yy1kY2UzLTQ3M2EtODY0My03ZGI5NGQxNjI4NDQiLCIzN2I0ODM5ZS01YjBjLTQyOTMtYWY4OC0xYTI1YWE4MDBmNjciLCJhNjM2MjY5Zi1hOTY3LTQ1YjItYmI0ZS0zZTAyZGJiNjI0YTIiLCJhNDdkZjJhMi03OTlhLTRkOGQtYTc0Ni01Nzk0MTFhY2QxODUiLCJkZjQxZTVhNS05NzQ5LTQzMGYtYTQwOS0yYjYzNTM0MzMwM2EiLCJkNjEzMDRhNi0yNDM2LTQ4NmUtOGI0MC1kNTM1MTJmM2E1YmYiLCIxYzE3NDNhOC04OTcxLTQ1MmItYjNmZC02OWFlYTNhOTc1MjMiLCJlZDg5ODNhOC1hZjc0LTQzNDYtODU2Zi1iNjMxOGYyNWI2MjgiLCJiNjI3NTFhYS1iOTAzLTQ4MTUtYmY0YS02Y2ExZmQ2NDNlZTciLCJlNTI2ZWVhYy1hNDQwLTQzNjQtOTE0ZC0xMDljZmUzNzk0MWUiLCJhZmY0YjBhZC03YzNjLTRkOTUtODNkZi1iYjU2MThmNjFkMGIiLCIzZWRiNjhhZS1mYWQ0LTQ2NmYtYTEyZC1hNjc1MzQ4MGY4N2IiLCIyOGU0NjFiMS0wZGNkLTRlNmQtYjM2Zi00ZjQ3NDdmNzI5YWIiLCJjNzU1NTViMi1jMjU1LTRkNTItOTY5NS05MDFlOTcyOGMwOGUiLCIxZmJkZGViMi0xZGJhLTQxYmEtOWNhNS1kYzRiZDFjMTUwYWIiLCI1MjkwMzRiMy1jNDUwLTQwYTgtYmNjNS1jNDIzODMyZjQ1NjIiLCJmOTk1MjliNC1hNTljLTRiYTEtYTMyZC1mYWQwZGUzMDA5YWMiLCIxYmFmNjhiNC0yNWM4LTQ5OTgtYjE1OS1jYWU5ZDQ4OTM3N2UiLCJmYTQxNzFiNC0yNzQwLTRiMzYtYTAyNi04MGRlY2NlYzU1NDAiLCIyOTM5ODRiNC1lNTE5LTQ2NzYtOWQyYS02ZmEzZjY3MmJkMWMiLCJjYjQyMjViNy0zNWFmLTQ1MzMtODg5Zi03MjQxYzk5ZjE1MWMiLCIwZDdhZGFiOS1mMTlkLTRhZjktOWU2Yi03ZGQ1YTNkN2Q5OWYiLCIzZWE4MzZiYy00YTI1LTRmZGItOWUxOC00NjU0NzU0OTNkNmYiLCIxNmY4MTBiZS1lMjc5LTRlMjItODFjMS02MmY0OTQ2Y2E1MDYiLCJkZTUwZTdiZS0yNWM3LTRmOTMtYWQ1Mi0zYmY1YWU4MTUzMjIiLCJhNTEwY2ViZi0xZTc5LTRjOWItYjIxZS02OTlmOWQ3NTE5ZjkiLCJiZDYzZjZjMC1jYzYxLTQ1ZWItYmIwYS05NzUxODVmYzYwMWYiLCI1ZjA2ZGNjMS0zMjYzLTQxZjYtOWJmYS1mYTZmMGNlYjg2ZDkiLCI0ZjYwODBjOS1jZTM4LTRkNWUtYjE2Ny1lYzUzNzdiZGRmODkiLCJiNDliMTRjYS0wM2M2LTRlYzMtYmNhNS0wZDQzNjkzNTA2YWIiLCJkYTMzNzFjYS04MDYyLTQ2NzEtYjBjOC01MzhhOWM2ZjJhZGQiLCJlODkxNDhjYi00YTFkLTQzNjctOGFhNC1jN2FhNjQ0MmY0NzEiLCJiNGM0NzFjYi1mMjYzLTRlMjItYTAzNi0xNmQ4ZDE2NDQ2ZmUiLCJhODZiODFjYy1hMGZhLTRkY2QtYTQ3MC1jOWQ0ZmZiNGQzNDciLCI0ZWIxM2ZjZi0yMGI2LTQ3ODQtYWU1My0zMTQ1MmFlN2ZlZDEiLCI3MTMzN2FkMy0xZjZiLTQ5N2UtOWE0NS1mYzZlOTc4MjM3OGIiLCIwYmFmYTBkNy0zYTA0LTRhMGYtOTE3ZC00NzQyZmI0MTM1ZGUiLCJhOTNhMTNkOS02MzExLTQxZTEtYjNiNi1mOTlkNGZiMDJlYWQiLCJmMTY3OTZkYS0zNGYzLTRmNmEtYWM0My1jNmExNjkxZmJiM2MiLCJmYTIwNjJkYy02MDY4LTQ2MWMtOTJhZC1iYmZmNjAxMjZkMTkiLCJiOGFkY2FkYy02ODZjLTQ0NGItYjRlZC0zMjY1NjFhM2U4NmIiLCJiZDI1YzRkZC03MWI4LTQ1ZDMtODcwMi05OGM0N2ZlMDAxOWQiLCIwOTQ1YzRkZi0wMWYxLTRkMWMtOTE5Ny02YWE3YWY0Y2U3MzciLCJiOTA2NDBlMC1jYzU4LTRlNWItYjIxYi05YzE3OTcwODBkYjMiLCI2MWM5NzNlMC1hMDMzLTRiYmEtOWEzOS00ZGZmYThhMzEyZDIiLCJlZmIwNzFlMi1jZmFhLTQwYzctOThlNS03MjA1NjZhMGYyMjUiLCJiOGEzYjNlMy1kOWRmLTQ5NTYtOWZhNy02ZGFhNjUwNjI1NzgiLCIxYWIzYzllNy1kZGUwLTRhZjEtYWQ4OS1lN2ZkZWI3YmI4ZDgiLCIyZWYzMmFlZC0wZjhjLTQxNDMtOGUyMi1jNTFmODYxYjM1NzciLCIyNmIzYmRlZS0xYzhmLTQ0ZWMtODliZC0wNmY4MDNiMTc3ODciLCJkOTljZWRlZi1iYzg3LTQxY2EtYmFhZC01NzNmYzNlZjIwZWQiLCI4MmY4ZjNlZi05MDYwLTRhMmYtYTU4Ny01ZjQ3Y2EyMzhhYjciLCJjYTQ1ZjllZi1hMTc5LTQ4ZjgtODMxZC05NDFjNGVjMjIxMTMiLCJiMGFjYjdmMC00YmRkLTRkODMtYWNiMC0yNGRkODZjYWQ5MDQiLCIxMDRiMjhmMi1lYjJkLTQ0NWUtOGQ0Yi0wMDExZTExOTZmYWQiLCIyMTE1NDJmMy1jY2JkLTRkOWEtOTNhNi1jNWZiYmQ5MjE5YTMiLCJjYjU3ZjBmNy1kZjJjLTRmYWUtYTZhMC03MzA0YmIzNzI3YmIiLCI3OTg2MzJmOC1iMDQ1LTRjYzEtYTg0ZC04MWVkNTY3NzFjYWIiLCI1NjdmYjZmOC03MDU4LTQ5OTYtYTUzYi0yZjJjMWJkMjE4NGQiLCIyZjRhYjNmOS02ODJkLTQ2ZDYtOTIwNC03ZWJkYTdiYmQ0MWMiLCI5NjAxODhmYS00MDhlLTQ5MDEtOTUwZS1kNmUxOWZlZDU0ZWYiLCI5MGI2ZDdmYS1mYTI2LTRhODUtOTJlMy05ZGEyMDVlZDQ2YzUiLCJhYWMzN2JmYi03ZTgxLTQzMWMtYmI3MC01Y2U0ZTgwYmNiZGQiLCI5OWU2MmFmZi00Zjc2LTQ2MGEtYTYxMS1mOGE0OGU5OGY3NDEiXSwiaWR0eXAiOiJ1c2VyIiwiaXBhZGRyIjoiOTAuMjUwLjkuNDgiLCJuYW1lIjoiRGF2aWQgRmxvb2QiLCJvaWQiOiJkNTRlYTg5ZS03ZTJkLTQzYTQtYmU0NS01NmMzNTA5ZWQzYTYiLCJvbnByZW1fc2lkIjoiUy0xLTUtMjEtMjIwNTIzMzg4LTEwODUwMzEyMTQtNzI1MzQ1NTQzLTIyMjIyODEiLCJwdWlkIjoiMTAwMzNGRkY4REJDNUUwNyIsInJoIjoiMC5BUUlBTmFLa091SzIxVWlSbFhfUEJiUlpzRVpJZjNrQXV0ZFB1a1Bhd2ZqMk1CTUNBSjAuIiwic2NwIjoidXNlcl9pbXBlcnNvbmF0aW9uIiwic3ViIjoid29sTWxiQWlrRC1Mbi13QUg0dDV3Z3EwajRCX3pUb2ZteGFkaVl0Sy1LQSIsInRpZCI6IjNhYTRhMjM1LWI2ZTItNDhkNS05MTk1LTdmY2YwNWI0NTliMCIsInVuaXF1ZV9uYW1lIjoiREZMT09AZXF1aW5vci5jb20iLCJ1cG4iOiJERkxPT0BlcXVpbm9yLmNvbSIsInV0aSI6Ind2UHRFX05DSFV1N2p6aW9lTndhQUEiLCJ2ZXIiOiIxLjAiLCJ3aWRzIjpbImI3OWZiZjRkLTNlZjktNDY4OS04MTQzLTc2YjE5NGU4NTUwOSJdLCJ4bXNfY2FlIjoiMSIsInhtc190Y2R0IjoxMzQ0NTgzNjAyfQ.EgHQjYqu85yyH5MGM8vG8MbI_G4R0uRQxPU6xbTqAMEIgVehSZeRMgIzKa0luTG-1NISW2FdDBHs8S8peDsODIqmv0JJVZUDJZV4rqVm1zKLCvi3sZ0pFA3w9Z_b48nyDjWsuJs0xkAhl64Z1sVlO5CYjdQ5sRFXsU1vu8J7_rcbCq8eCL4x1h4akZ9Yz0vSdeLkG3JoNIonE1pHpAqBZyhq5U7BX-n-Nj1uUPT3TWYbzOURuyrNnpy_rUQbvWhy3gifi77QBvMdgb_RtjCNTfVyT4EUbmxD2LPi1Y1VZoeexmWLoxcv-NC3EOTleV4-C_geuV3zWUFN0hxsGYm_EA\""
+					"access_token = \"<insert-your-bearer-token-here>\""
 				],
-				"execution_count": 12
+				"execution_count": 45
 			},
 			{
 				"cell_type": "code",
@@ -218,10 +202,54 @@
 				"source": [
 					"billing_periods = generate_billing_periods(2018, 5)\r\n",
 					"\r\n",
+					"schema = T.StructType([\r\n",
+					"    T.StructField(\"Id\", T.StringType(), True),\r\n",
+					"    T.StructField(\"BillingPeriod\", T.StringType(), True),\r\n",
+					"    T.StructField(\"BillingAccountId\", T.StringType(), True),\r\n",
+					"    T.StructField(\"Currency\", T.StringType(), True),\r\n",
+					"    T.StructField(\"BeginningBalance\", T.DoubleType(), True),\r\n",
+					"    T.StructField(\"EndingBalance\", T.DoubleType(), True),\r\n",
+					"    T.StructField(\"NewPurchases\", T.DoubleType(), True),\r\n",
+					"    T.StructField(\"Adjustments\", T.DoubleType(), True),\r\n",
+					"    T.StructField(\"Utilized\", T.DoubleType(), True),\r\n",
+					"    T.StructField(\"ServiceOverage\", T.DoubleType(), True),\r\n",
+					"    T.StructField(\"ChargesBilledSeparately\", T.DoubleType(), True),\r\n",
+					"    T.StructField(\"TotalOverage\", T.DoubleType(), True),\r\n",
+					"    T.StructField(\"TotalUsage\", T.DoubleType(), True),\r\n",
+					"    T.StructField(\"AzureMarketplaceServiceCharges\", T.DoubleType(), True),\r\n",
+					"    T.StructField(\"BillingFrequency\", T.StringType(), True),\r\n",
+					"    T.StructField(\"PriceHidden\", T.BooleanType(), True)\r\n",
+					"])\r\n",
+					"df = spark.createDataFrame([], schema)\r\n",
+					"\r\n",
 					"for billing_period in billing_periods:\r\n",
-					"    data = fetch_billing_details(BILLING_ACCOUNT_ID, 201805, '2019-10-01', access_token)"
+					"    print(f'Fetching billing period {billing_period}')\r\n",
+					"\r\n",
+					"    data = fetch_billing_details(BILLING_ACCOUNT_ID, billing_period, '2019-10-01', access_token)\r\n",
+					"\r\n",
+					"    new_row = [(\r\n",
+					"        data['id'],\r\n",
+					"        billing_period,\r\n",
+					"        BILLING_ACCOUNT_ID,\r\n",
+					"        data['properties']['currency'],\r\n",
+					"        data['properties']['beginningBalance'],\r\n",
+					"        data['properties']['endingBalance'],\r\n",
+					"        data['properties']['newPurchases'],\r\n",
+					"        data['properties']['adjustments'],\r\n",
+					"        data['properties']['utilized'],\r\n",
+					"        data['properties']['serviceOverage'],\r\n",
+					"        data['properties']['chargesBilledSeparately'],\r\n",
+					"        data['properties']['totalOverage'],\r\n",
+					"        data['properties']['totalUsage'],\r\n",
+					"        data['properties']['azureMarketplaceServiceCharges'],\r\n",
+					"        data['properties']['billingFrequency'],\r\n",
+					"        data['properties']['priceHidden']\r\n",
+					"    )]\r\n",
+					"    new_df = spark.createDataFrame(new_row, schema)\r\n",
+					"\r\n",
+					"    df = df.union(new_df)"
 				],
-				"execution_count": 23
+				"execution_count": 48
 			},
 			{
 				"cell_type": "code",
@@ -237,10 +265,10 @@
 					}
 				},
 				"source": [
-					"test = fetch_billing_details(BILLING_ACCOUNT_ID, 201805, '2019-10-01', access_token)\r\n",
-					"print(test)"
+					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/billing/BillingPeriods.parquet\"\r\n",
+					"df.write.format('parquet').mode('overwrite').save(target_path)"
 				],
-				"execution_count": 14
+				"execution_count": 50
 			}
 		]
 	}
