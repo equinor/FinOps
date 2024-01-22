@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "b90d6c78-2151-4881-8a52-6982cb13ef52"
+				"spark.autotune.trackingId": "1f61e0d1-4dc7-480d-8b3a-55e7d928b7a2"
 			}
 		},
 		"metadata": {
@@ -70,7 +70,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 107
+				"execution_count": 7
 			},
 			{
 				"cell_type": "code",
@@ -81,7 +81,7 @@
 					"import pandas as pd\r\n",
 					"import numpy as np"
 				],
-				"execution_count": 108
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -97,10 +97,23 @@
 					}
 				},
 				"source": [
-					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
-					"df = spark.read.format('parquet').load(cost_path)"
+					"# Define rolling window for accumulation\r\n",
+					"window = W.Window.orderBy(\"Date\").rowsBetween(W.Window.unboundedPreceding, 0)"
 				],
-				"execution_count": 109
+				"execution_count": 9
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Prepare Usage data"
+				]
 			},
 			{
 				"cell_type": "code",
@@ -116,69 +129,75 @@
 					}
 				},
 				"source": [
-					"df = df.select('Date', 'CostInBillingCurrency')\r\n",
-					"df = df.withColumn('Date', F.date_trunc('month', 'Date'))\r\n",
-					"df = df.groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('Cost')).orderBy('Date')"
-				],
-				"execution_count": 110
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"df = df.filter(F.col('Date') < F.concat(F.date_format(F.current_date(), 'yyyy'), F.lit('-'), F.date_format(F.current_date(), 'MM'), F.lit('-'), F.lit('01')))"
-				],
-				"execution_count": 111
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"window = W.Window.orderBy(\"Date\").rowsBetween(W.Window.unboundedPreceding, 0)\r\n",
-					"df = df.withColumn(\"CumulativeCost\", F.sum(\"Cost\").over(window))"
-				],
-				"execution_count": 112
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"pdf = df.toPandas()\r\n",
+					"# # Load usage source\r\n",
+					"# cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
+					"# cost_df = spark.read.format('parquet').load(cost_path)\r\n",
 					"\r\n",
-					"# Set the month column as the index\r\n",
-					"pdf.set_index(\"Date\", inplace=True)"
+					"# # Select appropriate columns\r\n",
+					"# cost_df = cost_df.select('Date', 'CostInBillingCurrency')\r\n",
+					"# cost_df = cost_df.withColumn('Date', F.date_trunc('month', 'Date'))\r\n",
+					"# cost_df = cost_df.groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('Cost')).orderBy('Date')\r\n",
+					"\r\n",
+					"# # Filter away latest month - as we predict cost per month, it will mess up future predictions\r\n",
+					"# cost_df = cost_df.filter(F.col('Date') < F.concat(F.date_format(F.current_date(), 'yyyy'), F.lit('-'), F.date_format(F.current_date(), 'MM'), F.lit('-'), F.lit('01')))\r\n",
+					"\r\n",
+					"# # Compute cumulative cost\r\n",
+					"# cost_df = cost_df.withColumn(\"CumulativeCost\", F.sum(\"Cost\").over(window))\r\n",
+					"\r\n",
+					"# # Convert pyspark df to pandas for OLS model\r\n",
+					"# cost_pdf = cost_df.toPandas()\r\n",
+					"# cost_pdf.set_index(\"Date\", inplace=True)"
 				],
-				"execution_count": 113
+				"execution_count": 6
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Prepare Billing data"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"# Load billing source\r\n",
+					"billing_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/billing/BillingPeriods.parquet'\r\n",
+					"billing_df = spark.read.format('parquet').load(billing_path)\r\n",
+					"\r\n",
+					"# Compute invoiced amount\r\n",
+					"billing_df = billing_df \\\r\n",
+					"    .withColumn('Cost', F.col('TotalUsage') - F.col('Adjustments') + F.col('AzureMarketplaceServiceCharges')) \\\r\n",
+					"    .withColumn('Date', F.to_date(F.col('BillingPeriod'), 'yyyyMM'))\\\r\n",
+					"    .select('Cost', 'Date') \\\r\n",
+					"    .where(F.col('Date') < '2024-01-01') \\\r\n",
+					"    .orderBy('Date')\r\n",
+					"\r\n",
+					"# Compute cumulative cost\r\n",
+					"billing_df = billing_df.withColumn(\"CumulativeCost\", F.sum(\"Cost\").over(window))\r\n",
+					"\r\n",
+					"# Convert pyspark df to pandas for OLS model\r\n",
+					"billing_pdf = billing_df.toPandas()\r\n",
+					"billing_pdf.set_index(\"Date\", inplace=True)"
+				],
+				"execution_count": 21
 			},
 			{
 				"cell_type": "code",
@@ -220,7 +239,7 @@
 					"    predicted_df = predicted_df.withColumn(f'PredictedCumulativeCost{column_label}',  F.sum(f\"PredictedCost{column_label}\").over(window) + input_df['CumulativeCost'][-1])\r\n",
 					"    return predicted_df"
 				],
-				"execution_count": 116
+				"execution_count": 22
 			},
 			{
 				"cell_type": "code",
@@ -236,18 +255,18 @@
 					}
 				},
 				"source": [
-					"four_month_lookback_df = compute_ols_prediction(pdf, lookback=6, prediction_interval=72)\r\n",
-					"eight_month_lookback_df = compute_ols_prediction(pdf, lookback=12, prediction_interval=72)\r\n",
-					"twelve_month_lookback_df = compute_ols_prediction(pdf, lookback=24, prediction_interval=72)\r\n",
-					"sixteen_month_lookback_df = compute_ols_prediction(pdf, lookback=-1, prediction_interval=72)\r\n",
+					"four_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=6, prediction_interval=72)\r\n",
+					"eight_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=12, prediction_interval=72)\r\n",
+					"twelve_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=24, prediction_interval=72)\r\n",
+					"sixteen_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=-1, prediction_interval=72)\r\n",
 					"\r\n",
-					"joined_df = df.join(four_month_lookback_df, on='Date', how='outer')\r\n",
+					"joined_df = billing_df.join(four_month_lookback_df, on='Date', how='outer')\r\n",
 					"joined_df = joined_df.join(eight_month_lookback_df, on='Date', how='outer')\r\n",
 					"joined_df = joined_df.join(twelve_month_lookback_df, on='Date', how='outer')\r\n",
 					"joined_df = joined_df.join(sixteen_month_lookback_df, on='Date', how='outer')\r\n",
 					"joined_df = joined_df.withColumn('Date', F.to_date('Date'))"
 				],
-				"execution_count": 117
+				"execution_count": 24
 			},
 			{
 				"cell_type": "code",
@@ -266,7 +285,7 @@
 					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/cumulative-cost-prediction.parquet\"\r\n",
 					"joined_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 				],
-				"execution_count": 119
+				"execution_count": 25
 			},
 			{
 				"cell_type": "markdown",
