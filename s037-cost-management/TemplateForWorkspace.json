@@ -297,6 +297,10 @@
 			"type": "string",
 			"defaultValue": "https://management.azure.com/"
 		},
+		"FinOpsHubsTest_linkedServiceUrl": {
+			"type": "string",
+			"defaultValue": "https://myfinopshub5f2xqvwwmha5y.dfs.core.windows.net/"
+		},
 		"HUB Storage Account_linkedServiceUrl": {
 			"type": "string",
 			"defaultValue": "https://hubautomation.dfs.core.windows.net/"
@@ -311,7 +315,7 @@
 		},
 		"S926FinOpsHubTest_linkedServiceUrl": {
 			"type": "string",
-			"defaultValue": "https://finopshubte2shkkxfrb2my6.dfs.core.windows.net/"
+			"defaultValue": "https://myfinopshub5f2xqvwwmha5y.dfs.core.windows.net/"
 		},
 		"ServiceNowLinkedService_linkedServiceUrl": {
 			"type": "string",
@@ -766,6 +770,18 @@
 			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
 		},
 		"daily-cost-extend-v3_notebookSparkPoolEndpointRef": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"fetch-billing-periods_notebookSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"fetch-billing-periods_notebookSparkPoolIdRef": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"fetch-billing-periods_notebookSparkPoolEndpointRef": {
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
@@ -21770,6 +21786,37 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/FinOpsHubsTest')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('FinOpsHubsTest_linkedServiceUrl')]",
+					"tenant": "3aa4a235-b6e2-48d5-9195-7fcf05b459b0",
+					"servicePrincipalId": "4c1cded2-f7a7-4c00-8d65-0a3287cbd682",
+					"servicePrincipalCredentialType": "ServicePrincipalKey",
+					"servicePrincipalCredential": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "ACM_Toolkit_kv",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "sp-password"
+					}
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]",
+				"[concat(variables('workspaceId'), '/linkedServices/ACM_Toolkit_kv')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/HUB Storage Account')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
@@ -31164,7 +31211,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "2dd8e22c-8762-4a1a-91fd-dcd91ba001c5"
+						"spark.autotune.trackingId": "b7886129-a220-4eb8-a8bc-deaa2dd32f37"
 					}
 				},
 				"metadata": {
@@ -31189,8 +31236,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -34064,7 +34110,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "d101a900-e5b6-41e3-96ca-0cd1b38111fc"
+						"spark.autotune.trackingId": "24db8e0d-88e0-4a87-b084-0526c66e3b03"
 					}
 				},
 				"metadata": {
@@ -34089,8 +34135,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -38168,7 +38213,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "79344f1d-a7cf-4f37-922a-f17e77d4fe35"
+						"spark.autotune.trackingId": "42fa1aa1-6229-474d-b46d-0e349decc5b3"
 					}
 				},
 				"metadata": {
@@ -38193,8 +38238,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -38355,7 +38399,7 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"folder": {
-					"name": "NotebookInProduction"
+					"name": "NotebookInProduction/Billing"
 				},
 				"nbformat": 4,
 				"nbformat_minor": 2,
@@ -38373,7 +38417,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "2320f631-09ab-4afc-b62c-33fa9673a908"
+						"spark.autotune.trackingId": "1f61e0d1-4dc7-480d-8b3a-55e7d928b7a2"
 					}
 				},
 				"metadata": {
@@ -38423,7 +38467,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 107
+						"execution_count": 7
 					},
 					{
 						"cell_type": "code",
@@ -38435,7 +38479,7 @@
 							"import numpy as np"
 						],
 						"outputs": [],
-						"execution_count": 108
+						"execution_count": 8
 					},
 					{
 						"cell_type": "code",
@@ -38451,11 +38495,24 @@
 							}
 						},
 						"source": [
-							"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
-							"df = spark.read.format('parquet').load(cost_path)"
+							"# Define rolling window for accumulation\r\n",
+							"window = W.Window.orderBy(\"Date\").rowsBetween(W.Window.unboundedPreceding, 0)"
 						],
 						"outputs": [],
-						"execution_count": 109
+						"execution_count": 9
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Prepare Usage data"
+						]
 					},
 					{
 						"cell_type": "code",
@@ -38471,73 +38528,77 @@
 							}
 						},
 						"source": [
-							"df = df.select('Date', 'CostInBillingCurrency')\r\n",
-							"df = df.withColumn('Date', F.date_trunc('month', 'Date'))\r\n",
-							"df = df.groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('Cost')).orderBy('Date')"
-						],
-						"outputs": [],
-						"execution_count": 110
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"df = df.filter(F.col('Date') < F.concat(F.date_format(F.current_date(), 'yyyy'), F.lit('-'), F.date_format(F.current_date(), 'MM'), F.lit('-'), F.lit('01')))"
-						],
-						"outputs": [],
-						"execution_count": 111
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"window = W.Window.orderBy(\"Date\").rowsBetween(W.Window.unboundedPreceding, 0)\r\n",
-							"df = df.withColumn(\"CumulativeCost\", F.sum(\"Cost\").over(window))"
-						],
-						"outputs": [],
-						"execution_count": 112
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"pdf = df.toPandas()\r\n",
+							"# # Load usage source\r\n",
+							"# cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
+							"# cost_df = spark.read.format('parquet').load(cost_path)\r\n",
 							"\r\n",
-							"# Set the month column as the index\r\n",
-							"pdf.set_index(\"Date\", inplace=True)"
+							"# # Select appropriate columns\r\n",
+							"# cost_df = cost_df.select('Date', 'CostInBillingCurrency')\r\n",
+							"# cost_df = cost_df.withColumn('Date', F.date_trunc('month', 'Date'))\r\n",
+							"# cost_df = cost_df.groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('Cost')).orderBy('Date')\r\n",
+							"\r\n",
+							"# # Filter away latest month - as we predict cost per month, it will mess up future predictions\r\n",
+							"# cost_df = cost_df.filter(F.col('Date') < F.concat(F.date_format(F.current_date(), 'yyyy'), F.lit('-'), F.date_format(F.current_date(), 'MM'), F.lit('-'), F.lit('01')))\r\n",
+							"\r\n",
+							"# # Compute cumulative cost\r\n",
+							"# cost_df = cost_df.withColumn(\"CumulativeCost\", F.sum(\"Cost\").over(window))\r\n",
+							"\r\n",
+							"# # Convert pyspark df to pandas for OLS model\r\n",
+							"# cost_pdf = cost_df.toPandas()\r\n",
+							"# cost_pdf.set_index(\"Date\", inplace=True)"
 						],
 						"outputs": [],
-						"execution_count": 113
+						"execution_count": 6
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Prepare Billing data"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"# Load billing source\r\n",
+							"billing_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/billing/BillingPeriods.parquet'\r\n",
+							"billing_df = spark.read.format('parquet').load(billing_path)\r\n",
+							"\r\n",
+							"# Compute invoiced amount\r\n",
+							"billing_df = billing_df \\\r\n",
+							"    .withColumn('Cost', F.col('TotalUsage') - F.col('Adjustments') + F.col('AzureMarketplaceServiceCharges')) \\\r\n",
+							"    .withColumn('Date', F.to_date(F.col('BillingPeriod'), 'yyyyMM'))\\\r\n",
+							"    .select('Cost', 'Date') \\\r\n",
+							"    .where(F.col('Date') < '2024-01-01') \\\r\n",
+							"    .orderBy('Date')\r\n",
+							"\r\n",
+							"# Compute cumulative cost\r\n",
+							"billing_df = billing_df.withColumn(\"CumulativeCost\", F.sum(\"Cost\").over(window))\r\n",
+							"\r\n",
+							"# Convert pyspark df to pandas for OLS model\r\n",
+							"billing_pdf = billing_df.toPandas()\r\n",
+							"billing_pdf.set_index(\"Date\", inplace=True)"
+						],
+						"outputs": [],
+						"execution_count": 21
 					},
 					{
 						"cell_type": "code",
@@ -38580,7 +38641,7 @@
 							"    return predicted_df"
 						],
 						"outputs": [],
-						"execution_count": 116
+						"execution_count": 22
 					},
 					{
 						"cell_type": "code",
@@ -38596,19 +38657,19 @@
 							}
 						},
 						"source": [
-							"four_month_lookback_df = compute_ols_prediction(pdf, lookback=6, prediction_interval=72)\r\n",
-							"eight_month_lookback_df = compute_ols_prediction(pdf, lookback=12, prediction_interval=72)\r\n",
-							"twelve_month_lookback_df = compute_ols_prediction(pdf, lookback=24, prediction_interval=72)\r\n",
-							"sixteen_month_lookback_df = compute_ols_prediction(pdf, lookback=-1, prediction_interval=72)\r\n",
+							"four_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=6, prediction_interval=72)\r\n",
+							"eight_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=12, prediction_interval=72)\r\n",
+							"twelve_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=24, prediction_interval=72)\r\n",
+							"sixteen_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=-1, prediction_interval=72)\r\n",
 							"\r\n",
-							"joined_df = df.join(four_month_lookback_df, on='Date', how='outer')\r\n",
+							"joined_df = billing_df.join(four_month_lookback_df, on='Date', how='outer')\r\n",
 							"joined_df = joined_df.join(eight_month_lookback_df, on='Date', how='outer')\r\n",
 							"joined_df = joined_df.join(twelve_month_lookback_df, on='Date', how='outer')\r\n",
 							"joined_df = joined_df.join(sixteen_month_lookback_df, on='Date', how='outer')\r\n",
 							"joined_df = joined_df.withColumn('Date', F.to_date('Date'))"
 						],
 						"outputs": [],
-						"execution_count": 117
+						"execution_count": 24
 					},
 					{
 						"cell_type": "code",
@@ -38628,7 +38689,7 @@
 							"joined_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 						],
 						"outputs": [],
-						"execution_count": 119
+						"execution_count": 25
 					},
 					{
 						"cell_type": "markdown",
@@ -38696,7 +38757,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "61eca864-2622-4138-ad95-c356df54964c"
+						"spark.autotune.trackingId": "e6227f3c-75a6-4771-8e63-8c8ce7af9f1b"
 					}
 				},
 				"metadata": {
@@ -38721,8 +38782,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -38742,7 +38802,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"from enum import Enum\r\n",
@@ -40140,7 +40199,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "e3d0fd1f-5502-40dc-a390-8b0c1ccd2d5a"
+						"spark.autotune.trackingId": "f6f8440d-223d-4e6a-8213-200c147e9c70"
 					}
 				},
 				"metadata": {
@@ -40165,7 +40224,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -40194,6 +40254,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"def get_last_day_prev_month(to_date):\r\n",
 							"    current_month = int(to_date[4:6])\r\n",
@@ -40334,7 +40395,7 @@
 							"    is_standard_sql_license = F.col('ProductName').like('%Standard%') | F.col('ProductName').like('%General%')\r\n",
 							"    is_enterprise_sql_license = F.col('ProductName').like('%Enterprise%') | F.col('ProductName').like('%Critical%')\r\n",
 							"\r\n",
-							"    cost_df = cost_df.withColumn('AHBSQL_VCPUS', \r\n",
+							"    cost_df = cost_df.withColumn('SQLAHB_VCPUS', \r\n",
 							"        F.when(F.col('ai_VCPUs') == 0, 0)\r\n",
 							"        .when(is_standard_sql_license & (F.col('ai_VCPUs') <= 4), 4)\r\n",
 							"        .when(is_standard_sql_license & (F.col('ai_VCPUs') > 4), F.col('ai_VCPUs'))\r\n",
@@ -40399,13 +40460,13 @@
 							"def expand_cost_tags(cost_df):\r\n",
 							"    \r\n",
 							"    # Storing the Tags column in a new column, and cleaning it up to fit with CostAllocationType\r\n",
-							"    cost_df = cost_df.withColumn('CostAllocationType', F.regexp_extract(F.col('Tags'), 'CostAllocationType\": \"(.*)\"', 0))\r\n",
+							"    cost_df = cost_df.withColumn('CostAllocationType', F.regexp_extract(F.col('Tags'), '(?i)CostAllocationType\": \"(.*)\"', 0))\r\n",
 							"    cost_df = cost_df.withColumn('CostAllocationType', F.regexp_replace(F.col('CostAllocationType'), 'CostAllocationType\": \"', \"\"))\r\n",
 							"    cost_df = cost_df.withColumn('CostAllocationType', F.split(F.col('CostAllocationType'),'\"', 0).getItem(0))\r\n",
 							"    cost_df = cost_df.withColumn('CostAllocationType', F.when(F.col('CostAllocationType') == \"\", None).otherwise(F.col('CostAllocationType')))\r\n",
 							"\r\n",
 							"    # Storing the Tags column in a new column, and cleaning it up to fit with CostAllocationCode\r\n",
-							"    cost_df = cost_df.withColumn('CostAllocationCode', F.regexp_extract(F.col('Tags'), 'CostAllocationCode\": \"(.*)\"', 0))\r\n",
+							"    cost_df = cost_df.withColumn('CostAllocationCode', F.regexp_extract(F.col('Tags'), '(?i)CostAllocationCode\": \"(.*)\"', 0))\r\n",
 							"    cost_df = cost_df.withColumn('CostAllocationCode', F.regexp_replace(F.col('CostAllocationCode'), 'CostAllocationCode\": \"', \"\"))\r\n",
 							"    cost_df = cost_df.withColumn('CostAllocationCode', F.split(F.col('CostAllocationCode'),'\"', 0).getItem(0))\r\n",
 							"    cost_df = cost_df.withColumn('CostAllocationCode', F.when(F.col('CostAllocationCode') == \"\", None).otherwise(F.col('CostAllocationCode')))\r\n",
@@ -40934,6 +40995,291 @@
 						],
 						"outputs": [],
 						"execution_count": 8
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/fetch-billing-periods')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "NotebookInProduction/Billing"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "[parameters('fetch-billing-periods_notebookSparkPoolNameRef')]",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "112g",
+					"driverCores": 16,
+					"executorMemory": "112g",
+					"executorCores": 16,
+					"numExecutors": 1,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "5",
+						"spark.autotune.trackingId": "19558068-0d11-49f7-b585-c195a2807896"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "[parameters('fetch-billing-periods_notebookSparkPoolIdRef')]",
+						"name": "[parameters('fetch-billing-periods_notebookSparkPoolNameRef')]",
+						"type": "Spark",
+						"endpoint": "[parameters('fetch-billing-periods_notebookSparkPoolEndpointRef')]",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 16,
+						"memory": 112
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"import requests\r\n",
+							"import datetime\r\n",
+							"import pyspark.sql.types as T\r\n",
+							"import pyspark.sql.functions as F"
+						],
+						"outputs": [],
+						"execution_count": 39
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": 40
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"BASE_URL = \"https://management.azure.com/providers/Microsoft.Billing/\"\r\n",
+							"BILLING_ACCOUNT_ID = \"57950773\""
+						],
+						"outputs": [],
+						"execution_count": 41
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"def generate_billing_periods(initial_year, initial_month):\r\n",
+							"    now = datetime.datetime.now()\r\n",
+							"    current_year = now.year\r\n",
+							"    current_month = now.month\r\n",
+							"\r\n",
+							"    billing_periods = []\r\n",
+							"\r\n",
+							"    # Loop through the years and months and add the dates to the list\r\n",
+							"    for year in range(initial_year, current_year + 1):\r\n",
+							"        start_month = 1 if year > initial_year else initial_month\r\n",
+							"        end_month = current_month if year == current_year else 12\r\n",
+							"        for month in range(start_month, end_month + 1):\r\n",
+							"            date_str = f\"{year}{month:02}\"\r\n",
+							"            billing_periods.append(date_str)\r\n",
+							"\r\n",
+							"    return billing_periods"
+						],
+						"outputs": [],
+						"execution_count": 43
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"def fetch_billing_details(billing_account_id, billing_period, api_version, access_token):\r\n",
+							"\r\n",
+							"    # Build Azure management API billing endpoint\r\n",
+							"    endpoint_url = BASE_URL\r\n",
+							"    endpoint_url += f\"billingAccounts/{billing_account_id}/\"\r\n",
+							"    endpoint_url += f\"billingPeriods/{billing_period}/providers/Microsoft.Consumption/balances?\"\r\n",
+							"    endpoint_url += f\"api-version={api_version}\"\r\n",
+							"\r\n",
+							"    headers = {\r\n",
+							"        'Authorization': 'Bearer ' + access_token\r\n",
+							"    }\r\n",
+							"\r\n",
+							"    response = requests.get(endpoint_url, headers=headers)\r\n",
+							"    result = response.json()\r\n",
+							"    return result"
+						],
+						"outputs": [],
+						"execution_count": 44
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"access_token = \"<insert-your-bearer-token-here>\""
+						],
+						"outputs": [],
+						"execution_count": 45
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"billing_periods = generate_billing_periods(2018, 5)\r\n",
+							"\r\n",
+							"schema = T.StructType([\r\n",
+							"    T.StructField(\"Id\", T.StringType(), True),\r\n",
+							"    T.StructField(\"BillingPeriod\", T.StringType(), True),\r\n",
+							"    T.StructField(\"BillingAccountId\", T.StringType(), True),\r\n",
+							"    T.StructField(\"Currency\", T.StringType(), True),\r\n",
+							"    T.StructField(\"BeginningBalance\", T.DoubleType(), True),\r\n",
+							"    T.StructField(\"EndingBalance\", T.DoubleType(), True),\r\n",
+							"    T.StructField(\"NewPurchases\", T.DoubleType(), True),\r\n",
+							"    T.StructField(\"Adjustments\", T.DoubleType(), True),\r\n",
+							"    T.StructField(\"Utilized\", T.DoubleType(), True),\r\n",
+							"    T.StructField(\"ServiceOverage\", T.DoubleType(), True),\r\n",
+							"    T.StructField(\"ChargesBilledSeparately\", T.DoubleType(), True),\r\n",
+							"    T.StructField(\"TotalOverage\", T.DoubleType(), True),\r\n",
+							"    T.StructField(\"TotalUsage\", T.DoubleType(), True),\r\n",
+							"    T.StructField(\"AzureMarketplaceServiceCharges\", T.DoubleType(), True),\r\n",
+							"    T.StructField(\"BillingFrequency\", T.StringType(), True),\r\n",
+							"    T.StructField(\"PriceHidden\", T.BooleanType(), True)\r\n",
+							"])\r\n",
+							"df = spark.createDataFrame([], schema)\r\n",
+							"\r\n",
+							"for billing_period in billing_periods:\r\n",
+							"    print(f'Fetching billing period {billing_period}')\r\n",
+							"\r\n",
+							"    data = fetch_billing_details(BILLING_ACCOUNT_ID, billing_period, '2019-10-01', access_token)\r\n",
+							"\r\n",
+							"    new_row = [(\r\n",
+							"        data['id'],\r\n",
+							"        billing_period,\r\n",
+							"        BILLING_ACCOUNT_ID,\r\n",
+							"        data['properties']['currency'],\r\n",
+							"        data['properties']['beginningBalance'],\r\n",
+							"        data['properties']['endingBalance'],\r\n",
+							"        data['properties']['newPurchases'],\r\n",
+							"        data['properties']['adjustments'],\r\n",
+							"        data['properties']['utilized'],\r\n",
+							"        data['properties']['serviceOverage'],\r\n",
+							"        data['properties']['chargesBilledSeparately'],\r\n",
+							"        data['properties']['totalOverage'],\r\n",
+							"        data['properties']['totalUsage'],\r\n",
+							"        data['properties']['azureMarketplaceServiceCharges'],\r\n",
+							"        data['properties']['billingFrequency'],\r\n",
+							"        data['properties']['priceHidden']\r\n",
+							"    )]\r\n",
+							"    new_df = spark.createDataFrame(new_row, schema)\r\n",
+							"\r\n",
+							"    df = df.union(new_df)"
+						],
+						"outputs": [],
+						"execution_count": 48
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/billing/BillingPeriods.parquet\"\r\n",
+							"df.write.format('parquet').mode('overwrite').save(target_path)"
+						],
+						"outputs": [],
+						"execution_count": 50
 					}
 				]
 			},
