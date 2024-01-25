@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "e3d0fd1f-5502-40dc-a390-8b0c1ccd2d5a"
+				"spark.autotune.trackingId": "f6887798-bd1b-4f93-805f-af793a43c875"
 			}
 		},
 		"metadata": {
@@ -211,7 +211,7 @@
 					"    is_standard_sql_license = F.col('ProductName').like('%Standard%') | F.col('ProductName').like('%General%')\r\n",
 					"    is_enterprise_sql_license = F.col('ProductName').like('%Enterprise%') | F.col('ProductName').like('%Critical%')\r\n",
 					"\r\n",
-					"    cost_df = cost_df.withColumn('AHBSQL_VCPUS', \r\n",
+					"    cost_df = cost_df.withColumn('SQLAHB_VCPUS', \r\n",
 					"        F.when(F.col('ai_VCPUs') == 0, 0)\r\n",
 					"        .when(is_standard_sql_license & (F.col('ai_VCPUs') <= 4), 4)\r\n",
 					"        .when(is_standard_sql_license & (F.col('ai_VCPUs') > 4), F.col('ai_VCPUs'))\r\n",
@@ -274,13 +274,13 @@
 					"def expand_cost_tags(cost_df):\r\n",
 					"    \r\n",
 					"    # Storing the Tags column in a new column, and cleaning it up to fit with CostAllocationType\r\n",
-					"    cost_df = cost_df.withColumn('CostAllocationType', F.regexp_extract(F.col('Tags'), 'CostAllocationType\": \"(.*)\"', 0))\r\n",
+					"    cost_df = cost_df.withColumn('CostAllocationType', F.regexp_extract(F.col('Tags'), '(?i)CostAllocationType\": \"(.*)\"', 0))\r\n",
 					"    cost_df = cost_df.withColumn('CostAllocationType', F.regexp_replace(F.col('CostAllocationType'), 'CostAllocationType\": \"', \"\"))\r\n",
 					"    cost_df = cost_df.withColumn('CostAllocationType', F.split(F.col('CostAllocationType'),'\"', 0).getItem(0))\r\n",
 					"    cost_df = cost_df.withColumn('CostAllocationType', F.when(F.col('CostAllocationType') == \"\", None).otherwise(F.col('CostAllocationType')))\r\n",
 					"\r\n",
 					"    # Storing the Tags column in a new column, and cleaning it up to fit with CostAllocationCode\r\n",
-					"    cost_df = cost_df.withColumn('CostAllocationCode', F.regexp_extract(F.col('Tags'), 'CostAllocationCode\": \"(.*)\"', 0))\r\n",
+					"    cost_df = cost_df.withColumn('CostAllocationCode', F.regexp_extract(F.col('Tags'), '(?i)CostAllocationCode\": \"(.*)\"', 0))\r\n",
 					"    cost_df = cost_df.withColumn('CostAllocationCode', F.regexp_replace(F.col('CostAllocationCode'), 'CostAllocationCode\": \"', \"\"))\r\n",
 					"    cost_df = cost_df.withColumn('CostAllocationCode', F.split(F.col('CostAllocationCode'),'\"', 0).getItem(0))\r\n",
 					"    cost_df = cost_df.withColumn('CostAllocationCode', F.when(F.col('CostAllocationCode') == \"\", None).otherwise(F.col('CostAllocationCode')))\r\n",
