@@ -1,0 +1,44 @@
+{
+	"name": "full-pbi-refresh-all",
+	"properties": {
+		"activities": [
+			{
+				"name": "Refresh 3yr dataset",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "full-pbi-3yr-refresh",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Refresh 1yr dataset",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Refresh 3yr dataset",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "full-pbi-1yr-refresh",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			}
+		],
+		"folder": {
+			"name": "PipelinesInProduction/PBI Refresh"
+		},
+		"annotations": []
+	}
+}
