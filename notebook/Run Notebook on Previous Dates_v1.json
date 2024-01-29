@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "5cf5f491-4908-4e59-9d67-a8a83e3bab3f"
+				"spark.autotune.trackingId": "d6f8667b-ca45-4f1f-99e4-7ce92eca6c93"
 			}
 		},
 		"metadata": {
@@ -114,7 +114,9 @@
 					"# Getting the dates from the directory folder\r\n",
 					"date_paths = mssparkutils.fs.ls(root_dir)\r\n",
 					"dates = [files.name for files in date_paths]\r\n",
-					"dates = [date_string.split('-') for date_string in dates]"
+					"dates = [date_string.split('-') for date_string in dates]\r\n",
+					"\r\n",
+					"report_types = ['ActualCost', 'AmortizedCost']"
 				],
 				"execution_count": 3
 			},
@@ -155,33 +157,22 @@
 					"# For each date, we run the notebook for the specific period\r\n",
 					"for (fromDate, toDate) in dates:\r\n",
 					"    notebook_reference = 'monthly-cost-extend-v3' if fromDate != dates[-1][0] else 'daily-cost-extend-v3'\r\n",
-					"    print(f'Running {notebook_reference} notebook with date range {fromDate}-{toDate}')\r\n",
-					"    # Checking the run-time of the notebook for timeout-purposes\r\n",
-					"    start_time = time.time()\r\n",
-					"    # Running Monthly Extend-notebook with the variable arguments as inputs to the notebook.\r\n",
-					"    mssparkutils.notebook.run(path=notebook_reference, \r\n",
-					"                              timeout_seconds=600,\r\n",
-					"                              arguments={'fromDate' : fromDate, \r\n",
-					"                                         'toDate' : toDate, \r\n",
-					"                                         'container' : container,\r\n",
-					"                                         'reportType': 'ActualCost'})\r\n",
-					"    end_time = time.time()\r\n",
-					"    print(f\"The runtime of the actual cost notebook was: {round(end_time - start_time, 2)} seconds.\")\r\n",
 					"\r\n",
-					"    start_time = time.time()\r\n",
-					"    mssparkutils.notebook.run(path=notebook_reference, \r\n",
-					"                              timeout_seconds=600,\r\n",
-					"                              arguments={'fromDate' : fromDate, \r\n",
-					"                                         'toDate' : toDate, \r\n",
-					"                                         'container' : container,\r\n",
-					"                                         'reportType': 'AmortizedCost'})\r\n",
-					"    end_time = time.time()\r\n",
-					"    print(f\"The runtime of the amortized cost notebook was: {round(end_time - start_time, 2)} seconds.\")\r\n",
-					"    \r\n",
-					"    # # For testing purposes\r\n",
-					"    # n += 1\r\n",
-					"    # if n == 2:\r\n",
-					"    #     break"
+					"    for report_type in report_types:\r\n",
+					"        print(f'Running {notebook_reference} notebook with report type {report_type} and date range {fromDate}-{toDate}')\r\n",
+					"\r\n",
+					"        # Checking the run-time of the notebook for timeout-purposes\r\n",
+					"        start_time = time.time()\r\n",
+					"\r\n",
+					"        # Running Monthly Extend-notebook with the variable arguments as inputs to the notebook.\r\n",
+					"        mssparkutils.notebook.run(path=notebook_reference, \r\n",
+					"                                timeout_seconds=600,\r\n",
+					"                                arguments={'fromDate' : fromDate, \r\n",
+					"                                            'toDate' : toDate, \r\n",
+					"                                            'container' : container,\r\n",
+					"                                            'reportType': report_type})\r\n",
+					"        end_time = time.time()\r\n",
+					"        print(f\"The runtime of the {report_type} notebook was: {round(end_time - start_time, 2)} seconds.\")"
 				],
 				"execution_count": 5
 			}
