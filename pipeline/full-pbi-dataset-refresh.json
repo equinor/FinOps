@@ -1,0 +1,32 @@
+{
+	"name": "full-pbi-dataset-refresh",
+	"properties": {
+		"activities": [
+			{
+				"name": "Run automation refresh script",
+				"type": "WebActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": "https://d332f14c-6467-4b13-b68f-1eea96f6981e.webhook.we.azure-automation.net/webhooks?token=Q%2bkfcES3Imx2kjF0Eu4O1%2bEioYIQoVHH8YLFi708HTw%3d",
+					"connectVia": {
+						"referenceName": "AutoResolveIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
+					},
+					"method": "POST"
+				}
+			}
+		],
+		"folder": {
+			"name": "PipelinesInProduction/PBI Refresh"
+		},
+		"annotations": []
+	}
+}
