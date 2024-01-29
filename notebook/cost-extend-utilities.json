@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "9c663637-87e5-46d1-bd69-eddcedf2e9bc"
+				"spark.autotune.trackingId": "a3e186e7-e95d-44c7-a983-5e8eb43449bc"
 			}
 		},
 		"metadata": {
@@ -274,14 +274,14 @@
 					"def expand_cost_tags(cost_df):\r\n",
 					"    \r\n",
 					"    # Storing the Tags column in a new column, and cleaning it up to fit with CostAllocationType\r\n",
-					"    cost_df = cost_df.withColumn('CostAllocationType', F.regexp_extract(F.col('Tags'), '(?i)CostAllocationType\": \"(.*)\"', 0))\r\n",
-					"    cost_df = cost_df.withColumn('CostAllocationType', F.regexp_replace(F.col('CostAllocationType'), 'CostAllocationType\": \"', \"\"))\r\n",
+					"    cost_df = cost_df.withColumn('CostAllocationType', F.regexp_extract(F.col('Tags'), '(?i)costallocationtype\": \"(.*)\"', 0))\r\n",
+					"    cost_df = cost_df.withColumn('CostAllocationType', F.regexp_replace(F.col('CostAllocationType'), '(?i)costallocationtype\": \"', \"\"))\r\n",
 					"    cost_df = cost_df.withColumn('CostAllocationType', F.split(F.col('CostAllocationType'),'\"', 0).getItem(0))\r\n",
 					"    cost_df = cost_df.withColumn('CostAllocationType', F.when(F.col('CostAllocationType') == \"\", None).otherwise(F.col('CostAllocationType')))\r\n",
 					"\r\n",
 					"    # Storing the Tags column in a new column, and cleaning it up to fit with CostAllocationCode\r\n",
-					"    cost_df = cost_df.withColumn('CostAllocationCode', F.regexp_extract(F.col('Tags'), '(?i)CostAllocationCode\": \"(.*)\"', 0))\r\n",
-					"    cost_df = cost_df.withColumn('CostAllocationCode', F.regexp_replace(F.col('CostAllocationCode'), 'CostAllocationCode\": \"', \"\"))\r\n",
+					"    cost_df = cost_df.withColumn('CostAllocationCode', F.regexp_extract(F.col('Tags'), '(?i)costallocationcode\": \"(.*)\"', 0))\r\n",
+					"    cost_df = cost_df.withColumn('CostAllocationCode', F.regexp_replace(F.col('CostAllocationCode'), '(?i)costallocationcode\": \"', \"\"))\r\n",
 					"    cost_df = cost_df.withColumn('CostAllocationCode', F.split(F.col('CostAllocationCode'),'\"', 0).getItem(0))\r\n",
 					"    cost_df = cost_df.withColumn('CostAllocationCode', F.when(F.col('CostAllocationCode') == \"\", None).otherwise(F.col('CostAllocationCode')))\r\n",
 					"    \r\n",
