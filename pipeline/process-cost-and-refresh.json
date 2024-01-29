@@ -1,0 +1,158 @@
+{
+	"name": "process-cost-and-refresh",
+	"properties": {
+		"activities": [
+			{
+				"name": "Update historic cost",
+				"type": "SynapseNotebook",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "Run Notebook on Previous Dates_v1",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"storageAccount": {
+							"value": {
+								"value": "@variables('storageAccount')",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true
+				}
+			},
+			{
+				"name": "Update 1yr source",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "Update historic cost",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "Prod_Extended_Amortized_Cost-Oneyear",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"storageAccount": {
+							"value": {
+								"value": "@variables('storageAccount')",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true
+				}
+			},
+			{
+				"name": "Update 3yr source",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "Update 1yr source",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "Prod_Extended_Amortized_Cost-Threeyears",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"storageAccount": {
+							"value": {
+								"value": "@variables('storageAccount')",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true
+				}
+			},
+			{
+				"name": "Refresh 3yr dataset",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Update 3yr source",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "full-pbi-3yr-refresh",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Refresh 1yr dataset",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Refresh 3yr dataset",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "full-pbi-1yr-refresh",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			}
+		],
+		"variables": {
+			"storageAccount": {
+				"type": "String",
+				"defaultValue": "s037costmgmt"
+			}
+		},
+		"folder": {
+			"name": "PipelinesInProduction/PBI Refresh"
+		},
+		"annotations": []
+	}
+}
