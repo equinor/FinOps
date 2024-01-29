@@ -4,26 +4,58 @@
 		"activities": [
 			{
 				"name": "Run automation refresh script",
+				"type": "WebHook",
+				"dependsOn": [
+					{
+						"activity": "Get Webhook URL",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": true
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "@activity('Get Webhook URL').output.value",
+						"type": "Expression"
+					},
+					"method": "POST",
+					"body": {
+						"value": "@json(\n\tconcat(' \n\t\t{\"Database\": \"',pipeline().parameters.Database,'\", \n\t\t\"TableName\": \"',pipeline().parameters.TableName,'\"}'\n\t\t)\n\t)",
+						"type": "Expression"
+					},
+					"timeout": "00:10:00"
+				}
+			},
+			{
+				"name": "Get Webhook URL",
 				"type": "WebActivity",
 				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
 					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
+					"secureOutput": true,
 					"secureInput": false
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"url": "https://d332f14c-6467-4b13-b68f-1eea96f6981e.webhook.we.azure-automation.net/webhooks?token=8dyUqdpgGD1t1cDSZJTEfCAMbhp4fz7pjWxSxABH7c4%3d",
+					"url": {
+						"value": "https://@{variables('KVName')}.vault.azure.net/secrets/@{variables('SecretName')}?api-version=7.4",
+						"type": "Expression"
+					},
 					"connectVia": {
 						"referenceName": "AutoResolveIntegrationRuntime",
 						"type": "IntegrationRuntimeReference"
 					},
-					"method": "POST",
-					"body": {
-						"value": "@json(\n\tconcat(' \n\t\t{\"Database\": \"',pipeline().parameters.Database,'\", \n\t\t\"TableName\": \"',pipeline().parameters.TableName,'\"}'\n\t\t)\n\t)",
-						"type": "Expression"
+					"method": "GET",
+					"authentication": {
+						"type": "MSI",
+						"resource": "https://vault.azure.net"
 					}
 				}
 			}
@@ -34,6 +66,16 @@
 			},
 			"TableName": {
 				"type": "string"
+			}
+		},
+		"variables": {
+			"KVName": {
+				"type": "String",
+				"defaultValue": "acm-toolkit-kv"
+			},
+			"SecretName": {
+				"type": "String",
+				"defaultValue": "finops-reports-full-refresh-webhook"
 			}
 		},
 		"folder": {
