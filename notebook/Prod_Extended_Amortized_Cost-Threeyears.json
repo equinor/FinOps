@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "85d236e5-0ca2-47e0-9ff8-459936b2df23"
+				"spark.autotune.trackingId": "e636e836-bd2a-4d70-a6c1-8a4fb192511b"
 			}
 		},
 		"metadata": {
@@ -93,7 +93,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 1
+				"execution_count": 17
 			},
 			{
 				"cell_type": "markdown",
@@ -135,7 +135,7 @@
 					"from pyspark.sql.functions import when\r\n",
 					""
 				],
-				"execution_count": 2
+				"execution_count": 18
 			},
 			{
 				"cell_type": "markdown",
@@ -190,7 +190,7 @@
 					"df_schema_extended = df_schema_extended.withColumn('Report_Date',lit('') )\r\n",
 					"df_schema_extended = df_schema_extended.withColumn('Report_Date_Partition',lit('') )"
 				],
-				"execution_count": 3
+				"execution_count": 19
 			},
 			{
 				"cell_type": "code",
@@ -209,7 +209,7 @@
 					"print(\"Three-years-ago's date since today:\",date_three_years_ago)\r\n",
 					"len(df_schema_extended.columns)"
 				],
-				"execution_count": 4
+				"execution_count": 20
 			},
 			{
 				"cell_type": "code",
@@ -229,7 +229,7 @@
 					"#df_schema_extended_pd = df_schema_extended_pd.rename(columns={'Azure Hybrid Benefit': 'Azure_Hybrid_Benefit'})\r\n",
 					"#df_schema_extended = spark.createDataFrame(df_schema_extended_pd)"
 				],
-				"execution_count": 5
+				"execution_count": 21
 			},
 			{
 				"cell_type": "markdown",
@@ -303,7 +303,7 @@
 					"                        print(df)\r\n",
 					"                        print(len(df_temp.columns),len(df.columns))"
 				],
-				"execution_count": 6
+				"execution_count": 22
 			},
 			{
 				"cell_type": "markdown",
@@ -335,7 +335,7 @@
 					"# Change the column name\r\n",
 					"df = df.withColumnRenamed(\"Application_Name\", \"ApplicationName\")"
 				],
-				"execution_count": 7
+				"execution_count": 23
 			},
 			{
 				"cell_type": "markdown",
@@ -370,7 +370,7 @@
 					"# Aggregate the data\r\n",
 					"df_agg = df.groupBy('SubscriptionId','ApplicationName','SubscriptionName','CostCenter','ResourceGroup','ResourceLocation','ResourceName','MeterName','MeterCategory','MeterSubCategory','Report_Date','Report_Date_Partition','SubscriptionServiceNow-App','ActiveWBS','CostAllocationType','AppID','Date').agg(F.sum('Quantity').alias('TotalQuantity'),F.sum('CostInBillingCurrency').alias('CostInKroner'))"
 				],
-				"execution_count": 9
+				"execution_count": 24
 			},
 			{
 				"cell_type": "code",
@@ -389,7 +389,7 @@
 					"# Change the data type of the 'Report_Date_Partition' column to Datetime\r\n",
 					"df_agg = df_agg.withColumn(\"Report_Date_Partition\", col(\"Report_Date_Partition\").cast(\"timestamp\"))"
 				],
-				"execution_count": 10
+				"execution_count": 25
 			},
 			{
 				"cell_type": "code",
@@ -409,7 +409,7 @@
 					"df_agg = df_agg.withColumn(\"year_partition\", year(df_agg[\"Report_Date_Partition\"]))\r\n",
 					"df_agg = df_agg.withColumn(\"month_partition\", month(df_agg[\"Report_Date_Partition\"]))"
 				],
-				"execution_count": 11
+				"execution_count": 26
 			},
 			{
 				"cell_type": "markdown",
@@ -439,10 +439,9 @@
 				},
 				"source": [
 					"# Change the data type of the 'Report_Date' column to Datetime\r\n",
-					"df_agg = df_agg.withColumn(\"Report_Date\", col(\"Report_Date\").cast(\"timestamp\"))\r\n",
-					"print(\"The number of the rows in the aggregated dataframe:\", df_agg.count())"
+					"df_agg = df_agg.withColumn(\"Report_Date\", col(\"Report_Date\").cast(\"timestamp\"))"
 				],
-				"execution_count": 12
+				"execution_count": 27
 			},
 			{
 				"cell_type": "code",
@@ -467,48 +466,7 @@
 					" 'month_partition','SubscriptionServiceNow-App','ActiveWBS','CostAllocationType','AppID','Date']\r\n",
 					"df_agg = df_agg.select(*selected_columns)"
 				],
-				"execution_count": 13
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# Verify the result\r\n",
-					"df_agg.groupBy(\"ApplicationName\").count().orderBy(\"count\", ascending=False).show()"
-				],
-				"execution_count": 14
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"#df_agg.printSchema()\r\n",
-					"#print(\"The number of the rows in the aggregated dataframe:\", df_agg.count())\r\n",
-					"#display(df_agg)\r\n",
-					"# display(df_agg)"
-				],
-				"execution_count": 15
+				"execution_count": 28
 			},
 			{
 				"cell_type": "markdown",
@@ -546,7 +504,7 @@
 					"# Save the data with no partition.\r\n",
 					"#df_agg.write.format('parquet').mode('overwrite').partitionBy('Report_date).option('overwriteSchema', 'true').save(optimized_path)"
 				],
-				"execution_count": 16
+				"execution_count": 29
 			},
 			{
 				"cell_type": "markdown",
@@ -578,7 +536,7 @@
 					"currentSparkSession = SparkSession.builder.getOrCreate()\r\n",
 					"spark.catalog.clearCache()"
 				],
-				"execution_count": 17
+				"execution_count": 30
 			}
 		]
 	}
