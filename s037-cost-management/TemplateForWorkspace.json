@@ -85,14 +85,6 @@
 			"type": "string",
 			"defaultValue": "s037costmgmt"
 		},
-		"Run Notebook on Previous Dates_v1_pipelineSparkPoolNameRef": {
-			"type": "string",
-			"defaultValue": "sprkpool33large"
-		},
-		"Run Notebook on Previous Dates_v1_pipelineStorageAccountParameter": {
-			"type": "string",
-			"defaultValue": "s037costmgmt"
-		},
 		"VM-Performance_pipelineStorageAccountParameter": {
 			"type": "string",
 			"defaultValue": "s037costmgmt"
@@ -928,6 +920,10 @@
 		"sprkpool33large_sparkVersion": {
 			"type": "string",
 			"defaultValue": "3.3"
+		},
+		"process-cost-and-refresh_pipelineStorageAccountVariable": {
+			"type": "string",
+			"defaultValue": "s037costmgmt"
 		}
 	},
 	"variables": {
@@ -17422,74 +17418,6 @@
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/notebooks/Get RI Recommendations')]",
 				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('RI Recommendations_pipelineSparkPoolNameRef'))]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/Run Notebook on Previous Dates_v1')]",
-			"type": "Microsoft.Synapse/workspaces/pipelines",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"activities": [
-					{
-						"name": "Run Notebook on Previous Dates_v1",
-						"type": "SynapseNotebook",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"notebook": {
-								"referenceName": "Run Notebook on Previous Dates_v1",
-								"type": "NotebookReference"
-							},
-							"parameters": {
-								"storageAccount": {
-									"value": {
-										"value": "@pipeline().parameters.storageAccount",
-										"type": "Expression"
-									},
-									"type": "string"
-								}
-							},
-							"snapshot": true,
-							"sparkPool": {
-								"referenceName": "[parameters('Run Notebook on Previous Dates_v1_pipelineSparkPoolNameRef')]",
-								"type": "BigDataPoolReference"
-							},
-							"executorSize": "Medium",
-							"conf": {
-								"spark.dynamicAllocation.enabled": null,
-								"spark.dynamicAllocation.minExecutors": null,
-								"spark.dynamicAllocation.maxExecutors": null
-							},
-							"driverSize": "Medium",
-							"numExecutors": null
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"parameters": {
-					"storageAccount": {
-						"type": "string",
-						"defaultValue": "[parameters('Run Notebook on Previous Dates_v1_pipelineStorageAccountParameter')]"
-					}
-				},
-				"folder": {
-					"name": "PipelinesInProduction"
-				},
-				"annotations": [],
-				"lastPublishTime": "2023-09-08T08:39:00Z"
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/notebooks/Run Notebook on Previous Dates_v1')]",
-				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('Run Notebook on Previous Dates_v1_pipelineSparkPoolNameRef'))]"
 			]
 		},
 		{
@@ -34551,7 +34479,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "85d236e5-0ca2-47e0-9ff8-459936b2df23"
+						"spark.autotune.trackingId": "e636e836-bd2a-4d70-a6c1-8a4fb192511b"
 					}
 				},
 				"metadata": {
@@ -34576,7 +34504,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -34622,7 +34551,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 1
+						"execution_count": 17
 					},
 					{
 						"cell_type": "markdown",
@@ -34665,7 +34594,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 2
+						"execution_count": 18
 					},
 					{
 						"cell_type": "markdown",
@@ -34721,7 +34650,7 @@
 							"df_schema_extended = df_schema_extended.withColumn('Report_Date_Partition',lit('') )"
 						],
 						"outputs": [],
-						"execution_count": 3
+						"execution_count": 19
 					},
 					{
 						"cell_type": "code",
@@ -34741,7 +34670,7 @@
 							"len(df_schema_extended.columns)"
 						],
 						"outputs": [],
-						"execution_count": 4
+						"execution_count": 20
 					},
 					{
 						"cell_type": "code",
@@ -34762,7 +34691,7 @@
 							"#df_schema_extended = spark.createDataFrame(df_schema_extended_pd)"
 						],
 						"outputs": [],
-						"execution_count": 5
+						"execution_count": 21
 					},
 					{
 						"cell_type": "markdown",
@@ -34837,7 +34766,7 @@
 							"                        print(len(df_temp.columns),len(df.columns))"
 						],
 						"outputs": [],
-						"execution_count": 6
+						"execution_count": 22
 					},
 					{
 						"cell_type": "markdown",
@@ -34870,7 +34799,7 @@
 							"df = df.withColumnRenamed(\"Application_Name\", \"ApplicationName\")"
 						],
 						"outputs": [],
-						"execution_count": 7
+						"execution_count": 23
 					},
 					{
 						"cell_type": "markdown",
@@ -34906,7 +34835,7 @@
 							"df_agg = df.groupBy('SubscriptionId','ApplicationName','SubscriptionName','CostCenter','ResourceGroup','ResourceLocation','ResourceName','MeterName','MeterCategory','MeterSubCategory','Report_Date','Report_Date_Partition','SubscriptionServiceNow-App','ActiveWBS','CostAllocationType','AppID','Date').agg(F.sum('Quantity').alias('TotalQuantity'),F.sum('CostInBillingCurrency').alias('CostInKroner'))"
 						],
 						"outputs": [],
-						"execution_count": 9
+						"execution_count": 24
 					},
 					{
 						"cell_type": "code",
@@ -34926,7 +34855,7 @@
 							"df_agg = df_agg.withColumn(\"Report_Date_Partition\", col(\"Report_Date_Partition\").cast(\"timestamp\"))"
 						],
 						"outputs": [],
-						"execution_count": 10
+						"execution_count": 25
 					},
 					{
 						"cell_type": "code",
@@ -34947,7 +34876,7 @@
 							"df_agg = df_agg.withColumn(\"month_partition\", month(df_agg[\"Report_Date_Partition\"]))"
 						],
 						"outputs": [],
-						"execution_count": 11
+						"execution_count": 26
 					},
 					{
 						"cell_type": "markdown",
@@ -34977,11 +34906,10 @@
 						},
 						"source": [
 							"# Change the data type of the 'Report_Date' column to Datetime\r\n",
-							"df_agg = df_agg.withColumn(\"Report_Date\", col(\"Report_Date\").cast(\"timestamp\"))\r\n",
-							"print(\"The number of the rows in the aggregated dataframe:\", df_agg.count())"
+							"df_agg = df_agg.withColumn(\"Report_Date\", col(\"Report_Date\").cast(\"timestamp\"))"
 						],
 						"outputs": [],
-						"execution_count": 12
+						"execution_count": 27
 					},
 					{
 						"cell_type": "code",
@@ -35007,50 +34935,7 @@
 							"df_agg = df_agg.select(*selected_columns)"
 						],
 						"outputs": [],
-						"execution_count": 13
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"# Verify the result\r\n",
-							"df_agg.groupBy(\"ApplicationName\").count().orderBy(\"count\", ascending=False).show()"
-						],
-						"outputs": [],
-						"execution_count": 14
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							},
-							"collapsed": false
-						},
-						"source": [
-							"#df_agg.printSchema()\r\n",
-							"#print(\"The number of the rows in the aggregated dataframe:\", df_agg.count())\r\n",
-							"#display(df_agg)\r\n",
-							"# display(df_agg)"
-						],
-						"outputs": [],
-						"execution_count": 15
+						"execution_count": 28
 					},
 					{
 						"cell_type": "markdown",
@@ -35089,7 +34974,7 @@
 							"#df_agg.write.format('parquet').mode('overwrite').partitionBy('Report_date).option('overwriteSchema', 'true').save(optimized_path)"
 						],
 						"outputs": [],
-						"execution_count": 16
+						"execution_count": 29
 					},
 					{
 						"cell_type": "markdown",
@@ -35122,7 +35007,7 @@
 							"spark.catalog.clearCache()"
 						],
 						"outputs": [],
-						"execution_count": 17
+						"execution_count": 30
 					}
 				]
 			},
@@ -35468,7 +35353,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "c699190d-d064-45bb-88dd-18cec091d1fa"
+						"spark.autotune.trackingId": "b03546cb-523a-4c9b-9378-7c9c3439fdaf"
 					}
 				},
 				"metadata": {
@@ -35493,7 +35378,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -35561,7 +35447,9 @@
 							"# Getting the dates from the directory folder\r\n",
 							"date_paths = mssparkutils.fs.ls(root_dir)\r\n",
 							"dates = [files.name for files in date_paths]\r\n",
-							"dates = [date_string.split('-') for date_string in dates]"
+							"dates = [date_string.split('-') for date_string in dates]\r\n",
+							"\r\n",
+							"report_types = ['ActualCost', 'AmortizedCost']"
 						],
 						"outputs": [],
 						"execution_count": 3
@@ -35604,33 +35492,22 @@
 							"# For each date, we run the notebook for the specific period\r\n",
 							"for (fromDate, toDate) in dates:\r\n",
 							"    notebook_reference = 'monthly-cost-extend-v3' if fromDate != dates[-1][0] else 'daily-cost-extend-v3'\r\n",
-							"    print(f'Running {notebook_reference} notebook with date range {fromDate}-{toDate}')\r\n",
-							"    # Checking the run-time of the notebook for timeout-purposes\r\n",
-							"    start_time = time.time()\r\n",
-							"    # Running Monthly Extend-notebook with the variable arguments as inputs to the notebook.\r\n",
-							"    mssparkutils.notebook.run(path=notebook_reference, \r\n",
-							"                              timeout_seconds=600,\r\n",
-							"                              arguments={'fromDate' : fromDate, \r\n",
-							"                                         'toDate' : toDate, \r\n",
-							"                                         'container' : container,\r\n",
-							"                                         'reportType': 'ActualCost'})\r\n",
-							"    end_time = time.time()\r\n",
-							"    print(f\"The runtime of the actual cost notebook was: {round(end_time - start_time, 2)} seconds.\")\r\n",
 							"\r\n",
-							"    start_time = time.time()\r\n",
-							"    mssparkutils.notebook.run(path=notebook_reference, \r\n",
-							"                              timeout_seconds=600,\r\n",
-							"                              arguments={'fromDate' : fromDate, \r\n",
-							"                                         'toDate' : toDate, \r\n",
-							"                                         'container' : container,\r\n",
-							"                                         'reportType': 'AmortizedCost'})\r\n",
-							"    end_time = time.time()\r\n",
-							"    print(f\"The runtime of the amortized cost notebook was: {round(end_time - start_time, 2)} seconds.\")\r\n",
-							"    \r\n",
-							"    # # For testing purposes\r\n",
-							"    # n += 1\r\n",
-							"    # if n == 2:\r\n",
-							"    #     break"
+							"    for report_type in report_types:\r\n",
+							"        print(f'Running {notebook_reference} notebook with report type {report_type} and date range {fromDate}-{toDate}')\r\n",
+							"\r\n",
+							"        # Checking the run-time of the notebook for timeout-purposes\r\n",
+							"        start_time = time.time()\r\n",
+							"\r\n",
+							"        # Running Monthly Extend-notebook with the variable arguments as inputs to the notebook.\r\n",
+							"        mssparkutils.notebook.run(path=notebook_reference, \r\n",
+							"                                timeout_seconds=600,\r\n",
+							"                                arguments={'fromDate' : fromDate, \r\n",
+							"                                            'toDate' : toDate, \r\n",
+							"                                            'container' : container,\r\n",
+							"                                            'reportType': report_type})\r\n",
+							"        end_time = time.time()\r\n",
+							"        print(f\"The runtime of the {report_type} notebook was: {round(end_time - start_time, 2)} seconds.\")"
 						],
 						"outputs": [],
 						"execution_count": 5
@@ -38757,7 +38634,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "51287eaf-0596-4523-9f15-0b6a32373155"
+						"spark.autotune.trackingId": "1130a751-e5d9-4817-9341-5c211e2f45bc"
 					}
 				},
 				"metadata": {
@@ -38782,8 +38659,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -38803,7 +38679,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"from enum import Enum\r\n",
@@ -40201,7 +40076,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "da2f7118-74fc-40a6-8b2b-8c518512906a"
+						"spark.autotune.trackingId": "a3e186e7-e95d-44c7-a983-5e8eb43449bc"
 					}
 				},
 				"metadata": {
@@ -40226,8 +40101,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -40256,7 +40130,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"def get_last_day_prev_month(to_date):\r\n",
 							"    current_month = int(to_date[4:6])\r\n",
@@ -41312,7 +41185,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "d32f0fad-a68f-40ed-be83-19daf905d021"
+						"spark.autotune.trackingId": "60ebf913-3b7e-41cb-9d7e-7edccf58165e"
 					}
 				},
 				"metadata": {
@@ -41337,7 +41210,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -43831,6 +43705,436 @@
 			},
 			"dependsOn": [],
 			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/full-pbi-dataset-refresh')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Run automation refresh script",
+						"type": "WebHook",
+						"dependsOn": [
+							{
+								"activity": "Get Webhook URL",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": true
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": {
+								"value": "@activity('Get Webhook URL').output.value",
+								"type": "Expression"
+							},
+							"method": "POST",
+							"headers": {},
+							"body": {
+								"value": "@json(\n\tconcat(' \n\t\t{\"Database\": \"',pipeline().parameters.Database,'\", \n\t\t\"TableName\": \"',pipeline().parameters.TableName,'\"}'\n\t\t)\n\t)",
+								"type": "Expression"
+							},
+							"timeout": "00:10:00"
+						}
+					},
+					{
+						"name": "Get Webhook URL",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": true,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": {
+								"value": "https://@{variables('KVName')}.vault.azure.net/secrets/@{variables('SecretName')}?api-version=7.4",
+								"type": "Expression"
+							},
+							"connectVia": {
+								"referenceName": "AutoResolveIntegrationRuntime",
+								"type": "IntegrationRuntimeReference"
+							},
+							"method": "GET",
+							"headers": {},
+							"authentication": {
+								"type": "MSI",
+								"resource": "https://vault.azure.net"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"Database": {
+						"type": "string"
+					},
+					"TableName": {
+						"type": "string"
+					}
+				},
+				"variables": {
+					"KVName": {
+						"type": "String",
+						"defaultValue": "acm-toolkit-kv"
+					},
+					"SecretName": {
+						"type": "String",
+						"defaultValue": "finops-reports-full-refresh-webhook"
+					}
+				},
+				"folder": {
+					"name": "PipelinesInProduction/PBI Refresh"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/full-pbi-3yr-refresh')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Refresh 3yr dataset",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "full-pbi-dataset-refresh",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"Database": {
+									"value": "@variables('Database')",
+									"type": "Expression"
+								},
+								"TableName": {
+									"value": "@variables('TableName')",
+									"type": "Expression"
+								}
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"Database": {
+						"type": "String",
+						"defaultValue": "FinOps_DataFoundamental"
+					},
+					"TableName": {
+						"type": "String",
+						"defaultValue": "ACMMonthlyAmortizedCost_overview_Threeyear"
+					}
+				},
+				"folder": {
+					"name": "PipelinesInProduction/PBI Refresh"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/full-pbi-dataset-refresh')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/full-pbi-1yr-refresh')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Refresh 1yr dataset",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "full-pbi-dataset-refresh",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"Database": {
+									"value": "@variables('Database')",
+									"type": "Expression"
+								},
+								"TableName": {
+									"value": "@variables('TableName')",
+									"type": "Expression"
+								}
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"Database": {
+						"type": "String",
+						"defaultValue": "FinOps_DataFoundamental"
+					},
+					"TableName": {
+						"type": "String",
+						"defaultValue": "ACMMonthlyAmortizedCost_Detailed_Oneyear"
+					}
+				},
+				"folder": {
+					"name": "PipelinesInProduction/PBI Refresh"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/full-pbi-dataset-refresh')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/process-cost-and-refresh')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Update historic cost",
+						"type": "SynapseNotebook",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "Run Notebook on Previous Dates_v1",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@variables('storageAccount')",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"conf": {}
+						}
+					},
+					{
+						"name": "Update 1yr source",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "Update historic cost",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "Prod_Extended_Amortized_Cost-Oneyear",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@variables('storageAccount')",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"conf": {}
+						}
+					},
+					{
+						"name": "Update 3yr source",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "Update 1yr source",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "Prod_Extended_Amortized_Cost-Threeyears",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@variables('storageAccount')",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"conf": {}
+						}
+					},
+					{
+						"name": "Refresh 3yr dataset",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Update 3yr source",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "full-pbi-3yr-refresh",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					},
+					{
+						"name": "Refresh 1yr dataset",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Refresh 3yr dataset",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "full-pbi-1yr-refresh",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"storageAccount": {
+						"type": "String",
+						"defaultValue": "[parameters('process-cost-and-refresh_pipelineStorageAccountVariable')]"
+					}
+				},
+				"folder": {
+					"name": "PipelinesInProduction/PBI Refresh"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/notebooks/Run Notebook on Previous Dates_v1')]",
+				"[concat(variables('workspaceId'), '/notebooks/Prod_Extended_Amortized_Cost-Oneyear')]",
+				"[concat(variables('workspaceId'), '/notebooks/Prod_Extended_Amortized_Cost-Threeyears')]",
+				"[concat(variables('workspaceId'), '/pipelines/full-pbi-3yr-refresh')]",
+				"[concat(variables('workspaceId'), '/pipelines/full-pbi-1yr-refresh')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/full-pbi-refresh-all')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Refresh 3yr dataset",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "full-pbi-3yr-refresh",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					},
+					{
+						"name": "Refresh 1yr dataset",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Refresh 3yr dataset",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "full-pbi-1yr-refresh",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "PipelinesInProduction/PBI Refresh"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/full-pbi-3yr-refresh')]",
+				"[concat(variables('workspaceId'), '/pipelines/full-pbi-1yr-refresh')]"
+			]
 		}
 	]
 }
