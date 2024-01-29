@@ -35468,7 +35468,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "a50d0cf2-e812-4d41-bcf7-e604901aaca1"
+						"spark.autotune.trackingId": "c699190d-d064-45bb-88dd-18cec091d1fa"
 					}
 				},
 				"metadata": {
@@ -35608,7 +35608,7 @@
 							"    # Checking the run-time of the notebook for timeout-purposes\r\n",
 							"    start_time = time.time()\r\n",
 							"    # Running Monthly Extend-notebook with the variable arguments as inputs to the notebook.\r\n",
-							"    mssparkutils.notebook.run(path='monthly-cost-extend-v3', \r\n",
+							"    mssparkutils.notebook.run(path=notebook_reference, \r\n",
 							"                              timeout_seconds=600,\r\n",
 							"                              arguments={'fromDate' : fromDate, \r\n",
 							"                                         'toDate' : toDate, \r\n",
@@ -35618,7 +35618,7 @@
 							"    print(f\"The runtime of the actual cost notebook was: {round(end_time - start_time, 2)} seconds.\")\r\n",
 							"\r\n",
 							"    start_time = time.time()\r\n",
-							"    mssparkutils.notebook.run(path='monthly-cost-extend-v3', \r\n",
+							"    mssparkutils.notebook.run(path=notebook_reference, \r\n",
 							"                              timeout_seconds=600,\r\n",
 							"                              arguments={'fromDate' : fromDate, \r\n",
 							"                                         'toDate' : toDate, \r\n",
@@ -38757,7 +38757,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "e6227f3c-75a6-4771-8e63-8c8ce7af9f1b"
+						"spark.autotune.trackingId": "51287eaf-0596-4523-9f15-0b6a32373155"
 					}
 				},
 				"metadata": {
@@ -38782,7 +38782,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -38802,6 +38803,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"from enum import Enum\r\n",
@@ -38982,7 +38984,7 @@
 							"    'SQLAHB', \r\n",
 							"    'IsRIUsage', \r\n",
 							"    'WindowsAHB_VCPUS',\r\n",
-							"    'AHBSQL_VCPUS',  \r\n",
+							"    'SQLAHB_VCPUS',  \r\n",
 							"    'ai_DatabaseName',\r\n",
 							"    'ai_AHB', \r\n",
 							"    'ai_VCPUs',\r\n",
@@ -39176,7 +39178,7 @@
 							"        'WindowsAHB', \r\n",
 							"        'SQLAHB', \r\n",
 							"        'WindowsAHB_VCPUS', \r\n",
-							"        'AHBSQL_VCPUS', \r\n",
+							"        'SQLAHB_VCPUS', \r\n",
 							"        'VCPUs', \r\n",
 							"        'IsRICost', \r\n",
 							"        'Reservation', \r\n",
@@ -39188,7 +39190,7 @@
 							"        'DBType', \r\n",
 							"        'PricesheetJoinKey'\r\n",
 							"    ) \\\r\n",
-							"    .groupBy('Date', 'ResourceName', 'WindowsAHB', 'SQLAHB', 'VCPUs', 'WindowsAHB_VCPUS', 'AHBSQL_VCPUS', 'IsRICost', 'Reservation', 'RIType', 'IsReservationUnused', 'HUBType', 'DBType', 'PricesheetJoinKey') \\\r\n",
+							"    .groupBy('Date', 'ResourceName', 'WindowsAHB', 'SQLAHB', 'VCPUs', 'WindowsAHB_VCPUS', 'SQLAHB_VCPUS', 'IsRICost', 'Reservation', 'RIType', 'IsReservationUnused', 'HUBType', 'DBType', 'PricesheetJoinKey') \\\r\n",
 							"    .agg(F.sum('Quantity').alias('Quantity'), F.sum('CostInBillingCurrency').alias('ResourceCost'), F.sum('RICostSavings').alias('RICostSavings'), F.sum('RIEffectiveCost').alias('RIEffectiveCost'))\\\r\n",
 							"    .orderBy('Date')"
 						],
@@ -40199,7 +40201,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "e028adb7-dbf1-40e3-b66d-808ad4adbfc1"
+						"spark.autotune.trackingId": "da2f7118-74fc-40a6-8b2b-8c518512906a"
 					}
 				},
 				"metadata": {
@@ -40460,14 +40462,14 @@
 							"def expand_cost_tags(cost_df):\r\n",
 							"    \r\n",
 							"    # Storing the Tags column in a new column, and cleaning it up to fit with CostAllocationType\r\n",
-							"    cost_df = cost_df.withColumn('CostAllocationType', F.regexp_extract(F.col('Tags'), '(?i)CostAllocationType\": \"(.*)\"', 0))\r\n",
-							"    cost_df = cost_df.withColumn('CostAllocationType', F.regexp_replace(F.col('CostAllocationType'), 'CostAllocationType\": \"', \"\"))\r\n",
+							"    cost_df = cost_df.withColumn('CostAllocationType', F.regexp_extract(F.col('Tags'), '(?i)costallocationtype\": \"(.*)\"', 0))\r\n",
+							"    cost_df = cost_df.withColumn('CostAllocationType', F.regexp_replace(F.col('CostAllocationType'), '(?i)costallocationtype\": \"', \"\"))\r\n",
 							"    cost_df = cost_df.withColumn('CostAllocationType', F.split(F.col('CostAllocationType'),'\"', 0).getItem(0))\r\n",
 							"    cost_df = cost_df.withColumn('CostAllocationType', F.when(F.col('CostAllocationType') == \"\", None).otherwise(F.col('CostAllocationType')))\r\n",
 							"\r\n",
 							"    # Storing the Tags column in a new column, and cleaning it up to fit with CostAllocationCode\r\n",
-							"    cost_df = cost_df.withColumn('CostAllocationCode', F.regexp_extract(F.col('Tags'), '(?i)CostAllocationCode\": \"(.*)\"', 0))\r\n",
-							"    cost_df = cost_df.withColumn('CostAllocationCode', F.regexp_replace(F.col('CostAllocationCode'), 'CostAllocationCode\": \"', \"\"))\r\n",
+							"    cost_df = cost_df.withColumn('CostAllocationCode', F.regexp_extract(F.col('Tags'), '(?i)costallocationcode\": \"(.*)\"', 0))\r\n",
+							"    cost_df = cost_df.withColumn('CostAllocationCode', F.regexp_replace(F.col('CostAllocationCode'), '(?i)costallocationcode\": \"', \"\"))\r\n",
 							"    cost_df = cost_df.withColumn('CostAllocationCode', F.split(F.col('CostAllocationCode'),'\"', 0).getItem(0))\r\n",
 							"    cost_df = cost_df.withColumn('CostAllocationCode', F.when(F.col('CostAllocationCode') == \"\", None).otherwise(F.col('CostAllocationCode')))\r\n",
 							"    \r\n",
