@@ -20,10 +20,22 @@
 						"referenceName": "AutoResolveIntegrationRuntime",
 						"type": "IntegrationRuntimeReference"
 					},
-					"method": "POST"
+					"method": "POST",
+					"body": {
+						"value": "@json(\n\tconcat(' \n\t\t{\"Database\": \"',pipeline().parameters.Database,'\", \n\t\t\"TableName\": \"',pipeline().parameters.TableName,'\"}'\n\t\t)\n\t)",
+						"type": "Expression"
+					}
 				}
 			}
 		],
+		"parameters": {
+			"Database": {
+				"type": "string"
+			},
+			"TableName": {
+				"type": "string"
+			}
+		},
 		"folder": {
 			"name": "PipelinesInProduction/PBI Refresh"
 		},
