@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "e6227f3c-75a6-4771-8e63-8c8ce7af9f1b"
+				"spark.autotune.trackingId": "1130a751-e5d9-4817-9341-5c211e2f45bc"
 			}
 		},
 		"metadata": {
@@ -240,7 +240,7 @@
 					"    'SQLAHB', \r\n",
 					"    'IsRIUsage', \r\n",
 					"    'WindowsAHB_VCPUS',\r\n",
-					"    'AHBSQL_VCPUS',  \r\n",
+					"    'SQLAHB_VCPUS',  \r\n",
 					"    'ai_DatabaseName',\r\n",
 					"    'ai_AHB', \r\n",
 					"    'ai_VCPUs',\r\n",
@@ -429,7 +429,7 @@
 					"        'WindowsAHB', \r\n",
 					"        'SQLAHB', \r\n",
 					"        'WindowsAHB_VCPUS', \r\n",
-					"        'AHBSQL_VCPUS', \r\n",
+					"        'SQLAHB_VCPUS', \r\n",
 					"        'VCPUs', \r\n",
 					"        'IsRICost', \r\n",
 					"        'Reservation', \r\n",
@@ -441,7 +441,7 @@
 					"        'DBType', \r\n",
 					"        'PricesheetJoinKey'\r\n",
 					"    ) \\\r\n",
-					"    .groupBy('Date', 'ResourceName', 'WindowsAHB', 'SQLAHB', 'VCPUs', 'WindowsAHB_VCPUS', 'AHBSQL_VCPUS', 'IsRICost', 'Reservation', 'RIType', 'IsReservationUnused', 'HUBType', 'DBType', 'PricesheetJoinKey') \\\r\n",
+					"    .groupBy('Date', 'ResourceName', 'WindowsAHB', 'SQLAHB', 'VCPUs', 'WindowsAHB_VCPUS', 'SQLAHB_VCPUS', 'IsRICost', 'Reservation', 'RIType', 'IsReservationUnused', 'HUBType', 'DBType', 'PricesheetJoinKey') \\\r\n",
 					"    .agg(F.sum('Quantity').alias('Quantity'), F.sum('CostInBillingCurrency').alias('ResourceCost'), F.sum('RICostSavings').alias('RICostSavings'), F.sum('RIEffectiveCost').alias('RIEffectiveCost'))\\\r\n",
 					"    .orderBy('Date')"
 				],
