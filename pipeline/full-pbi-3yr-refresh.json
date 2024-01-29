@@ -1,0 +1,44 @@
+{
+	"name": "full-pbi-3yr-refresh",
+	"properties": {
+		"activities": [
+			{
+				"name": "Refresh 3yr dataset",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "full-pbi-dataset-refresh",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"Database": {
+							"value": "@variables('Database')",
+							"type": "Expression"
+						},
+						"TableName": {
+							"value": "@variables('TableName')",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"variables": {
+			"Database": {
+				"type": "String",
+				"defaultValue": "FinOps_DataFoundamental"
+			},
+			"TableName": {
+				"type": "String",
+				"defaultValue": "ACMMonthlyAmortizedCost_overview_Threeyear"
+			}
+		},
+		"folder": {
+			"name": "PipelinesInProduction/PBI Refresh"
+		},
+		"annotations": []
+	}
+}
