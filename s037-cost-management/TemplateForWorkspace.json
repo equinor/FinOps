@@ -101,6 +101,10 @@
 			"type": "string",
 			"defaultValue": "s037costmgmt"
 		},
+		"process-cost-and-refresh_pipelineStorageAccountVariable": {
+			"type": "string",
+			"defaultValue": "s037costmgmt"
+		},
 		"servicenow-applications-daily_pipelineSparkPoolNameRef": {
 			"type": "string",
 			"defaultValue": "sprkpool33large"
@@ -920,10 +924,6 @@
 		"sprkpool33large_sparkVersion": {
 			"type": "string",
 			"defaultValue": "3.3"
-		},
-		"process-cost-and-refresh_pipelineStorageAccountVariable": {
-			"type": "string",
-			"defaultValue": "s037costmgmt"
 		}
 	},
 	"variables": {
@@ -2868,13 +2868,13 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "GET",
+							"headers": {},
 							"url": "https://acm-toolkit-kv.vault.azure.net/secrets/sp-password/127d0505066d4ae6913e286bab8cc79c?api-version=7.0",
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
 							},
-							"method": "GET",
-							"headers": {},
 							"authentication": {
 								"type": "MSI",
 								"resource": "https://vault.azure.net"
@@ -2901,14 +2901,14 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "POST",
+							"headers": {
+								"Content-Type": "application/x-www-form-urlencoded"
+							},
 							"url": "https://login.microsoftonline.com/3aa4a235-b6e2-48d5-9195-7fcf05b459b0/oauth2/token",
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
-							},
-							"method": "POST",
-							"headers": {
-								"Content-Type": "application/x-www-form-urlencoded"
 							},
 							"body": {
 								"value": "@concat('client_id=4c1cded2-f7a7-4c00-8d65-0a3287cbd682&client_secret=',activity('Get SP client secret').output.value,'&grant_type=client_credentials&resource=https://management.azure.com&scope=./default')",
@@ -3240,13 +3240,13 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "GET",
+							"headers": {},
 							"url": "https://management.azure.com/subscriptions?api-version=2022-12-01",
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
 							},
-							"method": "GET",
-							"headers": {},
 							"authentication": {
 								"type": "ServicePrincipal",
 								"userTenant": "3aa4a235-b6e2-48d5-9195-7fcf05b459b0",
@@ -5121,13 +5121,13 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "GET",
+							"headers": {},
 							"url": "https://management.azure.com/subscriptions?api-version=2022-12-01",
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
 							},
-							"method": "GET",
-							"headers": {},
 							"authentication": {
 								"type": "ServicePrincipal",
 								"userTenant": "3aa4a235-b6e2-48d5-9195-7fcf05b459b0",
@@ -7951,6 +7951,13 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "POST",
+							"headers": {
+								"Authorization": {
+									"value": "@{concat('Bearer ',activity('Get Bearer').output.value)}",
+									"type": "Expression"
+								}
+							},
 							"url": {
 								"value": "@concat('https://consumption.azure.com/v3/enrollments/57950773/usagedetails/submit?startTime=',pipeline().parameters.day,'&endTime=',pipeline().parameters.day)",
 								"type": "Expression"
@@ -7958,13 +7965,6 @@
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
-							},
-							"method": "POST",
-							"headers": {
-								"Authorization": {
-									"value": "@{concat('Bearer ',activity('Get Bearer').output.value)}",
-									"type": "Expression"
-								}
 							},
 							"body": "{}"
 						}
@@ -8000,6 +8000,13 @@
 									},
 									"userProperties": [],
 									"typeProperties": {
+										"method": "GET",
+										"headers": {
+											"Authorization": {
+												"value": "@{concat('Bearer ',activity('Get Bearer').output.value)}",
+												"type": "Expression"
+											}
+										},
 										"url": {
 											"value": "@activity('Post Consumption Request').output.reportUrl",
 											"type": "Expression"
@@ -8007,13 +8014,6 @@
 										"connectVia": {
 											"referenceName": "AutoResolveIntegrationRuntime",
 											"type": "IntegrationRuntimeReference"
-										},
-										"method": "GET",
-										"headers": {
-											"Authorization": {
-												"value": "@{concat('Bearer ',activity('Get Bearer').output.value)}",
-												"type": "Expression"
-											}
 										}
 									}
 								},
@@ -8074,13 +8074,13 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "GET",
+							"headers": {},
 							"url": "https://acm-toolkit-kv.vault.azure.net/secrets/EA-API-PRI-KEY/d222708c46d54a0abd273cc0877b6aad?api-version=7.0",
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
 							},
-							"method": "GET",
-							"headers": {},
 							"authentication": {
 								"type": "MSI",
 								"resource": "https://vault.azure.net"
@@ -8959,14 +8959,6 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
-							"url": {
-								"value": "https://management.azure.com/providers/Microsoft.Billing/billingAccounts/57950773/providers/Microsoft.CostManagement/generateCostDetailsReport?api-version=2022-05-01",
-								"type": "Expression"
-							},
-							"connectVia": {
-								"referenceName": "AutoResolveIntegrationRuntime",
-								"type": "IntegrationRuntimeReference"
-							},
 							"method": "POST",
 							"headers": {
 								"Authorization": {
@@ -8974,6 +8966,14 @@
 									"type": "Expression"
 								},
 								"Content-type": "application/json"
+							},
+							"url": {
+								"value": "https://management.azure.com/providers/Microsoft.Billing/billingAccounts/57950773/providers/Microsoft.CostManagement/generateCostDetailsReport?api-version=2022-05-01",
+								"type": "Expression"
+							},
+							"connectVia": {
+								"referenceName": "AutoResolveIntegrationRuntime",
+								"type": "IntegrationRuntimeReference"
 							},
 							"body": {
 								"value": "@concat('{\n  \"metric\": \"ActualCost\",\n  \"billingPeriod\": \"',pipeline().parameters.Year,pipeline().parameters.Month,'\"\n  }')",
@@ -10117,14 +10117,6 @@
 									},
 									"userProperties": [],
 									"typeProperties": {
-										"url": {
-											"value": "https://management.azure.com/providers/Microsoft.Billing/billingAccounts/57950773/providers/Microsoft.CostManagement/generateCostDetailsReport?api-version=2022-05-01",
-											"type": "Expression"
-										},
-										"connectVia": {
-											"referenceName": "AutoResolveIntegrationRuntime",
-											"type": "IntegrationRuntimeReference"
-										},
 										"method": "POST",
 										"headers": {
 											"Authorization": {
@@ -10132,6 +10124,14 @@
 												"type": "Expression"
 											},
 											"Content-type": "application/json"
+										},
+										"url": {
+											"value": "https://management.azure.com/providers/Microsoft.Billing/billingAccounts/57950773/providers/Microsoft.CostManagement/generateCostDetailsReport?api-version=2022-05-01",
+											"type": "Expression"
+										},
+										"connectVia": {
+											"referenceName": "AutoResolveIntegrationRuntime",
+											"type": "IntegrationRuntimeReference"
 										},
 										"body": {
 											"value": "@concat('{\n  \"metric\": \"',pipeline().parameters.ReportType,'\",\n  \"billingPeriod\": \"',pipeline().parameters.Year,item(),'\"\n  }')",
@@ -11186,14 +11186,6 @@
 									},
 									"userProperties": [],
 									"typeProperties": {
-										"url": {
-											"value": "https://management.azure.com/providers/Microsoft.Billing/billingAccounts/57950773/providers/Microsoft.CostManagement/generateCostDetailsReport?api-version=2022-05-01",
-											"type": "Expression"
-										},
-										"connectVia": {
-											"referenceName": "AutoResolveIntegrationRuntime",
-											"type": "IntegrationRuntimeReference"
-										},
 										"method": "POST",
 										"headers": {
 											"Authorization": {
@@ -11201,6 +11193,14 @@
 												"type": "Expression"
 											},
 											"Content-type": "application/json"
+										},
+										"url": {
+											"value": "https://management.azure.com/providers/Microsoft.Billing/billingAccounts/57950773/providers/Microsoft.CostManagement/generateCostDetailsReport?api-version=2022-05-01",
+											"type": "Expression"
+										},
+										"connectVia": {
+											"referenceName": "AutoResolveIntegrationRuntime",
+											"type": "IntegrationRuntimeReference"
 										},
 										"body": {
 											"value": "@concat('{\n  \"metric\": \"',pipeline().parameters.ReportType,'\",\n  \"billingPeriod\": \"',pipeline().parameters.Year,item(),'\"\n  }')",
@@ -12255,14 +12255,6 @@
 									},
 									"userProperties": [],
 									"typeProperties": {
-										"url": {
-											"value": "https://management.azure.com/providers/Microsoft.Billing/billingAccounts/57950773/providers/Microsoft.CostManagement/generateCostDetailsReport?api-version=2022-05-01",
-											"type": "Expression"
-										},
-										"connectVia": {
-											"referenceName": "AutoResolveIntegrationRuntime",
-											"type": "IntegrationRuntimeReference"
-										},
 										"method": "POST",
 										"headers": {
 											"Authorization": {
@@ -12270,6 +12262,14 @@
 												"type": "Expression"
 											},
 											"Content-type": "application/json"
+										},
+										"url": {
+											"value": "https://management.azure.com/providers/Microsoft.Billing/billingAccounts/57950773/providers/Microsoft.CostManagement/generateCostDetailsReport?api-version=2022-05-01",
+											"type": "Expression"
+										},
+										"connectVia": {
+											"referenceName": "AutoResolveIntegrationRuntime",
+											"type": "IntegrationRuntimeReference"
 										},
 										"body": {
 											"value": "@concat('{\n  \"metric\": \"',pipeline().parameters.ReportType,'\",\n  \"billingPeriod\": \"',pipeline().parameters.Year,item(),'\"\n  }')",
@@ -13430,14 +13430,6 @@
 									},
 									"userProperties": [],
 									"typeProperties": {
-										"url": {
-											"value": "https://management.azure.com/providers/Microsoft.Billing/billingAccounts/57950773/providers/Microsoft.CostManagement/generateCostDetailsReport?api-version=2022-05-01",
-											"type": "Expression"
-										},
-										"connectVia": {
-											"referenceName": "AutoResolveIntegrationRuntime",
-											"type": "IntegrationRuntimeReference"
-										},
 										"method": "POST",
 										"headers": {
 											"Authorization": {
@@ -13445,6 +13437,14 @@
 												"type": "Expression"
 											},
 											"Content-type": "application/json"
+										},
+										"url": {
+											"value": "https://management.azure.com/providers/Microsoft.Billing/billingAccounts/57950773/providers/Microsoft.CostManagement/generateCostDetailsReport?api-version=2022-05-01",
+											"type": "Expression"
+										},
+										"connectVia": {
+											"referenceName": "AutoResolveIntegrationRuntime",
+											"type": "IntegrationRuntimeReference"
 										},
 										"body": {
 											"value": "@concat('{\n  \"metric\": \"',pipeline().parameters.ReportType,'\",\n  \"billingPeriod\": \"',pipeline().parameters.Year,item(),'\"\n  }')",
@@ -14609,14 +14609,6 @@
 									},
 									"userProperties": [],
 									"typeProperties": {
-										"url": {
-											"value": "https://management.azure.com/providers/Microsoft.Billing/billingAccounts/57950773/providers/Microsoft.CostManagement/generateCostDetailsReport?api-version=2022-05-01",
-											"type": "Expression"
-										},
-										"connectVia": {
-											"referenceName": "AutoResolveIntegrationRuntime",
-											"type": "IntegrationRuntimeReference"
-										},
 										"method": "POST",
 										"headers": {
 											"Authorization": {
@@ -14624,6 +14616,14 @@
 												"type": "Expression"
 											},
 											"Content-type": "application/json"
+										},
+										"url": {
+											"value": "https://management.azure.com/providers/Microsoft.Billing/billingAccounts/57950773/providers/Microsoft.CostManagement/generateCostDetailsReport?api-version=2022-05-01",
+											"type": "Expression"
+										},
+										"connectVia": {
+											"referenceName": "AutoResolveIntegrationRuntime",
+											"type": "IntegrationRuntimeReference"
 										},
 										"body": {
 											"value": "@concat('{\n  \"metric\": \"',pipeline().parameters.ReportType,'\",\n  \"billingPeriod\": \"',pipeline().parameters.Year,item(),'\"\n  }')",
@@ -16043,14 +16043,14 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "POST",
+							"headers": {
+								"Content-Type": "application/x-www-form-urlencoded"
+							},
 							"url": "https://login.microsoftonline.com/3aa4a235-b6e2-48d5-9195-7fcf05b459b0/oauth2/token",
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
-							},
-							"method": "POST",
-							"headers": {
-								"Content-Type": "application/x-www-form-urlencoded"
 							},
 							"body": {
 								"value": "@concat('client_id=1810d95a-5adb-4a43-b31f-44a7bdc0bbcd&client_secret=',activity('Get SP Secret').output.value,'&grant_type=client_credentials&resource=https://management.azure.com&scope=./default')",
@@ -16071,13 +16071,13 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "GET",
+							"headers": {},
 							"url": "https://acm-toolkit-kv.vault.azure.net/secrets/ACM-Billing-Reader-PW/bb760feaba3f4d5385a40b68541dafa5?api-version=7.0",
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
 							},
-							"method": "GET",
-							"headers": {},
 							"authentication": {
 								"type": "MSI",
 								"resource": "https://vault.azure.net"
@@ -16104,6 +16104,13 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "PUT",
+							"headers": {
+								"Authorization": {
+									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+									"type": "Expression"
+								}
+							},
 							"url": {
 								"value": "@concat('https://management.azure.com/subscriptions/',pipeline().parameters.subscriptionId,'/providers/Microsoft.CostManagement/exports/ActualCost/?api-version=2021-10-01')",
 								"type": "Expression"
@@ -16111,13 +16118,6 @@
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
-							},
-							"method": "PUT",
-							"headers": {
-								"Authorization": {
-									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
-									"type": "Expression"
-								}
 							},
 							"body": {
 								"value": "@concat('{\n  \"properties\": {\n    \"definition\": {\n      \"dataset\": {\n        \"granularity\": \"Daily\",\n        \"grouping\": []\n      },\n      \"timePeriod\": {\n        \"from\": \"',pipeline().parameters.from_date,'T00:00:00.000Z\",\n        \"to\": \"',pipeline().parameters.to_date,'T00:00:00.000Z\"\n      },\n      \"timeframe\": \"Custom\",\n      \"type\": \"ActualCost\"\n    },\n    \"deliveryInfo\": {\n      \"destination\": {\n        \"container\": \"usage\",\n        \"rootFolderPath\": \"exports/',pipeline().parameters.subscriptionNo,'\",\n        \"resourceId\": \"/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt\"\n      }\n    },\n    \"format\": \"Csv\",\n    \"partitionData\": false\n  }\n}')",
@@ -16145,6 +16145,13 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "POST",
+							"headers": {
+								"Authorization": {
+									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+									"type": "Expression"
+								}
+							},
 							"url": {
 								"value": "@concat('https://management.azure.com/subscriptions/',pipeline().parameters.subscriptionId,'/providers/Microsoft.CostManagement/exports/ActualCost/run?api-version=2021-10-01')",
 								"type": "Expression"
@@ -16152,13 +16159,6 @@
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
-							},
-							"method": "POST",
-							"headers": {
-								"Authorization": {
-									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
-									"type": "Expression"
-								}
 							},
 							"body": {
 								"value": "@concat('{\n  \"properties\": {\n    \"definition\": {\n      \"dataset\": {\n        \"granularity\": \"Daily\",\n        \"grouping\": []\n      },\n      \"timePeriod\": {\n        \"from\": \"',pipeline().parameters.from_date,'T00:00:00.000Z\",\n        \"to\": \"',pipeline().parameters.to_date,'T00:00:00.000Z\"\n      },\n      \"timeframe\": \"Custom\",\n      \"type\": \"ActualCost\"\n    },\n    \"deliveryInfo\": {\n      \"destination\": {\n        \"container\": \"usage\",\n        \"rootFolderPath\": \"exports/',pipeline().parameters.subscriptionNo,'\",\n        \"resourceId\": \"/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt\"\n      }\n    },\n    \"format\": \"Csv\",\n    \"partitionData\": false\n  }\n}')",
@@ -16186,6 +16186,13 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "DELETE",
+							"headers": {
+								"Authorization": {
+									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+									"type": "Expression"
+								}
+							},
 							"url": {
 								"value": "@concat('https://management.azure.com/subscriptions/',pipeline().parameters.subscriptionId,'/providers/Microsoft.CostManagement/exports/ActualCost/?api-version=2021-10-01')",
 								"type": "Expression"
@@ -16193,13 +16200,6 @@
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
-							},
-							"method": "DELETE",
-							"headers": {
-								"Authorization": {
-									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
-									"type": "Expression"
-								}
 							}
 						}
 					},
@@ -16223,6 +16223,13 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "PUT",
+							"headers": {
+								"Authorization": {
+									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+									"type": "Expression"
+								}
+							},
 							"url": {
 								"value": "@concat('https://management.azure.com/subscriptions/',pipeline().parameters.subscriptionId,'/providers/Microsoft.CostManagement/exports/AmortizedCost/?api-version=2021-10-01')",
 								"type": "Expression"
@@ -16230,13 +16237,6 @@
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
-							},
-							"method": "PUT",
-							"headers": {
-								"Authorization": {
-									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
-									"type": "Expression"
-								}
 							},
 							"body": {
 								"value": "@concat('{\n  \"properties\": {\n    \"definition\": {\n      \"dataset\": {\n        \"granularity\": \"Daily\",\n        \"grouping\": []\n      },\n      \"timePeriod\": {\n        \"from\": \"',pipeline().parameters.from_date,'T00:00:00.000Z\",\n        \"to\": \"',pipeline().parameters.to_date,'T00:00:00.000Z\"\n      },\n      \"timeframe\": \"Custom\",\n      \"type\": \"AmortizedCost\"\n    },\n    \"deliveryInfo\": {\n      \"destination\": {\n        \"container\": \"usage\",\n        \"rootFolderPath\": \"exports/',pipeline().parameters.subscriptionNo,'\",\n        \"resourceId\": \"/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt\"\n      }\n    },\n    \"format\": \"Csv\",\n    \"partitionData\": false\n  }\n}')",
@@ -16264,6 +16264,13 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "POST",
+							"headers": {
+								"Authorization": {
+									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+									"type": "Expression"
+								}
+							},
 							"url": {
 								"value": "@concat('https://management.azure.com/subscriptions/',pipeline().parameters.subscriptionId,'/providers/Microsoft.CostManagement/exports/AmortizedCost/run?api-version=2021-10-01')",
 								"type": "Expression"
@@ -16271,13 +16278,6 @@
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
-							},
-							"method": "POST",
-							"headers": {
-								"Authorization": {
-									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
-									"type": "Expression"
-								}
 							},
 							"body": {
 								"value": "@concat('{\n  \"properties\": {\n    \"definition\": {\n      \"dataset\": {\n        \"granularity\": \"Daily\",\n        \"grouping\": []\n      },\n      \"timePeriod\": {\n        \"from\": \"',pipeline().parameters.from_date,'T00:00:00.000Z\",\n        \"to\": \"',pipeline().parameters.to_date,'T00:00:00.000Z\"\n      },\n      \"timeframe\": \"Custom\",\n      \"type\": \"AmortizedCost\"\n    },\n    \"deliveryInfo\": {\n      \"destination\": {\n        \"container\": \"usage\",\n        \"rootFolderPath\": \"exports/',pipeline().parameters.subscriptionNo,'\",\n        \"resourceId\": \"/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt\"\n      }\n    },\n    \"format\": \"Csv\",\n    \"partitionData\": false\n  }\n}')",
@@ -16305,6 +16305,13 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "DELETE",
+							"headers": {
+								"Authorization": {
+									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+									"type": "Expression"
+								}
+							},
 							"url": {
 								"value": "@concat('https://management.azure.com/subscriptions/',pipeline().parameters.subscriptionId,'/providers/Microsoft.CostManagement/exports/AmortizedCost/?api-version=2021-10-01')",
 								"type": "Expression"
@@ -16312,13 +16319,6 @@
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
-							},
-							"method": "DELETE",
-							"headers": {
-								"Authorization": {
-									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
-									"type": "Expression"
-								}
 							}
 						}
 					},
@@ -16342,6 +16342,13 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "PUT",
+							"headers": {
+								"Authorization": {
+									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+									"type": "Expression"
+								}
+							},
 							"url": {
 								"value": "@concat('https://management.azure.com/subscriptions/',pipeline().parameters.subscriptionId,'/providers/Microsoft.CostManagement/exports/Usage/?api-version=2021-10-01')",
 								"type": "Expression"
@@ -16349,13 +16356,6 @@
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
-							},
-							"method": "PUT",
-							"headers": {
-								"Authorization": {
-									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
-									"type": "Expression"
-								}
 							},
 							"body": {
 								"value": "@concat('{\n  \"properties\": {\n    \"definition\": {\n      \"dataset\": {\n        \"granularity\": \"Daily\",\n        \"grouping\": []\n      },\n      \"timePeriod\": {\n        \"from\": \"',pipeline().parameters.from_date,'T00:00:00.000Z\",\n        \"to\": \"',pipeline().parameters.to_date,'T00:00:00.000Z\"\n      },\n      \"timeframe\": \"Custom\",\n      \"type\": \"Usage\"\n    },\n    \"deliveryInfo\": {\n      \"destination\": {\n        \"container\": \"usage\",\n        \"rootFolderPath\": \"exports/',pipeline().parameters.subscriptionNo,'\",\n        \"resourceId\": \"/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt\"\n      }\n    },\n    \"format\": \"Csv\",\n    \"partitionData\": false\n  }\n}')",
@@ -16383,6 +16383,13 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "POST",
+							"headers": {
+								"Authorization": {
+									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+									"type": "Expression"
+								}
+							},
 							"url": {
 								"value": "@concat('https://management.azure.com/subscriptions/',pipeline().parameters.subscriptionId,'/providers/Microsoft.CostManagement/exports/Usage/run?api-version=2021-10-01')",
 								"type": "Expression"
@@ -16390,13 +16397,6 @@
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
-							},
-							"method": "POST",
-							"headers": {
-								"Authorization": {
-									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
-									"type": "Expression"
-								}
 							},
 							"body": {
 								"value": "@concat('{\n  \"properties\": {\n    \"definition\": {\n      \"dataset\": {\n        \"granularity\": \"Daily\",\n        \"grouping\": []\n      },\n      \"timePeriod\": {\n        \"from\": \"',pipeline().parameters.from_date,'T00:00:00.000Z\",\n        \"to\": \"',pipeline().parameters.to_date,'T00:00:00.000Z\"\n      },\n      \"timeframe\": \"Custom\",\n      \"type\": \"Usage\"\n    },\n    \"deliveryInfo\": {\n      \"destination\": {\n        \"container\": \"usage\",\n        \"rootFolderPath\": \"exports/',pipeline().parameters.subscriptionNo,'\",\n        \"resourceId\": \"/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt\"\n      }\n    },\n    \"format\": \"Csv\",\n    \"partitionData\": false\n  }\n}')",
@@ -16424,6 +16424,13 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "DELETE",
+							"headers": {
+								"Authorization": {
+									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+									"type": "Expression"
+								}
+							},
 							"url": {
 								"value": "@concat('https://management.azure.com/subscriptions/',pipeline().parameters.subscriptionId,'/providers/Microsoft.CostManagement/exports/Usage/?api-version=2021-10-01')",
 								"type": "Expression"
@@ -16431,13 +16438,6 @@
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
-							},
-							"method": "DELETE",
-							"headers": {
-								"Authorization": {
-									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
-									"type": "Expression"
-								}
 							}
 						}
 					}
@@ -16499,14 +16499,14 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "POST",
+							"headers": {
+								"Content-Type": "application/x-www-form-urlencoded"
+							},
 							"url": "https://login.microsoftonline.com/3aa4a235-b6e2-48d5-9195-7fcf05b459b0/oauth2/token",
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
-							},
-							"method": "POST",
-							"headers": {
-								"Content-Type": "application/x-www-form-urlencoded"
 							},
 							"body": {
 								"value": "@concat('client_id=1810d95a-5adb-4a43-b31f-44a7bdc0bbcd&client_secret=',activity('Get SP Secret').output.value,'&grant_type=client_credentials&resource=https://management.azure.com&scope=./default')",
@@ -16527,13 +16527,13 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "GET",
+							"headers": {},
 							"url": "https://acm-toolkit-kv.vault.azure.net/secrets/ACM-Billing-Reader-PW/bb760feaba3f4d5385a40b68541dafa5?api-version=7.0",
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
 							},
-							"method": "GET",
-							"headers": {},
 							"authentication": {
 								"type": "MSI",
 								"resource": "https://vault.azure.net"
@@ -16560,6 +16560,13 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "POST",
+							"headers": {
+								"Authorization": {
+									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+									"type": "Expression"
+								}
+							},
 							"url": {
 								"value": "https://management.azure.com/providers/Microsoft.Billing/billingAccounts/57950773/providers/Microsoft.CostManagement/exports/ACMMonthlyActualCost/run?api-version=2021-10-01",
 								"type": "Expression"
@@ -16567,13 +16574,6 @@
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
-							},
-							"method": "POST",
-							"headers": {
-								"Authorization": {
-									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
-									"type": "Expression"
-								}
 							},
 							"body": {
 								"value": "{\n  \"properties\": {\n    \"definition\": {\n      \"dataset\": {\n        \"granularity\": \"Daily\",\n        \"grouping\": []\n      },\n      \"timePeriod\": {\n        \"from\": \"2022-01-01T00:00:00.000Z\",\n        \"to\": \"2022-01-02T00:00:00.000Z\"\n      },\n      \"timeframe\": \"Custom\",\n      \"type\": \"ActualCost\"\n    },\n    \"deliveryInfo\": {\n      \"destination\": {\n        \"container\": \"usage\",\n        \"rootFolderPath\": \"Test-Export\",\n        \"resourceId\": \"/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt\"\n      }\n    },\n    \"format\": \"Csv\",\n    \"partitionData\": false\n  }\n}",
@@ -16621,14 +16621,14 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "POST",
+							"headers": {
+								"Content-Type": "application/x-www-form-urlencoded"
+							},
 							"url": "https://login.microsoftonline.com/3aa4a235-b6e2-48d5-9195-7fcf05b459b0/oauth2/token",
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
-							},
-							"method": "POST",
-							"headers": {
-								"Content-Type": "application/x-www-form-urlencoded"
 							},
 							"body": {
 								"value": "@concat('client_id=1810d95a-5adb-4a43-b31f-44a7bdc0bbcd&client_secret=',activity('Get SP Secret').output.value,'&grant_type=client_credentials&resource=https://management.azure.com&scope=./default')",
@@ -16649,13 +16649,13 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "GET",
+							"headers": {},
 							"url": "https://acm-toolkit-kv.vault.azure.net/secrets/ACM-Billing-Reader-PW/bb760feaba3f4d5385a40b68541dafa5?api-version=7.0",
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
 							},
-							"method": "GET",
-							"headers": {},
 							"authentication": {
 								"type": "MSI",
 								"resource": "https://vault.azure.net"
@@ -16682,6 +16682,13 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "POST",
+							"headers": {
+								"Authorization": {
+									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+									"type": "Expression"
+								}
+							},
 							"url": {
 								"value": "@concat('https://management.azure.com/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/providers/Microsoft.CostManagement/exports/',pipeline().parameters.Export_Name,'/run?api-version=2021-10-01')",
 								"type": "Expression"
@@ -16689,13 +16696,6 @@
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
-							},
-							"method": "POST",
-							"headers": {
-								"Authorization": {
-									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
-									"type": "Expression"
-								}
 							},
 							"body": {
 								"value": "@concat('{\n  \"properties\": {\n    \"definition\": {\n      \"dataset\": {\n        \"granularity\": \"Daily\",\n        \"grouping\": []\n      },\n      \"timePeriod\": {\n        \"from\": \"',pipeline().parameters.from_date,'T00:00:00.000Z\",\n        \"to\": \"',pipeline().parameters.to_date,'T00:00:00.000Z\"\n      },\n      \"timeframe\": \"Custom\",\n      \"type\": \"ActualCost\"\n    },\n    \"deliveryInfo\": {\n      \"destination\": {\n        \"container\": \"usage\",\n        \"rootFolderPath\": \"Test-Export\",\n        \"resourceId\": \"/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt\"\n      }\n    },\n    \"format\": \"Csv\",\n    \"partitionData\": false\n  }\n}')",
@@ -16757,14 +16757,14 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "POST",
+							"headers": {
+								"Content-Type": "application/x-www-form-urlencoded"
+							},
 							"url": "https://login.microsoftonline.com/3aa4a235-b6e2-48d5-9195-7fcf05b459b0/oauth2/token",
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
-							},
-							"method": "POST",
-							"headers": {
-								"Content-Type": "application/x-www-form-urlencoded"
 							},
 							"body": {
 								"value": "@concat('client_id=',pipeline().parameters.clientId,'&client_secret=',activity('Get SP Secret').output.value,'&grant_type=client_credentials&resource=https://management.azure.com&scope=./default')",
@@ -16785,6 +16785,8 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "GET",
+							"headers": {},
 							"url": {
 								"value": "@concat(pipeline().parameters.KV_Address,'?api-version=7.0')",
 								"type": "Expression"
@@ -16793,8 +16795,6 @@
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
 							},
-							"method": "GET",
-							"headers": {},
 							"authentication": {
 								"type": "MSI",
 								"resource": "https://vault.azure.net"
@@ -16821,6 +16821,13 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "PUT",
+							"headers": {
+								"Authorization": {
+									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+									"type": "Expression"
+								}
+							},
 							"url": {
 								"value": "@concat('https://management.azure.com/subscriptions/',pipeline().parameters.subscriptionId,'/providers/Microsoft.CostManagement/exports/ActualCost/?api-version=2021-10-01')",
 								"type": "Expression"
@@ -16828,13 +16835,6 @@
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
-							},
-							"method": "PUT",
-							"headers": {
-								"Authorization": {
-									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
-									"type": "Expression"
-								}
 							},
 							"body": {
 								"value": "@concat('{\n  \"properties\": {\n    \"definition\": {\n      \"dataset\": {\n        \"granularity\": \"Daily\",\n        \"grouping\": []\n      },\n      \"timePeriod\": {\n        \"from\": \"',pipeline().parameters.from_date,'T00:00:00.000Z\",\n        \"to\": \"',pipeline().parameters.to_date,'T00:00:00.000Z\"\n      },\n      \"timeframe\": \"Custom\",\n      \"type\": \"ActualCost\"\n    },\n    \"deliveryInfo\": {\n      \"destination\": {\n        \"container\": \"usage\",\n        \"rootFolderPath\": \"exports/S037-Test\",\n        \"resourceId\": \"/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt\"\n      }\n    },\n    \"format\": \"Csv\",\n    \"partitionData\": false\n  }\n}')",
@@ -16862,6 +16862,13 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "POST",
+							"headers": {
+								"Authorization": {
+									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+									"type": "Expression"
+								}
+							},
 							"url": {
 								"value": "@concat('https://management.azure.com/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/providers/Microsoft.CostManagement/exports/ActualCost/run?api-version=2021-10-01')",
 								"type": "Expression"
@@ -16869,13 +16876,6 @@
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
-							},
-							"method": "POST",
-							"headers": {
-								"Authorization": {
-									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
-									"type": "Expression"
-								}
 							},
 							"body": {
 								"value": "@concat('{\n  \"properties\": {\n    \"definition\": {\n      \"dataset\": {\n        \"granularity\": \"Daily\",\n        \"grouping\": []\n      },\n      \"timePeriod\": {\n        \"from\": \"',pipeline().parameters.from_date,'T00:00:00.000Z\",\n        \"to\": \"',pipeline().parameters.to_date,'T00:00:00.000Z\"\n      },\n      \"timeframe\": \"Custom\",\n      \"type\": \"ActualCost\"\n    },\n    \"deliveryInfo\": {\n      \"destination\": {\n        \"container\": \"usage\",\n        \"rootFolderPath\": \"exports/S037-Test\",\n        \"resourceId\": \"/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt\"\n      }\n    },\n    \"format\": \"Csv\",\n    \"partitionData\": false\n  }\n}')",
@@ -16903,6 +16903,13 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "DELETE",
+							"headers": {
+								"Authorization": {
+									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+									"type": "Expression"
+								}
+							},
 							"url": {
 								"value": "@concat('https://management.azure.com/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/providers/Microsoft.CostManagement/exports/ActualCost/?api-version=2021-10-01')",
 								"type": "Expression"
@@ -16910,13 +16917,6 @@
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
-							},
-							"method": "DELETE",
-							"headers": {
-								"Authorization": {
-									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
-									"type": "Expression"
-								}
 							}
 						}
 					},
@@ -16940,6 +16940,13 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "PUT",
+							"headers": {
+								"Authorization": {
+									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+									"type": "Expression"
+								}
+							},
 							"url": {
 								"value": "@concat('https://management.azure.com/subscriptions/',pipeline().parameters.subscriptionId,'/providers/Microsoft.CostManagement/exports/AmortizedCost/?api-version=2021-10-01')",
 								"type": "Expression"
@@ -16947,13 +16954,6 @@
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
-							},
-							"method": "PUT",
-							"headers": {
-								"Authorization": {
-									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
-									"type": "Expression"
-								}
 							},
 							"body": {
 								"value": "@concat('{\n  \"properties\": {\n    \"definition\": {\n      \"dataset\": {\n        \"granularity\": \"Daily\",\n        \"grouping\": []\n      },\n      \"timePeriod\": {\n        \"from\": \"',pipeline().parameters.from_date,'T00:00:00.000Z\",\n        \"to\": \"',pipeline().parameters.to_date,'T00:00:00.000Z\"\n      },\n      \"timeframe\": \"Custom\",\n      \"type\": \"AmortizedCost\"\n    },\n    \"deliveryInfo\": {\n      \"destination\": {\n        \"container\": \"usage\",\n        \"rootFolderPath\": \"exports/S037-Test\",\n        \"resourceId\": \"/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt\"\n      }\n    },\n    \"format\": \"Csv\",\n    \"partitionData\": false\n  }\n}')",
@@ -16981,6 +16981,13 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "POST",
+							"headers": {
+								"Authorization": {
+									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+									"type": "Expression"
+								}
+							},
 							"url": {
 								"value": "@concat('https://management.azure.com/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/providers/Microsoft.CostManagement/exports/AmortizedCost/run?api-version=2021-10-01')",
 								"type": "Expression"
@@ -16988,13 +16995,6 @@
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
-							},
-							"method": "POST",
-							"headers": {
-								"Authorization": {
-									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
-									"type": "Expression"
-								}
 							},
 							"body": {
 								"value": "@concat('{\n  \"properties\": {\n    \"definition\": {\n      \"dataset\": {\n        \"granularity\": \"Daily\",\n        \"grouping\": []\n      },\n      \"timePeriod\": {\n        \"from\": \"',pipeline().parameters.from_date,'T00:00:00.000Z\",\n        \"to\": \"',pipeline().parameters.to_date,'T00:00:00.000Z\"\n      },\n      \"timeframe\": \"Custom\",\n      \"type\": \"AmortizedCost\"\n    },\n    \"deliveryInfo\": {\n      \"destination\": {\n        \"container\": \"usage\",\n        \"rootFolderPath\": \"exports/S037-Test\",\n        \"resourceId\": \"/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt\"\n      }\n    },\n    \"format\": \"Csv\",\n    \"partitionData\": false\n  }\n}')",
@@ -17022,6 +17022,13 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "DELETE",
+							"headers": {
+								"Authorization": {
+									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+									"type": "Expression"
+								}
+							},
 							"url": {
 								"value": "@concat('https://management.azure.com/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/providers/Microsoft.CostManagement/exports/AmortizedCost/?api-version=2021-10-01')",
 								"type": "Expression"
@@ -17029,13 +17036,6 @@
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
-							},
-							"method": "DELETE",
-							"headers": {
-								"Authorization": {
-									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
-									"type": "Expression"
-								}
 							}
 						}
 					},
@@ -17059,6 +17059,13 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "PUT",
+							"headers": {
+								"Authorization": {
+									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+									"type": "Expression"
+								}
+							},
 							"url": {
 								"value": "@concat('https://management.azure.com/subscriptions/',pipeline().parameters.subscriptionId,'/providers/Microsoft.CostManagement/exports/Usage/?api-version=2021-10-01')",
 								"type": "Expression"
@@ -17066,13 +17073,6 @@
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
-							},
-							"method": "PUT",
-							"headers": {
-								"Authorization": {
-									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
-									"type": "Expression"
-								}
 							},
 							"body": {
 								"value": "@concat('{\n  \"properties\": {\n    \"definition\": {\n      \"dataset\": {\n        \"granularity\": \"Daily\",\n        \"grouping\": []\n      },\n      \"timePeriod\": {\n        \"from\": \"',pipeline().parameters.from_date,'T00:00:00.000Z\",\n        \"to\": \"',pipeline().parameters.to_date,'T00:00:00.000Z\"\n      },\n      \"timeframe\": \"Custom\",\n      \"type\": \"Usage\"\n    },\n    \"deliveryInfo\": {\n      \"destination\": {\n        \"container\": \"usage\",\n        \"rootFolderPath\": \"exports/S037-Test\",\n        \"resourceId\": \"/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt\"\n      }\n    },\n    \"format\": \"Csv\",\n    \"partitionData\": false\n  }\n}')",
@@ -17100,6 +17100,13 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "POST",
+							"headers": {
+								"Authorization": {
+									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+									"type": "Expression"
+								}
+							},
 							"url": {
 								"value": "https://management.azure.com/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/providers/Microsoft.CostManagement/exports/Usage/run?api-version=2021-10-01",
 								"type": "Expression"
@@ -17107,13 +17114,6 @@
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
-							},
-							"method": "POST",
-							"headers": {
-								"Authorization": {
-									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
-									"type": "Expression"
-								}
 							},
 							"body": {
 								"value": "@concat('{\n  \"properties\": {\n    \"definition\": {\n      \"dataset\": {\n        \"granularity\": \"Daily\",\n        \"grouping\": []\n      },\n      \"timePeriod\": {\n        \"from\": \"',pipeline().parameters.from_date,'T00:00:00.000Z\",\n        \"to\": \"',pipeline().parameters.to_date,'T00:00:00.000Z\"\n      },\n      \"timeframe\": \"Custom\",\n      \"type\": \"Usage\"\n    },\n    \"deliveryInfo\": {\n      \"destination\": {\n        \"container\": \"usage\",\n        \"rootFolderPath\": \"exports/S037-Test\",\n        \"resourceId\": \"/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt\"\n      }\n    },\n    \"format\": \"Csv\",\n    \"partitionData\": false\n  }\n}')",
@@ -17141,6 +17141,13 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
+							"method": "DELETE",
+							"headers": {
+								"Authorization": {
+									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
+									"type": "Expression"
+								}
+							},
 							"url": {
 								"value": "@concat('https://management.azure.com/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/providers/Microsoft.CostManagement/exports/Usage/?api-version=2021-10-01')",
 								"type": "Expression"
@@ -17148,13 +17155,6 @@
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
-							},
-							"method": "DELETE",
-							"headers": {
-								"Authorization": {
-									"value": "@concat('Bearer ',activity('Get token').output.access_token)",
-									"type": "Expression"
-								}
 							}
 						}
 					}
@@ -17825,6 +17825,261 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/full-pbi-1yr-refresh')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Refresh 1yr dataset",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "full-pbi-dataset-refresh",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"Database": {
+									"value": "@variables('Database')",
+									"type": "Expression"
+								},
+								"TableName": {
+									"value": "@variables('TableName')",
+									"type": "Expression"
+								}
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"Database": {
+						"type": "String",
+						"defaultValue": "FinOps_DataFoundamental"
+					},
+					"TableName": {
+						"type": "String",
+						"defaultValue": "ACMMonthlyAmortizedCost_Detailed_Oneyear"
+					}
+				},
+				"folder": {
+					"name": "PipelinesInProduction/PBI Refresh"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/full-pbi-dataset-refresh')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/full-pbi-3yr-refresh')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Refresh 3yr dataset",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "full-pbi-dataset-refresh",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"Database": {
+									"value": "@variables('Database')",
+									"type": "Expression"
+								},
+								"TableName": {
+									"value": "@variables('TableName')",
+									"type": "Expression"
+								}
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"Database": {
+						"type": "String",
+						"defaultValue": "FinOps_DataFoundamental"
+					},
+					"TableName": {
+						"type": "String",
+						"defaultValue": "ACMMonthlyAmortizedCost_overview_Threeyear"
+					}
+				},
+				"folder": {
+					"name": "PipelinesInProduction/PBI Refresh"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/full-pbi-dataset-refresh')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/full-pbi-dataset-refresh')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Run automation refresh script",
+						"type": "WebHook",
+						"dependsOn": [
+							{
+								"activity": "Get Webhook URL",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": true
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": {
+								"value": "@activity('Get Webhook URL').output.value",
+								"type": "Expression"
+							},
+							"method": "POST",
+							"headers": {},
+							"body": {
+								"value": "@json(\n\tconcat(' \n\t\t{\"Database\": \"',pipeline().parameters.Database,'\", \n\t\t\"TableName\": \"',pipeline().parameters.TableName,'\"}'\n\t\t)\n\t)",
+								"type": "Expression"
+							},
+							"timeout": "10:00:00"
+						}
+					},
+					{
+						"name": "Get Webhook URL",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": true,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "GET",
+							"headers": {},
+							"url": {
+								"value": "https://@{variables('KVName')}.vault.azure.net/secrets/@{variables('SecretName')}?api-version=7.4",
+								"type": "Expression"
+							},
+							"connectVia": {
+								"referenceName": "AutoResolveIntegrationRuntime",
+								"type": "IntegrationRuntimeReference"
+							},
+							"authentication": {
+								"type": "MSI",
+								"resource": "https://vault.azure.net"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"Database": {
+						"type": "string"
+					},
+					"TableName": {
+						"type": "string"
+					}
+				},
+				"variables": {
+					"KVName": {
+						"type": "String",
+						"defaultValue": "acm-toolkit-kv"
+					},
+					"SecretName": {
+						"type": "String",
+						"defaultValue": "finops-reports-full-refresh-webhook"
+					}
+				},
+				"folder": {
+					"name": "PipelinesInProduction/PBI Refresh"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/full-pbi-refresh-all')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Refresh 3yr dataset",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "full-pbi-3yr-refresh",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					},
+					{
+						"name": "Refresh 1yr dataset",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Refresh 3yr dataset",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "full-pbi-1yr-refresh",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "PipelinesInProduction/PBI Refresh"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/full-pbi-3yr-refresh')]",
+				"[concat(variables('workspaceId'), '/pipelines/full-pbi-1yr-refresh')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/persist-latest')]",
 			"type": "Microsoft.Synapse/workspaces/pipelines",
 			"apiVersion": "2019-06-01-preview",
@@ -17964,6 +18219,196 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/notebooks/persist-latest-pricesheet')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/process-cost-and-refresh')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Update historic cost",
+						"type": "SynapseNotebook",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "Run Notebook on Previous Dates_v1",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@variables('storageAccount')",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"numExecutors": null
+						}
+					},
+					{
+						"name": "Update 1yr source",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "Update historic cost",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "Prod_Extended_Amortized_Cost-Oneyear",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@variables('storageAccount')",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"numExecutors": null
+						}
+					},
+					{
+						"name": "Update 3yr source",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "Update 1yr source",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "Prod_Extended_Amortized_Cost-Threeyears",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@variables('storageAccount')",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"numExecutors": null
+						}
+					},
+					{
+						"name": "Refresh 3yr dataset",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Update 3yr source",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "full-pbi-3yr-refresh",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					},
+					{
+						"name": "Refresh 1yr dataset",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Refresh 3yr dataset",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "full-pbi-1yr-refresh",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"storageAccount": {
+						"type": "String",
+						"defaultValue": "[parameters('process-cost-and-refresh_pipelineStorageAccountVariable')]"
+					}
+				},
+				"folder": {
+					"name": "PipelinesInProduction/PBI Refresh"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/notebooks/Run Notebook on Previous Dates_v1')]",
+				"[concat(variables('workspaceId'), '/notebooks/Prod_Extended_Amortized_Cost-Oneyear')]",
+				"[concat(variables('workspaceId'), '/notebooks/Prod_Extended_Amortized_Cost-Threeyears')]",
+				"[concat(variables('workspaceId'), '/pipelines/full-pbi-3yr-refresh')]",
+				"[concat(variables('workspaceId'), '/pipelines/full-pbi-1yr-refresh')]"
 			]
 		},
 		{
@@ -22862,7 +23307,7 @@
 					"name": "OGBG Benchmark 2022/2023"
 				},
 				"content": {
-					"query": "--\n--   Cost by ConsumedService\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    --CostAllocationType,\n    ActiveWBS\n    ,ConsumedService\n    --,MeterCategory\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAc*/202*/Extended_v2_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by ActiveWBS, ConsumedService --format([Date], 'yyyy-MM'), CostAllocationType,\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
+					"query": "--\n--   Cost by ConsumedService\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    --CostAllocationType,\n    ActiveWBS\n    ,ConsumedService\n    --,MeterCategory\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAc*/2023*/Extended_v3_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    --where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by ActiveWBS, ConsumedService --format([Date], 'yyyy-MM'), CostAllocationType,\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
 					"metadata": {
 						"language": "sql"
 					},
@@ -22885,7 +23330,7 @@
 					"name": "OGBG Benchmark 2022/2023"
 				},
 				"content": {
-					"query": "--\n--   Cost by ConsumedService\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    --CostAllocationType,\n    ActiveWBS\n    ,ResourceLocation\n    --,MeterCategory\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAc*/202*/Extended_v2_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by ActiveWBS, ResourceLocation --format([Date], 'yyyy-MM'), CostAllocationType,\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
+					"query": "--\n--   Cost by ConsumedService\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    --CostAllocationType,\n    ActiveWBS\n    ,ResourceLocation\n    --,MeterCategory\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAc*/2023*/Extended_v3_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    --where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by ActiveWBS, ResourceLocation --format([Date], 'yyyy-MM'), CostAllocationType,\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
 					"metadata": {
 						"language": "sql"
 					},
@@ -22908,7 +23353,7 @@
 					"name": "OGBG Benchmark 2022/2023"
 				},
 				"content": {
-					"query": "--\n--   Cost by ActiveWBS\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    --CostAllocationType\n    ActiveWBS\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\n    --,format(CostInBillingCurrency, 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAc*/202*/Extended_v2_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --and ActiveWBS is null or ActiveWBS = ''\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by ActiveWBS --format([Date], 'yyyy-MM'),\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
+					"query": "--\n--   Cost by ActiveWBS\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    --CostAllocationType\n    ActiveWBS\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\n    --,format(CostInBillingCurrency, 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAc*/2023*/Extended_v3_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    --where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --and ActiveWBS is null or ActiveWBS = ''\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by ActiveWBS --format([Date], 'yyyy-MM'),\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
 					"metadata": {
 						"language": "sql"
 					},
@@ -22931,7 +23376,7 @@
 					"name": "OGBG Benchmark 2022/2023"
 				},
 				"content": {
-					"query": "--\n--   Cost by CostAllocationType\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    CostAllocationType\n    ,ActiveWBS\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAc*/202*/Extended_v2_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by CostAllocationType, ActiveWBS --format([Date], 'yyyy-MM'),\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
+					"query": "--\n--   Cost by CostAllocationType\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    CostAllocationType\n    ,ActiveWBS\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAc*/2023*/Extended_v3_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    --where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by CostAllocationType, ActiveWBS --format([Date], 'yyyy-MM'),\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
 					"metadata": {
 						"language": "sql"
 					},
@@ -22954,7 +23399,7 @@
 					"name": "OGBG Benchmark 2022/2023"
 				},
 				"content": {
-					"query": "--\n--   Cost by ConsumedService\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    --CostAllocationType,\n    ActiveWBS\n    ,ConsumedService\n    --,MeterCategory\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAm*/202*/Extended_v2_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by ActiveWBS, ConsumedService --format([Date], 'yyyy-MM'), CostAllocationType,\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
+					"query": "--\n--   Cost by ConsumedService\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    --CostAllocationType,\n    ActiveWBS\n    ,ConsumedService\n    --,MeterCategory\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAm*/2023*/Extended_v3_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    --where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by ActiveWBS, ConsumedService --format([Date], 'yyyy-MM'), CostAllocationType,\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
 					"metadata": {
 						"language": "sql"
 					},
@@ -22977,7 +23422,7 @@
 					"name": "OGBG Benchmark 2022/2023"
 				},
 				"content": {
-					"query": "--\n--   Cost by ConsumedService\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    --CostAllocationType,\n    ActiveWBS\n    ,ResourceLocation\n    --,MeterCategory\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAm*/202*/Extended_v2_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by ActiveWBS, ResourceLocation --format([Date], 'yyyy-MM'), CostAllocationType,\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
+					"query": "--\n--   Cost by ConsumedService\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    --CostAllocationType,\n    ActiveWBS\n    ,ResourceLocation\n    --,MeterCategory\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAm*/2023*/Extended_v3_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    --where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by ActiveWBS, ResourceLocation --format([Date], 'yyyy-MM'), CostAllocationType,\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
 					"metadata": {
 						"language": "sql"
 					},
@@ -23000,7 +23445,7 @@
 					"name": "OGBG Benchmark 2022/2023"
 				},
 				"content": {
-					"query": "--\n--   Cost by ActiveWBS\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    --CostAllocationType\n    ActiveWBS\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAm*/202*/Extended_v2_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by ActiveWBS --format([Date], 'yyyy-MM'),\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
+					"query": "--\n--   Cost by ActiveWBS\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    --CostAllocationType\n    ActiveWBS\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAm*/2023*/Extended_v3_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    --where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by ActiveWBS --format([Date], 'yyyy-MM'),\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
 					"metadata": {
 						"language": "sql"
 					},
@@ -23015,7 +23460,7 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/2023 BM cost by CostAllocationType Amortized')]",
+			"name": "[concat(parameters('workspaceName'), '/2023 BM Amortized cost by CostAllocationType')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -23023,7 +23468,7 @@
 					"name": "OGBG Benchmark 2022/2023"
 				},
 				"content": {
-					"query": "--\n--   Cost by CostAllocationType\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    CostAllocationType\n    ,ActiveWBS\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAm*/202*/Extended_v2_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by CostAllocationType, ActiveWBS --format([Date], 'yyyy-MM'),\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
+					"query": "--\n--   Cost by CostAllocationType\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    CostAllocationType\n    ,ActiveWBS\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAm*/2023*/Extended_v3_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    --where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by CostAllocationType, ActiveWBS --format([Date], 'yyyy-MM'),\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
 					"metadata": {
 						"language": "sql"
 					},
@@ -23046,7 +23491,7 @@
 					"name": "OGBG Benchmark 2022/2023"
 				},
 				"content": {
-					"query": "--\n--   Cost by MeterCategory\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    --CostAllocationType,\n    ActiveWBS\n    ,MeterCategory\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAc*/202*/Extended_v2_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by ActiveWBS, MeterCategory --format([Date], 'yyyy-MM'), CostAllocationType,\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
+					"query": "--\n--   Cost by MeterCategory\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    --CostAllocationType,\n    ActiveWBS\n    ,MeterCategory\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAc*/2023*/Extended_v3_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    --where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by ActiveWBS, MeterCategory --format([Date], 'yyyy-MM'), CostAllocationType,\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
 					"metadata": {
 						"language": "sql"
 					},
@@ -23069,7 +23514,7 @@
 					"name": "OGBG Benchmark 2022/2023"
 				},
 				"content": {
-					"query": "--\n--   Cost by MeterCategory\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    --CostAllocationType,\n    ActiveWBS\n    ,MeterCategory\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAm*/202*/Extended_v2_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by ActiveWBS, MeterCategory --format([Date], 'yyyy-MM'), CostAllocationType,\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
+					"query": "--\n--   Cost by MeterCategory\n--\nSELECT\n    --TOP 1000 \n    --Tags \n    --CostAllocationType,\n    ActiveWBS\n    ,MeterCategory\n    --,format([Date], 'yyyy-MM')\n    --,SubscriptionWBS\n    --,[SubscriptionServiceNow-App] \n    ,format(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAm*/2023*/Extended_v3_ACMMonthly*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    --where [Date] >= '2022-11-01' and [Date] <= '2023-10-31'\n    --where CostAllocationType not in ('CI', 'APPID', 'WBS', 'SubscriptionWBS')\n    --where CostAllocationCode = '' or CostAllocationType = '' or CostAllocationCode = 'TOBESPECIFIED' or CostAllocationType = 'TOBESPECIFIED'\n    group by ActiveWBS, MeterCategory --format([Date], 'yyyy-MM'), CostAllocationType,\n    --group by CostAllocationCode, CostAllocationType\n    order by sum(CostInBillingCurrency) desc --, CostAllocationCode, CostAllocationType \n",
 					"metadata": {
 						"language": "sql"
 					},
@@ -24036,7 +24481,7 @@
 					"name": "PowerBIViews"
 				},
 				"content": {
-					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW tsc_ACMMonthlyAmortizedCost_overview_Oneyear\nAS\n\nSELECT [Date]\n,[Report_Date]\n,[UnitPrice]\n,[Quantity]\n,[CostInBillingCurrency]\n,[EffectivePrice]\n,[ActiveWBS]\n,[ai_VMName]\n,[AppID]\n,[ApplicationName]\n,[ChargeType]\n,[ConsumedService]\n,[MeterSubCategory]\n,[PricingModel]\n,[CostAllocationCode]\n,[CostAllocationType]\n,[IsRIUsage]\n,[ResourceLocation]\n,[ServiceFamily]\n,[SubscriptionId]\n,[MeterCategory]\n,[MeterName]\n,[MeterRegion]\n,[SubscriptionName]\n,[SubscriptionWBS]\n,[UnitOfMeasure]\n,[ResourceGroup]\n,[ResourceId]\n,[ResourceName]\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear.parquet/*/*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n\n\n",
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW tsc_ACMMonthlyAmortizedCost_overview_Oneyear\nAS\n\nSELECT *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear.parquet/*/*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n\n\n",
 					"metadata": {
 						"language": "sql"
 					},
@@ -34038,7 +34483,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "24db8e0d-88e0-4a87-b084-0526c66e3b03"
+						"spark.autotune.trackingId": "ce92e334-2364-4bca-a8f4-5142e1b29f35"
 					}
 				},
 				"metadata": {
@@ -34108,7 +34553,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 4
+						"execution_count": 11
 					},
 					{
 						"cell_type": "markdown",
@@ -34151,7 +34596,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 5
+						"execution_count": 12
 					},
 					{
 						"cell_type": "markdown",
@@ -34230,7 +34675,14 @@
 							"    'UnitOfMeasure',\r\n",
 							"    'ResourceGroup',\r\n",
 							"    'ResourceId',\r\n",
-							"    'ResourceName'\r\n",
+							"    'ResourceName',\r\n",
+							"    'ReservationName',\r\n",
+							"    'ai_VCPUs',\r\n",
+							"    'WindowsAHB',\r\n",
+							"    'SQLAHB',\r\n",
+							"    'WindowsAHB_VCPUS',\r\n",
+							"    'SQLAHB_VCPUS',\r\n",
+							"    'CPUHours'\r\n",
 							"]\r\n",
 							"\r\n",
 							"df_schema_extended = df_schema_extended.select(*columns_to_keep) \r\n",
@@ -34239,7 +34691,7 @@
 							"df_schema_extended = df_schema_extended.withColumn('Report_Date_Partition',lit('') )"
 						],
 						"outputs": [],
-						"execution_count": 6
+						"execution_count": 13
 					},
 					{
 						"cell_type": "code",
@@ -34255,33 +34707,10 @@
 							}
 						},
 						"source": [
-							"print(\"A-year-ago's date since today:\",date_one_year_ago)\r\n",
-							"len(df_schema_extended.columns)"
+							"print(len(columns_to_keep))"
 						],
 						"outputs": [],
-						"execution_count": 7
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"# In case there is a need to change the column name\r\n",
-							"\r\n",
-							"#df_schema_extended_pd = df_schema_extended_pd.rename(columns={'Azure Hybrid Benefit': 'Azure_Hybrid_Benefit'})\r\n",
-							"#df_schema_extended = spark.createDataFrame(df_schema_extended_pd)"
-						],
-						"outputs": [],
-						"execution_count": 8
+						"execution_count": 14
 					},
 					{
 						"cell_type": "markdown",
@@ -34358,7 +34787,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 9
+						"execution_count": 15
 					},
 					{
 						"cell_type": "markdown",
@@ -34391,7 +34820,7 @@
 							"df = df.withColumn(\"Report_Date\", col(\"Report_Date\").cast(\"timestamp\"))"
 						],
 						"outputs": [],
-						"execution_count": 10
+						"execution_count": 16
 					},
 					{
 						"cell_type": "code",
@@ -34411,7 +34840,7 @@
 							"df = df.withColumnRenamed(\"Application_Name\", \"ApplicationName\")"
 						],
 						"outputs": [],
-						"execution_count": 11
+						"execution_count": 17
 					},
 					{
 						"cell_type": "markdown",
@@ -34447,7 +34876,7 @@
 							"df.write.format('parquet').mode('overwrite').partitionBy('Report_Date_Partition').option('overwriteSchema', 'true').save(optimized_path)"
 						],
 						"outputs": [],
-						"execution_count": 12
+						"execution_count": 18
 					}
 				]
 			},
@@ -34479,7 +34908,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "e636e836-bd2a-4d70-a6c1-8a4fb192511b"
+						"spark.autotune.trackingId": "ef8a248f-4687-4e0b-b89a-370680f997d4"
 					}
 				},
 				"metadata": {
@@ -34504,8 +34933,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -34551,7 +34979,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 17
+						"execution_count": 1
 					},
 					{
 						"cell_type": "markdown",
@@ -34594,7 +35022,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 18
+						"execution_count": 2
 					},
 					{
 						"cell_type": "markdown",
@@ -34650,48 +35078,7 @@
 							"df_schema_extended = df_schema_extended.withColumn('Report_Date_Partition',lit('') )"
 						],
 						"outputs": [],
-						"execution_count": 19
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"print(\"Three-years-ago's date since today:\",date_three_years_ago)\r\n",
-							"len(df_schema_extended.columns)"
-						],
-						"outputs": [],
-						"execution_count": 20
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"# In case there is a need to change the column name\r\n",
-							"#df_schema_extended_pd = df_schema_extended_pd.rename(columns={'Azure Hybrid Benefit': 'Azure_Hybrid_Benefit'})\r\n",
-							"#df_schema_extended = spark.createDataFrame(df_schema_extended_pd)"
-						],
-						"outputs": [],
-						"execution_count": 21
+						"execution_count": 3
 					},
 					{
 						"cell_type": "markdown",
@@ -35353,7 +35740,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "b03546cb-523a-4c9b-9378-7c9c3439fdaf"
+						"spark.autotune.trackingId": "d6f8667b-ca45-4f1f-99e4-7ce92eca6c93"
 					}
 				},
 				"metadata": {
@@ -35378,8 +35765,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -41185,7 +41571,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "60ebf913-3b7e-41cb-9d7e-7edccf58165e"
+						"spark.autotune.trackingId": "d32f0fad-a68f-40ed-be83-19daf905d021"
 					}
 				},
 				"metadata": {
@@ -41210,8 +41596,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -43705,436 +44090,6 @@
 			},
 			"dependsOn": [],
 			"location": "northeurope"
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/full-pbi-dataset-refresh')]",
-			"type": "Microsoft.Synapse/workspaces/pipelines",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"activities": [
-					{
-						"name": "Run automation refresh script",
-						"type": "WebHook",
-						"dependsOn": [
-							{
-								"activity": "Get Webhook URL",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"secureOutput": false,
-							"secureInput": true
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"url": {
-								"value": "@activity('Get Webhook URL').output.value",
-								"type": "Expression"
-							},
-							"method": "POST",
-							"headers": {},
-							"body": {
-								"value": "@json(\n\tconcat(' \n\t\t{\"Database\": \"',pipeline().parameters.Database,'\", \n\t\t\"TableName\": \"',pipeline().parameters.TableName,'\"}'\n\t\t)\n\t)",
-								"type": "Expression"
-							},
-							"timeout": "00:10:00"
-						}
-					},
-					{
-						"name": "Get Webhook URL",
-						"type": "WebActivity",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": true,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"url": {
-								"value": "https://@{variables('KVName')}.vault.azure.net/secrets/@{variables('SecretName')}?api-version=7.4",
-								"type": "Expression"
-							},
-							"connectVia": {
-								"referenceName": "AutoResolveIntegrationRuntime",
-								"type": "IntegrationRuntimeReference"
-							},
-							"method": "GET",
-							"headers": {},
-							"authentication": {
-								"type": "MSI",
-								"resource": "https://vault.azure.net"
-							}
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"parameters": {
-					"Database": {
-						"type": "string"
-					},
-					"TableName": {
-						"type": "string"
-					}
-				},
-				"variables": {
-					"KVName": {
-						"type": "String",
-						"defaultValue": "acm-toolkit-kv"
-					},
-					"SecretName": {
-						"type": "String",
-						"defaultValue": "finops-reports-full-refresh-webhook"
-					}
-				},
-				"folder": {
-					"name": "PipelinesInProduction/PBI Refresh"
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/full-pbi-3yr-refresh')]",
-			"type": "Microsoft.Synapse/workspaces/pipelines",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"activities": [
-					{
-						"name": "Refresh 3yr dataset",
-						"type": "ExecutePipeline",
-						"dependsOn": [],
-						"userProperties": [],
-						"typeProperties": {
-							"pipeline": {
-								"referenceName": "full-pbi-dataset-refresh",
-								"type": "PipelineReference"
-							},
-							"waitOnCompletion": true,
-							"parameters": {
-								"Database": {
-									"value": "@variables('Database')",
-									"type": "Expression"
-								},
-								"TableName": {
-									"value": "@variables('TableName')",
-									"type": "Expression"
-								}
-							}
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"variables": {
-					"Database": {
-						"type": "String",
-						"defaultValue": "FinOps_DataFoundamental"
-					},
-					"TableName": {
-						"type": "String",
-						"defaultValue": "ACMMonthlyAmortizedCost_overview_Threeyear"
-					}
-				},
-				"folder": {
-					"name": "PipelinesInProduction/PBI Refresh"
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/pipelines/full-pbi-dataset-refresh')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/full-pbi-1yr-refresh')]",
-			"type": "Microsoft.Synapse/workspaces/pipelines",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"activities": [
-					{
-						"name": "Refresh 1yr dataset",
-						"type": "ExecutePipeline",
-						"dependsOn": [],
-						"userProperties": [],
-						"typeProperties": {
-							"pipeline": {
-								"referenceName": "full-pbi-dataset-refresh",
-								"type": "PipelineReference"
-							},
-							"waitOnCompletion": true,
-							"parameters": {
-								"Database": {
-									"value": "@variables('Database')",
-									"type": "Expression"
-								},
-								"TableName": {
-									"value": "@variables('TableName')",
-									"type": "Expression"
-								}
-							}
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"variables": {
-					"Database": {
-						"type": "String",
-						"defaultValue": "FinOps_DataFoundamental"
-					},
-					"TableName": {
-						"type": "String",
-						"defaultValue": "ACMMonthlyAmortizedCost_Detailed_Oneyear"
-					}
-				},
-				"folder": {
-					"name": "PipelinesInProduction/PBI Refresh"
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/pipelines/full-pbi-dataset-refresh')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/process-cost-and-refresh')]",
-			"type": "Microsoft.Synapse/workspaces/pipelines",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"activities": [
-					{
-						"name": "Update historic cost",
-						"type": "SynapseNotebook",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"notebook": {
-								"referenceName": "Run Notebook on Previous Dates_v1",
-								"type": "NotebookReference"
-							},
-							"parameters": {
-								"storageAccount": {
-									"value": {
-										"value": "@variables('storageAccount')",
-										"type": "Expression"
-									},
-									"type": "string"
-								}
-							},
-							"snapshot": true,
-							"conf": {}
-						}
-					},
-					{
-						"name": "Update 1yr source",
-						"type": "SynapseNotebook",
-						"dependsOn": [
-							{
-								"activity": "Update historic cost",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"notebook": {
-								"referenceName": "Prod_Extended_Amortized_Cost-Oneyear",
-								"type": "NotebookReference"
-							},
-							"parameters": {
-								"storageAccount": {
-									"value": {
-										"value": "@variables('storageAccount')",
-										"type": "Expression"
-									},
-									"type": "string"
-								}
-							},
-							"snapshot": true,
-							"conf": {}
-						}
-					},
-					{
-						"name": "Update 3yr source",
-						"type": "SynapseNotebook",
-						"dependsOn": [
-							{
-								"activity": "Update 1yr source",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"notebook": {
-								"referenceName": "Prod_Extended_Amortized_Cost-Threeyears",
-								"type": "NotebookReference"
-							},
-							"parameters": {
-								"storageAccount": {
-									"value": {
-										"value": "@variables('storageAccount')",
-										"type": "Expression"
-									},
-									"type": "string"
-								}
-							},
-							"snapshot": true,
-							"conf": {}
-						}
-					},
-					{
-						"name": "Refresh 3yr dataset",
-						"type": "ExecutePipeline",
-						"dependsOn": [
-							{
-								"activity": "Update 3yr source",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"pipeline": {
-								"referenceName": "full-pbi-3yr-refresh",
-								"type": "PipelineReference"
-							},
-							"waitOnCompletion": true,
-							"parameters": {}
-						}
-					},
-					{
-						"name": "Refresh 1yr dataset",
-						"type": "ExecutePipeline",
-						"dependsOn": [
-							{
-								"activity": "Refresh 3yr dataset",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"pipeline": {
-								"referenceName": "full-pbi-1yr-refresh",
-								"type": "PipelineReference"
-							},
-							"waitOnCompletion": true,
-							"parameters": {}
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"variables": {
-					"storageAccount": {
-						"type": "String",
-						"defaultValue": "[parameters('process-cost-and-refresh_pipelineStorageAccountVariable')]"
-					}
-				},
-				"folder": {
-					"name": "PipelinesInProduction/PBI Refresh"
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/notebooks/Run Notebook on Previous Dates_v1')]",
-				"[concat(variables('workspaceId'), '/notebooks/Prod_Extended_Amortized_Cost-Oneyear')]",
-				"[concat(variables('workspaceId'), '/notebooks/Prod_Extended_Amortized_Cost-Threeyears')]",
-				"[concat(variables('workspaceId'), '/pipelines/full-pbi-3yr-refresh')]",
-				"[concat(variables('workspaceId'), '/pipelines/full-pbi-1yr-refresh')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/full-pbi-refresh-all')]",
-			"type": "Microsoft.Synapse/workspaces/pipelines",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"activities": [
-					{
-						"name": "Refresh 3yr dataset",
-						"type": "ExecutePipeline",
-						"dependsOn": [],
-						"userProperties": [],
-						"typeProperties": {
-							"pipeline": {
-								"referenceName": "full-pbi-3yr-refresh",
-								"type": "PipelineReference"
-							},
-							"waitOnCompletion": true,
-							"parameters": {}
-						}
-					},
-					{
-						"name": "Refresh 1yr dataset",
-						"type": "ExecutePipeline",
-						"dependsOn": [
-							{
-								"activity": "Refresh 3yr dataset",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"pipeline": {
-								"referenceName": "full-pbi-1yr-refresh",
-								"type": "PipelineReference"
-							},
-							"waitOnCompletion": true,
-							"parameters": {}
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"folder": {
-					"name": "PipelinesInProduction/PBI Refresh"
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/pipelines/full-pbi-3yr-refresh')]",
-				"[concat(variables('workspaceId'), '/pipelines/full-pbi-1yr-refresh')]"
-			]
 		}
 	]
 }
