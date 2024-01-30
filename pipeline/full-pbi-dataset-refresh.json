@@ -28,7 +28,7 @@
 						"value": "@json(\n\tconcat(' \n\t\t{\"Database\": \"',pipeline().parameters.Database,'\", \n\t\t\"TableName\": \"',pipeline().parameters.TableName,'\"}'\n\t\t)\n\t)",
 						"type": "Expression"
 					},
-					"timeout": "00:10:00"
+					"timeout": "10:00:00"
 				}
 			},
 			{
@@ -44,6 +44,7 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
+					"method": "GET",
 					"url": {
 						"value": "https://@{variables('KVName')}.vault.azure.net/secrets/@{variables('SecretName')}?api-version=7.4",
 						"type": "Expression"
@@ -52,7 +53,6 @@
 						"referenceName": "AutoResolveIntegrationRuntime",
 						"type": "IntegrationRuntimeReference"
 					},
-					"method": "GET",
 					"authentication": {
 						"type": "MSI",
 						"resource": "https://vault.azure.net"
