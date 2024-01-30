@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "24db8e0d-88e0-4a87-b084-0526c66e3b03"
+				"spark.autotune.trackingId": "ce92e334-2364-4bca-a8f4-5142e1b29f35"
 			}
 		},
 		"metadata": {
@@ -92,7 +92,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 4
+				"execution_count": 11
 			},
 			{
 				"cell_type": "markdown",
@@ -134,7 +134,7 @@
 					"from pyspark.sql.functions import when\r\n",
 					""
 				],
-				"execution_count": 5
+				"execution_count": 12
 			},
 			{
 				"cell_type": "markdown",
@@ -213,7 +213,14 @@
 					"    'UnitOfMeasure',\r\n",
 					"    'ResourceGroup',\r\n",
 					"    'ResourceId',\r\n",
-					"    'ResourceName'\r\n",
+					"    'ResourceName',\r\n",
+					"    'ReservationName',\r\n",
+					"    'ai_VCPUs',\r\n",
+					"    'WindowsAHB',\r\n",
+					"    'SQLAHB',\r\n",
+					"    'WindowsAHB_VCPUS',\r\n",
+					"    'SQLAHB_VCPUS',\r\n",
+					"    'CPUHours'\r\n",
 					"]\r\n",
 					"\r\n",
 					"df_schema_extended = df_schema_extended.select(*columns_to_keep) \r\n",
@@ -221,7 +228,7 @@
 					"df_schema_extended = df_schema_extended.withColumn('Report_Date',lit('') )\r\n",
 					"df_schema_extended = df_schema_extended.withColumn('Report_Date_Partition',lit('') )"
 				],
-				"execution_count": 6
+				"execution_count": 13
 			},
 			{
 				"cell_type": "code",
@@ -237,31 +244,9 @@
 					}
 				},
 				"source": [
-					"print(\"A-year-ago's date since today:\",date_one_year_ago)\r\n",
-					"len(df_schema_extended.columns)"
+					"print(len(columns_to_keep))"
 				],
-				"execution_count": 7
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# In case there is a need to change the column name\r\n",
-					"\r\n",
-					"#df_schema_extended_pd = df_schema_extended_pd.rename(columns={'Azure Hybrid Benefit': 'Azure_Hybrid_Benefit'})\r\n",
-					"#df_schema_extended = spark.createDataFrame(df_schema_extended_pd)"
-				],
-				"execution_count": 8
+				"execution_count": 14
 			},
 			{
 				"cell_type": "markdown",
@@ -337,7 +322,7 @@
 					"                        print(len(df_temp.columns),len(df.columns))\r\n",
 					""
 				],
-				"execution_count": 9
+				"execution_count": 15
 			},
 			{
 				"cell_type": "markdown",
@@ -369,7 +354,7 @@
 					"# Change the data type of the 'Report_Date' column to Datetime\r\n",
 					"df = df.withColumn(\"Report_Date\", col(\"Report_Date\").cast(\"timestamp\"))"
 				],
-				"execution_count": 10
+				"execution_count": 16
 			},
 			{
 				"cell_type": "code",
@@ -388,7 +373,7 @@
 					"# Change the column name\r\n",
 					"df = df.withColumnRenamed(\"Application_Name\", \"ApplicationName\")"
 				],
-				"execution_count": 11
+				"execution_count": 17
 			},
 			{
 				"cell_type": "markdown",
@@ -423,7 +408,7 @@
 					"# Save the data with partitioned by Report date\r\n",
 					"df.write.format('parquet').mode('overwrite').partitionBy('Report_Date_Partition').option('overwriteSchema', 'true').save(optimized_path)"
 				],
-				"execution_count": 12
+				"execution_count": 18
 			}
 		]
 	}
