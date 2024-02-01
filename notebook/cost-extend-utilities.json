@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "a3e186e7-e95d-44c7-a983-5e8eb43449bc"
+				"spark.autotune.trackingId": "f670722e-df29-4b32-9619-3dee7a10c102"
 			}
 		},
 		"metadata": {
@@ -310,7 +310,7 @@
 					"\r\n",
 					"    # Apply Upper-case for all CostAllocationTypes and Codes\r\n",
 					"    cost_df = cost_df.withColumn('CostAllocationType', F.upper(F.col('CostAllocationType')))\r\n",
-					"    cost_df = cost_df.withColumn('CostAllocationCode', F.upper(F.col('CostAllocationCode')))\r\n",
+					"    cost_df = cost_df.withColumn('CostAllocationCode', F.trim(F.upper(F.col('CostAllocationCode'))))\r\n",
 					"\r\n",
 					"    # When the tag does not contain CostAllocationCode or CostAllocationType, then we fill/replace the value in ActiveWBSReason\r\n",
 					"    invalidCostAllocationMask = F.col('CostAllocationCode').isNull() | F.col('CostAllocationType').isNull()\r\n",
