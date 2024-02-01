@@ -22691,13 +22691,6 @@
 							"type": "PipelineReference"
 						},
 						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "compute-hub-and-ri-savings",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
 					}
 				],
 				"type": "ScheduleTrigger",
@@ -22720,8 +22713,7 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/pipelines/servicenow-applications-daily')]",
-				"[concat(variables('workspaceId'), '/pipelines/servicenow-subscriptions-daily')]",
-				"[concat(variables('workspaceId'), '/pipelines/compute-hub-and-ri-savings')]"
+				"[concat(variables('workspaceId'), '/pipelines/servicenow-subscriptions-daily')]"
 			]
 		},
 		{
@@ -38680,7 +38672,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "1f61e0d1-4dc7-480d-8b3a-55e7d928b7a2"
+						"spark.autotune.trackingId": "c6142327-ecb7-4b9c-922d-693a986781c0"
 					}
 				},
 				"metadata": {
@@ -38730,7 +38722,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 7
+						"execution_count": 22
 					},
 					{
 						"cell_type": "code",
@@ -38742,7 +38734,7 @@
 							"import numpy as np"
 						],
 						"outputs": [],
-						"execution_count": 8
+						"execution_count": 23
 					},
 					{
 						"cell_type": "code",
@@ -38762,7 +38754,7 @@
 							"window = W.Window.orderBy(\"Date\").rowsBetween(W.Window.unboundedPreceding, 0)"
 						],
 						"outputs": [],
-						"execution_count": 9
+						"execution_count": 24
 					},
 					{
 						"cell_type": "markdown",
@@ -38811,7 +38803,7 @@
 							"# cost_pdf.set_index(\"Date\", inplace=True)"
 						],
 						"outputs": [],
-						"execution_count": 6
+						"execution_count": 25
 					},
 					{
 						"cell_type": "markdown",
@@ -38861,7 +38853,7 @@
 							"billing_pdf.set_index(\"Date\", inplace=True)"
 						],
 						"outputs": [],
-						"execution_count": 21
+						"execution_count": 26
 					},
 					{
 						"cell_type": "code",
@@ -38904,7 +38896,7 @@
 							"    return predicted_df"
 						],
 						"outputs": [],
-						"execution_count": 22
+						"execution_count": 27
 					},
 					{
 						"cell_type": "code",
@@ -38925,14 +38917,61 @@
 							"twelve_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=24, prediction_interval=72)\r\n",
 							"sixteen_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=-1, prediction_interval=72)\r\n",
 							"\r\n",
-							"joined_df = billing_df.join(four_month_lookback_df, on='Date', how='outer')\r\n",
-							"joined_df = joined_df.join(eight_month_lookback_df, on='Date', how='outer')\r\n",
-							"joined_df = joined_df.join(twelve_month_lookback_df, on='Date', how='outer')\r\n",
-							"joined_df = joined_df.join(sixteen_month_lookback_df, on='Date', how='outer')\r\n",
-							"joined_df = joined_df.withColumn('Date', F.to_date('Date'))"
+							"billing_df = billing_df.join(four_month_lookback_df, on='Date', how='outer')\r\n",
+							"billing_df = billing_df.join(eight_month_lookback_df, on='Date', how='outer')\r\n",
+							"billing_df = billing_df.join(twelve_month_lookback_df, on='Date', how='outer')\r\n",
+							"billing_df = billing_df.join(sixteen_month_lookback_df, on='Date', how='outer')\r\n",
+							"billing_df = billing_df.withColumn('Date', F.to_date('Date'))"
 						],
 						"outputs": [],
-						"execution_count": 24
+						"execution_count": 28
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Estimate monthly cost of Azure Sentinel once deployed\r\n",
+							"COST_OFFSET = 1600000\r\n",
+							"\r\n",
+							"# Get cumulative cost to date\r\n",
+							"cumulative_to_date = billing_df.agg(F.max('CumulativeCost')).collect()[0][0]\r\n",
+							"\r\n",
+							"\r\n",
+							"adjusted_df = billing_df.alias('adjusted_df')\r\n",
+							"\r\n",
+							"# Rename columns\r\n",
+							"for col in adjusted_df.columns:\r\n",
+							"    if col.startswith(\"Predicted\"):\r\n",
+							"        adjusted_df = adjusted_df.withColumnRenamed(col, \"Adjusted_\" + col)\r\n",
+							"\r\n",
+							"# Iterate over predicted cost columns\r\n",
+							"for col in adjusted_df.columns:\r\n",
+							"    if col.startswith(\"Adjusted_PredictedCost\"):\r\n",
+							"        adjusted_df = adjusted_df.withColumn(col, \r\n",
+							"            F.when(F.col(col).isNull(), None)\r\n",
+							"            .when(F.col('Date') <= '2024-04-01', F.col(col))\r\n",
+							"            .otherwise(F.col(col) + COST_OFFSET)\r\n",
+							"        )\r\n",
+							"\r\n",
+							"# Iterate over predicted cumulative cost columns\r\n",
+							"for col in adjusted_df.columns:\r\n",
+							"    if col.startswith(\"Adjusted_PredictedCumulative\"):\r\n",
+							"        predicted_cost_col = col.replace('Cumulative', '')\r\n",
+							"        adjusted_df = adjusted_df.withColumn(col, F.sum(predicted_cost_col).over(window) + cumulative_to_date)\r\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": 29
 					},
 					{
 						"cell_type": "code",
@@ -38949,10 +38988,30 @@
 						},
 						"source": [
 							"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/cumulative-cost-prediction.parquet\"\r\n",
-							"joined_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
+							"billing_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 						],
 						"outputs": [],
-						"execution_count": 25
+						"execution_count": 30
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"adjusted_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/adjusted-cumulative-cost-prediction.parquet\"\r\n",
+							"adjusted_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(adjusted_path)"
+						],
+						"outputs": [],
+						"execution_count": 31
 					},
 					{
 						"cell_type": "markdown",
@@ -38990,7 +39049,7 @@
 							"#     return predicted_df"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 32
 					}
 				]
 			},
@@ -44090,6 +44149,44 @@
 			},
 			"dependsOn": [],
 			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Daily at 4am')]",
+			"type": "Microsoft.Synapse/workspaces/triggers",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "compute-hub-and-ri-savings",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2024-02-01T04:00:00",
+						"timeZone": "W. Europe Standard Time",
+						"schedule": {
+							"minutes": [
+								0
+							],
+							"hours": [
+								4
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/compute-hub-and-ri-savings')]"
+			]
 		}
 	]
 }
