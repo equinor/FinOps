@@ -38672,7 +38672,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "c6142327-ecb7-4b9c-922d-693a986781c0"
+						"spark.autotune.trackingId": "4fb58acf-203f-4e27-8e67-4405c45b49eb"
 					}
 				},
 				"metadata": {
@@ -38697,7 +38697,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -38726,6 +38727,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"import pyspark.sql.window as W\r\n",
@@ -40521,7 +40523,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "a3e186e7-e95d-44c7-a983-5e8eb43449bc"
+						"spark.autotune.trackingId": "f00e40dc-0c93-4478-9ecf-c56c5cb336f4"
 					}
 				},
 				"metadata": {
@@ -40546,7 +40548,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -40575,6 +40578,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"def get_last_day_prev_month(to_date):\r\n",
 							"    current_month = int(to_date[4:6])\r\n",
@@ -40817,7 +40821,7 @@
 							"\r\n",
 							"    # Apply Upper-case for all CostAllocationTypes and Codes\r\n",
 							"    cost_df = cost_df.withColumn('CostAllocationType', F.upper(F.col('CostAllocationType')))\r\n",
-							"    cost_df = cost_df.withColumn('CostAllocationCode', F.upper(F.col('CostAllocationCode')))\r\n",
+							"    cost_df = cost_df.withColumn('CostAllocationCode', F.trim(F.upper(F.col('CostAllocationCode'))))\r\n",
 							"\r\n",
 							"    # When the tag does not contain CostAllocationCode or CostAllocationType, then we fill/replace the value in ActiveWBSReason\r\n",
 							"    invalidCostAllocationMask = F.col('CostAllocationCode').isNull() | F.col('CostAllocationType').isNull()\r\n",
