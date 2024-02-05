@@ -22717,6 +22717,44 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/Daily at 4am')]",
+			"type": "Microsoft.Synapse/workspaces/triggers",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "compute-hub-and-ri-savings",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2024-02-01T04:00:00",
+						"timeZone": "W. Europe Standard Time",
+						"schedule": {
+							"minutes": [
+								0
+							],
+							"hours": [
+								4
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/compute-hub-and-ri-savings')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/Daily at 5am')]",
 			"type": "Microsoft.Synapse/workspaces/triggers",
 			"apiVersion": "2019-06-01-preview",
@@ -34475,7 +34513,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "ce92e334-2364-4bca-a8f4-5142e1b29f35"
+						"spark.autotune.trackingId": "24cef0e9-4f3e-46dc-8a26-88a88c6b8f14"
 					}
 				},
 				"metadata": {
@@ -34500,7 +34538,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -34522,432 +34561,6 @@
 							"The appended data is considered as a large dataset with more than a hundred million rows and multiple columns. \r\n",
 							"\r\n",
 							"To reduce the size of the data, a years period with all columns has been selected. This has been verified and confirmed by the end-users (WBS owners).\r\n",
-							""
-						]
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							},
-							"tags": [
-								"parameters"
-							]
-						},
-						"source": [
-							"storageAccount = 's037costmgmt'"
-						],
-						"outputs": [],
-						"execution_count": 11
-					},
-					{
-						"cell_type": "markdown",
-						"metadata": {
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"# Import Libraries"
-						]
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"import pandas as pd \r\n",
-							"import pyspark.pandas as ps\r\n",
-							"from pyspark.sql import SparkSession\r\n",
-							"from pyspark.sql import functions as F\r\n",
-							"from pyspark.sql.functions import col\r\n",
-							"from pyspark.sql.types import StructType\r\n",
-							"from pyspark.sql.functions import lit\r\n",
-							"from pyspark.sql.functions import year, month\r\n",
-							"from notebookutils import mssparkutils\r\n",
-							"from datetime import datetime, timedelta\r\n",
-							"from pyspark.sql.functions import when\r\n",
-							""
-						],
-						"outputs": [],
-						"execution_count": 12
-					},
-					{
-						"cell_type": "markdown",
-						"metadata": {
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"# Load the data"
-						]
-					},
-					{
-						"cell_type": "markdown",
-						"metadata": {
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"## Collect the data schema"
-						]
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"# Identify a years period\r\n",
-							"date_one_year_ago = datetime.now().date()-timedelta(days=365)\r\n",
-							"\r\n",
-							"# Define a path for the data with random period\r\n",
-							"path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20230501-20230531/Extended_v3_ACMMonthlyAmortizedCost_20230501-20230531.parquet\"\r\n",
-							"\r\n",
-							"# Load the data schema and add a new column for Report Date\r\n",
-							"df_schema_extended = spark.read.format('parquet').load(path)\r\n",
-							"\r\n",
-							"columns_to_keep = [\r\n",
-							"    'Date',\r\n",
-							"    'UnitPrice',\r\n",
-							"    'Quantity',\r\n",
-							"    'CostInBillingCurrency',\r\n",
-							"    'EffectivePrice',\r\n",
-							"    'ActiveWBS',\r\n",
-							"    'ai_VMName',\r\n",
-							"    'AppID',\r\n",
-							"    'Application_Name',\r\n",
-							"    'ChargeType',\r\n",
-							"    'ConsumedService',\r\n",
-							"    'MeterSubCategory',\r\n",
-							"    'PricingModel',\r\n",
-							"    'CostAllocationCode',\r\n",
-							"    'CostAllocationType',\r\n",
-							"    'IsRIUsage',\r\n",
-							"    'ResourceLocation',\r\n",
-							"    'ServiceFamily',\r\n",
-							"    'SubscriptionId',\r\n",
-							"    'MeterCategory',\r\n",
-							"    'MeterName',\r\n",
-							"    'MeterRegion',\r\n",
-							"    'SubscriptionName',\r\n",
-							"    'SubscriptionWBS',\r\n",
-							"    'UnitOfMeasure',\r\n",
-							"    'ResourceGroup',\r\n",
-							"    'ResourceId',\r\n",
-							"    'ResourceName',\r\n",
-							"    'ReservationName',\r\n",
-							"    'ai_VCPUs',\r\n",
-							"    'WindowsAHB',\r\n",
-							"    'SQLAHB',\r\n",
-							"    'WindowsAHB_VCPUS',\r\n",
-							"    'SQLAHB_VCPUS',\r\n",
-							"    'CPUHours'\r\n",
-							"]\r\n",
-							"\r\n",
-							"df_schema_extended = df_schema_extended.select(*columns_to_keep) \r\n",
-							"\r\n",
-							"df_schema_extended = df_schema_extended.withColumn('Report_Date',lit('') )\r\n",
-							"df_schema_extended = df_schema_extended.withColumn('Report_Date_Partition',lit('') )"
-						],
-						"outputs": [],
-						"execution_count": 13
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"print(len(columns_to_keep))"
-						],
-						"outputs": [],
-						"execution_count": 14
-					},
-					{
-						"cell_type": "markdown",
-						"metadata": {
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"## Load all ACMMonthlyAmortizedCost data and append to one dataframe."
-						]
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							},
-							"collapsed": false
-						},
-						"source": [
-							"# Create a SparkSession\r\n",
-							"spark = SparkSession.builder.getOrCreate()\r\n",
-							"\r\n",
-							"# Define an empty schema\r\n",
-							"schema = df_schema_extended.schema\r\n",
-							"\r\n",
-							"# Create an empty DataFrame with the specified schema\r\n",
-							"df = spark.createDataFrame([], schema)\r\n",
-							"\r\n",
-							"# Define the root path\r\n",
-							"root_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost\"\r\n",
-							"\r\n",
-							"# Collect all the folders under this root path\r\n",
-							"folders = mssparkutils.fs.ls(root_path)\r\n",
-							"\r\n",
-							"\r\n",
-							"for folder in folders:\r\n",
-							"    # Collect all file path from the folder\r\n",
-							"        datetime_str = folder.name[0:8]\r\n",
-							"        year = int(datetime_str[0:4])\r\n",
-							"        month = int(datetime_str[4:6])\r\n",
-							"        day = int(datetime_str[6:8])\r\n",
-							"        timestamp = pd.Timestamp(year=year, month=month, day=day).date()\r\n",
-							"        if timestamp > date_one_year_ago:\r\n",
-							"            file_paths = mssparkutils.fs.ls(root_path +'/'+ str(folder.name))\r\n",
-							"            for file_path in file_paths:\r\n",
-							"                # Focus on parquet file not csv file\r\n",
-							"                if 'Extended_v3' in file_path.name:\r\n",
-							"                    try:\r\n",
-							"                        # Add a Report date column in the dataframe\r\n",
-							"                        date = pd.to_datetime(folder.path.split('/')[-1].split('-')[0],format=\"%Y/%m/%d\")\r\n",
-							"                        df_temp = spark.read.format('parquet').load(file_path.path).select(*columns_to_keep) \r\n",
-							"                        print(date)\r\n",
-							"                        print(\"Filepath:\", file_path.path)\r\n",
-							"                        df_temp = df_temp.withColumn('Report_Date', lit(date))\r\n",
-							"                        df_temp = df_temp.withColumn('Report_Date_Partition', lit(date))\r\n",
-							"                        # Append the dataframe\r\n",
-							"                        df = df.union(df_temp)\r\n",
-							"                    except Exception as e:\r\n",
-							"                        # Exclude the extended files that are developed by David.\r\n",
-							"                        print(\"Those files will not be read\",file_path.path)\r\n",
-							"                        print(df_temp.columns)\r\n",
-							"                        print(df)\r\n",
-							"                        print(len(df_temp.columns),len(df.columns))\r\n",
-							""
-						],
-						"outputs": [],
-						"execution_count": 15
-					},
-					{
-						"cell_type": "markdown",
-						"metadata": {
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"# Display the dataframe"
-						]
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"# Change the data type of the 'Report_Date' column to Datetime\r\n",
-							"df = df.withColumn(\"Report_Date\", col(\"Report_Date\").cast(\"timestamp\"))"
-						],
-						"outputs": [],
-						"execution_count": 16
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"# Change the column name\r\n",
-							"df = df.withColumnRenamed(\"Application_Name\", \"ApplicationName\")"
-						],
-						"outputs": [],
-						"execution_count": 17
-					},
-					{
-						"cell_type": "markdown",
-						"metadata": {
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"# Save it to optimized container"
-						]
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"# Define optimized path to save the data\r\n",
-							"optimized_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear.parquet\" \r\n",
-							"\r\n",
-							"# Save the data with partitioned by Report date\r\n",
-							"df.write.format('parquet').mode('overwrite').partitionBy('Report_Date_Partition').option('overwriteSchema', 'true').save(optimized_path)"
-						],
-						"outputs": [],
-						"execution_count": 18
-					}
-				]
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/Prod_Extended_Amortized_Cost-Threeyears')]",
-			"type": "Microsoft.Synapse/workspaces/notebooks",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"description": "\n",
-				"folder": {
-					"name": "NotebookInProduction"
-				},
-				"nbformat": 4,
-				"nbformat_minor": 2,
-				"bigDataPool": {
-					"referenceName": "[parameters('Prod_Extended_Amortized_Cost-Threeyears_notebookSparkPoolNameRef')]",
-					"type": "BigDataPoolReference"
-				},
-				"sessionProperties": {
-					"driverMemory": "112g",
-					"driverCores": 16,
-					"executorMemory": "112g",
-					"executorCores": 16,
-					"numExecutors": 1,
-					"runAsWorkspaceSystemIdentity": false,
-					"conf": {
-						"spark.dynamicAllocation.enabled": "true",
-						"spark.dynamicAllocation.minExecutors": "1",
-						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "ef8a248f-4687-4e0b-b89a-370680f997d4"
-					}
-				},
-				"metadata": {
-					"saveOutput": true,
-					"enableDebugMode": false,
-					"kernelspec": {
-						"name": "synapse_pyspark",
-						"display_name": "Synapse PySpark"
-					},
-					"language_info": {
-						"name": "python"
-					},
-					"a365ComputeOptions": {
-						"id": "[parameters('Prod_Extended_Amortized_Cost-Threeyears_notebookSparkPoolIdRef')]",
-						"name": "[parameters('Prod_Extended_Amortized_Cost-Threeyears_notebookSparkPoolNameRef')]",
-						"type": "Spark",
-						"endpoint": "[parameters('Prod_Extended_Amortized_Cost-Threeyears_notebookSparkPoolEndpointRef')]",
-						"auth": {
-							"type": "AAD",
-							"authResource": "https://dev.azuresynapse.net"
-						},
-						"sparkVersion": "3.3",
-						"nodeCount": 3,
-						"cores": 16,
-						"memory": 112
-					},
-					"sessionKeepAliveTimeout": 30
-				},
-				"cells": [
-					{
-						"cell_type": "markdown",
-						"metadata": {
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"This notebook is used to extract all extended amortized cost files from storage account as dataframes and append them into one single dataframe.\r\n",
-							"\r\n",
-							"The purpose is to make PBI desktop convenient and faster to load the data. \r\n",
-							"\r\n",
-							"The appended data is considered as a large dataset with more than a hundred million rows and multiple columns. \r\n",
-							"\r\n",
-							"To reduce the size of the data, it has been aggregated to limited columns and a three years period have been selected. This has been verified and confirmed by the end-users (WBS owners).\r\n",
-							"\r\n",
 							""
 						]
 					},
@@ -35056,6 +34669,435 @@
 							}
 						},
 						"source": [
+							"# Identify a years period\r\n",
+							"date_one_year_ago = datetime.now().date()-timedelta(days=365)\r\n",
+							"\r\n",
+							"# Define a path for the data with random period\r\n",
+							"path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20230501-20230531/Extended_v3_ACMMonthlyAmortizedCost_20230501-20230531.parquet\"\r\n",
+							"\r\n",
+							"# Load the data schema and add a new column for Report Date\r\n",
+							"df_schema_extended = spark.read.format('parquet').load(path)\r\n",
+							"\r\n",
+							"columns_to_keep = [\r\n",
+							"    'Date',\r\n",
+							"    'UnitPrice',\r\n",
+							"    'Quantity',\r\n",
+							"    'CostInBillingCurrency',\r\n",
+							"    'EffectivePrice',\r\n",
+							"    'ActiveWBS',\r\n",
+							"    'ActiveWBSReason',\r\n",
+							"    'ai_VMName',\r\n",
+							"    'AppID',\r\n",
+							"    'Application_Name',\r\n",
+							"    'ChargeType',\r\n",
+							"    'ConsumedService',\r\n",
+							"    'MeterSubCategory',\r\n",
+							"    'PricingModel',\r\n",
+							"    'CostAllocationCode',\r\n",
+							"    'CostAllocationType',\r\n",
+							"    'IsRIUsage',\r\n",
+							"    'ResourceLocation',\r\n",
+							"    'ServiceFamily',\r\n",
+							"    'SubscriptionId',\r\n",
+							"    'MeterCategory',\r\n",
+							"    'MeterName',\r\n",
+							"    'MeterRegion',\r\n",
+							"    'SubscriptionName',\r\n",
+							"    'SubscriptionWBS',\r\n",
+							"    'UnitOfMeasure',\r\n",
+							"    'ResourceGroup',\r\n",
+							"    'ResourceId',\r\n",
+							"    'ResourceName',\r\n",
+							"    'ReservationName',\r\n",
+							"    'ai_VCPUs',\r\n",
+							"    'ai_ServiceType',\r\n",
+							"    'WindowsAHB',\r\n",
+							"    'SQLAHB',\r\n",
+							"    'WindowsAHB_VCPUS',\r\n",
+							"    'SQLAHB_VCPUS',\r\n",
+							"    'CPUHours'\r\n",
+							"]\r\n",
+							"\r\n",
+							"df_schema_extended = df_schema_extended.select(*columns_to_keep) \r\n",
+							"\r\n",
+							"df_schema_extended = df_schema_extended.withColumn('Report_Date',lit('') )\r\n",
+							"df_schema_extended = df_schema_extended.withColumn('Report_Date_Partition',lit('') )"
+						],
+						"outputs": [],
+						"execution_count": 3
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"print(len(columns_to_keep))"
+						],
+						"outputs": [],
+						"execution_count": 4
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Load all ACMMonthlyAmortizedCost data and append to one dataframe."
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"# Create a SparkSession\r\n",
+							"spark = SparkSession.builder.getOrCreate()\r\n",
+							"\r\n",
+							"# Define an empty schema\r\n",
+							"schema = df_schema_extended.schema\r\n",
+							"\r\n",
+							"# Create an empty DataFrame with the specified schema\r\n",
+							"df = spark.createDataFrame([], schema)\r\n",
+							"\r\n",
+							"# Define the root path\r\n",
+							"root_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost\"\r\n",
+							"\r\n",
+							"# Collect all the folders under this root path\r\n",
+							"folders = mssparkutils.fs.ls(root_path)\r\n",
+							"\r\n",
+							"\r\n",
+							"for folder in folders:\r\n",
+							"    # Collect all file path from the folder\r\n",
+							"        datetime_str = folder.name[0:8]\r\n",
+							"        year = int(datetime_str[0:4])\r\n",
+							"        month = int(datetime_str[4:6])\r\n",
+							"        day = int(datetime_str[6:8])\r\n",
+							"        timestamp = pd.Timestamp(year=year, month=month, day=day).date()\r\n",
+							"        if timestamp > date_one_year_ago:\r\n",
+							"            file_paths = mssparkutils.fs.ls(root_path +'/'+ str(folder.name))\r\n",
+							"            for file_path in file_paths:\r\n",
+							"                # Focus on parquet file not csv file\r\n",
+							"                if 'Extended_v3' in file_path.name:\r\n",
+							"                    try:\r\n",
+							"                        # Add a Report date column in the dataframe\r\n",
+							"                        date = pd.to_datetime(folder.path.split('/')[-1].split('-')[0],format=\"%Y/%m/%d\")\r\n",
+							"                        df_temp = spark.read.format('parquet').load(file_path.path).select(*columns_to_keep) \r\n",
+							"                        print(date)\r\n",
+							"                        print(\"Filepath:\", file_path.path)\r\n",
+							"                        df_temp = df_temp.withColumn('Report_Date', lit(date))\r\n",
+							"                        df_temp = df_temp.withColumn('Report_Date_Partition', lit(date))\r\n",
+							"                        # Append the dataframe\r\n",
+							"                        df = df.union(df_temp)\r\n",
+							"                    except Exception as e:\r\n",
+							"                        # Exclude the extended files that are developed by David.\r\n",
+							"                        print(\"Those files will not be read\",file_path.path)\r\n",
+							"                        print(df_temp.columns)\r\n",
+							"                        print(df)\r\n",
+							"                        print(len(df_temp.columns),len(df.columns))\r\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": 5
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Display the dataframe"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Change the data type of the 'Report_Date' column to Datetime\r\n",
+							"df = df.withColumn(\"Report_Date\", col(\"Report_Date\").cast(\"timestamp\"))"
+						],
+						"outputs": [],
+						"execution_count": 6
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Change the column name\r\n",
+							"df = df.withColumnRenamed(\"Application_Name\", \"ApplicationName\")"
+						],
+						"outputs": [],
+						"execution_count": 7
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Save it to optimized container"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Define optimized path to save the data\r\n",
+							"optimized_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_OneYear.parquet\" \r\n",
+							"\r\n",
+							"# Save the data with partitioned by Report date\r\n",
+							"df.write.format('parquet').mode('overwrite').partitionBy('Report_Date_Partition').option('overwriteSchema', 'true').save(optimized_path)"
+						],
+						"outputs": [],
+						"execution_count": 8
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Prod_Extended_Amortized_Cost-Threeyears')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"description": "\n",
+				"folder": {
+					"name": "NotebookInProduction"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "[parameters('Prod_Extended_Amortized_Cost-Threeyears_notebookSparkPoolNameRef')]",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "112g",
+					"driverCores": 16,
+					"executorMemory": "112g",
+					"executorCores": 16,
+					"numExecutors": 1,
+					"runAsWorkspaceSystemIdentity": false,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "4",
+						"spark.autotune.trackingId": "5de80260-3c4b-4f8d-920a-9ce7cf296484"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "[parameters('Prod_Extended_Amortized_Cost-Threeyears_notebookSparkPoolIdRef')]",
+						"name": "[parameters('Prod_Extended_Amortized_Cost-Threeyears_notebookSparkPoolNameRef')]",
+						"type": "Spark",
+						"endpoint": "[parameters('Prod_Extended_Amortized_Cost-Threeyears_notebookSparkPoolEndpointRef')]",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 16,
+						"memory": 112,
+						"automaticScaleJobs": true
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"This notebook is used to extract all extended amortized cost files from storage account as dataframes and append them into one single dataframe.\r\n",
+							"\r\n",
+							"The purpose is to make PBI desktop convenient and faster to load the data. \r\n",
+							"\r\n",
+							"The appended data is considered as a large dataset with more than a hundred million rows and multiple columns. \r\n",
+							"\r\n",
+							"To reduce the size of the data, it has been aggregated to limited columns and a three years period have been selected. This has been verified and confirmed by the end-users (WBS owners).\r\n",
+							"\r\n",
+							""
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": 11
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Import Libraries"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"import pandas as pd \r\n",
+							"import pyspark.pandas as ps\r\n",
+							"from pyspark.sql import SparkSession\r\n",
+							"from pyspark.sql import functions as F\r\n",
+							"from pyspark.sql.functions import col\r\n",
+							"from pyspark.sql.types import StructType\r\n",
+							"from pyspark.sql.functions import lit\r\n",
+							"from pyspark.sql.functions import year, month\r\n",
+							"from notebookutils import mssparkutils\r\n",
+							"from datetime import datetime, timedelta\r\n",
+							"from pyspark.sql.functions import when\r\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": 12
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Load the data"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Collect the data schema"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
 							"# Identify a three years period\r\n",
 							"date_three_years_ago = datetime.now().date()-timedelta(days=1095)\r\n",
 							"\r\n",
@@ -35070,7 +35112,7 @@
 							"df_schema_extended = df_schema_extended.withColumn('Report_Date_Partition',lit('') )"
 						],
 						"outputs": [],
-						"execution_count": 3
+						"execution_count": 13
 					},
 					{
 						"cell_type": "markdown",
@@ -35145,7 +35187,7 @@
 							"                        print(len(df_temp.columns),len(df.columns))"
 						],
 						"outputs": [],
-						"execution_count": 22
+						"execution_count": 14
 					},
 					{
 						"cell_type": "markdown",
@@ -35178,7 +35220,7 @@
 							"df = df.withColumnRenamed(\"Application_Name\", \"ApplicationName\")"
 						],
 						"outputs": [],
-						"execution_count": 23
+						"execution_count": 15
 					},
 					{
 						"cell_type": "markdown",
@@ -35210,11 +35252,50 @@
 							}
 						},
 						"source": [
-							"# Aggregate the data\r\n",
-							"df_agg = df.groupBy('SubscriptionId','ApplicationName','SubscriptionName','CostCenter','ResourceGroup','ResourceLocation','ResourceName','MeterName','MeterCategory','MeterSubCategory','Report_Date','Report_Date_Partition','SubscriptionServiceNow-App','ActiveWBS','CostAllocationType','AppID','Date').agg(F.sum('Quantity').alias('TotalQuantity'),F.sum('CostInBillingCurrency').alias('CostInKroner'))"
+							"selected_cols = [\r\n",
+							"    'SubscriptionId',\r\n",
+							"    'ApplicationName',\r\n",
+							"    'SubscriptionName',\r\n",
+							"    'CostCenter',\r\n",
+							"    'ResourceGroup',\r\n",
+							"    'ResourceLocation',\r\n",
+							"    'ResourceName',\r\n",
+							"    'MeterName',\r\n",
+							"    'MeterCategory',\r\n",
+							"    'MeterSubCategory',\r\n",
+							"    'Report_Date',\r\n",
+							"    'Report_Date_Partition',\r\n",
+							"    'SubscriptionServiceNow-App',\r\n",
+							"    'ActiveWBS',\r\n",
+							"    'ActiveWBSReason',\r\n",
+							"    'CostAllocationType',\r\n",
+							"    'AppID',\r\n",
+							"    'Date'\r\n",
+							"]"
 						],
 						"outputs": [],
-						"execution_count": 24
+						"execution_count": 20
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"df_agg = df \\\r\n",
+							"    .groupBy(*selected_cols) \\\r\n",
+							"    .agg(F.sum('Quantity').alias('TotalQuantity'),F.sum('CostInBillingCurrency').alias('CostInKroner'))"
+						],
+						"outputs": [],
+						"execution_count": 21
 					},
 					{
 						"cell_type": "code",
@@ -35234,7 +35315,7 @@
 							"df_agg = df_agg.withColumn(\"Report_Date_Partition\", col(\"Report_Date_Partition\").cast(\"timestamp\"))"
 						],
 						"outputs": [],
-						"execution_count": 25
+						"execution_count": 22
 					},
 					{
 						"cell_type": "code",
@@ -35255,7 +35336,7 @@
 							"df_agg = df_agg.withColumn(\"month_partition\", month(df_agg[\"Report_Date_Partition\"]))"
 						],
 						"outputs": [],
-						"execution_count": 26
+						"execution_count": 23
 					},
 					{
 						"cell_type": "markdown",
@@ -35288,7 +35369,7 @@
 							"df_agg = df_agg.withColumn(\"Report_Date\", col(\"Report_Date\").cast(\"timestamp\"))"
 						],
 						"outputs": [],
-						"execution_count": 27
+						"execution_count": 24
 					},
 					{
 						"cell_type": "code",
@@ -35305,16 +35386,38 @@
 						},
 						"source": [
 							"# Select the columns needed for visualization\r\n",
-							"selected_columns = ['SubscriptionId','ApplicationName','SubscriptionName','CostCenter','ResourceGroup','ResourceLocation','ResourceName','MeterName','MeterCategory','MeterSubCategory', \r\n",
-							" 'Report_Date',\r\n",
-							" 'TotalQuantity',\r\n",
-							" 'CostInKroner',\r\n",
-							" 'year_partition',\r\n",
-							" 'month_partition','SubscriptionServiceNow-App','ActiveWBS','CostAllocationType','AppID','Date']\r\n",
-							"df_agg = df_agg.select(*selected_columns)"
+							"new_cols = [\r\n",
+							"    'TotalQuantity',\r\n",
+							"    'CostInKroner',\r\n",
+							"    'month_partition',\r\n",
+							"    'year_partition'\r\n",
+							"]\r\n",
+							"\r\n",
+							"selected_cols.remove('Report_Date_Partition')\r\n",
+							"\r\n",
+							"selected_cols = selected_cols + new_cols"
 						],
 						"outputs": [],
-						"execution_count": 28
+						"execution_count": 25
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"df_agg = df_agg.select(*selected_cols)"
+						],
+						"outputs": [],
+						"execution_count": 26
 					},
 					{
 						"cell_type": "markdown",
@@ -35353,7 +35456,7 @@
 							"#df_agg.write.format('parquet').mode('overwrite').partitionBy('Report_date).option('overwriteSchema', 'true').save(optimized_path)"
 						],
 						"outputs": [],
-						"execution_count": 29
+						"execution_count": 27
 					},
 					{
 						"cell_type": "markdown",
@@ -35383,10 +35486,10 @@
 						},
 						"source": [
 							"currentSparkSession = SparkSession.builder.getOrCreate()\r\n",
-							"spark.catalog.clearCache()"
+							"currentSparkSession.catalog.clearCache()"
 						],
 						"outputs": [],
-						"execution_count": 30
+						"execution_count": 28
 					}
 				]
 			},
@@ -38672,7 +38775,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "4fb58acf-203f-4e27-8e67-4405c45b49eb"
+						"spark.autotune.trackingId": "c6142327-ecb7-4b9c-922d-693a986781c0"
 					}
 				},
 				"metadata": {
@@ -38697,8 +38800,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -38727,7 +38829,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"import pyspark.sql.window as W\r\n",
@@ -40523,7 +40624,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "f00e40dc-0c93-4478-9ecf-c56c5cb336f4"
+						"spark.autotune.trackingId": "e8229b86-358e-46b5-a721-e7391deab8c6"
 					}
 				},
 				"metadata": {
@@ -41348,7 +41449,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "19558068-0d11-49f7-b585-c195a2807896"
+						"spark.autotune.trackingId": "20460d15-faca-406d-86ae-0a2bab8f2ed6"
 					}
 				},
 				"metadata": {
@@ -41373,7 +41474,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -44153,44 +44255,6 @@
 			},
 			"dependsOn": [],
 			"location": "northeurope"
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/Daily at 4am')]",
-			"type": "Microsoft.Synapse/workspaces/triggers",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Started",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "compute-hub-and-ri-savings",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Day",
-						"interval": 1,
-						"startTime": "2024-02-01T04:00:00",
-						"timeZone": "W. Europe Standard Time",
-						"schedule": {
-							"minutes": [
-								0
-							],
-							"hours": [
-								4
-							]
-						}
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/pipelines/compute-hub-and-ri-savings')]"
-			]
 		}
 	]
 }
