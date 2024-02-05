@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "ef8a248f-4687-4e0b-b89a-370680f997d4"
+				"spark.autotune.trackingId": "1578435c-0eb5-4ecc-bed3-245bd0c7f74b"
 			}
 		},
 		"metadata": {
@@ -93,7 +93,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 1
+				"execution_count": 3
 			},
 			{
 				"cell_type": "markdown",
@@ -328,8 +328,46 @@
 					}
 				},
 				"source": [
-					"# Aggregate the data\r\n",
-					"df_agg = df.groupBy('SubscriptionId','ApplicationName','SubscriptionName','CostCenter','ResourceGroup','ResourceLocation','ResourceName','MeterName','MeterCategory','MeterSubCategory','Report_Date','Report_Date_Partition','SubscriptionServiceNow-App','ActiveWBS','CostAllocationType','AppID','Date').agg(F.sum('Quantity').alias('TotalQuantity'),F.sum('CostInBillingCurrency').alias('CostInKroner'))"
+					"selected_cols = [\r\n",
+					"    'SubscriptionId',\r\n",
+					"    'ApplicationName',\r\n",
+					"    'SubscriptionName',\r\n",
+					"    'CostCenter',\r\n",
+					"    'ResourceGroup',\r\n",
+					"    'ResourceLocation',\r\n",
+					"    'ResourceName',\r\n",
+					"    'MeterName',\r\n",
+					"    'MeterCategory',\r\n",
+					"    'MeterSubCategory',\r\n",
+					"    'Report_Date',\r\n",
+					"    'Report_Date_Partition',\r\n",
+					"    'SubscriptionServiceNow-App',\r\n",
+					"    'ActiveWBS',\r\n",
+					"    'ActiveWBSReason'\r\n",
+					"    'CostAllocationType',\r\n",
+					"    'AppID',\r\n",
+					"    'Date'\r\n",
+					"]"
+				],
+				"execution_count": 7
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"df_agg = df\r\n",
+					"    .groupBy(*selected_cols)\r\n",
+					"    .agg(F.sum('Quantity').alias('TotalQuantity'),F.sum('CostInBillingCurrency').alias('CostInKroner'))"
 				],
 				"execution_count": 24
 			},
@@ -419,15 +457,36 @@
 				},
 				"source": [
 					"# Select the columns needed for visualization\r\n",
-					"selected_columns = ['SubscriptionId','ApplicationName','SubscriptionName','CostCenter','ResourceGroup','ResourceLocation','ResourceName','MeterName','MeterCategory','MeterSubCategory', \r\n",
-					" 'Report_Date',\r\n",
-					" 'TotalQuantity',\r\n",
-					" 'CostInKroner',\r\n",
-					" 'year_partition',\r\n",
-					" 'month_partition','SubscriptionServiceNow-App','ActiveWBS','CostAllocationType','AppID','Date']\r\n",
-					"df_agg = df_agg.select(*selected_columns)"
+					"new_cols = [\r\n",
+					"    'TotalQuantity',\r\n",
+					"    'CostInKroner',\r\n",
+					"    'month_partition',\r\n",
+					"    'year_partition'\r\n",
+					"]\r\n",
+					"\r\n",
+					"selected_cols.remove('Report_Date_Partition')\r\n",
+					"\r\n",
+					"selected_cols = selected_cols + new_cols"
 				],
-				"execution_count": 28
+				"execution_count": 8
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"df_agg = df_agg.select(*selected_cols)"
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",
@@ -495,7 +554,7 @@
 				},
 				"source": [
 					"currentSparkSession = SparkSession.builder.getOrCreate()\r\n",
-					"spark.catalog.clearCache()"
+					"currentSparkSession.catalog.clearCache()"
 				],
 				"execution_count": 30
 			}
