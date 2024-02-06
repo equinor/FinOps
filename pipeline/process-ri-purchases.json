@@ -1,0 +1,348 @@
+{
+	"name": "process-ri-purchases",
+	"properties": {
+		"activities": [
+			{
+				"name": "Transform RI Purchaes to parquet",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFolderPath": "portal-export/FinOps-ReservationTransactions-Daily/*/*",
+							"wildcardFileName": "*.csv",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings",
+							"copyBehavior": "MergeFiles"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "AccountName",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "AccountName",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "AccountOwnerEmail",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "AccountOwnerEmail",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "Amount",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "Amount",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ArmSkuName",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "ArmSkuName",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "BillingFrequency",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "BillingFrequency",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "BillingMonth",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "BillingMonth",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "CostCenter",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "CostCenter",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "Currency",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "Currency",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "CurrentEnrollmentId",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "CurrentEnrollmentId",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "DepartmentName",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "DepartmentName",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "Description",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "Description",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "EventDate",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "EventDate",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "EventType",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "EventType",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "MonetaryCommitment",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "MonetaryCommitment",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "Overage",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "Overage",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "PurchasingSubscriptionGuid",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "PurchasingSubscriptionGuid",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "PurchasingSubscriptionName",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "PurchasingSubscriptionName",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "PurchasingEnrollment",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "PurchasingEnrollment",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "Quantity",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "Quantity",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "Region",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "Region",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ReservationOrderId",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "ReservationOrderId",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ReservationOrderName",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "ReservationOrderName",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "Term",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "Term",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "RIPurchasesSource",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "RIPurchaseSink",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "PipelinesInProduction/HUB and RI"
+		},
+		"annotations": []
+	}
+}
