@@ -1,0 +1,25 @@
+{
+	"name": "ri-purchases-update-trigger",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Started",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "process-ri-purchases",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "BlobEventsTrigger",
+		"typeProperties": {
+			"blobPathBeginsWith": "/reservations/blobs/portal-export/FinOps-ReservationTransactions-Daily",
+			"blobPathEndsWith": "manifest.json",
+			"ignoreEmptyBlobs": true,
+			"scope": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt",
+			"events": [
+				"Microsoft.Storage.BlobCreated"
+			]
+		}
+	}
+}
