@@ -1,0 +1,20 @@
+{
+	"name": "SQL script 51",
+	"properties": {
+		"folder": {
+			"name": "Reservation - Saving Plan Queries"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    TOP 10 \n    UnitPrice, \n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/20240101-20240131/Extended_v3_ACMMonthlyActualCost_20240101-20240131.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where benefitName like 'Compute%'\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
