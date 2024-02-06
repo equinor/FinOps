@@ -181,6 +181,14 @@
 			"type": "string",
 			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
 		},
+		"RIPurchaseSink_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
+		},
+		"RIPurchasesSource_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
+		},
 		"ReservationFileTransform_dst_dataSetLinkedServiceName": {
 			"type": "string",
 			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
@@ -18412,6 +18420,365 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/process-ri-purchases')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Transform RI Purchaes to parquet",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"wildcardFolderPath": "portal-export/FinOps-ReservationTransactions-Daily/*/*",
+									"wildcardFileName": "*.csv",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings",
+									"copyBehavior": "MergeFiles"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "AccountName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "AccountName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "AccountOwnerEmail",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "AccountOwnerEmail",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Amount",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Amount",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ArmSkuName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ArmSkuName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "BillingFrequency",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "BillingFrequency",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "BillingMonth",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "BillingMonth",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "CostCenter",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "CostCenter",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Currency",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Currency",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "CurrentEnrollmentId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "CurrentEnrollmentId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "DepartmentName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "DepartmentName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Description",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Description",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "EventDate",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "EventDate",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "EventType",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "EventType",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "MonetaryCommitment",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "MonetaryCommitment",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Overage",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Overage",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "PurchasingSubscriptionGuid",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "PurchasingSubscriptionGuid",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "PurchasingSubscriptionName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "PurchasingSubscriptionName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "PurchasingEnrollment",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "PurchasingEnrollment",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Quantity",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Quantity",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Region",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Region",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ReservationOrderId",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ReservationOrderId",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ReservationOrderName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ReservationOrderName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Term",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Term",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "RIPurchasesSource",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "RIPurchaseSink",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "PipelinesInProduction/HUB and RI"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/RIPurchasesSource')]",
+				"[concat(variables('workspaceId'), '/datasets/RIPurchaseSink')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/process-wbs-owners')]",
 			"type": "Microsoft.Synapse/workspaces/pipelines",
 			"apiVersion": "2019-06-01-preview",
@@ -20282,6 +20649,61 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/linkedServices/', parameters('Parquet_for_Deletion_dataSetLinkedServiceName'))]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/RIPurchaseSink')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('RIPurchaseSink_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "ri-purchases.parquet",
+						"folderPath": "ri",
+						"fileSystem": "usage"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('RIPurchaseSink_dataSetLinkedServiceName'))]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/RIPurchasesSource')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('RIPurchasesSource_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "part0.csv",
+						"folderPath": "portal-export/FinOps-ReservationTransactions-Daily/20240201-20240229/db8b3a9e-1da2-4c77-ad16-30ef41ac4503",
+						"fileSystem": "reservations"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('RIPurchasesSource_dataSetLinkedServiceName'))]"
 			]
 		},
 		{
@@ -22951,6 +23373,37 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/ri-purchases-update-trigger')]",
+			"type": "Microsoft.Synapse/workspaces/triggers",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "process-ri-purchases",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "BlobEventsTrigger",
+				"typeProperties": {
+					"blobPathBeginsWith": "/reservations/blobs/portal-export/FinOps-ReservationTransactions-Daily",
+					"blobPathEndsWith": "manifest.json",
+					"ignoreEmptyBlobs": true,
+					"scope": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt",
+					"events": [
+						"Microsoft.Storage.BlobCreated"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/process-ri-purchases')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/ri-recommendation-update-trigger')]",
 			"type": "Microsoft.Synapse/workspaces/triggers",
 			"apiVersion": "2019-06-01-preview",
@@ -24540,6 +24993,29 @@
 					},
 					"currentConnection": {
 						"databaseName": "master",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/CreateRIPurchasesView')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "PowerBIViews"
+				},
+				"content": {
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW RIPurchases\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/ri/ri-purchases.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
 						"poolName": "Built-in"
 					},
 					"resultLimit": 5000
@@ -34513,7 +34989,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "24cef0e9-4f3e-46dc-8a26-88a88c6b8f14"
+						"spark.autotune.trackingId": "8f0fe5b4-3fcb-4b50-bd26-e104db820875"
 					}
 				},
 				"metadata": {
@@ -34538,8 +35014,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -34725,25 +35200,6 @@
 						],
 						"outputs": [],
 						"execution_count": 3
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"print(len(columns_to_keep))"
-						],
-						"outputs": [],
-						"execution_count": 4
 					},
 					{
 						"cell_type": "markdown",
@@ -34941,7 +35397,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "5de80260-3c4b-4f8d-920a-9ce7cf296484"
+						"spark.autotune.trackingId": "7d27d9eb-8551-4d5d-9034-708e18a641dd"
 					}
 				},
 				"metadata": {
@@ -34966,8 +35422,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -40624,7 +41079,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "e8229b86-358e-46b5-a721-e7391deab8c6"
+						"spark.autotune.trackingId": "f670722e-df29-4b32-9619-3dee7a10c102"
 					}
 				},
 				"metadata": {
@@ -40649,8 +41104,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -40679,7 +41133,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"def get_last_day_prev_month(to_date):\r\n",
 							"    current_month = int(to_date[4:6])\r\n",
@@ -41449,7 +41902,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "20460d15-faca-406d-86ae-0a2bab8f2ed6"
+						"spark.autotune.trackingId": "19558068-0d11-49f7-b585-c195a2807896"
 					}
 				},
 				"metadata": {
@@ -41474,8 +41927,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
