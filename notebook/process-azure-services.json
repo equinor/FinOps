@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "a571076a-2aaa-459d-a39a-073f6e4dfa02"
+				"spark.autotune.trackingId": "fe840693-d659-43d1-830c-a6aaf479ac74"
 			}
 		},
 		"metadata": {
@@ -85,7 +85,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 55
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -93,7 +93,7 @@
 					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 56
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -117,45 +117,7 @@
 					"                'escape' : '\"'}\r\n",
 					"service_df = spark.read.options(**csv_options).csv(service_path)"
 				],
-				"execution_count": 103
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"service_df = service_df.withColumn('service_join_key', F.lower(F.concat(F.col('ResourceType'), F.lit('-'), F.col('ServiceName'))))"
-				],
-				"execution_count": 58
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"service_df = service_df.withColumnRenamed('Service Model', 'ServiceModel')\r\n",
-					"service_df = service_df.select('service_join_key', 'ServiceModel')\r\n",
-					"service_df = service_df.dropDuplicates([\"service_join_key\", \"ServiceModel\"])"
-				],
-				"execution_count": 59
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -172,9 +134,70 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(service_df.groupBy('ResourceType', 'Service Model').count().filter(F.col(\"count\") > 1))"
+					"display(service_df)"
 				],
-				"execution_count": 104
+				"execution_count": 7
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# service_df = service_df.withColumn('service_join_key', F.lower(F.concat(F.col('ResourceType'), F.lit('-'), F.col('ServiceName'))))\r\n",
+					"# service_df = service_df.withColumnRenamed('Service Model', 'ServiceModel')\r\n",
+					"# service_df = service_df.select('service_join_key', 'ServiceModel')\r\n",
+					"# service_df = service_df.dropDuplicates([\"service_join_key\", \"ServiceModel\"])"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"service_df = service_df.withColumnRenamed('Service Model', 'ServiceModel')\r\n",
+					"service_df = service_df.withColumn('ResourceType', F.lower('ResourceType'))\r\n",
+					"service_df = service_df.select('ResourceType', 'ServiceModel')\r\n",
+					"service_df = service_df.dropDuplicates([\"ResourceType\", \"ServiceModel\"])"
+				],
+				"execution_count": 12
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(service_df.groupBy('ResourceType', 'ServiceModel').count().filter(F.col(\"count\") > 1))"
+				],
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -192,9 +215,9 @@
 				"source": [
 					"cost_df = cost_df.withColumn('temp_resource_id', F.lower(F.col('ResourceId')))\r\n",
 					"cost_df = cost_df.withColumn('ResourceType', F.regexp_extract('temp_resource_id', '/providers/(.*)/', 1))\r\n",
-					"cost_df = cost_df.withColumn('cost_join_key', F.lower(F.concat(F.col('ResourceType'), F.lit('-'), F.col('MeterCategory'))))"
+					"# cost_df = cost_df.withColumn('cost_join_key', F.lower(F.concat(F.col('ResourceType'), F.lit('-'), F.col('MeterCategory'))))"
 				],
-				"execution_count": 60
+				"execution_count": 15
 			},
 			{
 				"cell_type": "code",
@@ -210,9 +233,9 @@
 					}
 				},
 				"source": [
-					"joined_df = cost_df.join(service_df, cost_df.cost_join_key == service_df.service_join_key, how='left')"
+					"joined_df = cost_df.join(service_df, cost_df.ResourceType == service_df.ResourceType, how='left')"
 				],
-				"execution_count": 61
+				"execution_count": 16
 			},
 			{
 				"cell_type": "code",
@@ -231,7 +254,7 @@
 				"source": [
 					"display(joined_df.where(F.col('ServiceModel').isNull()))"
 				],
-				"execution_count": 67
+				"execution_count": 17
 			},
 			{
 				"cell_type": "code",
@@ -250,7 +273,7 @@
 				"source": [
 					"display(service_df.where(F.lower(F.col('ResourceType')) == 'microsoft.compute/virtualmachines'))"
 				],
-				"execution_count": 98
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -269,7 +292,7 @@
 				"source": [
 					"display(cost_df.select('MeterCategory').distinct())"
 				],
-				"execution_count": 81
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -288,7 +311,7 @@
 				"source": [
 					"display(service_df.select('ServiceCategory').distinct())"
 				],
-				"execution_count": 80
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -307,7 +330,7 @@
 				"source": [
 					"display(service_df.select('ServiceName').distinct())"
 				],
-				"execution_count": 79
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -325,7 +348,7 @@
 				"source": [
 					"print(setA)"
 				],
-				"execution_count": 91
+				"execution_count": null
 			}
 		]
 	}
