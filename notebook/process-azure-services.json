@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "9cdb486f-bd0b-4f8e-a2c7-7af83195e872"
+				"spark.autotune.trackingId": "a571076a-2aaa-459d-a39a-073f6e4dfa02"
 			}
 		},
 		"metadata": {
@@ -67,7 +67,7 @@
 				"source": [
 					"import pyspark.sql.functions as F"
 				],
-				"execution_count": 54
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -117,7 +117,7 @@
 					"                'escape' : '\"'}\r\n",
 					"service_df = spark.read.options(**csv_options).csv(service_path)"
 				],
-				"execution_count": 65
+				"execution_count": 103
 			},
 			{
 				"cell_type": "code",
@@ -172,9 +172,9 @@
 					"collapsed": false
 				},
 				"source": [
-					"# display(service_df.groupBy('JoinKey', 'ServiceModel').count().filter(F.col(\"count\") > 1))"
+					"display(service_df.groupBy('ResourceType', 'Service Model').count().filter(F.col(\"count\") > 1))"
 				],
-				"execution_count": 41
+				"execution_count": 104
 			},
 			{
 				"cell_type": "code",
