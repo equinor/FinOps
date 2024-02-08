@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "775b2220-0da3-4175-95b9-549543441957"
+				"spark.autotune.trackingId": "a4691477-74ce-42ff-ba28-f0e690fab9e1"
 			}
 		},
 		"metadata": {
@@ -289,13 +289,12 @@
 						"transient": {
 							"deleting": false
 						}
-					},
-					"collapsed": false
+					}
 				},
 				"source": [
-					"display(joined_df)"
+					"joined_df = joined_df.join(ambig_df, (joined_df.ResourceType == ambig_df.ambig_service_ResourceType) & (joined_df.MeterCategory == ambig_df.ambig_ServiceName), how='left').drop('ambig_service_ResourceType')"
 				],
-				"execution_count": 145
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
