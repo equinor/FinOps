@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "df945593-5fa6-4341-a6d7-ddc3139fb840"
+				"spark.autotune.trackingId": "4f8206cc-1e5d-43f5-bc92-391d9b792fcb"
 			}
 		},
 		"metadata": {
@@ -312,7 +312,13 @@
 				"source": [
 					"joined_df = joined_df.withColumn('ServiceModel', F.when(F.col('unambig_ServiceModel').isNotNull(), F.col('unambig_ServiceModel')).otherwise(F.col('ambig_ServiceModel')))\r\n",
 					"joined_df = joined_df.withColumn('ServiceName', F.when(F.col('unambig_ServiceName').isNotNull(), F.col('unambig_ServiceName')).otherwise(F.col('ambig_ServiceName')))\r\n",
-					"joined_df = joined_df.withColumn('ServiceName', F.when(F.col('unambig_ServiceCategory').isNotNull(), F.col('unambig_ServiceCategory')).otherwise(F.col('ambig_ServiceCategory')))"
+					"joined_df = joined_df.withColumn('ServiceName', F.when(F.col('unambig_ServiceCategory').isNotNull(), F.col('unambig_ServiceCategory')).otherwise(F.col('ambig_ServiceCategory')))\r\n",
+					"\r\n",
+					"# Drop ambig/unambig columns\r\n",
+					"\r\n",
+					"# Join on meter sub category\r\n",
+					"\r\n",
+					"# drop columns again"
 				],
 				"execution_count": 146
 			},
