@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "bc8bfda8-4512-46a0-b111-8d9e7bf6ff53"
+				"spark.autotune.trackingId": "48d62cec-9f5d-46e6-a315-277842a8f5e1"
 			}
 		},
 		"metadata": {
@@ -354,9 +354,28 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(joined_df.where(F.col('ServiceModel').isNotNull()).select('MeterSubCategory', 'ResourceType').distinct())"
+					"display(joined_df)"
 				],
-				"execution_count": 245
+				"execution_count": 247
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(joined_df.where(F.col('ServiceModel').isNull()).select('MeterSubCategory', 'ResourceType').distinct())"
+				],
+				"execution_count": 246
 			},
 			{
 				"cell_type": "code",
