@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "48d62cec-9f5d-46e6-a315-277842a8f5e1"
+				"spark.autotune.trackingId": "9119af6b-7ede-4d68-9f4d-b61c41755d33"
 			}
 		},
 		"metadata": {
@@ -67,7 +67,7 @@
 				"source": [
 					"import pyspark.sql.functions as F"
 				],
-				"execution_count": 154
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -85,7 +85,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 230
+				"execution_count": 7
 			},
 			{
 				"cell_type": "code",
@@ -93,7 +93,7 @@
 					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 231
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -117,7 +117,7 @@
 					"                'escape' : '\"'}\r\n",
 					"service_df = spark.read.options(**csv_options).csv(service_path)"
 				],
-				"execution_count": 232
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -133,10 +133,11 @@
 					}
 				},
 				"source": [
+					"# Remove duplicate rows by groupBy+count\r\n",
 					"service_df = service_df.withColumn('service_ResourceType', F.lower('ResourceType'))\r\n",
 					"service_df = service_df.groupBy('service_ResourceType','ServiceName','ServiceCategory', 'ServiceModel').count().drop('count')"
 				],
-				"execution_count": 233
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -152,11 +153,16 @@
 					}
 				},
 				"source": [
+					"# Count number of distinct resourcetypes in dataset\r\n",
 					"count_df = service_df.groupBy('service_ResourceType').count()\r\n",
 					"\r\n",
+					"# Separate services with unique resource types (unambiguous in terms of service type) - i.e where the count of resource types is 1\r\n",
 					"unambig_df = count_df.filter(count_df['count'] == 1).join(service_df, 'service_ResourceType').drop('count')\r\n",
+					"\r\n",
+					"# Separate services with ambiguity in terms of service types - i.e where the count of resource types is greater than 0\r\n",
 					"ambig_df = count_df.filter(count_df['count'] > 1).join(service_df, 'service_ResourceType').drop('count')\r\n",
 					"\r\n",
+					"# Add prefix to service datasets for joining purposes\r\n",
 					"unambig_prefix = 'unambig_'\r\n",
 					"for col in unambig_df.columns:\r\n",
 					"    unambig_df = unambig_df.withColumnRenamed(col, unambig_prefix + col)\r\n",
@@ -165,7 +171,7 @@
 					"for col in ambig_df.columns:\r\n",
 					"    ambig_df = ambig_df.withColumnRenamed(col, unambig_prefix + col)"
 				],
-				"execution_count": 234
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -181,10 +187,11 @@
 					}
 				},
 				"source": [
+					"# Extract resource type from resource id\r\n",
 					"cost_df = cost_df.withColumn('temp_resource_id', F.lower(F.col('ResourceId')))\r\n",
 					"cost_df = cost_df.withColumn('ResourceType', F.regexp_extract('temp_resource_id', '/providers/([^/]+/[^/]+)', 1)).drop('temp_resource_id')"
 				],
-				"execution_count": 235
+				"execution_count": 12
 			},
 			{
 				"cell_type": "code",
@@ -200,287 +207,28 @@
 					}
 				},
 				"source": [
-					"joined_df = cost_df.join(unambig_df, cost_df.ResourceType == unambig_df.unambig_service_ResourceType, how='left').drop('unambig_service_ResourceType')"
-				],
-				"execution_count": 236
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(joined_df.where(F.col('unambig_ServiceModel').isNull()).agg(F.sum('CostInBillingCurrency').alias('total')).select(F.format_number('total', 0)))"
-				],
-				"execution_count": 238
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"joined_df = joined_df.join(ambig_df, (joined_df.ResourceType == ambig_df.ambig_service_ResourceType) & (joined_df.MeterCategory == ambig_df.ambig_ServiceName), how='left').drop('ambig_service_ResourceType')"
-				],
-				"execution_count": 239
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"joined_df = joined_df.withColumn('ServiceModel', F.when(F.col('unambig_ServiceModel').isNotNull(), F.col('unambig_ServiceModel')).otherwise(F.col('ambig_ServiceModel')))\r\n",
-					"joined_df = joined_df.withColumn('ServiceName', F.when(F.col('unambig_ServiceName').isNotNull(), F.col('unambig_ServiceName')).otherwise(F.col('ambig_ServiceName')))\r\n",
-					"joined_df = joined_df.withColumn('ServiceCategory', F.when(F.col('unambig_ServiceCategory').isNotNull(), F.col('unambig_ServiceCategory')).otherwise(F.col('ambig_ServiceCategory')))\r\n",
-					"joined_df = joined_df.drop('ambig_ServiceModel', 'ambig_ServiceName', 'ambig_ServiceCategory', 'unambig_ServiceModel', 'unambig_ServiceName', 'unambig_ServiceCategory')"
-				],
-				"execution_count": 240
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"joined_df = joined_df.join(ambig_df, (joined_df.ResourceType == ambig_df.ambig_service_ResourceType) & (joined_df.MeterSubCategory == ambig_df.ambig_ServiceName), how='left').drop('ambig_service_ResourceType')"
-				],
-				"execution_count": 242
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"joined_df = joined_df.withColumn('ServiceModel', F.when(F.col('ServiceModel').isNotNull(), F.col('ServiceModel')).otherwise(F.col('ambig_ServiceModel')))\r\n",
-					"joined_df = joined_df.withColumn('ServiceName', F.when(F.col('ServiceName').isNotNull(), F.col('ServiceName')).otherwise(F.col('ambig_ServiceName')))\r\n",
-					"joined_df = joined_df.withColumn('ServiceCategory', F.when(F.col('ServiceCategory').isNotNull(), F.col('ServiceCategory')).otherwise(F.col('ambig_ServiceCategory')))\r\n",
-					"joined_df = joined_df.drop('ambig_ServiceModel', 'ambig_ServiceName', 'ambig_ServiceCategory')"
-				],
-				"execution_count": 243
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(joined_df.where(F.col('ServiceModel').isNull()).agg(F.sum('CostInBillingCurrency')))"
-				],
-				"execution_count": 244
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(joined_df.where(F.col('MeterCategory') == 'Advanced Threat Protection').where(F.col('ServiceModel').isNotNull()).agg(F.sum('CostInBillingCurrency').alias('total')).select(F.format_number(\"total\", 0)))"
-				],
-				"execution_count": 227
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(joined_df)"
-				],
-				"execution_count": 247
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(joined_df.where(F.col('ServiceModel').isNull()).select('MeterSubCategory', 'ResourceType').distinct())"
-				],
-				"execution_count": 246
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(joined_df.where(F.col('ServiceModel').isNull()).select('Date', 'ResourceId', 'MeterCategory', 'MeterSubCategory','ResourceType', 'ServiceModel', 'CostInBillingCurrency'))"
-				],
-				"execution_count": 188
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(service_df.where(F.col('service_ResourceType') == 'microsoft.security/pricings'))"
-				],
-				"execution_count": 214
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"temp = joined_df.where(F.col('ServiceModel').isNull()).select('Date', 'ResourceId', 'MeterCategory', 'MeterSubCategory','ResourceType', 'ServiceModel', 'CostInBillingCurrency')"
-				],
-				"execution_count": 148
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"temp = temp.where((F.col('ResourceType') == 'microsoft.security/pricings') | (F.col('ResourceType') == 'microsoft.keyvault/vaults'))"
-				],
-				"execution_count": 150
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# Remaining rows: 5,148,150\r\n",
-					"# Remaining rows which are pricings/vaults: 4,926,488\r\n",
-					"# Diff: 221,662\r\n",
+					"# Join cost resource types on unambiguous resource types\r\n",
+					"cost_df = cost_df.join(unambig_df, cost_df.ResourceType == unambig_df.unambig_service_ResourceType, how='left').drop('unambig_service_ResourceType')\r\n",
 					"\r\n",
-					"# Meter categories: Advanced Threat Protection - Azure Defender - Microsoft Defender for Cloud - Security Center - Event Grid - Key Vault\r\n",
-					"# Meter sub categories: Key Vault - Azure Container Registry - Azure Kubernetes Services - Workload Protection for App Services - Defender for APIs - Microsoft Defender for Containers - Azure DNS service layers - Azure ARM service layers\r\n",
+					"# Join cost resource types and meter category on ambiguous resource types and service name\r\n",
+					"cost_df = cost_df.join(ambig_df, (cost_df.ResourceType == ambig_df.ambig_service_ResourceType) & (cost_df.MeterCategory == ambig_df.ambig_ServiceName), how='left').drop('ambig_service_ResourceType')\r\n",
 					"\r\n",
-					"# After meter category join\r\n",
-					"# Remaining rows: 3,751,857\r\n",
-					"# Remaining rows which are pricings/vaults: 3,530,195\r\n",
-					"# Diff: 221,662\r\n",
+					"# Merge joined service columns and drop remaining columns from service datasets \r\n",
+					"cost_df = cost_df.withColumn('ServiceModel', F.when(F.col('unambig_ServiceModel').isNotNull(), F.col('unambig_ServiceModel')).otherwise(F.col('ambig_ServiceModel')))\r\n",
+					"cost_df = cost_df.withColumn('ServiceName', F.when(F.col('unambig_ServiceName').isNotNull(), F.col('unambig_ServiceName')).otherwise(F.col('ambig_ServiceName')))\r\n",
+					"cost_df = cost_df.withColumn('ServiceCategory', F.when(F.col('unambig_ServiceCategory').isNotNull(), F.col('unambig_ServiceCategory')).otherwise(F.col('ambig_ServiceCategory')))\r\n",
+					"cost_df = cost_df.drop('ambig_ServiceModel', 'ambig_ServiceName', 'ambig_ServiceCategory', 'unambig_ServiceModel', 'unambig_ServiceName', 'unambig_ServiceCategory')\r\n",
 					"\r\n",
-					"# After meter sub category join\r\n",
-					"# Remaining rows: 1,086,995"
+					"# Join cost resource types and meter sub category on ambiguous resource types and service name\r\n",
+					"cost_df = cost_df.join(ambig_df, (cost_df.ResourceType == ambig_df.ambig_service_ResourceType) & (cost_df.MeterSubCategory == ambig_df.ambig_ServiceName), how='left').drop('ambig_service_ResourceType')\r\n",
+					"\r\n",
+					"# Merge joined columns with previously merged service columns\r\n",
+					"cost_df = cost_df.withColumn('ServiceModel', F.when(F.col('ServiceModel').isNotNull(), F.col('ServiceModel')).otherwise(F.col('ambig_ServiceModel')))\r\n",
+					"cost_df = cost_df.withColumn('ServiceName', F.when(F.col('ServiceName').isNotNull(), F.col('ServiceName')).otherwise(F.col('ambig_ServiceName')))\r\n",
+					"cost_df = cost_df.withColumn('ServiceCategory', F.when(F.col('ServiceCategory').isNotNull(), F.col('ServiceCategory')).otherwise(F.col('ambig_ServiceCategory')))\r\n",
+					"cost_df = cost_df.drop('ambig_ServiceModel', 'ambig_ServiceName', 'ambig_ServiceCategory')"
 				],
-				"execution_count": null
+				"execution_count": 13
 			}
 		]
 	}
