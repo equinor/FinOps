@@ -813,6 +813,18 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
+		"process-azure-services_notebookSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"process-azure-services_notebookSparkPoolIdRef": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"process-azure-services_notebookSparkPoolEndpointRef": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
 		"servicenow-application-processing_notebookSparkPoolNameRef": {
 			"type": "string",
 			"defaultValue": "sprkpool33large"
@@ -885,30 +897,6 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
-		"sparkpool32_delayInMinutes": {
-			"type": "int",
-			"defaultValue": 15
-		},
-		"sparkpool32_maxNodeCount": {
-			"type": "int",
-			"defaultValue": 5
-		},
-		"sparkpool32_minNodeCount": {
-			"type": "int",
-			"defaultValue": 3
-		},
-		"sparkpool32_nodeCount": {
-			"type": "int",
-			"defaultValue": 0
-		},
-		"sparkpool32_nodeSize": {
-			"type": "string",
-			"defaultValue": "Medium"
-		},
-		"sparkpool32_sparkVersion": {
-			"type": "string",
-			"defaultValue": "3.2"
-		},
 		"sprkpool33large_delayInMinutes": {
 			"type": "int",
 			"defaultValue": 10
@@ -932,6 +920,30 @@
 		"sprkpool33large_sparkVersion": {
 			"type": "string",
 			"defaultValue": "3.3"
+		},
+		"sparkpool32_delayInMinutes": {
+			"type": "int",
+			"defaultValue": 15
+		},
+		"sparkpool32_maxNodeCount": {
+			"type": "int",
+			"defaultValue": 5
+		},
+		"sparkpool32_minNodeCount": {
+			"type": "int",
+			"defaultValue": 3
+		},
+		"sparkpool32_nodeCount": {
+			"type": "int",
+			"defaultValue": 0
+		},
+		"sparkpool32_nodeSize": {
+			"type": "string",
+			"defaultValue": "Medium"
+		},
+		"sparkpool32_sparkVersion": {
+			"type": "string",
+			"defaultValue": "3.2"
 		}
 	},
 	"variables": {
@@ -26936,6 +26948,29 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/SQL script 51')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Reservation - Saving Plan Queries"
+				},
+				"content": {
+					"query": "-- This is auto-generated code\nSELECT\n    TOP 10 \n    UnitPrice, \n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/20240101-20240131/Extended_v3_ACMMonthlyActualCost_20240101-20240131.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where benefitName like 'Compute%'\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/Saving Plan Usage - Actual Cost')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
@@ -37995,7 +38030,7 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"folder": {
-					"name": "NotebookInProduction/AzureAdvisor"
+					"name": "NotebookInProduction/Azure"
 				},
 				"nbformat": 4,
 				"nbformat_minor": 2,
@@ -38013,7 +38048,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "90a8d2cb-72c6-409c-a4c8-a2cc750fd67f"
+						"spark.autotune.trackingId": "06ebd69a-1753-4306-ac11-8859dfad3088"
 					}
 				},
 				"metadata": {
@@ -39026,7 +39061,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "42fa1aa1-6229-474d-b46d-0e349decc5b3"
+						"spark.autotune.trackingId": "a71c40eb-abaf-4c30-93b9-b215f2a4ef56"
 					}
 				},
 				"metadata": {
@@ -41079,7 +41114,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "f670722e-df29-4b32-9619-3dee7a10c102"
+						"spark.autotune.trackingId": "73d21f75-1b2c-4aa6-86fb-3c8765f1111c"
 					}
 				},
 				"metadata": {
@@ -41104,7 +41139,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -41133,6 +41169,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"def get_last_day_prev_month(to_date):\r\n",
 							"    current_month = int(to_date[4:6])\r\n",
@@ -41559,6 +41596,137 @@
 							}
 						},
 						"source": [
+							"def add_azure_service_information(cost_df, service_df):\r\n",
+							"    # Remove duplicate rows by groupBy+count\r\n",
+							"    service_df = service_df.withColumn('service_ResourceType', F.lower('ResourceType'))\r\n",
+							"    service_df = service_df.groupBy('service_ResourceType','ServiceName','ServiceCategory', 'ServiceModel').count().drop('count')\r\n",
+							"\r\n",
+							"    # Count number of distinct resourcetypes in dataset\r\n",
+							"    count_df = service_df.groupBy('service_ResourceType').count()\r\n",
+							"\r\n",
+							"    # Separate services with unique resource types (unambiguous in terms of service type) - i.e where the count of resource types is 1\r\n",
+							"    unambig_df = count_df.filter(count_df['count'] == 1).join(service_df, 'service_ResourceType').drop('count')\r\n",
+							"\r\n",
+							"    # Separate services with ambiguity in terms of service types - i.e where the count of resource types is greater than 0\r\n",
+							"    ambig_df = count_df.filter(count_df['count'] > 1).join(service_df, 'service_ResourceType').drop('count')\r\n",
+							"\r\n",
+							"    # Add prefix to service datasets for joining purposes\r\n",
+							"    unambig_prefix = 'unambig_'\r\n",
+							"    for col in unambig_df.columns:\r\n",
+							"        unambig_df = unambig_df.withColumnRenamed(col, unambig_prefix + col)\r\n",
+							"\r\n",
+							"    unambig_prefix = 'ambig_'\r\n",
+							"    for col in ambig_df.columns:\r\n",
+							"        ambig_df = ambig_df.withColumnRenamed(col, unambig_prefix + col)\r\n",
+							"\r\n",
+							"    # Extract resource type from resource id\r\n",
+							"    cost_df = cost_df.withColumn('temp_resource_id', F.lower(F.col('ResourceId')))\r\n",
+							"    cost_df = cost_df.withColumn('ResourceType', F.regexp_extract('temp_resource_id', '/providers/([^/]+/[^/]+)', 1)).drop('temp_resource_id')\r\n",
+							"\r\n",
+							"    # Join cost resource types on unambiguous resource types\r\n",
+							"    cost_df = cost_df.join(unambig_df, cost_df.ResourceType == unambig_df.unambig_service_ResourceType, how='left').drop('unambig_service_ResourceType')\r\n",
+							"\r\n",
+							"    # Join cost resource types and meter category on ambiguous resource types and service name\r\n",
+							"    cost_df = cost_df.join(ambig_df, (cost_df.ResourceType == ambig_df.ambig_service_ResourceType) & (cost_df.MeterCategory == ambig_df.ambig_ServiceName), how='left').drop('ambig_service_ResourceType')\r\n",
+							"\r\n",
+							"    # Merge joined service columns and drop remaining columns from service datasets \r\n",
+							"    cost_df = cost_df.withColumn('ServiceModel', F.when(F.col('unambig_ServiceModel').isNotNull(), F.col('unambig_ServiceModel')).otherwise(F.col('ambig_ServiceModel')))\r\n",
+							"    cost_df = cost_df.withColumn('ServiceName', F.when(F.col('unambig_ServiceName').isNotNull(), F.col('unambig_ServiceName')).otherwise(F.col('ambig_ServiceName')))\r\n",
+							"    cost_df = cost_df.withColumn('ServiceCategory', F.when(F.col('unambig_ServiceCategory').isNotNull(), F.col('unambig_ServiceCategory')).otherwise(F.col('ambig_ServiceCategory')))\r\n",
+							"    cost_df = cost_df.drop('ambig_ServiceModel', 'ambig_ServiceName', 'ambig_ServiceCategory', 'unambig_ServiceModel', 'unambig_ServiceName', 'unambig_ServiceCategory')\r\n",
+							"\r\n",
+							"    # Join cost resource types and meter sub category on ambiguous resource types and service name\r\n",
+							"    cost_df = cost_df.join(ambig_df, (cost_df.ResourceType == ambig_df.ambig_service_ResourceType) & (cost_df.MeterSubCategory == ambig_df.ambig_ServiceName), how='left').drop('ambig_service_ResourceType')\r\n",
+							"\r\n",
+							"    # Merge joined columns with previously merged service columns\r\n",
+							"    cost_df = cost_df.withColumn('ServiceModel', F.when(F.col('ServiceModel').isNotNull(), F.col('ServiceModel')).otherwise(F.col('ambig_ServiceModel')))\r\n",
+							"    cost_df = cost_df.withColumn('ServiceName', F.when(F.col('ServiceName').isNotNull(), F.col('ServiceName')).otherwise(F.col('ambig_ServiceName')))\r\n",
+							"    cost_df = cost_df.withColumn('ServiceCategory', F.when(F.col('ServiceCategory').isNotNull(), F.col('ServiceCategory')).otherwise(F.col('ambig_ServiceCategory')))\r\n",
+							"    cost_df = cost_df.drop('ambig_ServiceModel', 'ambig_ServiceName', 'ambig_ServiceCategory')\r\n",
+							"\r\n",
+							"    return cost_df"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Remove duplicate rows by groupBy+count\r\n",
+							"service_df = service_df.withColumn('service_ResourceType', F.lower('ResourceType'))\r\n",
+							"service_df = service_df.groupBy('service_ResourceType','ServiceName','ServiceCategory', 'ServiceModel').count().drop('count')\r\n",
+							"\r\n",
+							"# Count number of distinct resourcetypes in dataset\r\n",
+							"count_df = service_df.groupBy('service_ResourceType').count()\r\n",
+							"\r\n",
+							"# Separate services with unique resource types (unambiguous in terms of service type) - i.e where the count of resource types is 1\r\n",
+							"unambig_df = count_df.filter(count_df['count'] == 1).join(service_df, 'service_ResourceType').drop('count')\r\n",
+							"\r\n",
+							"# Separate services with ambiguity in terms of service types - i.e where the count of resource types is greater than 0\r\n",
+							"ambig_df = count_df.filter(count_df['count'] > 1).join(service_df, 'service_ResourceType').drop('count')\r\n",
+							"\r\n",
+							"# Add prefix to service datasets for joining purposes\r\n",
+							"unambig_prefix = 'unambig_'\r\n",
+							"for col in unambig_df.columns:\r\n",
+							"    unambig_df = unambig_df.withColumnRenamed(col, unambig_prefix + col)\r\n",
+							"\r\n",
+							"unambig_prefix = 'ambig_'\r\n",
+							"for col in ambig_df.columns:\r\n",
+							"    ambig_df = ambig_df.withColumnRenamed(col, unambig_prefix + col)\r\n",
+							"\r\n",
+							"# Extract resource type from resource id\r\n",
+							"cost_df = cost_df.withColumn('temp_resource_id', F.lower(F.col('ResourceId')))\r\n",
+							"cost_df = cost_df.withColumn('ResourceType', F.regexp_extract('temp_resource_id', '/providers/([^/]+/[^/]+)', 1)).drop('temp_resource_id')\r\n",
+							"\r\n",
+							"# Join cost resource types on unambiguous resource types\r\n",
+							"cost_df = cost_df.join(unambig_df, cost_df.ResourceType == unambig_df.unambig_service_ResourceType, how='left').drop('unambig_service_ResourceType')\r\n",
+							"\r\n",
+							"# Join cost resource types and meter category on ambiguous resource types and service name\r\n",
+							"cost_df = cost_df.join(ambig_df, (cost_df.ResourceType == ambig_df.ambig_service_ResourceType) & (cost_df.MeterCategory == ambig_df.ambig_ServiceName), how='left').drop('ambig_service_ResourceType')\r\n",
+							"\r\n",
+							"# Merge joined service columns and drop remaining columns from service datasets \r\n",
+							"cost_df = cost_df.withColumn('ServiceModel', F.when(F.col('unambig_ServiceModel').isNotNull(), F.col('unambig_ServiceModel')).otherwise(F.col('ambig_ServiceModel')))\r\n",
+							"cost_df = cost_df.withColumn('ServiceName', F.when(F.col('unambig_ServiceName').isNotNull(), F.col('unambig_ServiceName')).otherwise(F.col('ambig_ServiceName')))\r\n",
+							"cost_df = cost_df.withColumn('ServiceCategory', F.when(F.col('unambig_ServiceCategory').isNotNull(), F.col('unambig_ServiceCategory')).otherwise(F.col('ambig_ServiceCategory')))\r\n",
+							"cost_df = cost_df.drop('ambig_ServiceModel', 'ambig_ServiceName', 'ambig_ServiceCategory', 'unambig_ServiceModel', 'unambig_ServiceName', 'unambig_ServiceCategory')\r\n",
+							"\r\n",
+							"# Join cost resource types and meter sub category on ambiguous resource types and service name\r\n",
+							"cost_df = cost_df.join(ambig_df, (cost_df.ResourceType == ambig_df.ambig_service_ResourceType) & (cost_df.MeterSubCategory == ambig_df.ambig_ServiceName), how='left').drop('ambig_service_ResourceType')\r\n",
+							"\r\n",
+							"# Merge joined columns with previously merged service columns\r\n",
+							"cost_df = cost_df.withColumn('ServiceModel', F.when(F.col('ServiceModel').isNotNull(), F.col('ServiceModel')).otherwise(F.col('ambig_ServiceModel')))\r\n",
+							"cost_df = cost_df.withColumn('ServiceName', F.when(F.col('ServiceName').isNotNull(), F.col('ServiceName')).otherwise(F.col('ambig_ServiceName')))\r\n",
+							"cost_df = cost_df.withColumn('ServiceCategory', F.when(F.col('ServiceCategory').isNotNull(), F.col('ServiceCategory')).otherwise(F.col('ambig_ServiceCategory')))\r\n",
+							"cost_df = cost_df.drop('ambig_ServiceModel', 'ambig_ServiceName', 'ambig_ServiceCategory')"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
 							"def transform_cost_data(cost_df):\r\n",
 							"\r\n",
 							"    warnings.simplefilter(action='ignore', category=FutureWarning)\r\n",
@@ -41568,7 +41736,7 @@
 							"    cost_df = cost_set_instance_name(cost_df)\r\n",
 							"    cost_df = expand_cost_tags(cost_df)\r\n",
 							"    cost_df = cost_df.withColumn(\"ResourceLocation\", F.lower(F.trim(F.regexp_replace(F.col('ResourceLocation'), \"\\s+\", \"\"))))\r\n",
-							"\r\n",
+							"    \r\n",
 							"    return cost_df"
 						],
 						"outputs": [],
@@ -41632,7 +41800,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "87ce1037-3d33-4ad0-9ff4-96f3012b6bfc"
+						"spark.autotune.trackingId": "9c444197-ee2b-4e49-9dda-c06626afbc4c"
 					}
 				},
 				"metadata": {
@@ -41657,7 +41825,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -41683,14 +41852,14 @@
 							]
 						},
 						"source": [
-							"toDate = '20240131'\n",
-							"fromDate = '20240101'\n",
+							"toDate = '20240229'\n",
+							"fromDate = '20240201'\n",
 							"container = 'usage'\n",
 							"storageAccount = 's037costmgmt'\n",
-							"reportType = 'ActualCost'"
+							"reportType = 'AmortizedCost'"
 						],
 						"outputs": [],
-						"execution_count": 3
+						"execution_count": 7
 					},
 					{
 						"cell_type": "code",
@@ -41718,7 +41887,7 @@
 							"import pyspark.sql.types as T"
 						],
 						"outputs": [],
-						"execution_count": 4
+						"execution_count": 8
 					},
 					{
 						"cell_type": "markdown",
@@ -41750,7 +41919,7 @@
 							"%run /cost-extend-utilities"
 						],
 						"outputs": [],
-						"execution_count": 5
+						"execution_count": 9
 					},
 					{
 						"cell_type": "code",
@@ -41774,7 +41943,7 @@
 							"    return subscriptions_df"
 						],
 						"outputs": [],
-						"execution_count": 6
+						"execution_count": 10
 					},
 					{
 						"cell_type": "code",
@@ -41798,7 +41967,7 @@
 							"    print('File write complete!')"
 						],
 						"outputs": [],
-						"execution_count": 7
+						"execution_count": 11
 					},
 					{
 						"cell_type": "markdown",
@@ -41850,11 +42019,18 @@
 							"print(f\"Application path: {application_path}\")\r\n",
 							"\r\n",
 							"# Load cost file\r\n",
-							"csv_options = {'header' : True,\r\n",
+							"cost_csv_options = {'header' : True,\r\n",
 							"                'delimiter' : ',',\r\n",
 							"                'quote' : '\"',\r\n",
 							"                'escape' : '\"'}\r\n",
-							"cost_df = spark.read.options(**csv_options).csv(cost_source_path)\r\n",
+							"cost_df = spark.read.options(**cost_csv_options).csv(cost_source_path)\r\n",
+							"\r\n",
+							"# Load service fileservice_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/services/services-raw.csv'\r\n",
+							"service_csv_options = {'header' : True,\r\n",
+							"                'delimiter' : ';',\r\n",
+							"                'quote' : '\"',\r\n",
+							"                'escape' : '\"'}\r\n",
+							"service_df = spark.read.options(**service_csv_options).csv(service_path)\r\n",
 							"\r\n",
 							"# Load subscription file\r\n",
 							"subscription_df = spark.read.format('parquet').load(subscription_path)\r\n",
@@ -41867,12 +42043,13 @@
 							"# Transform data\r\n",
 							"cost_df = transform_cost_data(cost_df)\r\n",
 							"cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\r\n",
+							"cost_df = add_azure_service_information(cost_df, service_df)\r\n",
 							"write_output_file(cost_df, cost_target_path)\r\n",
 							"\r\n",
 							"print(' ')"
 						],
 						"outputs": [],
-						"execution_count": 8
+						"execution_count": 15
 					}
 				]
 			},
@@ -42562,6 +42739,253 @@
 						],
 						"outputs": [],
 						"execution_count": 7
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/process-azure-services')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "NotebookInProduction/Azure"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "[parameters('process-azure-services_notebookSparkPoolNameRef')]",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "112g",
+					"driverCores": 16,
+					"executorMemory": "112g",
+					"executorCores": 16,
+					"numExecutors": 1,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "5",
+						"spark.autotune.trackingId": "b40321af-f87d-48c0-b7f7-ecf1c5831b86"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "[parameters('process-azure-services_notebookSparkPoolIdRef')]",
+						"name": "[parameters('process-azure-services_notebookSparkPoolNameRef')]",
+						"type": "Spark",
+						"endpoint": "[parameters('process-azure-services_notebookSparkPoolEndpointRef')]",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 16,
+						"memory": 112,
+						"automaticScaleJobs": true
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"import pyspark.sql.functions as F"
+						],
+						"outputs": [],
+						"execution_count": 16
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": 17
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet'\r\n",
+							"cost_df = spark.read.format('parquet').load(cost_path)"
+						],
+						"outputs": [],
+						"execution_count": 8
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"service_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/services/services-raw.csv'\r\n",
+							"\r\n",
+							"csv_options = {'header' : True,\r\n",
+							"                'delimiter' : ';',\r\n",
+							"                'quote' : '\"',\r\n",
+							"                'escape' : '\"'}\r\n",
+							"service_df = spark.read.options(**csv_options).csv(service_path)"
+						],
+						"outputs": [],
+						"execution_count": 18
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Remove duplicate rows by groupBy+count\r\n",
+							"service_df = service_df.withColumn('service_ResourceType', F.lower('ResourceType'))\r\n",
+							"service_df = service_df.groupBy('service_ResourceType','ServiceName','ServiceCategory', 'ServiceModel').count().drop('count')"
+						],
+						"outputs": [],
+						"execution_count": 10
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Count number of distinct resourcetypes in dataset\r\n",
+							"count_df = service_df.groupBy('service_ResourceType').count()\r\n",
+							"\r\n",
+							"# Separate services with unique resource types (unambiguous in terms of service type) - i.e where the count of resource types is 1\r\n",
+							"unambig_df = count_df.filter(count_df['count'] == 1).join(service_df, 'service_ResourceType').drop('count')\r\n",
+							"\r\n",
+							"# Separate services with ambiguity in terms of service types - i.e where the count of resource types is greater than 0\r\n",
+							"ambig_df = count_df.filter(count_df['count'] > 1).join(service_df, 'service_ResourceType').drop('count')\r\n",
+							"\r\n",
+							"# Add prefix to service datasets for joining purposes\r\n",
+							"unambig_prefix = 'unambig_'\r\n",
+							"for col in unambig_df.columns:\r\n",
+							"    unambig_df = unambig_df.withColumnRenamed(col, unambig_prefix + col)\r\n",
+							"\r\n",
+							"unambig_prefix = 'ambig_'\r\n",
+							"for col in ambig_df.columns:\r\n",
+							"    ambig_df = ambig_df.withColumnRenamed(col, unambig_prefix + col)"
+						],
+						"outputs": [],
+						"execution_count": 11
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Extract resource type from resource id\r\n",
+							"cost_df = cost_df.withColumn('temp_resource_id', F.lower(F.col('ResourceId')))\r\n",
+							"cost_df = cost_df.withColumn('ResourceType', F.regexp_extract('temp_resource_id', '/providers/([^/]+/[^/]+)', 1)).drop('temp_resource_id')"
+						],
+						"outputs": [],
+						"execution_count": 12
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Join cost resource types on unambiguous resource types\r\n",
+							"cost_df = cost_df.join(unambig_df, cost_df.ResourceType == unambig_df.unambig_service_ResourceType, how='left').drop('unambig_service_ResourceType')\r\n",
+							"\r\n",
+							"# Join cost resource types and meter category on ambiguous resource types and service name\r\n",
+							"cost_df = cost_df.join(ambig_df, (cost_df.ResourceType == ambig_df.ambig_service_ResourceType) & (cost_df.MeterCategory == ambig_df.ambig_ServiceName), how='left').drop('ambig_service_ResourceType')\r\n",
+							"\r\n",
+							"# Merge joined service columns and drop remaining columns from service datasets \r\n",
+							"cost_df = cost_df.withColumn('ServiceModel', F.when(F.col('unambig_ServiceModel').isNotNull(), F.col('unambig_ServiceModel')).otherwise(F.col('ambig_ServiceModel')))\r\n",
+							"cost_df = cost_df.withColumn('ServiceName', F.when(F.col('unambig_ServiceName').isNotNull(), F.col('unambig_ServiceName')).otherwise(F.col('ambig_ServiceName')))\r\n",
+							"cost_df = cost_df.withColumn('ServiceCategory', F.when(F.col('unambig_ServiceCategory').isNotNull(), F.col('unambig_ServiceCategory')).otherwise(F.col('ambig_ServiceCategory')))\r\n",
+							"cost_df = cost_df.drop('ambig_ServiceModel', 'ambig_ServiceName', 'ambig_ServiceCategory', 'unambig_ServiceModel', 'unambig_ServiceName', 'unambig_ServiceCategory')\r\n",
+							"\r\n",
+							"# Join cost resource types and meter sub category on ambiguous resource types and service name\r\n",
+							"cost_df = cost_df.join(ambig_df, (cost_df.ResourceType == ambig_df.ambig_service_ResourceType) & (cost_df.MeterSubCategory == ambig_df.ambig_ServiceName), how='left').drop('ambig_service_ResourceType')\r\n",
+							"\r\n",
+							"# Merge joined columns with previously merged service columns\r\n",
+							"cost_df = cost_df.withColumn('ServiceModel', F.when(F.col('ServiceModel').isNotNull(), F.col('ServiceModel')).otherwise(F.col('ambig_ServiceModel')))\r\n",
+							"cost_df = cost_df.withColumn('ServiceName', F.when(F.col('ServiceName').isNotNull(), F.col('ServiceName')).otherwise(F.col('ambig_ServiceName')))\r\n",
+							"cost_df = cost_df.withColumn('ServiceCategory', F.when(F.col('ServiceCategory').isNotNull(), F.col('ServiceCategory')).otherwise(F.col('ambig_ServiceCategory')))\r\n",
+							"cost_df = cost_df.drop('ambig_ServiceModel', 'ambig_ServiceName', 'ambig_ServiceCategory')"
+						],
+						"outputs": [],
+						"execution_count": 13
 					}
 				]
 			},
@@ -44654,6 +45078,31 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
+				},
+				"autoScale": {
+					"enabled": true,
+					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
+					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
+				},
+				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
+				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": true,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "northeurope"
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/sparkpool32')]",
 			"type": "Microsoft.Synapse/workspaces/bigDataPools",
 			"apiVersion": "2019-06-01-preview",
@@ -44676,31 +45125,6 @@
 					"filename": "requirements.txt",
 					"time": "2023-01-25T09:06:41.7702231Z"
 				},
-				"isComputeIsolationEnabled": false,
-				"sessionLevelPackagesEnabled": true,
-				"annotations": []
-			},
-			"dependsOn": [],
-			"location": "northeurope"
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
-			"type": "Microsoft.Synapse/workspaces/bigDataPools",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"autoPause": {
-					"enabled": true,
-					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
-				},
-				"autoScale": {
-					"enabled": true,
-					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
-					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
-				},
-				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
-				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
-				"nodeSizeFamily": "MemoryOptimized",
-				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
 				"isComputeIsolationEnabled": false,
 				"sessionLevelPackagesEnabled": true,
 				"annotations": []
