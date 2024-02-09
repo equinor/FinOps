@@ -1,0 +1,46 @@
+{
+	"name": "Pipeline 1",
+	"properties": {
+		"activities": [
+			{
+				"name": "Process historic cost",
+				"type": "SynapseNotebook",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "Run Notebook on Previous Dates_v1",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"storageAccount": {
+							"value": {
+								"value": "@variables('storageAccount')",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true
+				}
+			}
+		],
+		"variables": {
+			"storageAccount": {
+				"type": "String",
+				"defaultValue": "s037costmgmt"
+			}
+		},
+		"folder": {
+			"name": "PipelinesInProduction/Cost"
+		},
+		"annotations": []
+	}
+}
