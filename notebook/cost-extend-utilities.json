@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "9526ec08-abb1-471e-bf4b-7deb0cc2ef73"
+				"spark.autotune.trackingId": "396dd445-0e8e-4402-b0c3-3586bc8e4ae8"
 			}
 		},
 		"metadata": {
@@ -541,69 +541,6 @@
 					"    cost_df = cost_df.drop('ambig_ServiceModel', 'ambig_ServiceName', 'ambig_ServiceCategory')\r\n",
 					"\r\n",
 					"    return cost_df"
-				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# Remove duplicate rows by groupBy+count\r\n",
-					"service_df = service_df.withColumn('service_ResourceType', F.lower('ResourceType'))\r\n",
-					"service_df = service_df.groupBy('service_ResourceType','ServiceName','ServiceCategory', 'ServiceModel').count().drop('count')\r\n",
-					"\r\n",
-					"# Count number of distinct resourcetypes in dataset\r\n",
-					"count_df = service_df.groupBy('service_ResourceType').count()\r\n",
-					"\r\n",
-					"# Separate services with unique resource types (unambiguous in terms of service type) - i.e where the count of resource types is 1\r\n",
-					"unambig_df = count_df.filter(count_df['count'] == 1).join(service_df, 'service_ResourceType').drop('count')\r\n",
-					"\r\n",
-					"# Separate services with ambiguity in terms of service types - i.e where the count of resource types is greater than 0\r\n",
-					"ambig_df = count_df.filter(count_df['count'] > 1).join(service_df, 'service_ResourceType').drop('count')\r\n",
-					"\r\n",
-					"# Add prefix to service datasets for joining purposes\r\n",
-					"unambig_prefix = 'unambig_'\r\n",
-					"for col in unambig_df.columns:\r\n",
-					"    unambig_df = unambig_df.withColumnRenamed(col, unambig_prefix + col)\r\n",
-					"\r\n",
-					"unambig_prefix = 'ambig_'\r\n",
-					"for col in ambig_df.columns:\r\n",
-					"    ambig_df = ambig_df.withColumnRenamed(col, unambig_prefix + col)\r\n",
-					"\r\n",
-					"# Extract resource type from resource id\r\n",
-					"cost_df = cost_df.withColumn('temp_resource_id', F.lower(F.col('ResourceId')))\r\n",
-					"cost_df = cost_df.withColumn('ResourceType', F.regexp_extract('temp_resource_id', '/providers/([^/]+/[^/]+)', 1)).drop('temp_resource_id')\r\n",
-					"\r\n",
-					"# Join cost resource types on unambiguous resource types\r\n",
-					"cost_df = cost_df.join(unambig_df, cost_df.ResourceType == unambig_df.unambig_service_ResourceType, how='left').drop('unambig_service_ResourceType')\r\n",
-					"\r\n",
-					"# Join cost resource types and meter category on ambiguous resource types and service name\r\n",
-					"cost_df = cost_df.join(ambig_df, (cost_df.ResourceType == ambig_df.ambig_service_ResourceType) & (cost_df.MeterCategory == ambig_df.ambig_ServiceName), how='left').drop('ambig_service_ResourceType')\r\n",
-					"\r\n",
-					"# Merge joined service columns and drop remaining columns from service datasets \r\n",
-					"cost_df = cost_df.withColumn('ServiceModel', F.when(F.col('unambig_ServiceModel').isNotNull(), F.col('unambig_ServiceModel')).otherwise(F.col('ambig_ServiceModel')))\r\n",
-					"cost_df = cost_df.withColumn('ServiceName', F.when(F.col('unambig_ServiceName').isNotNull(), F.col('unambig_ServiceName')).otherwise(F.col('ambig_ServiceName')))\r\n",
-					"cost_df = cost_df.withColumn('ServiceCategory', F.when(F.col('unambig_ServiceCategory').isNotNull(), F.col('unambig_ServiceCategory')).otherwise(F.col('ambig_ServiceCategory')))\r\n",
-					"cost_df = cost_df.drop('ambig_ServiceModel', 'ambig_ServiceName', 'ambig_ServiceCategory', 'unambig_ServiceModel', 'unambig_ServiceName', 'unambig_ServiceCategory')\r\n",
-					"\r\n",
-					"# Join cost resource types and meter sub category on ambiguous resource types and service name\r\n",
-					"cost_df = cost_df.join(ambig_df, (cost_df.ResourceType == ambig_df.ambig_service_ResourceType) & (cost_df.MeterSubCategory == ambig_df.ambig_ServiceName), how='left').drop('ambig_service_ResourceType')\r\n",
-					"\r\n",
-					"# Merge joined columns with previously merged service columns\r\n",
-					"cost_df = cost_df.withColumn('ServiceModel', F.when(F.col('ServiceModel').isNotNull(), F.col('ServiceModel')).otherwise(F.col('ambig_ServiceModel')))\r\n",
-					"cost_df = cost_df.withColumn('ServiceName', F.when(F.col('ServiceName').isNotNull(), F.col('ServiceName')).otherwise(F.col('ambig_ServiceName')))\r\n",
-					"cost_df = cost_df.withColumn('ServiceCategory', F.when(F.col('ServiceCategory').isNotNull(), F.col('ServiceCategory')).otherwise(F.col('ambig_ServiceCategory')))\r\n",
-					"cost_df = cost_df.drop('ambig_ServiceModel', 'ambig_ServiceName', 'ambig_ServiceCategory')"
 				],
 				"execution_count": null
 			},
