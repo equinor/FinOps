@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "d32f0fad-a68f-40ed-be83-19daf905d021"
+				"spark.autotune.trackingId": "faf2f721-cede-41b4-b34e-7e191ebd81e3"
 			}
 		},
 		"metadata": {
@@ -79,7 +79,7 @@
 					"storageAccount = 's037costmgmt'\n",
 					"reportType = 'ActualCost'"
 				],
-				"execution_count": 14
+				"execution_count": 1
 			},
 			{
 				"cell_type": "code",
@@ -106,7 +106,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 15
+				"execution_count": 2
 			},
 			{
 				"cell_type": "markdown",
@@ -137,7 +137,7 @@
 				"source": [
 					"%run /cost-extend-utilities"
 				],
-				"execution_count": 16
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -188,7 +188,7 @@
 					"    application_df = application_df.withColumn('AppID', F.col('AppID').cast(\"int\"))\r\n",
 					"    return application_df"
 				],
-				"execution_count": 17
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -211,7 +211,7 @@
 					"    cost_df.write.format('parquet').mode('overwrite').option('path', destinationFilename).save()\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": 18
+				"execution_count": 5
 			},
 			{
 				"cell_type": "markdown",
@@ -266,6 +266,14 @@
 					"except:\n",
 					"    subscription_df = load_and_process_solum_subscriptions(solum_subscription_path)\n",
 					"\n",
+					"# Load service file\n",
+					"service_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/services/services-raw.csv'\n",
+					"service_csv_options = {'header' : True,\n",
+					"                'delimiter' : ';',\n",
+					"                'quote' : '\"',\n",
+					"                'escape' : '\"'}\n",
+					"service_df = spark.read.options(**service_csv_options).csv(service_path)\n",
+					"\n",
 					"# Load application data\n",
 					"application_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\n",
 					"application_df = load_and_process_applications(application_path)\n",
@@ -274,10 +282,11 @@
 					"cost_df = spark.read.format('parquet').load(cost_source_path)\n",
 					"cost_df = transform_cost_data(cost_df)\n",
 					"cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\n",
-					"write_output_file(cost_df, cost_target_path)\n",
+					"cost_df = add_azure_service_information(cost_df, service_df)\n",
+					"# write_output_file(cost_df, cost_target_path)\n",
 					"print(' ')"
 				],
-				"execution_count": 19
+				"execution_count": 6
 			}
 		]
 	}
