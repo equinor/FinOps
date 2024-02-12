@@ -36391,7 +36391,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "ddf9d894-0af9-4c6b-a407-d7e93576acf3"
+						"spark.autotune.trackingId": "d6f8667b-ca45-4f1f-99e4-7ce92eca6c93"
 					}
 				},
 				"metadata": {
@@ -36416,8 +36416,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -41181,7 +41180,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "9c2d3749-67be-4755-a2ef-cab792a0dfa2"
+						"spark.autotune.trackingId": "8244b941-649d-48db-90c1-4bfc3dbf4dba"
 					}
 				},
 				"metadata": {
@@ -41446,12 +41445,14 @@
 							"    cost_df = cost_df.withColumn('CostAllocationType', F.regexp_replace(F.col('CostAllocationType'), '(?i)costallocationtype\": \"', \"\"))\r\n",
 							"    cost_df = cost_df.withColumn('CostAllocationType', F.split(F.col('CostAllocationType'),'\"', 0).getItem(0))\r\n",
 							"    cost_df = cost_df.withColumn('CostAllocationType', F.when(F.col('CostAllocationType') == \"\", None).otherwise(F.col('CostAllocationType')))\r\n",
+							"    cost_df = cost_df.withColumn('CostAllocationTypeTag', F.col('CostAllocationType'))\r\n",
 							"\r\n",
 							"    # Storing the Tags column in a new column, and cleaning it up to fit with CostAllocationCode\r\n",
 							"    cost_df = cost_df.withColumn('CostAllocationCode', F.regexp_extract(F.col('Tags'), '(?i)costallocationcode\": \"(.*)\"', 0))\r\n",
 							"    cost_df = cost_df.withColumn('CostAllocationCode', F.regexp_replace(F.col('CostAllocationCode'), '(?i)costallocationcode\": \"', \"\"))\r\n",
 							"    cost_df = cost_df.withColumn('CostAllocationCode', F.split(F.col('CostAllocationCode'),'\"', 0).getItem(0))\r\n",
 							"    cost_df = cost_df.withColumn('CostAllocationCode', F.when(F.col('CostAllocationCode') == \"\", None).otherwise(F.col('CostAllocationCode')))\r\n",
+							"    cost_df = cost_df.withColumn('CostAllocationCodeTag', F.col('CostAllocationCode'))\r\n",
 							"    \r\n",
 							"    print(\"Cost Tags expansion complete\")\r\n",
 							"\r\n",
