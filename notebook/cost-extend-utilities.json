@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "396dd445-0e8e-4402-b0c3-3586bc8e4ae8"
+				"spark.autotune.trackingId": "4c0492cf-bbca-4201-b383-5856f6d37afb"
 			}
 		},
 		"metadata": {
@@ -278,12 +278,14 @@
 					"    cost_df = cost_df.withColumn('CostAllocationType', F.regexp_replace(F.col('CostAllocationType'), '(?i)costallocationtype\": \"', \"\"))\r\n",
 					"    cost_df = cost_df.withColumn('CostAllocationType', F.split(F.col('CostAllocationType'),'\"', 0).getItem(0))\r\n",
 					"    cost_df = cost_df.withColumn('CostAllocationType', F.when(F.col('CostAllocationType') == \"\", None).otherwise(F.col('CostAllocationType')))\r\n",
+					"    cost_df = cost_df.withColumn('CostAllocationTypeTag', F.col('CostAllocationType'))\r\n",
 					"\r\n",
 					"    # Storing the Tags column in a new column, and cleaning it up to fit with CostAllocationCode\r\n",
 					"    cost_df = cost_df.withColumn('CostAllocationCode', F.regexp_extract(F.col('Tags'), '(?i)costallocationcode\": \"(.*)\"', 0))\r\n",
 					"    cost_df = cost_df.withColumn('CostAllocationCode', F.regexp_replace(F.col('CostAllocationCode'), '(?i)costallocationcode\": \"', \"\"))\r\n",
 					"    cost_df = cost_df.withColumn('CostAllocationCode', F.split(F.col('CostAllocationCode'),'\"', 0).getItem(0))\r\n",
 					"    cost_df = cost_df.withColumn('CostAllocationCode', F.when(F.col('CostAllocationCode') == \"\", None).otherwise(F.col('CostAllocationCode')))\r\n",
+					"    cost_df = cost_df.withColumn('CostAllocationCodeTag', F.col('CostAllocationCode'))\r\n",
 					"    \r\n",
 					"    print(\"Cost Tags expansion complete\")\r\n",
 					"\r\n",
