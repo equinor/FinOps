@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "107c1574-c5d3-4e1a-a6c6-cdf70678bcf7"
+				"spark.autotune.trackingId": "c97a3cdb-bb8e-4aee-8f66-57700c89834e"
 			}
 		},
 		"metadata": {
@@ -282,7 +282,8 @@
 						"transient": {
 							"deleting": false
 						}
-					}
+					},
+					"collapsed": false
 				},
 				"source": [
 					"display(df.where(F.col('MeterCategory') == 'Azure Cosmos DB'))"
@@ -322,27 +323,8 @@
 					}
 				},
 				"source": [
-					"# Convert pyspark df to pandas for OLS model\r\n",
-					"cost_pdf = cost_df.toPandas()\r\n",
-					"cost_pdf.set_index(\"Date\", inplace=True)"
-				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					""
+					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/service-cost-prediction.parquet\"\r\n",
+					"df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 				],
 				"execution_count": null
 			},
