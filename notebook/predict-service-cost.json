@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "c97a3cdb-bb8e-4aee-8f66-57700c89834e"
+				"spark.autotune.trackingId": "24cc6975-80b5-412f-ae7d-f8ff1d4ac946"
 			}
 		},
 		"metadata": {
@@ -61,7 +61,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 42
+				"execution_count": 67
 			},
 			{
 				"cell_type": "code",
@@ -86,7 +86,7 @@
 					"from datetime import datetime, timedelta\r\n",
 					"import time"
 				],
-				"execution_count": 62
+				"execution_count": 68
 			},
 			{
 				"cell_type": "code",
@@ -102,9 +102,11 @@
 					}
 				},
 				"source": [
-					"PREDICTION_INTERVAL = 60"
+					"# Integers represent number of months\r\n",
+					"PREDICTION_INTERVAL = 60\r\n",
+					"LOOKBACK = 6"
 				],
-				"execution_count": 49
+				"execution_count": 69
 			},
 			{
 				"cell_type": "code",
@@ -124,7 +126,7 @@
 					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 44
+				"execution_count": 91
 			},
 			{
 				"cell_type": "code",
@@ -141,11 +143,17 @@
 				},
 				"source": [
 					"today = datetime.today()\r\n",
-					"one_year_from_today = today - timedelta(days=365)\r\n",
+					"one_year_from_today = (today - timedelta(days=365)).replace(day=1)\r\n",
 					"one_year_from_today_formatted = one_year_from_today.strftime('%Y-%m-%d')\r\n",
+					"\r\n",
+					"lookback_date = (today - timedelta(days=LOOKBACK*30)).replace(day=1)\r\n",
+					"lookback_date_formatted = lookback_date.strftime('%Y-%m-%d')\r\n",
+					"\r\n",
+					"lookback_diff = (today.year - lookback_date.year) * 12 + (today.month - lookback_date.month)\r\n",
+					"\r\n",
 					"month_diff = (today.year - one_year_from_today.year) * 12 + (today.month - one_year_from_today.month)"
 				],
-				"execution_count": 45
+				"execution_count": 92
 			},
 			{
 				"cell_type": "code",
@@ -162,7 +170,7 @@
 				},
 				"source": [
 					"# Select appropriate columns\r\n",
-					"cost_df = cost_df.where(F.col('Date') >= one_year_from_today_formatted)\r\n",
+					"# cost_df = cost_df.where(F.col('Date') >= one_year_from_today_formatted)\r\n",
 					"cost_df = cost_df.select('Date', 'CostInBillingCurrency', 'MeterCategory')\r\n",
 					"cost_df = cost_df.withColumn('Date', F.date_trunc('month', 'Date'))\r\n",
 					"cost_df = cost_df.groupBy('Date', 'MeterCategory').agg(F.sum('CostInBillingCurrency').alias('Cost')).orderBy('Date')\r\n",
@@ -170,7 +178,7 @@
 					"# Filter away latest month - as we predict cost per month, it will mess up future predictions\r\n",
 					"cost_df = cost_df.filter(F.col('Date') < F.concat(F.date_format(F.current_date(), 'yyyy'), F.lit('-'), F.date_format(F.current_date(), 'MM'), F.lit('-'), F.lit('01')))"
 				],
-				"execution_count": 46
+				"execution_count": 93
 			},
 			{
 				"cell_type": "code",
@@ -187,12 +195,12 @@
 				},
 				"source": [
 					"# Counting the meter category groups to check if categories have cost in entire time period\r\n",
-					"count_df = cost_df.filter(F.col('Cost') > 0).groupBy(\"MeterCategory\").count()\r\n",
+					"count_df = cost_df.filter((F.col('Cost') > 0) & (F.col('Date') >= lookback_date_formatted)).groupBy(\"MeterCategory\").count()\r\n",
 					"\r\n",
 					"# Only keeping meter categories with cost in every month\r\n",
-					"cost_df = cost_df.join(count_df, \"MeterCategory\").filter(count_df[\"count\"] == month_diff).drop('count')"
+					"cost_df = cost_df.join(count_df, \"MeterCategory\").filter(count_df[\"count\"] == lookback_diff).drop('count')"
 				],
-				"execution_count": 47
+				"execution_count": 94
 			},
 			{
 				"cell_type": "code",
@@ -248,8 +256,8 @@
 					"    temp_pdf['x'] = range(len(temp_pdf))\r\n",
 					"\r\n",
 					"    # Estimate OLS model\r\n",
-					"    y = temp_pdf['Cost'].values\r\n",
-					"    x = temp_pdf['x'].values\r\n",
+					"    y = temp_pdf['Cost'].tail(LOOKBACK)\r\n",
+					"    x = temp_pdf['x'].tail(LOOKBACK)\r\n",
 					"    model = sm.OLS(y, sm.add_constant(x))\r\n",
 					"    result = model.fit()\r\n",
 					"\r\n",
