@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "24cc6975-80b5-412f-ae7d-f8ff1d4ac946"
+				"spark.autotune.trackingId": "e92b9136-c564-4f95-aa41-5db6e0b9ac35"
 			}
 		},
 		"metadata": {
@@ -61,7 +61,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 67
+				"execution_count": 97
 			},
 			{
 				"cell_type": "code",
@@ -84,9 +84,12 @@
 					"import pandas as pd\r\n",
 					"import numpy as np\r\n",
 					"from datetime import datetime, timedelta\r\n",
-					"import time"
+					"import time\r\n",
+					"\r\n",
+					"import warnings\r\n",
+					"warnings.filterwarnings(\"ignore\", category=FutureWarning)"
 				],
-				"execution_count": 68
+				"execution_count": 98
 			},
 			{
 				"cell_type": "code",
@@ -103,10 +106,10 @@
 				},
 				"source": [
 					"# Integers represent number of months\r\n",
-					"PREDICTION_INTERVAL = 60\r\n",
+					"PREDICTION_END_DATE = '2029-04-01'\r\n",
 					"LOOKBACK = 6"
 				],
-				"execution_count": 69
+				"execution_count": 110
 			},
 			{
 				"cell_type": "code",
@@ -126,7 +129,7 @@
 					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 91
+				"execution_count": 100
 			},
 			{
 				"cell_type": "code",
@@ -142,18 +145,16 @@
 					}
 				},
 				"source": [
-					"today = datetime.today()\r\n",
-					"one_year_from_today = (today - timedelta(days=365)).replace(day=1)\r\n",
-					"one_year_from_today_formatted = one_year_from_today.strftime('%Y-%m-%d')\r\n",
+					"today = datetime.today().replace(day=1)\r\n",
+					"\r\n",
+					"prediction_end_date = datetime.strptime(PREDICTION_END_DATE, '%Y-%m-%d')\r\n",
+					"prediction_interval = (prediction_end_date.year - today.year) * 12 + (prediction_end_date.month - today.month)\r\n",
 					"\r\n",
 					"lookback_date = (today - timedelta(days=LOOKBACK*30)).replace(day=1)\r\n",
 					"lookback_date_formatted = lookback_date.strftime('%Y-%m-%d')\r\n",
-					"\r\n",
-					"lookback_diff = (today.year - lookback_date.year) * 12 + (today.month - lookback_date.month)\r\n",
-					"\r\n",
-					"month_diff = (today.year - one_year_from_today.year) * 12 + (today.month - one_year_from_today.month)"
+					"lookback_diff = (today.year - lookback_date.year) * 12 + (today.month - lookback_date.month)"
 				],
-				"execution_count": 92
+				"execution_count": 111
 			},
 			{
 				"cell_type": "code",
@@ -170,7 +171,6 @@
 				},
 				"source": [
 					"# Select appropriate columns\r\n",
-					"# cost_df = cost_df.where(F.col('Date') >= one_year_from_today_formatted)\r\n",
 					"cost_df = cost_df.select('Date', 'CostInBillingCurrency', 'MeterCategory')\r\n",
 					"cost_df = cost_df.withColumn('Date', F.date_trunc('month', 'Date'))\r\n",
 					"cost_df = cost_df.groupBy('Date', 'MeterCategory').agg(F.sum('CostInBillingCurrency').alias('Cost')).orderBy('Date')\r\n",
@@ -178,7 +178,7 @@
 					"# Filter away latest month - as we predict cost per month, it will mess up future predictions\r\n",
 					"cost_df = cost_df.filter(F.col('Date') < F.concat(F.date_format(F.current_date(), 'yyyy'), F.lit('-'), F.date_format(F.current_date(), 'MM'), F.lit('-'), F.lit('01')))"
 				],
-				"execution_count": 93
+				"execution_count": 102
 			},
 			{
 				"cell_type": "code",
@@ -200,7 +200,7 @@
 					"# Only keeping meter categories with cost in every month\r\n",
 					"cost_df = cost_df.join(count_df, \"MeterCategory\").filter(count_df[\"count\"] == lookback_diff).drop('count')"
 				],
-				"execution_count": 94
+				"execution_count": 103
 			},
 			{
 				"cell_type": "code",
@@ -225,7 +225,7 @@
 					"\r\n",
 					"df = spark.createDataFrame([], schema)"
 				],
-				"execution_count": 59
+				"execution_count": 104
 			},
 			{
 				"cell_type": "code",
@@ -262,9 +262,9 @@
 					"    result = model.fit()\r\n",
 					"\r\n",
 					"    # Configure prediction period\r\n",
-					"    future_months = pd.date_range(start=temp_pdf.index[-1], periods=PREDICTION_INTERVAL, freq=\"MS\")[1:]\r\n",
+					"    future_months = pd.date_range(start=temp_pdf.index[-1], periods=prediction_interval, freq=\"MS\")[1:]\r\n",
 					"    # future_months = future_months[1:]\r\n",
-					"    future_x = np.arange(temp_pdf['x'][-1] + 1, temp_pdf['x'][-1] + PREDICTION_INTERVAL)\r\n",
+					"    future_x = np.arange(temp_pdf['x'][-1] + 1, temp_pdf['x'][-1] + prediction_interval)\r\n",
 					"\r\n",
 					"    # Predict future cost\r\n",
 					"    x = sm.add_constant(future_x)\r\n",
@@ -277,7 +277,7 @@
 					"    end_time = time.time()\r\n",
 					"    print(f'Successfully processed {meter_category} cost in {round(end_time - start_time, 2)} seconds.')"
 				],
-				"execution_count": 63
+				"execution_count": 105
 			},
 			{
 				"cell_type": "code",
@@ -290,32 +290,13 @@
 						"transient": {
 							"deleting": false
 						}
-					},
-					"collapsed": false
+					}
 				},
 				"source": [
-					"display(df.where(F.col('MeterCategory') == 'Azure Cosmos DB'))"
+					"# Set predicted Cost to 0 if negative\r\n",
+					"df = df.withColumn('Cost', F.when(F.col('Cost') >= 0, F.col('Cost')).otherwise(0))"
 				],
-				"execution_count": 65
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(df)"
-				],
-				"execution_count": 64
+				"execution_count": 107
 			},
 			{
 				"cell_type": "code",
@@ -334,49 +315,7 @@
 					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/service-cost-prediction.parquet\"\r\n",
 					"df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"def compute_ols_prediction(input_df, lookback, prediction_interval):\r\n",
-					"    input_df['x'] = range(len(input_df))\r\n",
-					"\r\n",
-					"    # Estimate OLS model\r\n",
-					"    y = input_df['Cost'].values if lookback == -1 else input_df['Cost'].tail(lookback)\r\n",
-					"    x = input_df['x'].values if lookback == -1 else input_df['x'].tail(lookback)\r\n",
-					"    model = sm.OLS(y, sm.add_constant(x))\r\n",
-					"    result = model.fit()\r\n",
-					"\r\n",
-					"    # Configure prediction period\r\n",
-					"    future_months = pd.date_range(start=input_df.index[-1], periods=prediction_interval, freq=\"MS\")\r\n",
-					"    # future_months = future_months[1:]\r\n",
-					"    future_x = np.arange(input_df['x'][-1] + 1, input_df['x'][-1] + prediction_interval + 1)\r\n",
-					"\r\n",
-					"    # Predict future cost\r\n",
-					"    x = sm.add_constant(future_x)\r\n",
-					"    predicted_cost = result.predict(x)\r\n",
-					"\r\n",
-					"    # Create the predicted cost column label\r\n",
-					"    column_label = \"FullLookback\" if lookback == -1 else f'{lookback}MonthLookback'\r\n",
-					"\r\n",
-					"    predicted_df = pd.DataFrame({\"Date\": future_months, f\"PredictedCost{column_label}\": predicted_cost})\r\n",
-					"    predicted_df = spark.createDataFrame(predicted_df)\r\n",
-					"    predicted_df = predicted_df.withColumn(f'PredictedCumulativeCost{column_label}',  F.sum(f\"PredictedCost{column_label}\").over(window) + input_df['CumulativeCost'][-1])\r\n",
-					"    return predicted_df"
-				],
-				"execution_count": null
+				"execution_count": 108
 			}
 		]
 	}
