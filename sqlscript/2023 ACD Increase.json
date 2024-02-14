@@ -1,6 +1,9 @@
 {
 	"name": "2023 ACD Increase",
 	"properties": {
+		"folder": {
+			"name": "Ad Hoc Cost Report Requests/ACD Challenge"
+		},
 		"content": {
 			"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 \n    --*\n    format(sum(CostInBillingCurrency), 'N', 'en-us') as TotalCost\n    ,format((sum(CostInBillingCurrency) - (sum(CostInBillingCurrency) / 1.09)), 'N', 'en-us') as [2023 ACD Increase]\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/*/ACMMonthlyActualCost_*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    --where benefitName is not NULL\n    --where ChargeType = 'Purchase'\n    --and PricingModel = 'Reservation'\n    where [Date] >= '2021-03-01'\n    and [Date] < '2023-04-01'\n\n    --2021-03-01: 9%\n    --2023-04-01: 11%\n    --2024-02-01: 12%\n",
 			"metadata": {
