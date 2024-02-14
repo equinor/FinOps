@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "e92b9136-c564-4f95-aa41-5db6e0b9ac35"
+				"spark.autotune.trackingId": "4fc91a73-d106-4b97-885f-ed4c602b2da3"
 			}
 		},
 		"metadata": {
@@ -61,7 +61,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 97
+				"execution_count": 114
 			},
 			{
 				"cell_type": "code",
@@ -89,7 +89,7 @@
 					"import warnings\r\n",
 					"warnings.filterwarnings(\"ignore\", category=FutureWarning)"
 				],
-				"execution_count": 98
+				"execution_count": 116
 			},
 			{
 				"cell_type": "code",
@@ -109,7 +109,7 @@
 					"PREDICTION_END_DATE = '2029-04-01'\r\n",
 					"LOOKBACK = 6"
 				],
-				"execution_count": 110
+				"execution_count": 117
 			},
 			{
 				"cell_type": "code",
@@ -126,10 +126,10 @@
 				},
 				"source": [
 					"# Load usage source\r\n",
-					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
+					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 100
+				"execution_count": 118
 			},
 			{
 				"cell_type": "code",
@@ -154,7 +154,7 @@
 					"lookback_date_formatted = lookback_date.strftime('%Y-%m-%d')\r\n",
 					"lookback_diff = (today.year - lookback_date.year) * 12 + (today.month - lookback_date.month)"
 				],
-				"execution_count": 111
+				"execution_count": 124
 			},
 			{
 				"cell_type": "code",
@@ -178,7 +178,7 @@
 					"# Filter away latest month - as we predict cost per month, it will mess up future predictions\r\n",
 					"cost_df = cost_df.filter(F.col('Date') < F.concat(F.date_format(F.current_date(), 'yyyy'), F.lit('-'), F.date_format(F.current_date(), 'MM'), F.lit('-'), F.lit('01')))"
 				],
-				"execution_count": 102
+				"execution_count": 119
 			},
 			{
 				"cell_type": "code",
@@ -200,7 +200,7 @@
 					"# Only keeping meter categories with cost in every month\r\n",
 					"cost_df = cost_df.join(count_df, \"MeterCategory\").filter(count_df[\"count\"] == lookback_diff).drop('count')"
 				],
-				"execution_count": 103
+				"execution_count": 125
 			},
 			{
 				"cell_type": "code",
@@ -225,7 +225,25 @@
 					"\r\n",
 					"df = spark.createDataFrame([], schema)"
 				],
-				"execution_count": 104
+				"execution_count": 129
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"distinct_meter_categories = [row[0] for row in cost_df.select('MeterCategory').distinct().collect()]"
+				],
+				"execution_count": 130
 			},
 			{
 				"cell_type": "code",
@@ -242,8 +260,6 @@
 					"collapsed": false
 				},
 				"source": [
-					"distinct_meter_categories = [row[0] for row in cost_df.select('MeterCategory').distinct().collect()]\r\n",
-					"\r\n",
 					"for meter_category in distinct_meter_categories:\r\n",
 					"    print(f'Processing {meter_category} cost')\r\n",
 					"    start_time = time.time()\r\n",
