@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "4fc91a73-d106-4b97-885f-ed4c602b2da3"
+				"spark.autotune.trackingId": "93c469d8-9994-4278-8238-56f5a659ea81"
 			}
 		},
 		"metadata": {
@@ -61,7 +61,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 114
+				"execution_count": 132
 			},
 			{
 				"cell_type": "code",
@@ -89,7 +89,7 @@
 					"import warnings\r\n",
 					"warnings.filterwarnings(\"ignore\", category=FutureWarning)"
 				],
-				"execution_count": 116
+				"execution_count": 133
 			},
 			{
 				"cell_type": "code",
@@ -109,7 +109,7 @@
 					"PREDICTION_END_DATE = '2029-04-01'\r\n",
 					"LOOKBACK = 6"
 				],
-				"execution_count": 117
+				"execution_count": 134
 			},
 			{
 				"cell_type": "code",
@@ -129,7 +129,7 @@
 					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 118
+				"execution_count": 135
 			},
 			{
 				"cell_type": "code",
@@ -154,7 +154,7 @@
 					"lookback_date_formatted = lookback_date.strftime('%Y-%m-%d')\r\n",
 					"lookback_diff = (today.year - lookback_date.year) * 12 + (today.month - lookback_date.month)"
 				],
-				"execution_count": 124
+				"execution_count": 136
 			},
 			{
 				"cell_type": "code",
@@ -178,7 +178,7 @@
 					"# Filter away latest month - as we predict cost per month, it will mess up future predictions\r\n",
 					"cost_df = cost_df.filter(F.col('Date') < F.concat(F.date_format(F.current_date(), 'yyyy'), F.lit('-'), F.date_format(F.current_date(), 'MM'), F.lit('-'), F.lit('01')))"
 				],
-				"execution_count": 119
+				"execution_count": 137
 			},
 			{
 				"cell_type": "code",
@@ -200,7 +200,7 @@
 					"# Only keeping meter categories with cost in every month\r\n",
 					"cost_df = cost_df.join(count_df, \"MeterCategory\").filter(count_df[\"count\"] == lookback_diff).drop('count')"
 				],
-				"execution_count": 125
+				"execution_count": 138
 			},
 			{
 				"cell_type": "code",
@@ -225,7 +225,7 @@
 					"\r\n",
 					"df = spark.createDataFrame([], schema)"
 				],
-				"execution_count": 129
+				"execution_count": 139
 			},
 			{
 				"cell_type": "code",
@@ -243,7 +243,7 @@
 				"source": [
 					"distinct_meter_categories = [row[0] for row in cost_df.select('MeterCategory').distinct().collect()]"
 				],
-				"execution_count": 130
+				"execution_count": 140
 			},
 			{
 				"cell_type": "code",
@@ -293,7 +293,7 @@
 					"    end_time = time.time()\r\n",
 					"    print(f'Successfully processed {meter_category} cost in {round(end_time - start_time, 2)} seconds.')"
 				],
-				"execution_count": 105
+				"execution_count": 141
 			},
 			{
 				"cell_type": "code",
@@ -312,7 +312,7 @@
 					"# Set predicted Cost to 0 if negative\r\n",
 					"df = df.withColumn('Cost', F.when(F.col('Cost') >= 0, F.col('Cost')).otherwise(0))"
 				],
-				"execution_count": 107
+				"execution_count": 142
 			},
 			{
 				"cell_type": "code",
@@ -331,7 +331,7 @@
 					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/service-cost-prediction.parquet\"\r\n",
 					"df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 				],
-				"execution_count": 108
+				"execution_count": 143
 			}
 		]
 	}
