@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "d4eff04d-b47a-4f7a-9511-16dc5bf65a29"
+				"spark.autotune.trackingId": "3e43ad98-c045-44bc-94ea-c8e177b2d096"
 			}
 		},
 		"metadata": {
@@ -63,15 +63,34 @@
 				"source": [
 					"## Amortized Cost\r\n",
 					"\r\n",
+					"### Savings Plan\r\n",
+					"\r\n",
 					"Looking up cost with **PriceModel** set to _SavingsPlan_ yield two kinds of cost:\r\n",
 					"- Has **ChargeType** set to _Usage_ where EffectivePrice < UnitPrice\r\n",
 					"- Has **ChargeType** set to _UnusedSavingsPlan_ (MeterCategory = Unassigned) where EffectiveCost is 100 and CostInBillingCurrency is 0 (is this corresponding to the unused parts of the savingsplan?)\r\n",
 					"\r\n",
+					"### Reservation\r\n",
+					"\r\n",
+					"Looking at **IsRIUsage** set to _RI Usage_\r\n",
+					"\r\n",
+					"There are two distinct charge types -> **Usage** and **UnusedReservation**\r\n",
+					"\r\n",
 					"## Actual Cost\r\n",
+					"\r\n",
+					"### Savings Plan\r\n",
 					"\r\n",
 					"Looking up cost with **PriceModel** set to _SavingsPlan_ yield two kinds of cost:\r\n",
 					"- Has **ChargeType** set to _Usage_ where EffectivePrice and CostInBillingCurrency are 0\r\n",
-					"- Has **ChargeType** set to _Purchase_ (MeterCategory = Unassigned) where CostInBillingCurrency = EffectivePrice = UnitPrice is 73000 which corresponds to 100 NOK/Hour for roughly 30 days"
+					"- Has **ChargeType** set to _Purchase_ (MeterCategory = Unassigned) where CostInBillingCurrency = EffectivePrice = UnitPrice is 73000 which corresponds to 100 NOK/Hour for roughly 30 days\r\n",
+					"\r\n",
+					"### Reservation\r\n",
+					"\r\n",
+					"Looking at **IsRIUsage** set to _RI Usage_\r\n",
+					"\r\n",
+					"There are three distinct charge types -> **Usage**, **Purchase** and **Refund**\r\n",
+					"- ChargeType=Purchase --> EffectivePrice=UnitPrice and UnitPrice*Quantity = CostInBillingCurrency -> add up to get total cost for RI purchase\r\n",
+					"- ChargeType=Refund --> Same as above, just negative (since its money back) \r\n",
+					"- ChargeType=Usage --> cost is always 0 since its covered by RI purchases"
 				]
 			},
 			{
