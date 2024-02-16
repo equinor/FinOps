@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "70851e23-3255-4a6f-9c3c-8a5ebaf2f5a4"
+				"spark.autotune.trackingId": "210ce1a4-b237-4a32-9ec6-90f2f0117e06"
 			}
 		},
 		"metadata": {
@@ -154,7 +154,7 @@
 					"lookback_date_formatted = lookback_date.strftime('%Y-%m-%d')\r\n",
 					"lookback_diff = (today.year - lookback_date.year) * 12 + (today.month - lookback_date.month)"
 				],
-				"execution_count": null
+				"execution_count": 129
 			},
 			{
 				"cell_type": "code",
@@ -178,7 +178,7 @@
 					"# Filter away latest month - as we predict cost per month, it will mess up future predictions\r\n",
 					"cost_df = cost_df.filter(F.col('Date') < F.concat(F.date_format(F.current_date(), 'yyyy'), F.lit('-'), F.date_format(F.current_date(), 'MM'), F.lit('-'), F.lit('01')))"
 				],
-				"execution_count": null
+				"execution_count": 130
 			},
 			{
 				"cell_type": "code",
@@ -212,7 +212,7 @@
 					"# Remove duplicates and prepare for join operation\r\n",
 					"count_df = count_df.select('MeterCategory', 'keep_service').dropDuplicates(subset=[\"MeterCategory\", \"keep_service\"])"
 				],
-				"execution_count": null
+				"execution_count": 131
 			},
 			{
 				"cell_type": "code",
@@ -234,7 +234,7 @@
 					"# # Only keeping meter categories with cost in every month\r\n",
 					"# cost_df = cost_df.join(count_df, \"MeterCategory\").filter(count_df[\"count\"] == lookback_diff).drop('count')"
 				],
-				"execution_count": null
+				"execution_count": 132
 			},
 			{
 				"cell_type": "code",
@@ -252,7 +252,7 @@
 				"source": [
 					"cost_df = cost_df.join(count_df, 'MeterCategory').where(F.col('keep_service') == True).drop('keep_service')"
 				],
-				"execution_count": null
+				"execution_count": 133
 			},
 			{
 				"cell_type": "code",
@@ -277,7 +277,7 @@
 					"\r\n",
 					"df = spark.createDataFrame([], schema)"
 				],
-				"execution_count": null
+				"execution_count": 134
 			},
 			{
 				"cell_type": "code",
@@ -295,7 +295,7 @@
 				"source": [
 					"distinct_meter_categories = [row[0] for row in cost_df.select('MeterCategory').distinct().collect()]"
 				],
-				"execution_count": null
+				"execution_count": 135
 			},
 			{
 				"cell_type": "code",
@@ -349,7 +349,7 @@
 					"    end_time = time.time()\r\n",
 					"    print(f'Successfully processed {meter_category} cost in {round(end_time - start_time, 2)} seconds.')"
 				],
-				"execution_count": null
+				"execution_count": 136
 			},
 			{
 				"cell_type": "code",
@@ -387,7 +387,7 @@
 					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/service-cost-prediction.parquet\"\r\n",
 					"df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 				],
-				"execution_count": 143
+				"execution_count": null
 			}
 		]
 	}
