@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "93c469d8-9994-4278-8238-56f5a659ea81"
+				"spark.autotune.trackingId": "70851e23-3255-4a6f-9c3c-8a5ebaf2f5a4"
 			}
 		},
 		"metadata": {
@@ -61,7 +61,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 132
+				"execution_count": 125
 			},
 			{
 				"cell_type": "code",
@@ -89,7 +89,7 @@
 					"import warnings\r\n",
 					"warnings.filterwarnings(\"ignore\", category=FutureWarning)"
 				],
-				"execution_count": 133
+				"execution_count": 126
 			},
 			{
 				"cell_type": "code",
@@ -109,7 +109,7 @@
 					"PREDICTION_END_DATE = '2029-04-01'\r\n",
 					"LOOKBACK = 6"
 				],
-				"execution_count": 134
+				"execution_count": 127
 			},
 			{
 				"cell_type": "code",
@@ -129,7 +129,7 @@
 					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 135
+				"execution_count": 128
 			},
 			{
 				"cell_type": "code",
@@ -154,7 +154,7 @@
 					"lookback_date_formatted = lookback_date.strftime('%Y-%m-%d')\r\n",
 					"lookback_diff = (today.year - lookback_date.year) * 12 + (today.month - lookback_date.month)"
 				],
-				"execution_count": 136
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -178,7 +178,7 @@
 					"# Filter away latest month - as we predict cost per month, it will mess up future predictions\r\n",
 					"cost_df = cost_df.filter(F.col('Date') < F.concat(F.date_format(F.current_date(), 'yyyy'), F.lit('-'), F.date_format(F.current_date(), 'MM'), F.lit('-'), F.lit('01')))"
 				],
-				"execution_count": 137
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -194,13 +194,65 @@
 					}
 				},
 				"source": [
-					"# Counting the meter category groups to check if categories have cost in entire time period\r\n",
-					"count_df = cost_df.filter((F.col('Cost') > 0) & (F.col('Date') >= lookback_date_formatted)).groupBy(\"MeterCategory\").count()\r\n",
+					"# Create window for iterating over meter categories\r\n",
+					"window = W.Window.partitionBy(\"MeterCategory\")\r\n",
 					"\r\n",
-					"# Only keeping meter categories with cost in every month\r\n",
-					"cost_df = cost_df.join(count_df, \"MeterCategory\").filter(count_df[\"count\"] == lookback_diff).drop('count')"
+					"# Only look at data within the lookback period\r\n",
+					"count_df = cost_df.where((F.col('Cost') > 0) & (F.col('Date') >= lookback_date_formatted))\r\n",
+					"\r\n",
+					"# Calculate the number of month between cost date and today\r\n",
+					"count_df = count_df.withColumn('months_from_today', F.months_between(F.lit(today), 'Date'))\r\n",
+					"\r\n",
+					"# Find the lowest month difference across each meter category\r\n",
+					"count_df = count_df.withColumn('min_month_diff', F.min('months_from_today').over(window))\r\n",
+					"\r\n",
+					"# Keep meter categories where lowest diff is 1 month - this means it has cost last month - candidate for forecasting\r\n",
+					"count_df = count_df.withColumn('keep_service', F.when(F.col('min_month_diff') == 1, True).otherwise(False))\r\n",
+					"\r\n",
+					"# Remove duplicates and prepare for join operation\r\n",
+					"count_df = count_df.select('MeterCategory', 'keep_service').dropDuplicates(subset=[\"MeterCategory\", \"keep_service\"])"
 				],
-				"execution_count": 138
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# # Counting the meter category groups to check if categories have cost in entire time period\r\n",
+					"# count_df = cost_df.filter((F.col('Cost') > 0) & (F.col('Date') >= lookback_date_formatted)).groupBy(\"MeterCategory\").count()\r\n",
+					"\r\n",
+					"# # Only keeping meter categories with cost in every month\r\n",
+					"# cost_df = cost_df.join(count_df, \"MeterCategory\").filter(count_df[\"count\"] == lookback_diff).drop('count')"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cost_df = cost_df.join(count_df, 'MeterCategory').where(F.col('keep_service') == True).drop('keep_service')"
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -225,7 +277,7 @@
 					"\r\n",
 					"df = spark.createDataFrame([], schema)"
 				],
-				"execution_count": 139
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -243,7 +295,7 @@
 				"source": [
 					"distinct_meter_categories = [row[0] for row in cost_df.select('MeterCategory').distinct().collect()]"
 				],
-				"execution_count": 140
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -272,14 +324,18 @@
 					"    temp_pdf['x'] = range(len(temp_pdf))\r\n",
 					"\r\n",
 					"    # Estimate OLS model\r\n",
-					"    y = temp_pdf['Cost'].tail(LOOKBACK)\r\n",
-					"    x = temp_pdf['x'].tail(LOOKBACK)\r\n",
+					"    if LOOKBACK > len(temp_pdf['Cost']):\r\n",
+					"        y = temp_pdf['Cost'].values\r\n",
+					"        x = temp_pdf['x'].values\r\n",
+					"    else:\r\n",
+					"        y = temp_pdf['Cost'].tail(LOOKBACK)\r\n",
+					"        x = temp_pdf['x'].tail(LOOKBACK)\r\n",
+					"        \r\n",
 					"    model = sm.OLS(y, sm.add_constant(x))\r\n",
 					"    result = model.fit()\r\n",
 					"\r\n",
 					"    # Configure prediction period\r\n",
 					"    future_months = pd.date_range(start=temp_pdf.index[-1], periods=prediction_interval, freq=\"MS\")[1:]\r\n",
-					"    # future_months = future_months[1:]\r\n",
 					"    future_x = np.arange(temp_pdf['x'][-1] + 1, temp_pdf['x'][-1] + prediction_interval)\r\n",
 					"\r\n",
 					"    # Predict future cost\r\n",
@@ -293,7 +349,7 @@
 					"    end_time = time.time()\r\n",
 					"    print(f'Successfully processed {meter_category} cost in {round(end_time - start_time, 2)} seconds.')"
 				],
-				"execution_count": 141
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -312,7 +368,7 @@
 					"# Set predicted Cost to 0 if negative\r\n",
 					"df = df.withColumn('Cost', F.when(F.col('Cost') >= 0, F.col('Cost')).otherwise(0))"
 				],
-				"execution_count": 142
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
