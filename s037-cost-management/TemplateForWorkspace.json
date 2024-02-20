@@ -757,6 +757,18 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
+		"compute-savings-plan-savings_notebookSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"compute-savings-plan-savings_notebookSparkPoolIdRef": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"compute-savings-plan-savings_notebookSparkPoolEndpointRef": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
 		"cost-extend-utilities_notebookSparkPoolNameRef": {
 			"type": "string",
 			"defaultValue": "sprkpool33large"
@@ -814,6 +826,18 @@
 			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
 		},
 		"persist-latest-pricesheet_notebookSparkPoolEndpointRef": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"predict-service-cost_notebookSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"predict-service-cost_notebookSparkPoolIdRef": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"predict-service-cost_notebookSparkPoolEndpointRef": {
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
@@ -23835,6 +23859,29 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/2021 ACD Increase')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Ad Hoc Cost Report Requests/ACD Challenge"
+				},
+				"content": {
+					"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 \n    --*\n    format(sum(CostInBillingCurrency), 'N', 'en-us') as TotalCost\n    ,format((sum(CostInBillingCurrency) - (sum(CostInBillingCurrency) / 1.09)), 'N', 'en-us') as [2023 ACD Increase]\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAc*/*/ACMMonthlyA*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where \n    --benefitName is not NULL\n    --where ChargeType = 'Purchase'\n    --and PricingModel = 'Reservation'\n    --((ChargeType <> 'Purchase' and PricingModel <> 'Reservation') and PricingModel <> 'Spot') and\n    NOT(ChargeType = 'Purchase' and PricingModel = 'Reservation') and PricingModel <> 'Spot' and\n    [Date] >= '2021-03-01'\n    and [Date] < '2023-04-01'\n\n    --2021-03-01: 9%\n    --2023-04-01: 11%\n    --2024-02-01: 12%\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/2021 Cost greater than 1000')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
@@ -23852,6 +23899,29 @@
 						"poolName": "Built-in"
 					},
 					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/2023 ACD Increase')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Ad Hoc Cost Report Requests/ACD Challenge"
+				},
+				"content": {
+					"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 \n    --*\n    format(sum(CostInBillingCurrency), 'N', 'en-us') as TotalCost\n    ,format((sum(CostInBillingCurrency) - (sum(CostInBillingCurrency) / (1.11 * 1.09))), 'N', 'en-us') as [2023 ACD Increase]\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAc*/*/ACMMonthlyA*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where \n    --benefitName is not NULL\n    NOT(ChargeType = 'Purchase' and PricingModel = 'Reservation') and PricingModel <> 'Spot' and\n    --((ChargeType <> 'Purchase' and PricingModel <> 'Reservation') and PricingModel <> 'Spot') and\n\n    [Date] >= '2023-04-01'\n    and [Date] < '2024-02-01'\n\n    --2021-03-01: 9%\n    --2023-04-01: 11%\n    --2024-02-01: 12%\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
 				},
 				"type": "SqlQuery"
 			},
@@ -25110,6 +25180,29 @@
 				},
 				"content": {
 					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW RIRecommendations\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/ri/ri-recommendations-with-autofit-combometer.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/CreateServiceCostPredictionView')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "PowerBIViews"
+				},
+				"content": {
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW ServiceCostPrediction\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/service-cost-prediction.parquet/',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
 					"metadata": {
 						"language": "sql"
 					},
@@ -27026,6 +27119,26 @@
 					},
 					"currentConnection": {
 						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQL script 52')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "-- This is auto-generated code\nSELECT\n    TOP 100 *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_Threeyears.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "master",
 						"poolName": "Built-in"
 					},
 					"resultLimit": 5000
@@ -35088,7 +35201,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "cd650d29-111f-46e7-a86b-45e02b2dd421"
+						"spark.autotune.trackingId": "18e58db2-262c-40e8-a74a-ecafb44478f0"
 					}
 				},
 				"metadata": {
@@ -35113,8 +35226,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -35500,7 +35612,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "04e32323-1f4e-4222-8a0e-91c447938562"
+						"spark.autotune.trackingId": "27411252-485f-4bc0-b591-ceb138b51778"
 					}
 				},
 				"metadata": {
@@ -35824,12 +35936,15 @@
 							"    'MeterSubCategory',\r\n",
 							"    'Report_Date',\r\n",
 							"    'Report_Date_Partition',\r\n",
-							"    'SubscriptionServiceNow-App',\r\n",
 							"    'ActiveWBS',\r\n",
 							"    'ActiveWBSReason',\r\n",
 							"    'CostAllocationType',\r\n",
 							"    'AppID',\r\n",
 							"    'ServiceModel',\r\n",
+							"    'PricingModel',\r\n",
+							"    'UnitPrice',\r\n",
+							"    'EffectivePrice',\r\n",
+							"    'ChargeType',\r\n",
 							"    'Date'\r\n",
 							"]"
 						],
@@ -39317,7 +39432,7 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"folder": {
-					"name": "NotebookInProduction/Billing"
+					"name": "NotebookInProduction/Cost Prediction"
 				},
 				"nbformat": 4,
 				"nbformat_minor": 2,
@@ -39335,7 +39450,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "c6142327-ecb7-4b9c-922d-693a986781c0"
+						"spark.autotune.trackingId": "4752a462-ba79-45d6-8b32-e1c4806eeed5"
 					}
 				},
 				"metadata": {
@@ -41161,6 +41276,280 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/compute-savings-plan-savings')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "NotebookInProduction/HUB and RI Savings"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "[parameters('compute-savings-plan-savings_notebookSparkPoolNameRef')]",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "112g",
+					"driverCores": 16,
+					"executorMemory": "112g",
+					"executorCores": 16,
+					"numExecutors": 1,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "5",
+						"spark.autotune.trackingId": "ced162a9-4bf5-4aa8-bc61-b717483f2301"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "[parameters('compute-savings-plan-savings_notebookSparkPoolIdRef')]",
+						"name": "[parameters('compute-savings-plan-savings_notebookSparkPoolNameRef')]",
+						"type": "Spark",
+						"endpoint": "[parameters('compute-savings-plan-savings_notebookSparkPoolEndpointRef')]",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 16,
+						"memory": 112
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Amortized Cost\r\n",
+							"\r\n",
+							"### Savings Plan\r\n",
+							"\r\n",
+							"Looking up cost with **PriceModel** set to _SavingsPlan_ yield two kinds of cost:\r\n",
+							"- Has **ChargeType** set to _Usage_ where EffectivePrice < UnitPrice\r\n",
+							"- Has **ChargeType** set to _UnusedSavingsPlan_ (MeterCategory = Unassigned) where EffectiveCost is 100 and CostInBillingCurrency is 0 (is this corresponding to the unused parts of the savingsplan?)\r\n",
+							"\r\n",
+							"### Reservation\r\n",
+							"\r\n",
+							"Looking at **IsRIUsage** set to _RI Usage_\r\n",
+							"\r\n",
+							"There are two distinct charge types -> **Usage** and **UnusedReservation**\r\n",
+							"\r\n",
+							"## Actual Cost\r\n",
+							"\r\n",
+							"### Savings Plan\r\n",
+							"\r\n",
+							"Looking up cost with **PriceModel** set to _SavingsPlan_ yield two kinds of cost:\r\n",
+							"- Has **ChargeType** set to _Usage_ where EffectivePrice and CostInBillingCurrency are 0\r\n",
+							"- Has **ChargeType** set to _Purchase_ (MeterCategory = Unassigned) where CostInBillingCurrency = EffectivePrice = UnitPrice is 73000 which corresponds to 100 NOK/Hour for roughly 30 days\r\n",
+							"\r\n",
+							"### Reservation\r\n",
+							"\r\n",
+							"Looking at **IsRIUsage** set to _RI Usage_\r\n",
+							"\r\n",
+							"There are three distinct charge types -> **Usage**, **Purchase** and **Refund**\r\n",
+							"- ChargeType=Purchase --> EffectivePrice=UnitPrice and UnitPrice*Quantity = CostInBillingCurrency -> add up to get total cost for RI purchase\r\n",
+							"- ChargeType=Refund --> Same as above, just negative (since its money back) \r\n",
+							"- ChargeType=Usage --> cost is always 0 since its covered by RI purchases"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"import pyspark.sql.functions as F\r\n",
+							"from datetime import datetime, timedelta"
+						],
+						"outputs": [],
+						"execution_count": 24
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": 25
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"date_two_year_ago = datetime.now().date()-timedelta(days=730)"
+						],
+						"outputs": [],
+						"execution_count": 26
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
+							"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet'\r\n",
+							"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
+							"cost_df = cost_df.where(F.col('Date') >= date_two_year_ago)"
+						],
+						"outputs": [],
+						"execution_count": 27
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"cost_df = cost_df.where(F.col('PricingModel') == 'SavingsPlan')"
+						],
+						"outputs": [],
+						"execution_count": 28
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"cost_df = cost_df.select('Date', 'PricingModel', 'ChargeType', 'UnitOfMeasure', 'Quantity', 'EffectivePrice', 'UnitPrice', 'CostInBillingCurrency', 'PayGPrice')"
+						],
+						"outputs": [],
+						"execution_count": 29
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"cost_df = cost_df.withColumn('EffectiveCost', F.col('EffectivePrice') * F.col('Quantity'))\r\n",
+							"cost_df = cost_df.withColumn('CostSavings', (F.col('UnitPrice') - F.col('EffectivePrice')) * F.col('Quantity'))"
+						],
+						"outputs": [],
+						"execution_count": 30
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"# Compute total savings for savings plan\r\n",
+							"display(cost_df.where(F.col('ChargeType') == 'Usage').agg(F.sum('CostSavings')))"
+						],
+						"outputs": [],
+						"execution_count": 31
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"# Compute cost of unused savings plan\r\n",
+							"display(cost_df.where(F.col('ChargeType') == 'UnusedSavingsPlan').agg(F.sum('EffectiveCost')))"
+						],
+						"outputs": [],
+						"execution_count": 32
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/cost-extend-utilities')]",
 			"type": "Microsoft.Synapse/workspaces/notebooks",
 			"apiVersion": "2019-06-01-preview",
@@ -42754,6 +43143,416 @@
 						],
 						"outputs": [],
 						"execution_count": 7
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/predict-service-cost')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "NotebookInProduction/Cost Prediction"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "[parameters('predict-service-cost_notebookSparkPoolNameRef')]",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "112g",
+					"driverCores": 16,
+					"executorMemory": "112g",
+					"executorCores": 16,
+					"numExecutors": 1,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "5",
+						"spark.autotune.trackingId": "210ce1a4-b237-4a32-9ec6-90f2f0117e06"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "[parameters('predict-service-cost_notebookSparkPoolIdRef')]",
+						"name": "[parameters('predict-service-cost_notebookSparkPoolNameRef')]",
+						"type": "Spark",
+						"endpoint": "[parameters('predict-service-cost_notebookSparkPoolEndpointRef')]",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 16,
+						"memory": 112
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": 125
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"import pyspark.sql.functions as F\r\n",
+							"import pyspark.sql.types as T\r\n",
+							"import pyspark.sql.window as W\r\n",
+							"import statsmodels.api as sm\r\n",
+							"import pandas as pd\r\n",
+							"import numpy as np\r\n",
+							"from datetime import datetime, timedelta\r\n",
+							"import time\r\n",
+							"\r\n",
+							"import warnings\r\n",
+							"warnings.filterwarnings(\"ignore\", category=FutureWarning)"
+						],
+						"outputs": [],
+						"execution_count": 126
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Integers represent number of months\r\n",
+							"PREDICTION_END_DATE = '2029-04-01'\r\n",
+							"LOOKBACK = 6"
+						],
+						"outputs": [],
+						"execution_count": 127
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Load usage source\r\n",
+							"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet'\r\n",
+							"cost_df = spark.read.format('parquet').load(cost_path)"
+						],
+						"outputs": [],
+						"execution_count": 128
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"today = datetime.today().replace(day=1)\r\n",
+							"\r\n",
+							"prediction_end_date = datetime.strptime(PREDICTION_END_DATE, '%Y-%m-%d')\r\n",
+							"prediction_interval = (prediction_end_date.year - today.year) * 12 + (prediction_end_date.month - today.month)\r\n",
+							"\r\n",
+							"lookback_date = (today - timedelta(days=LOOKBACK*30)).replace(day=1)\r\n",
+							"lookback_date_formatted = lookback_date.strftime('%Y-%m-%d')\r\n",
+							"lookback_diff = (today.year - lookback_date.year) * 12 + (today.month - lookback_date.month)"
+						],
+						"outputs": [],
+						"execution_count": 129
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Select appropriate columns\r\n",
+							"cost_df = cost_df.select('Date', 'CostInBillingCurrency', 'MeterCategory')\r\n",
+							"cost_df = cost_df.withColumn('Date', F.date_trunc('month', 'Date'))\r\n",
+							"cost_df = cost_df.groupBy('Date', 'MeterCategory').agg(F.sum('CostInBillingCurrency').alias('Cost')).orderBy('Date')\r\n",
+							"\r\n",
+							"# Filter away latest month - as we predict cost per month, it will mess up future predictions\r\n",
+							"cost_df = cost_df.filter(F.col('Date') < F.concat(F.date_format(F.current_date(), 'yyyy'), F.lit('-'), F.date_format(F.current_date(), 'MM'), F.lit('-'), F.lit('01')))"
+						],
+						"outputs": [],
+						"execution_count": 130
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Create window for iterating over meter categories\r\n",
+							"window = W.Window.partitionBy(\"MeterCategory\")\r\n",
+							"\r\n",
+							"# Only look at data within the lookback period\r\n",
+							"count_df = cost_df.where((F.col('Cost') > 0) & (F.col('Date') >= lookback_date_formatted))\r\n",
+							"\r\n",
+							"# Calculate the number of month between cost date and today\r\n",
+							"count_df = count_df.withColumn('months_from_today', F.months_between(F.lit(today), 'Date'))\r\n",
+							"\r\n",
+							"# Find the lowest month difference across each meter category\r\n",
+							"count_df = count_df.withColumn('min_month_diff', F.min('months_from_today').over(window))\r\n",
+							"\r\n",
+							"# Keep meter categories where lowest diff is 1 month - this means it has cost last month - candidate for forecasting\r\n",
+							"count_df = count_df.withColumn('keep_service', F.when(F.col('min_month_diff') == 1, True).otherwise(False))\r\n",
+							"\r\n",
+							"# Remove duplicates and prepare for join operation\r\n",
+							"count_df = count_df.select('MeterCategory', 'keep_service').dropDuplicates(subset=[\"MeterCategory\", \"keep_service\"])"
+						],
+						"outputs": [],
+						"execution_count": 131
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# # Counting the meter category groups to check if categories have cost in entire time period\r\n",
+							"# count_df = cost_df.filter((F.col('Cost') > 0) & (F.col('Date') >= lookback_date_formatted)).groupBy(\"MeterCategory\").count()\r\n",
+							"\r\n",
+							"# # Only keeping meter categories with cost in every month\r\n",
+							"# cost_df = cost_df.join(count_df, \"MeterCategory\").filter(count_df[\"count\"] == lookback_diff).drop('count')"
+						],
+						"outputs": [],
+						"execution_count": 132
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"cost_df = cost_df.join(count_df, 'MeterCategory').where(F.col('keep_service') == True).drop('keep_service')"
+						],
+						"outputs": [],
+						"execution_count": 133
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Create schema for resulting df\r\n",
+							"schema = T.StructType([\r\n",
+							"    T.StructField(\"Date\", T.TimestampType(), True),\r\n",
+							"    T.StructField(\"Cost\", T.DoubleType(), True),\r\n",
+							"    T.StructField(\"MeterCategory\", T.StringType(), True)\r\n",
+							"])\r\n",
+							"\r\n",
+							"df = spark.createDataFrame([], schema)"
+						],
+						"outputs": [],
+						"execution_count": 134
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"distinct_meter_categories = [row[0] for row in cost_df.select('MeterCategory').distinct().collect()]"
+						],
+						"outputs": [],
+						"execution_count": 135
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"for meter_category in distinct_meter_categories:\r\n",
+							"    print(f'Processing {meter_category} cost')\r\n",
+							"    start_time = time.time()\r\n",
+							"    temp_df = cost_df.where(F.col('MeterCategory') == meter_category).orderBy(F.asc('Date')).select('Date', 'Cost', 'MeterCategory')\r\n",
+							"\r\n",
+							"    # Convert pyspark df to pandas for OLS model\r\n",
+							"    temp_pdf = temp_df.toPandas()\r\n",
+							"    temp_pdf.set_index(\"Date\", inplace=True)\r\n",
+							"\r\n",
+							"    temp_pdf['x'] = range(len(temp_pdf))\r\n",
+							"\r\n",
+							"    # Estimate OLS model\r\n",
+							"    if LOOKBACK > len(temp_pdf['Cost']):\r\n",
+							"        y = temp_pdf['Cost'].values\r\n",
+							"        x = temp_pdf['x'].values\r\n",
+							"    else:\r\n",
+							"        y = temp_pdf['Cost'].tail(LOOKBACK)\r\n",
+							"        x = temp_pdf['x'].tail(LOOKBACK)\r\n",
+							"        \r\n",
+							"    model = sm.OLS(y, sm.add_constant(x))\r\n",
+							"    result = model.fit()\r\n",
+							"\r\n",
+							"    # Configure prediction period\r\n",
+							"    future_months = pd.date_range(start=temp_pdf.index[-1], periods=prediction_interval, freq=\"MS\")[1:]\r\n",
+							"    future_x = np.arange(temp_pdf['x'][-1] + 1, temp_pdf['x'][-1] + prediction_interval)\r\n",
+							"\r\n",
+							"    # Predict future cost\r\n",
+							"    x = sm.add_constant(future_x)\r\n",
+							"    predicted_cost = result.predict(x)\r\n",
+							"\r\n",
+							"    predicted_df = pd.DataFrame({\"Date\": future_months, \"Cost\": predicted_cost})\r\n",
+							"    predicted_df = spark.createDataFrame(predicted_df).withColumn('MeterCategory', F.lit(meter_category))\r\n",
+							"    updated_df = temp_df.union(predicted_df)\r\n",
+							"    df = df.union(updated_df)\r\n",
+							"    end_time = time.time()\r\n",
+							"    print(f'Successfully processed {meter_category} cost in {round(end_time - start_time, 2)} seconds.')"
+						],
+						"outputs": [],
+						"execution_count": 136
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Set predicted Cost to 0 if negative\r\n",
+							"df = df.withColumn('Cost', F.when(F.col('Cost') >= 0, F.col('Cost')).otherwise(0))"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/service-cost-prediction.parquet\"\r\n",
+							"df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
+						],
+						"outputs": [],
+						"execution_count": null
 					}
 				]
 			},
