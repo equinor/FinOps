@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "c910a8f8-b594-43b1-9ae1-ab39355482ba"
+				"spark.autotune.trackingId": "3ffea203-78fe-4ffc-b97c-6eeb29bf2fea"
 			}
 		},
 		"metadata": {
@@ -193,7 +193,6 @@
 					"    'EffectivePrice',\r\n",
 					"    'ActiveWBS',\r\n",
 					"    'ActiveWBSReason',\r\n",
-					"    'ai_VMName',\r\n",
 					"    'AppID',\r\n",
 					"    'Application_Name',\r\n",
 					"    'ChargeType',\r\n",
@@ -310,7 +309,7 @@
 					"                        print(len(df_temp.columns),len(df.columns))\r\n",
 					""
 				],
-				"execution_count": 5
+				"execution_count": 4
 			},
 			{
 				"cell_type": "markdown",
@@ -342,7 +341,7 @@
 					"# Change the data type of the 'Report_Date' column to Datetime\r\n",
 					"df = df.withColumn(\"Report_Date\", col(\"Report_Date\").cast(\"timestamp\"))"
 				],
-				"execution_count": 6
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -361,7 +360,7 @@
 					"# Change the column name\r\n",
 					"df = df.withColumnRenamed(\"Application_Name\", \"ApplicationName\")"
 				],
-				"execution_count": 7
+				"execution_count": 6
 			},
 			{
 				"cell_type": "markdown",
@@ -396,7 +395,7 @@
 					"# Save the data with partitioned by Report date\r\n",
 					"df.write.format('parquet').mode('overwrite').partitionBy('Report_Date_Partition').option('overwriteSchema', 'true').save(optimized_path)"
 				],
-				"execution_count": 8
+				"execution_count": 7
 			}
 		]
 	}
