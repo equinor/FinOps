@@ -35201,7 +35201,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "18e58db2-262c-40e8-a74a-ecafb44478f0"
+						"spark.autotune.trackingId": "3ffea203-78fe-4ffc-b97c-6eeb29bf2fea"
 					}
 				},
 				"metadata": {
@@ -35226,7 +35226,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -35373,7 +35374,6 @@
 							"    'EffectivePrice',\r\n",
 							"    'ActiveWBS',\r\n",
 							"    'ActiveWBSReason',\r\n",
-							"    'ai_VMName',\r\n",
 							"    'AppID',\r\n",
 							"    'Application_Name',\r\n",
 							"    'ChargeType',\r\n",
@@ -35405,7 +35405,8 @@
 							"    'WindowsAHB_VCPUS',\r\n",
 							"    'SQLAHB_VCPUS',\r\n",
 							"    'CPUHours',\r\n",
-							"    'ServiceModel'\r\n",
+							"    'ServiceModel',\r\n",
+							"    'benefitName'\r\n",
 							"]\r\n",
 							"\r\n",
 							"df_schema_extended = df_schema_extended.select(*columns_to_keep) \r\n",
@@ -35491,7 +35492,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 5
+						"execution_count": 4
 					},
 					{
 						"cell_type": "markdown",
@@ -35524,7 +35525,7 @@
 							"df = df.withColumn(\"Report_Date\", col(\"Report_Date\").cast(\"timestamp\"))"
 						],
 						"outputs": [],
-						"execution_count": 6
+						"execution_count": 5
 					},
 					{
 						"cell_type": "code",
@@ -35544,7 +35545,7 @@
 							"df = df.withColumnRenamed(\"Application_Name\", \"ApplicationName\")"
 						],
 						"outputs": [],
-						"execution_count": 7
+						"execution_count": 6
 					},
 					{
 						"cell_type": "markdown",
@@ -35580,7 +35581,7 @@
 							"df.write.format('parquet').mode('overwrite').partitionBy('Report_Date_Partition').option('overwriteSchema', 'true').save(optimized_path)"
 						],
 						"outputs": [],
-						"execution_count": 8
+						"execution_count": 7
 					}
 				]
 			},
@@ -35612,7 +35613,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "27411252-485f-4bc0-b591-ceb138b51778"
+						"spark.autotune.trackingId": "f756c86c-71d5-439a-891a-b43b6370e8a4"
 					}
 				},
 				"metadata": {
@@ -35945,6 +35946,7 @@
 							"    'UnitPrice',\r\n",
 							"    'EffectivePrice',\r\n",
 							"    'ChargeType',\r\n",
+							"    'benefitName',\r\n",
 							"    'Date'\r\n",
 							"]"
 						],
@@ -39857,7 +39859,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "1130a751-e5d9-4817-9341-5c211e2f45bc"
+						"spark.autotune.trackingId": "a2b7cfc9-4e62-4ac2-b101-259cb7ccb22d"
 					}
 				},
 				"metadata": {
@@ -39882,7 +39884,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -39902,6 +39905,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"from enum import Enum\r\n",
@@ -41573,7 +41577,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "4c0492cf-bbca-4201-b383-5856f6d37afb"
+						"spark.autotune.trackingId": "aa6a134c-22d1-44ce-8a3c-83ace7191b4c"
 					}
 				},
 				"metadata": {
@@ -41598,7 +41602,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -41627,6 +41632,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"def get_last_day_prev_month(to_date):\r\n",
 							"    current_month = int(to_date[4:6])\r\n",
