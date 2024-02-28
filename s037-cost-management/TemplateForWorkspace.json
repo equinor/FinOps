@@ -185,6 +185,14 @@
 			"type": "string",
 			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
 		},
+		"PricesheetExportSink_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
+		},
+		"PricesheetExportSource_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
+		},
 		"RIPurchaseSink_dataSetLinkedServiceName": {
 			"type": "string",
 			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
@@ -850,6 +858,18 @@
 			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
 		},
 		"process-azure-services_notebookSparkPoolEndpointRef": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"process-benefit-purchases_notebookSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"process-benefit-purchases_notebookSparkPoolIdRef": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"process-benefit-purchases_notebookSparkPoolEndpointRef": {
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
@@ -18243,6 +18263,87 @@
 							},
 							"numExecutors": null
 						}
+					},
+					{
+						"name": "Convert pricesheet csv to parquet",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Persist with latest suffix",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"wildcardFolderPath": {
+										"value": "@concat('pricesheet/portal-export/FinOps-Pricesheet-Monthly/', variables('folderpath'), '/*')",
+										"type": "Expression"
+									},
+									"wildcardFileName": "*.csv",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings",
+									"copyBehavior": "MergeFiles"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "PricesheetExportSource",
+								"type": "DatasetReference",
+								"parameters": {
+									"dateRange": {
+										"value": "@variables('folderpath')",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "PricesheetExportSink",
+								"type": "DatasetReference",
+								"parameters": {
+									"dateRange": {
+										"value": "@variables('folderpath')",
+										"type": "Expression"
+									}
+								}
+							}
+						]
 					}
 				],
 				"concurrency": 1,
@@ -18266,7 +18367,9 @@
 				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('workspaceId'), '/notebooks/persist-latest-pricesheet')]"
+				"[concat(variables('workspaceId'), '/notebooks/persist-latest-pricesheet')]",
+				"[concat(variables('workspaceId'), '/datasets/PricesheetExportSource')]",
+				"[concat(variables('workspaceId'), '/datasets/PricesheetExportSink')]"
 			]
 		},
 		{
@@ -20749,6 +20852,167 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/linkedServices/', parameters('Parquet_for_Deletion_dataSetLinkedServiceName'))]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/PricesheetExportSink')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('PricesheetExportSink_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"dateRange": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@concat(dataset().dateRange, '.parquet')",
+							"type": "Expression"
+						},
+						"folderPath": "pricesheet/portal-export/pricesheet-converted",
+						"fileSystem": "usage"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('PricesheetExportSink_dataSetLinkedServiceName'))]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/PricesheetExportSource')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('PricesheetExportSource_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"dateRange": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "part_0_0001.csv",
+						"folderPath": "pricesheet/portal-export/FinOps-Pricesheet-Monthly/20240101-20240131/a1a831cf-9def-48dd-a822-af3d8390eede",
+						"fileSystem": "usage"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "EnrollmentNumber",
+						"type": "String"
+					},
+					{
+						"name": "MeterID",
+						"type": "String"
+					},
+					{
+						"name": "MeterName",
+						"type": "String"
+					},
+					{
+						"name": "MeterType",
+						"type": "String"
+					},
+					{
+						"name": "MeterCategory",
+						"type": "String"
+					},
+					{
+						"name": "MeterSubCategory",
+						"type": "String"
+					},
+					{
+						"name": "ServiceFamily",
+						"type": "String"
+					},
+					{
+						"name": "Product",
+						"type": "String"
+					},
+					{
+						"name": "SkuID",
+						"type": "String"
+					},
+					{
+						"name": "ProductID",
+						"type": "String"
+					},
+					{
+						"name": "MeterRegion",
+						"type": "String"
+					},
+					{
+						"name": "UnitOfMeasure",
+						"type": "String"
+					},
+					{
+						"name": "PartNumber",
+						"type": "String"
+					},
+					{
+						"name": "EffectiveStartDate",
+						"type": "String"
+					},
+					{
+						"name": "EffectiveEndDate",
+						"type": "String"
+					},
+					{
+						"name": "UnitPrice",
+						"type": "String"
+					},
+					{
+						"name": "BasePrice",
+						"type": "String"
+					},
+					{
+						"name": "MarketPrice",
+						"type": "String"
+					},
+					{
+						"name": "CurrencyCode",
+						"type": "String"
+					},
+					{
+						"name": "IncludedQuantity",
+						"type": "String"
+					},
+					{
+						"name": "OfferID",
+						"type": "String"
+					},
+					{
+						"name": "Term",
+						"type": "String"
+					},
+					{
+						"name": "PriceType",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('PricesheetExportSource_dataSetLinkedServiceName'))]"
 			]
 		},
 		{
@@ -25009,6 +25273,29 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/CreateBenefitPurchasesView')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "PowerBIViews"
+				},
+				"content": {
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW BenefitPurchases\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/benefit-purchases.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/CreateBusinessAreaLevelView')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
@@ -27119,26 +27406,6 @@
 					},
 					"currentConnection": {
 						"databaseName": "costmgmt",
-						"poolName": "Built-in"
-					},
-					"resultLimit": 5000
-				},
-				"type": "SqlQuery"
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/SQL script 52')]",
-			"type": "Microsoft.Synapse/workspaces/sqlscripts",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"content": {
-					"query": "-- This is auto-generated code\nSELECT\n    TOP 100 *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_Threeyears.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n",
-					"metadata": {
-						"language": "sql"
-					},
-					"currentConnection": {
-						"databaseName": "master",
 						"poolName": "Built-in"
 					},
 					"resultLimit": 5000
@@ -35226,8 +35493,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -35638,8 +35904,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -39859,7 +40124,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "a2b7cfc9-4e62-4ac2-b101-259cb7ccb22d"
+						"spark.autotune.trackingId": "1130a751-e5d9-4817-9341-5c211e2f45bc"
 					}
 				},
 				"metadata": {
@@ -39884,8 +40149,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -39905,7 +40169,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"from enum import Enum\r\n",
@@ -41577,7 +41840,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "aa6a134c-22d1-44ce-8a3c-83ace7191b4c"
+						"spark.autotune.trackingId": "4c0492cf-bbca-4201-b383-5856f6d37afb"
 					}
 				},
 				"metadata": {
@@ -41602,8 +41865,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -41632,7 +41894,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"def get_last_day_prev_month(to_date):\r\n",
 							"    current_month = int(to_date[4:6])\r\n",
@@ -43801,6 +44062,172 @@
 							"cost_df = cost_df.withColumn('ServiceName', F.when(F.col('ServiceName').isNotNull(), F.col('ServiceName')).otherwise(F.col('ambig_ServiceName')))\r\n",
 							"cost_df = cost_df.withColumn('ServiceCategory', F.when(F.col('ServiceCategory').isNotNull(), F.col('ServiceCategory')).otherwise(F.col('ambig_ServiceCategory')))\r\n",
 							"cost_df = cost_df.drop('ambig_ServiceModel', 'ambig_ServiceName', 'ambig_ServiceCategory')"
+						],
+						"outputs": [],
+						"execution_count": 13
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/process-benefit-purchases')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "NotebookInProduction/Cost Extension"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "[parameters('process-benefit-purchases_notebookSparkPoolNameRef')]",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "112g",
+					"driverCores": 16,
+					"executorMemory": "112g",
+					"executorCores": 16,
+					"numExecutors": 1,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "5",
+						"spark.autotune.trackingId": "addc13bd-8436-4614-b58e-4a6292bce79b"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "[parameters('process-benefit-purchases_notebookSparkPoolIdRef')]",
+						"name": "[parameters('process-benefit-purchases_notebookSparkPoolNameRef')]",
+						"type": "Spark",
+						"endpoint": "[parameters('process-benefit-purchases_notebookSparkPoolEndpointRef')]",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 16,
+						"memory": 112
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"import pyspark.sql.functions as F"
+						],
+						"outputs": [],
+						"execution_count": 8
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": 9
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
+							"cost_df = spark.read.format('parquet').load(cost_path)"
+						],
+						"outputs": [],
+						"execution_count": 10
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"cost_df = cost_df.where((F.col('ChargeType') == 'Purchase') & (F.col('PricingModel') != 'OnDemand'))"
+						],
+						"outputs": [],
+						"execution_count": 11
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"cost_df = cost_df.select('Date', 'SubscriptionName', 'ResourceLocation', 'MeterCategory', 'MeterSubCategory', 'Quantity', 'EffectivePrice', 'CostInBillingCurrency', 'UnitPrice', 'PricingModel', 'benefitName')"
+						],
+						"outputs": [],
+						"execution_count": 12
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/benefit-purchases.parquet\"\r\n",
+							"cost_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 						],
 						"outputs": [],
 						"execution_count": 13
