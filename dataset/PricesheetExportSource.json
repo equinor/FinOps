@@ -5,13 +5,24 @@
 			"referenceName": "s037-cost-management-WorkspaceDefaultStorage",
 			"type": "LinkedServiceReference"
 		},
+		"parameters": {
+			"fromDate": {
+				"type": "string"
+			},
+			"toDate": {
+				"type": "string"
+			}
+		},
 		"annotations": [],
 		"type": "DelimitedText",
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
-				"fileName": "part_0_0001.csv",
-				"folderPath": "pricesheet/portal-export/FinOps-Pricesheet-Monthly/20240101-20240131/a1a831cf-9def-48dd-a822-af3d8390eede",
+				"fileName": "*.csv",
+				"folderPath": {
+					"value": "@concat('pricesheet/portal-export/FinOps-Pricesheet-Monthly/', dataset().fromDate, '-', dataset().toDate, '/*')",
+					"type": "Expression"
+				},
 				"fileSystem": "usage"
 			},
 			"columnDelimiter": ",",
