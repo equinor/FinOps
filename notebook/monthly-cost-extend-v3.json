@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "89600880-9de2-43be-823d-884700c17a2c"
+				"spark.autotune.trackingId": "21325c5a-a4fc-4528-8ea6-83e54f1daf11"
 			}
 		},
 		"metadata": {
@@ -73,13 +73,13 @@
 					]
 				},
 				"source": [
-					"toDate = '20231130'\n",
-					"fromDate = '20231101'\n",
+					"toDate = '20240131'\n",
+					"fromDate = '20240101'\n",
 					"container = 'usage'\n",
 					"storageAccount = 's037costmgmt'\n",
-					"reportType = 'ActualCost'"
+					"reportType = 'AmortizedCost'"
 				],
-				"execution_count": 1
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -106,7 +106,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 2
+				"execution_count": 12
 			},
 			{
 				"cell_type": "markdown",
@@ -137,7 +137,7 @@
 				"source": [
 					"%run /cost-extend-utilities"
 				],
-				"execution_count": 3
+				"execution_count": 13
 			},
 			{
 				"cell_type": "code",
@@ -188,7 +188,7 @@
 					"    application_df = application_df.withColumn('AppID', F.col('AppID').cast(\"int\"))\r\n",
 					"    return application_df"
 				],
-				"execution_count": 4
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -211,7 +211,7 @@
 					"    cost_df.write.format('parquet').mode('overwrite').option('path', destinationFilename).save()\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": 5
+				"execution_count": 15
 			},
 			{
 				"cell_type": "markdown",
@@ -283,10 +283,126 @@
 					"cost_df = transform_cost_data(cost_df)\n",
 					"cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\n",
 					"cost_df = add_azure_service_information(cost_df, service_df)\n",
-					"write_output_file(cost_df, cost_target_path)\n",
+					"# write_output_file(cost_df, cost_target_path)\n",
 					"print(' ')"
 				],
-				"execution_count": 6
+				"execution_count": 16
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from enum import Enum\r\n",
+					"class SavingsPlanStatus(Enum):\r\n",
+					"    Enabled = \"Enabled\"\r\n",
+					"    NotEnabled = \"Not Enabled\"\r\n",
+					"    NotSupported = \"Not Supported\""
+				],
+				"execution_count": 21
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"sp_enabled = (F.col('PricingModel') == 'SavingsPlan') & (F.col('ChargeType') == 'Usage')\r\n",
+					"is_ondemand = (F.col('PricingModel') == 'OnDemand') & (F.col('ChargeType') == 'Usage')\r\n",
+					"is_vm_compute = is_ondemand & (F.col('MeterCategory') == 'Virtual Machines') & ~(F.col('MeterSubCategory').contains('Av1'))\r\n",
+					"is_aas_compute = is_ondemand & (F.col('MeterCategory') == 'Azure App Service') & ~(F.col('MeterSubCategory').contains('Premium v3')) & ~(F.col('MeterSubCategory').contains('Isolated v2'))\r\n",
+					"is_af_compute = is_ondemand & (F.col('MeterCategory') == 'Functions') & (F.col('MeterSubCategory') == 'Premium')\r\n",
+					"is_aci_compute = is_ondemand & (F.col('MeterCategory') == 'Container Instances')\r\n",
+					"is_aca_compute = is_ondemand & (F.col('MeterCategory') == 'Azure Container Apps')\r\n",
+					"\r\n",
+					"cost_df = cost_df.withColumn('SPStatus', \r\n",
+					"    F.when(sp_enabled, SavingsPlanStatus.Enabled.value)\r\n",
+					"    .when(is_vm_compute | is_aas_compute | is_af_compute | is_aci_compute | is_aca_compute, SavingsPlanStatus.NotEnabled.value)\r\n",
+					"    .otherwise(SavingsPlanStatus.NotSupported.value)\r\n",
+					")"
+				],
+				"execution_count": 23
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/pricesheet-converted/{fromDate}-{toDate}.parquet'\r\n",
+					"pricesheet_df = spark.read.format('parquet').load(pricesheet_path)"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(cost_df.where(F.col('SPStatus') == 'Enabled').withColumn('Savings', (F.col('UnitPrice') - F.col('EffectivePrice')) * F.col('Quantity')).agg(F.sum('Savings')))"
+				],
+				"execution_count": 25
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Determine if cost has SP enabled - not enabled - not supported\r\n",
+					"\r\n",
+					"# Load pricesheet\r\n",
+					"\r\n",
+					"# Join pricesheet on Date and PartNumber\r\n",
+					"\r\n",
+					"# Compute NormalizedP3YUnitPrice\r\n",
+					"\r\n",
+					"# Compute savings/discount rate in PBI"
+				],
+				"execution_count": 17
 			}
 		]
 	}
