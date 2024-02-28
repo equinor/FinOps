@@ -112,6 +112,87 @@
 					},
 					"numExecutors": null
 				}
+			},
+			{
+				"name": "Convert pricesheet csv to parquet",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Persist with latest suffix",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFolderPath": {
+								"value": "@concat('pricesheet/portal-export/FinOps-Pricesheet-Monthly/', variables('folderpath'), '/*')",
+								"type": "Expression"
+							},
+							"wildcardFileName": "*.csv",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings",
+							"copyBehavior": "MergeFiles"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "PricesheetExportSource",
+						"type": "DatasetReference",
+						"parameters": {
+							"dateRange": {
+								"value": "@variables('folderpath')",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "PricesheetExportSink",
+						"type": "DatasetReference",
+						"parameters": {
+							"dateRange": {
+								"value": "@variables('folderpath')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
 			}
 		],
 		"concurrency": 1,
