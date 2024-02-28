@@ -6,10 +6,7 @@
 			"type": "LinkedServiceReference"
 		},
 		"parameters": {
-			"fromDate": {
-				"type": "string"
-			},
-			"toDate": {
+			"dateRange": {
 				"type": "string"
 			}
 		},
@@ -19,7 +16,7 @@
 			"location": {
 				"type": "AzureBlobFSLocation",
 				"fileName": {
-					"value": "@concat(dataset().fromDate, '-', dataset().toDate, '.parquet')",
+					"value": "@concat(dataset().dateRange, '.parquet')",
 					"type": "Expression"
 				},
 				"folderPath": "pricesheet/portal-export/pricesheet-converted",
