@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "ced162a9-4bf5-4aa8-bc61-b717483f2301"
+				"spark.autotune.trackingId": "84cefd8a-435b-4b82-8d5b-355ed21c0b23"
 			}
 		},
 		"metadata": {
@@ -110,7 +110,25 @@
 					"import pyspark.sql.functions as F\r\n",
 					"from datetime import datetime, timedelta"
 				],
-				"execution_count": 24
+				"execution_count": 25
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"PROD_OFFER_ID = 'MS-AZR-0017P'"
+				],
+				"execution_count": 26
 			},
 			{
 				"cell_type": "code",
@@ -122,7 +140,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 25
+				"execution_count": 27
 			},
 			{
 				"cell_type": "code",
@@ -140,7 +158,7 @@
 				"source": [
 					"date_two_year_ago = datetime.now().date()-timedelta(days=730)"
 				],
-				"execution_count": 26
+				"execution_count": 28
 			},
 			{
 				"cell_type": "code",
@@ -157,11 +175,289 @@
 				},
 				"source": [
 					"# cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
-					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet'\r\n",
+					"# cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet'\r\n",
+					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20240101-20240131/Extended_v3_ACMMonthlyAmortizedCost_20240101-20240131.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
-					"cost_df = cost_df.where(F.col('Date') >= date_two_year_ago)"
+					"# cost_df = cost_df.where(F.col('Date') >= date_two_year_ago)"
 				],
-				"execution_count": 27
+				"execution_count": 65
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/pricesheet-converted/20240101-20240131.parquet'\r\n",
+					"pricesheet_df = spark.read.format('parquet').load(pricesheet_path)\r\n",
+					"pricesheet_df = pricesheet_df.where((F.col('OfferID') == PROD_OFFER_ID) & (F.col('PriceType') == 'SavingsPlan'))"
+				],
+				"execution_count": 64
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"p3y_df = pricesheet_df.where(F.col('Term') == 'P3Y')\r\n",
+					"p1y_df = pricesheet_df.where(F.col('Term') == 'P1Y')"
+				],
+				"execution_count": 66
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"p3y_df = p3y_df.withColumn('NormalizedUnit', F.regexp_extract('UnitOfMeasure', r'^(\\d+)', 1).cast('integer'))\r\n",
+					"p3y_df = p3y_df.withColumn('NormalizedMemoryFactor', \r\n",
+					"    F.when(F.col('UnitOfMeasure').contains('TiB'), 1024) # Standard measure in usage file is GiB --> convertion factor between TiB and Gib is 1024\r\n",
+					"    .when(F.col('UnitOfMeasure').contains(\"PiB\"), 1048576) # Standard measure in usage file is GiB --> convertion factor between PiB and Gib is 1048576\r\n",
+					"    .when(F.col('UnitOfMeasure').contains(\"TB\"), 1000) # Standard measure in usage file is GB --> convertion factor between TB and Gb is 1000\r\n",
+					"    .when(F.col('UnitOfMeasure').contains(\"PB\"), 1000000) # Standard measure in usage file is GB --> convertion factor between PB and Gib is 1000000\r\n",
+					"    .otherwise(1)\r\n",
+					")\r\n",
+					"p3y_df = p3y_df.withColumn('NormalizedP3YUnitPrice', F.col('UnitPrice') / (F.col('NormalizedUnit') * F.col('NormalizedMemoryFactor')))"
+				],
+				"execution_count": 67
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"p3y_df = p3y_df.select('PartNumber', 'NormalizedP3YUnitPrice')"
+				],
+				"execution_count": 68
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(p3y_df.where(F.col('PartNumber') == 'AAM-61322'))"
+				],
+				"execution_count": 61
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Find eligible SP cost and compute potential savings\r\n",
+					"\r\n",
+					"- Virtual Machines cost have unit of measure on format `x Hours` in pricesheet --> must divide UnitPrice by `x`\r\n",
+					"- Azure Function cost have unit of measure on format `x TiB Hours` or `x Hours` --> must divide UnitPrice by `x` then if GiB --> leave cost as-is, if TiB --> divide UnitPrice by 1024\r\n",
+					"- Azure App Service have unit of measure on format `x Hours` in pricesheet --> must divide UnitPrice by `x`\r\n",
+					"- Azure Container Instance cost have unit of measure on format `x TB Hours` or `x Hours` --> must divide UnitPrice by `x` then if GB --> leave cost as-is, if TB --> divide UnitPrice by 1000\r\n",
+					"- Azure Container Apps cost have unit of measure on format `x PiB Hours` or `x Seconds` --> must divide UnitPrice by `x` then if GiB --> leave cost as-is, if PiB --> divide UnitPrice by 1 048 576"
+				]
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"sp_df = cost_df.where((F.col('PricingModel') == 'OnDemand') & (F.col('ChargeType') == 'Usage') & (F.col('MeterCategory') == 'Container Instances'))"
+				],
+				"execution_count": 88
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"sp_df = sp_df.join(p3y_df, 'PartNumber', 'left')"
+				],
+				"execution_count": 89
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"sp_df = sp_df.withColumn('Savings', (F.col('UnitPrice') - F.col('NormalizedP3YUnitPrice')) * F.col('Quantity'))"
+				],
+				"execution_count": 90
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(sp_df)"
+				],
+				"execution_count": 82
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(sp_df.agg(F.sum('CostInBillingCurrency')))"
+				],
+				"execution_count": 91
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(sp_df.agg(F.sum('Savings')))"
+				],
+				"execution_count": 92
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(sp_df.select('UnitPrice', 'NormalizedP3YUnitPrice', 'Savings'))"
+				],
+				"execution_count": 21
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Compute existing SP savings"
+				]
 			},
 			{
 				"cell_type": "code",
