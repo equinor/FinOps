@@ -20,24 +20,76 @@
 						"storeSettings": {
 							"type": "AzureBlobFSReadSettings",
 							"recursive": true,
-							"wildcardFolderPath": "pricesheet/portal-export/FinOps-Pricesheet-Monthly/20240101-20240131/*",
-							"wildcardFileName": "*.csv",
 							"enablePartitionDiscovery": false
 						},
 						"formatSettings": {
 							"type": "DelimitedTextReadSettings"
 						}
 					},
-					"enableStaging": false
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings",
+							"copyBehavior": "MergeFiles"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
 				},
 				"inputs": [
 					{
 						"referenceName": "PricesheetExportSource",
-						"type": "DatasetReference"
+						"type": "DatasetReference",
+						"parameters": {
+							"fromDate": {
+								"value": "@pipeline().parameters.fromDate",
+								"type": "Expression"
+							},
+							"toDate": {
+								"value": "@pipeline().parameters.toDate",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "PricesheetExportSink",
+						"type": "DatasetReference",
+						"parameters": {
+							"fromDate": {
+								"value": "@pipeline().parameters.fromDate",
+								"type": "Expression"
+							},
+							"toDate": {
+								"value": "@pipeline().parameters.toDate",
+								"type": "Expression"
+							}
+						}
 					}
 				]
 			}
 		],
+		"parameters": {
+			"fromDate": {
+				"type": "string",
+				"defaultValue": "20230101"
+			},
+			"toDate": {
+				"type": "string",
+				"defaultValue": "20230131"
+			}
+		},
 		"folder": {
 			"name": "PipelinesInProduction/Pricesheet"
 		},
