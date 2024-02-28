@@ -20,6 +20,11 @@
 						"storeSettings": {
 							"type": "AzureBlobFSReadSettings",
 							"recursive": true,
+							"wildcardFolderPath": {
+								"value": "@concat('pricesheet/portal-export/FinOps-Pricesheet-Monthly/', pipeline().parameters.fromDate, '-', pipeline().parameters.toDate, '/*')",
+								"type": "Expression"
+							},
+							"wildcardFileName": "*.csv",
 							"enablePartitionDiscovery": false
 						},
 						"formatSettings": {
