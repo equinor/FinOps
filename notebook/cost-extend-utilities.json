@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "877b812a-337e-4112-a562-f83473dd6d7a"
+				"spark.autotune.trackingId": "30f20d13-ff7c-403d-916d-b805255d59fc"
 			}
 		},
 		"metadata": {
@@ -148,12 +148,12 @@
 					"    is_vm_not_supported = is_vm & (F.col('MeterSubCategory') == 'SQL Server Express Edition')\r\n",
 					"\r\n",
 					"    cost_df = cost_df.withColumn('SQLAHB', \r\n",
-					"        F.when(is_sql_cost & is_vm_ahb, 'Enabled')\r\n",
-					"        .when(is_sql_cost & is_vm_not_supported, 'Not Supported')\r\n",
-					"        .when(is_sql_cost & is_vm, 'Not Enabled')\r\n",
-					"        .when(F.col('ai_AHB') == True, 'Enabled')\r\n",
-					"        .when(F.col('ai_AHB') == False, 'Not Enabled')\r\n",
-					"        .otherwise('Not Supported')\r\n",
+					"        F.when(is_sql_cost & is_vm_ahb, AHBStatus.Enabled.value)\r\n",
+					"        .when(is_sql_cost & is_vm_not_supported, AHBStatus.NotSupported.value)\r\n",
+					"        .when(is_sql_cost & is_vm, AHBStatus.NotEnabled.value)\r\n",
+					"        .when(F.col('ai_AHB') == True, AHBStatus.Enabled.value)\r\n",
+					"        .when(F.col('ai_AHB') == False, AHBStatus.NotEnabled.value)\r\n",
+					"        .otherwise(AHBStatus.NotSupported.value)\r\n",
 					"    )\r\n",
 					"    return cost_df"
 				],
