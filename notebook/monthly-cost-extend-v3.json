@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "d5617ff6-e682-4784-ab66-843fb3d1f63a"
+				"spark.autotune.trackingId": "783f9c00-accc-48cd-8bd9-943ca1063752"
 			}
 		},
 		"metadata": {
@@ -79,7 +79,7 @@
 					"storageAccount = 's037costmgmt'\n",
 					"reportType = 'AmortizedCost'"
 				],
-				"execution_count": 28
+				"execution_count": 22
 			},
 			{
 				"cell_type": "code",
@@ -106,7 +106,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 29
+				"execution_count": 23
 			},
 			{
 				"cell_type": "markdown",
@@ -137,7 +137,7 @@
 				"source": [
 					"%run /cost-extend-utilities"
 				],
-				"execution_count": 30
+				"execution_count": 24
 			},
 			{
 				"cell_type": "code",
@@ -188,7 +188,7 @@
 					"    application_df = application_df.withColumn('AppID', F.col('AppID').cast(\"int\"))\r\n",
 					"    return application_df"
 				],
-				"execution_count": 31
+				"execution_count": 25
 			},
 			{
 				"cell_type": "code",
@@ -211,7 +211,7 @@
 					"    cost_df.write.format('parquet').mode('overwrite').option('path', destinationFilename).save()\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": 32
+				"execution_count": 26
 			},
 			{
 				"cell_type": "markdown",
@@ -286,7 +286,7 @@
 					"# write_output_file(cost_df, cost_target_path)\n",
 					"print(' ')"
 				],
-				"execution_count": 33
+				"execution_count": 27
 			},
 			{
 				"cell_type": "code",
@@ -308,7 +308,25 @@
 					"    NotEnabled = \"Not Enabled\"\r\n",
 					"    NotSupported = \"Not Supported\""
 				],
-				"execution_count": 34
+				"execution_count": 28
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"PROD_OFFER_ID = 'MS-AZR-0017P'"
+				],
+				"execution_count": 29
 			},
 			{
 				"cell_type": "code",
@@ -327,18 +345,19 @@
 					"sp_enabled = (F.col('PricingModel') == 'SavingsPlan') & (F.col('ChargeType') == 'Usage')\r\n",
 					"is_ondemand = (F.col('PricingModel') == 'OnDemand') & (F.col('ChargeType') == 'Usage')\r\n",
 					"is_vm_compute = (F.col('MeterCategory') == 'Virtual Machines') & ~(F.col('MeterSubCategory').contains('Av1'))\r\n",
-					"is_aas_compute = (F.col('MeterCategory') == 'Azure App Service') & ~(F.col('MeterSubCategory').contains('Premium v3')) & ~(F.col('MeterSubCategory').contains('Isolated v2'))\r\n",
+					"is_aas_compute = (F.col('MeterCategory') == 'Azure App Service') & (F.col('MeterSubCategory').isin(['Premium v3', 'Isolated v2']))\r\n",
 					"is_af_compute = (F.col('MeterCategory') == 'Functions') & (F.col('MeterSubCategory') == 'Premium')\r\n",
 					"is_aci_compute = (F.col('MeterCategory') == 'Container Instances')\r\n",
 					"is_aca_compute = (F.col('MeterCategory') == 'Azure Container Apps')\r\n",
+					"is_sp_eligible = is_vm_compute | is_aas_compute | is_af_compute | is_aci_compute | is_aca_compute\r\n",
 					"\r\n",
 					"cost_df = cost_df.withColumn('SPStatus', \r\n",
 					"    F.when(sp_enabled, SavingsPlanStatus.Enabled.value)\r\n",
-					"    .when(is_ondemand & (is_vm_compute | is_aas_compute | is_af_compute | is_aci_compute | is_aca_compute), SavingsPlanStatus.NotEnabled.value)\r\n",
+					"    .when(is_ondemand & is_sp_eligible, SavingsPlanStatus.NotEnabled.value)\r\n",
 					"    .otherwise(SavingsPlanStatus.NotSupported.value)\r\n",
 					")"
 				],
-				"execution_count": 38
+				"execution_count": 31
 			},
 			{
 				"cell_type": "code",
@@ -357,7 +376,7 @@
 					"pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/pricesheet-converted/{fromDate}-{toDate}.parquet'\r\n",
 					"pricesheet_df = spark.read.format('parquet').load(pricesheet_path)"
 				],
-				"execution_count": 35
+				"execution_count": 32
 			},
 			{
 				"cell_type": "code",
@@ -373,9 +392,54 @@
 					}
 				},
 				"source": [
-					"sp_df = pricesheet_df.where((F.col('OfferID') == PROD_OFFER_ID) & (F.col('PriceType') == 'SavingsPlan') & (F.col('Term') == 'P3Y'))"
+					"sp_pricesheet_df = pricesheet_df.where((F.col('OfferID') == PROD_OFFER_ID) & (F.col('PriceType') == 'SavingsPlan') & (F.col('Term') == 'P3Y'))"
 				],
-				"execution_count": null
+				"execution_count": 33
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"sp_pricesheet_df = sp_pricesheet_df.withColumn('NormalizedUnit', F.regexp_extract('UnitOfMeasure', r'^(\\d+)', 1).cast('integer'))\r\n",
+					"sp_pricesheet_df = sp_pricesheet_df.withColumn('NormalizedMemoryFactor', \r\n",
+					"    F.when(F.col('UnitOfMeasure').contains('TiB'), 1024) # Standard measure in usage file is GiB --> convertion factor between TiB and Gib is 1024\r\n",
+					"    .when(F.col('UnitOfMeasure').contains(\"PiB\"), 1048576) # Standard measure in usage file is GiB --> convertion factor between PiB and Gib is 1048576\r\n",
+					"    .when(F.col('UnitOfMeasure').contains(\"TB\"), 1000) # Standard measure in usage file is GB --> convertion factor between TB and Gb is 1000\r\n",
+					"    .when(F.col('UnitOfMeasure').contains(\"PB\"), 1000000) # Standard measure in usage file is GB --> convertion factor between PB and Gib is 1000000\r\n",
+					"    .otherwise(1)\r\n",
+					")\r\n",
+					"sp_pricesheet_df = sp_pricesheet_df.withColumn('NormalizedP3YUnitPrice', F.col('UnitPrice') / (F.col('NormalizedUnit') * F.col('NormalizedMemoryFactor')))\r\n",
+					"sp_pricesheet_df = sp_pricesheet_df.select('PartNumber', 'NormalizedP3YUnitPrice')"
+				],
+				"execution_count": 34
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cost_df = cost_df.join(sp_pricesheet_df, 'PartNumber', 'left')"
+				],
+				"execution_count": 35
 			},
 			{
 				"cell_type": "code",
@@ -392,9 +456,9 @@
 					"collapsed": false
 				},
 				"source": [
-					"# display(cost_df.where(F.col('SPStatus') == 'Enabled').withColumn('Savings', (F.col('UnitPrice') - F.col('EffectivePrice')) * F.col('Quantity')).agg(F.sum('Savings')))"
+					"display(cost_df.where(F.col('SPStatus') == 'Not Enabled'))"
 				],
-				"execution_count": 36
+				"execution_count": 37
 			},
 			{
 				"cell_type": "code",
@@ -410,17 +474,144 @@
 					}
 				},
 				"source": [
-					"# Determine if cost has SP enabled - not enabled - not supported\r\n",
-					"\r\n",
-					"# Load pricesheet\r\n",
-					"\r\n",
-					"# Join pricesheet on Date and PartNumber\r\n",
-					"\r\n",
-					"# Compute NormalizedP3YUnitPrice\r\n",
-					"\r\n",
-					"# Compute savings/discount rate in PBI"
+					"test = cost_df.where(F.col('SPStatus') == 'Not Enabled').select('ResourceName', 'UnitPrice', 'Quantity', 'NormalizedP3YUnitPrice').groupBy('ResourceName', 'UnitPrice', 'NormalizedP3YUnitPrice').agg(F.sum('Quantity').alias('Quantity'))"
 				],
-				"execution_count": 37
+				"execution_count": 39
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"test = test.withColumn('Savings', (F.col('UnitPrice') - F.col('NormalizedP3YUnitPrice')) * F.col('Quantity'))\r\n",
+					"test = test.withColumn('Cost', F.col('UnitPrice') * F.col('Quantity'))\r\n",
+					"test = test.withColumn(\"DiscountRate\", F.col(\"Savings\") / F.col(\"Cost\"))\r\n",
+					"test = test.withColumn(\"DiscountPercentage\", F.format_string(\"%.2f%%\", F.col(\"DiscountRate\") * 100))"
+				],
+				"execution_count": 42
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"test = test.withColumn(\"SPPurchase\", F.col('Cost') - F.col('Savings'))\r\n",
+					"test = test.withColumn(\"SPCostPerHour\", F.col('SPPurchase') / 730)"
+				],
+				"execution_count": 44
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"test = test.withColumn('SavingsPerHour', F.col('Savings') / 730)\r\n",
+					"test = test.withColumn('PaygPerHour', F.col('Cost') / 730)"
+				],
+				"execution_count": 55
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(test.where(F.col('DiscountRate') >= 0.10))"
+				],
+				"execution_count": 68
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(test.where(F.col('DiscountRate') >= 0.10).agg(F.sum('SPCostPerHour')))"
+				],
+				"execution_count": 69
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(test.where(F.col('DiscountRate') >= 0.10).agg(F.sum('SavingsPerHour')))"
+				],
+				"execution_count": 70
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(test.where(F.col('DiscountRate') >= 0.10).agg(F.sum('PaygPerHour')))"
+				],
+				"execution_count": 71
 			}
 		]
 	}
