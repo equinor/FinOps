@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "ccaa2325-78db-4560-ad94-dccd0929c4d0"
+				"spark.autotune.trackingId": "4cbaafc0-eb64-4da3-8093-ee971e63e533"
 			}
 		},
 		"metadata": {
@@ -277,7 +277,7 @@
 					"sp_enabled = (F.col('PricingModel') == 'SavingsPlan') & (F.col('ChargeType') == 'Usage')\r\n",
 					"is_ondemand = (F.col('PricingModel') == 'OnDemand') & (F.col('ChargeType') == 'Usage')\r\n",
 					"is_vm_compute = (F.col('MeterCategory') == 'Virtual Machines') & ~(F.col('MeterSubCategory').contains('Av1'))\r\n",
-					"is_aas_compute = (F.col('MeterCategory') == 'Azure App Service') & ~(F.col('MeterSubCategory').contains('Premium v3')) & ~(F.col('MeterSubCategory').contains('Isolated v2'))\r\n",
+					"is_aas_compute = (F.col('MeterCategory') == 'Azure App Service') & (F.col('MeterSubCategory').isIn(['Premium v3', 'Isolated v2']))\r\n",
 					"is_af_compute = (F.col('MeterCategory') == 'Functions') & (F.col('MeterSubCategory') == 'Premium')\r\n",
 					"is_aci_compute = (F.col('MeterCategory') == 'Container Instances')\r\n",
 					"is_aca_compute = (F.col('MeterCategory') == 'Azure Container Apps')\r\n",
