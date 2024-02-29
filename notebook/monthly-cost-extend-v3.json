@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "b3efbf06-1436-4136-b11a-d714c5717418"
+				"spark.autotune.trackingId": "ffdd32f4-09a0-468f-88da-653bb91aaa2d"
 			}
 		},
 		"metadata": {
@@ -491,7 +491,13 @@
 					"    .when(is_sql_hub_eligible & is_sql_vm & is_standard_sql_license & (F.col('VCPUs') >= 5), F.concat(F.lit('SQL Server Standard - '), F.col('VCPUs'), F.lit(' vCPU VM License')))\r\n",
 					"    .when(is_sql_hub_eligible & is_sql_vm & is_enterprise_sql_license & (F.col('VCPUs') >= 5), F.concat(F.lit('SQL Server Enterprise - '), F.col('VCPUs'), F.lit(' vCPU VM License')))\r\n",
 					"    .otherwise(None)\r\n",
-					")"
+					")\r\n",
+					"\r\n",
+					"# Handle UnitOfMeasure for HUB cost\r\n",
+					"\r\n",
+					"# Normalize unit of measure in pricesheet\r\n",
+					"\r\n",
+					"# Populate new column with HUB unit price values from pricesheet"
 				],
 				"execution_count": null
 			}
