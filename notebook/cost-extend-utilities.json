@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "4c0492cf-bbca-4201-b383-5856f6d37afb"
+				"spark.autotune.trackingId": "4a3ebe2a-5e2f-4464-a5f2-c87ae5b74bfe"
 			}
 		},
 		"metadata": {
@@ -105,12 +105,6 @@
 				},
 				"source": [
 					"def cost_populate_vm_columns(cost_df):\r\n",
-					"\r\n",
-					"    # Compute if cost is RI or On-demand usage\r\n",
-					"    cost_df = cost_df.withColumn('IsRIUsage',\r\n",
-					"        F.when(F.col('ReservationId').isNull(), 'On Demand Usage')\r\n",
-					"        .otherwise('RI Usage')\r\n",
-					"    )\r\n",
 					"\r\n",
 					"    # Compute if cost has Windows Server Azure Hybrid Benefit enabled\r\n",
 					"    cost_df = cost_df.withColumn('WindowsAHB', F.when(F.col('MeterSubCategory').contains('Windows'), \"Not Enabled\")\\\r\n",
