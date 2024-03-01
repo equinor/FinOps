@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "e248823a-1f98-45be-aaa4-51b4bc4e3a69"
+				"spark.autotune.trackingId": "ef203d12-f73c-43f2-94dd-c229488a5150"
 			}
 		},
 		"metadata": {
@@ -264,7 +264,7 @@
 					"except:\n",
 					"    # Create empty df with pricesheet schema if file doesnt exist\n",
 					"    dummy_pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/pricesheet-converted/20240101-20240131.parquet'\n",
-					"    dummy_df = spark.read.format('parquet').load(pricesheet_path)\n",
+					"    dummy_df = spark.read.format('parquet').load(dummy_pricesheet_path)\n",
 					"    pricesheet_df = spark.createDataFrame([], dummy_df.schema)\n",
 					"\n",
 					"# Load subcsription data\n",
