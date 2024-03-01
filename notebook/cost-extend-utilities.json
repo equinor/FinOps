@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "30f20d13-ff7c-403d-916d-b805255d59fc"
+				"spark.autotune.trackingId": "aec4fb4b-33fb-43c3-86bc-9d5f75b41820"
 			}
 		},
 		"metadata": {
@@ -87,6 +87,24 @@
 					}
 				},
 				"source": [
+					"PROD_OFFER_ID = 'MS-AZR-0017P'"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
 					"class AHBStatus(Enum):\r\n",
 					"    Enabled = \"Enabled\"\r\n",
 					"    NotEnabled = \"Not Enabled\"\r\n",
@@ -116,48 +134,6 @@
 					"    return f\"{previous_year}-{str(previous_month).zfill(2)}-{str(last_day).zfill(2)}\""
 				],
 				"execution_count": 3
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"def cost_populate_vm_columns(cost_df):\r\n",
-					"    # Compute if cost has Windows Server Azure Hybrid Benefit enabled\r\n",
-					"    cost_df = cost_df.withColumn('WindowsAHB', F.when(F.col('ServiceInfo2') == 'Windows Server BYOL', AHBStatus.Enabled.value)\\\r\n",
-					"                                                            .when(F.col('MeterSubCategory').contains('Windows'), AHBStatus.NotEnabled.value)\\\r\n",
-					"                                                            .otherwise(AHBStatus.NotSupported.value))\r\n",
-					"\r\n",
-					"    # Compute if cost has SQL Server Azure Hybrid Benefit enabled\r\n",
-					"    is_sql_db = (F.col('ResourceId').like('%Microsoft.Sql/servers%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
-					"    is_sql_mi = (F.col('ResourceId').like('%Microsoft.Sql/managedInstances%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
-					"    is_sql_vm = (F.col('MeterCategory') == 'Virtual Machines Licenses') & (F.col('MeterSubCategory').like('SQL Server%'))\r\n",
-					"    is_sql_cost = is_sql_db | is_sql_mi | is_sql_vm\r\n",
-					"\r\n",
-					"    is_vm = F.col('ResourceId').like('%Microsoft.Compute/virtualMachines%')\r\n",
-					"    is_vm_ahb = is_vm & (F.col('MeterSubCategory') == 'SQL Server Azure Hybrid Benefit')\r\n",
-					"    is_vm_not_supported = is_vm & (F.col('MeterSubCategory') == 'SQL Server Express Edition')\r\n",
-					"\r\n",
-					"    cost_df = cost_df.withColumn('SQLAHB', \r\n",
-					"        F.when(is_sql_cost & is_vm_ahb, AHBStatus.Enabled.value)\r\n",
-					"        .when(is_sql_cost & is_vm_not_supported, AHBStatus.NotSupported.value)\r\n",
-					"        .when(is_sql_cost & is_vm, AHBStatus.NotEnabled.value)\r\n",
-					"        .when(F.col('ai_AHB') == True, AHBStatus.Enabled.value)\r\n",
-					"        .when(F.col('ai_AHB') == False, AHBStatus.NotEnabled.value)\r\n",
-					"        .otherwise(AHBStatus.NotSupported.value)\r\n",
-					"    )\r\n",
-					"    return cost_df"
-				],
-				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -214,35 +190,13 @@
 					}
 				},
 				"source": [
-					"def cost_AHB_column(cost_df):\r\n",
-					"\r\n",
-					"    cost_df = cost_df.withColumn('ai_VCPUs', F.col('ai_VCPUs').cast('int'))\r\n",
-					"    cost_df = cost_df.na.fill({'ai_VCPUs' : 0})\r\n",
-					"\r\n",
-					"    # Compute the Windows AHB equivalent VCPUs\r\n",
-					"    cost_df = cost_df.withColumn('WindowsAHB_VCPUS', F.when(F.col('ai_VCPUs') == 0, 0)\\\r\n",
-					"                                              .when(F.col('ai_VCPUs') <= 8, 8)\\\r\n",
-					"                                              .when(F.col('ai_VCPUs') <= 16, 16)\\\r\n",
-					"                                              .when(F.col('ai_VCPUs') == 20, 24)\\\r\n",
-					"                                              .when(F.col('ai_VCPUs') > 20, F.col('ai_VCPUs'))\\\r\n",
-					"                                              .otherwise(0))\r\n",
-					"\r\n",
-					"    # Compute the SQL AHB equivalent VCPUs\r\n",
-					"    is_standard_sql_license = F.col('ProductName').like('%Standard%') | F.col('ProductName').like('%General%')\r\n",
-					"    is_enterprise_sql_license = F.col('ProductName').like('%Enterprise%') | F.col('ProductName').like('%Critical%')\r\n",
-					"\r\n",
-					"    cost_df = cost_df.withColumn('SQLAHB_VCPUS', \r\n",
-					"        F.when(F.col('ai_VCPUs') == 0, 0)\r\n",
-					"        .when(is_standard_sql_license & (F.col('ai_VCPUs') <= 4), 4)\r\n",
-					"        .when(is_standard_sql_license & (F.col('ai_VCPUs') > 4), F.col('ai_VCPUs'))\r\n",
-					"        .when(is_enterprise_sql_license & (F.col('ai_VCPUs') <= 4), 16)\r\n",
-					"        .when(is_enterprise_sql_license & (F.col('ai_VCPUs') > 4), F.col('ai_VCPUs') * 4)\r\n",
-					"        .otherwise(0)\r\n",
-					"    )\r\n",
-					"\r\n",
-					"    return cost_df"
+					"def preprocess_pricesheet(pricesheet_df):\r\n",
+					"    pricesheet_df = pricesheet_df.where(F.col('OfferID') == PROD_OFFER_ID)\r\n",
+					"    pricesheet_df = pricesheet_df.withColumn('NormalizedUnit', F.regexp_extract('UnitOfMeasure', r'^(\\d+)', 1).cast('integer'))\r\n",
+					"    pricesheet_df = pricesheet_df.withColumn('NormalizedUnitPrice', F.col('UnitPrice') / F.col('NormalizedUnit'))\r\n",
+					"    return pricesheet_df"
 				],
-				"execution_count": 6
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -258,11 +212,163 @@
 					}
 				},
 				"source": [
-					"def cost_set_instance_name(cost_df):\r\n",
-					"    cost_df = cost_df.withColumn('Instance_Name', F.when(F.col('ai_VMName').isNull(), F.col('ResourceName'))\\\r\n",
-					"                                                   .when(F.col('ai_VMName').isNotNull(), F.col('ai_VMName'))\\\r\n",
-					"                                                   .otherwise(0))\r\n",
+					"def compute_sp_columns(cost_df, pricesheet_df):\r\n",
+					"    # Determine if cost is eligible to SP\r\n",
+					"    sp_enabled = (F.col('PricingModel') == 'SavingsPlan') & (F.col('ChargeType') == 'Usage')\r\n",
+					"    is_ondemand = (F.col('PricingModel') == 'OnDemand') & (F.col('ChargeType') == 'Usage')\r\n",
+					"    is_vm_compute = (F.col('MeterCategory') == 'Virtual Machines') & ~(F.col('MeterSubCategory').contains('Av1'))\r\n",
+					"    is_aas_compute = (F.col('MeterCategory') == 'Azure App Service') & (F.col('MeterSubCategory').isin(['Premium v3', 'Isolated v2']))\r\n",
+					"    is_af_compute = (F.col('MeterCategory') == 'Functions') & (F.col('MeterSubCategory') == 'Premium')\r\n",
+					"    is_aci_compute = (F.col('MeterCategory') == 'Container Instances')\r\n",
+					"    is_aca_compute = (F.col('MeterCategory') == 'Azure Container Apps')\r\n",
+					"    is_sp_eligible = is_vm_compute | is_aas_compute | is_af_compute | is_aci_compute | is_aca_compute\r\n",
 					"\r\n",
+					"    cost_df = cost_df.withColumn('SPStatus', \r\n",
+					"        F.when(sp_enabled, SavingsPlanStatus.Enabled.value)\r\n",
+					"        .when(is_ondemand & is_sp_eligible, SavingsPlanStatus.NotEnabled.value)\r\n",
+					"        .otherwise(SavingsPlanStatus.NotSupported.value)\r\n",
+					"    )\r\n",
+					"\r\n",
+					"    # Only use prices for savingsplan for 3 year term\r\n",
+					"    pricesheet_df = pricesheet_df.where((F.col('PriceType') == 'SavingsPlan') & (F.col('Term') == 'P3Y'))\r\n",
+					"\r\n",
+					"    pricesheet_df =  pricesheet_df.withColumn('NormalizedMemoryFactor', \r\n",
+					"        F.when(F.col('UnitOfMeasure').contains('TiB'), 1024) # Standard measure in usage file is GiB --> convertion factor between TiB and Gib is 1024\r\n",
+					"        .when(F.col('UnitOfMeasure').contains(\"PiB\"), 1048576) # Standard measure in usage file is GiB --> convertion factor between PiB and Gib is 1048576\r\n",
+					"        .when(F.col('UnitOfMeasure').contains(\"TB\"), 1000) # Standard measure in usage file is GB --> convertion factor between TB and Gb is 1000\r\n",
+					"        .when(F.col('UnitOfMeasure').contains(\"PB\"), 1000000) # Standard measure in usage file is GB --> convertion factor between PB and Gib is 1000000\r\n",
+					"        .otherwise(1)\r\n",
+					"    )\r\n",
+					"    pricesheet_df = pricesheet_df.withColumn('NormalizedP3YSPUnitPrice', F.col('NormalizedUnit') / F.col('NormalizedMemoryFactor'))\r\n",
+					"    pricesheet_df = pricesheet_df.select('PartNumber', 'NormalizedP3YSPUnitPrice')\r\n",
+					"\r\n",
+					"    cost_df = cost_df.join(pricesheet_df, 'PartNumber', 'left')\r\n",
+					"\r\n",
+					"    # When cost is classified as eligible to SP, but does not av a P3Y Unit Price associated with it - it should not be eligible to SP\r\n",
+					"    cost_df = cost_df.withColumn('SPStatus', F.when((F.col('SPStatus') == 'Not Enabled') & F.col('NormalizedP3YSPUnitPrice').isNull(), F.lit(SavingsPlanStatus.NotSupported.value)).otherwise(F.col('SPStatus')))\r\n",
+					"\r\n",
+					"    return cost_df"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def compute_AHB_columns(cost_df, pricesheet_df):\r\n",
+					"    ## DETERMINE IF WINDOWS/SQL SERVER IS HUB ENABLED/ELIGIBLE\r\n",
+					"\r\n",
+					"    # Compute if Windows Server has Azure Hybrid Benefit enabled\r\n",
+					"    cost_df = cost_df.withColumn('WindowsAHB', F.when(F.col('ServiceInfo2') == 'Windows Server BYOL', AHBStatus.Enabled.value)\\\r\n",
+					"                                                            .when(F.col('MeterSubCategory').contains('Windows'), AHBStatus.NotEnabled.value)\\\r\n",
+					"                                                            .otherwise(AHBStatus.NotSupported.value))\r\n",
+					"\r\n",
+					"    # Compute if SQL Server has Azure Hybrid Benefit enabled\r\n",
+					"    is_sql_db = (F.col('ResourceId').like('%Microsoft.Sql/servers%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
+					"    is_sql_mi = (F.col('ResourceId').like('%Microsoft.Sql/managedInstances%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
+					"    is_sql_vm = (F.col('MeterCategory') == 'Virtual Machines Licenses') & (F.col('MeterSubCategory').like('SQL Server%'))\r\n",
+					"    is_sql_cost = is_sql_db | is_sql_mi | is_sql_vm\r\n",
+					"\r\n",
+					"    is_vm = F.col('ResourceId').like('%Microsoft.Compute/virtualMachines%')\r\n",
+					"    is_vm_ahb = is_vm & (F.col('MeterSubCategory') == 'SQL Server Azure Hybrid Benefit')\r\n",
+					"    is_vm_not_supported = is_vm & (F.col('MeterSubCategory') == 'SQL Server Express Edition')\r\n",
+					"\r\n",
+					"    cost_df = cost_df.withColumn('SQLAHB', \r\n",
+					"        F.when(is_sql_cost & is_vm_ahb, AHBStatus.Enabled.value)\r\n",
+					"        .when(is_sql_cost & is_vm_not_supported, AHBStatus.NotSupported.value)\r\n",
+					"        .when(is_sql_cost & is_vm, AHBStatus.NotEnabled.value)\r\n",
+					"        .when(F.col('ai_AHB') == True, AHBStatus.Enabled.value)\r\n",
+					"        .when(F.col('ai_AHB') == False, AHBStatus.NotEnabled.value)\r\n",
+					"        .otherwise(AHBStatus.NotSupported.value)\r\n",
+					"    )\r\n",
+					"\r\n",
+					"    ## COMPUTE HUB NORMALIZED VCPUS FOR WINDOWS/SQL\r\n",
+					"    \r\n",
+					"    cost_df = cost_df.withColumn('ai_VCPUs', F.col('ai_VCPUs').cast('int'))\r\n",
+					"    cost_df = cost_df.na.fill({'ai_VCPUs' : 0})\r\n",
+					"\r\n",
+					"    is_standard_sql_license = F.col('ProductName').like('%Standard%') | F.col('ProductName').like('%General%')\r\n",
+					"    is_enterprise_sql_license = F.col('ProductName').like('%Enterprise%') | F.col('ProductName').like('%Critical%')\r\n",
+					"\r\n",
+					"    # Compute the Windows AHB equivalent VCPUs\r\n",
+					"    cost_df = cost_df.withColumn('WindowsAHB_VCPUS', F.when(F.col('ai_VCPUs') == 0, 0)\\\r\n",
+					"                                              .when(F.col('ai_VCPUs') <= 8, 8)\\\r\n",
+					"                                              .when(F.col('ai_VCPUs') <= 16, 16)\\\r\n",
+					"                                              .when(F.col('ai_VCPUs') == 20, 24)\\\r\n",
+					"                                              .when(F.col('ai_VCPUs') > 20, F.col('ai_VCPUs'))\\\r\n",
+					"                                              .otherwise(0))\r\n",
+					"\r\n",
+					"    # Compute the SQL AHB equivalent VCPUs\r\n",
+					"    cost_df = cost_df.withColumn('SQLAHB_VCPUS', \r\n",
+					"        F.when(F.col('ai_VCPUs') == 0, 0)\r\n",
+					"        .when(is_standard_sql_license & (F.col('ai_VCPUs') <= 4), 4)\r\n",
+					"        .when(is_standard_sql_license & (F.col('ai_VCPUs') > 4), F.col('ai_VCPUs'))\r\n",
+					"        .when(is_enterprise_sql_license & (F.col('ai_VCPUs') <= 4), 16)\r\n",
+					"        .when(is_enterprise_sql_license & (F.col('ai_VCPUs') > 4), F.col('ai_VCPUs') * 4)\r\n",
+					"        .otherwise(0)\r\n",
+					"    )\r\n",
+					"\r\n",
+					"    ## COMPUTE HUB PAYG LICENSE COST\r\n",
+					"\r\n",
+					"    is_windows_hub_eligible = (F.col('WindowsAHB') == AHBStatus.Enabled.value) | (F.col('WindowsAHB') == AHBStatus.NotEnabled.value)\r\n",
+					"    is_sql_hub_eligible = (F.col('SQLAHB') == AHBStatus.Enabled.value) | (F.col('SQLAHB') == AHBStatus.NotEnabled.value)\r\n",
+					"\r\n",
+					"    cost_df = cost_df.withColumn('HUBPricesheetJoinKey', \r\n",
+					"        F.when(is_windows_hub_eligible,\r\n",
+					"            F.concat(\r\n",
+					"                F.lit('Windows Server'),\r\n",
+					"                F.when(F.col('MeterSubCategory') == 'Windows Server Burst', ' Burst - ').otherwise(' - '), \r\n",
+					"                F.col('ai_VCPUs'), \r\n",
+					"                F.lit(' vCPU VM License')\r\n",
+					"            )\r\n",
+					"        )\r\n",
+					"        .when(is_sql_hub_eligible & is_sql_mi & is_standard_sql_license, 'SQL Managed Instance General Purpose - SQL License - vCore')\r\n",
+					"        .when(is_sql_hub_eligible & is_sql_mi & is_enterprise_sql_license, 'SQL Managed Instance Business Critical - SQL License - vCore')\r\n",
+					"        .when(is_sql_hub_eligible & is_sql_db & is_standard_sql_license, 'SQL Database Single/Elastic Pool General Purpose - SQL License - vCore')\r\n",
+					"        .when(is_sql_hub_eligible & is_sql_db & is_enterprise_sql_license, 'SQL Database Single/Elastic Pool Business Critical - SQL License - vCore')\r\n",
+					"        .when(is_sql_hub_eligible & is_sql_vm & is_standard_sql_license & (F.col('ai_VCPUs') < 5), 'SQL Server Standard - 1-4 vCPU VM License')\r\n",
+					"        .when(is_sql_hub_eligible & is_sql_vm & is_enterprise_sql_license & (F.col('ai_VCPUs') < 5), 'SQL Server Enterprise - 1-4 vCPU VM License')\r\n",
+					"        .when(is_sql_hub_eligible & is_sql_vm & is_standard_sql_license & (F.col('ai_VCPUs') >= 5), F.concat(F.lit('SQL Server Standard - '), F.col('ai_VCPUs'), F.lit(' vCPU VM License')))\r\n",
+					"        .when(is_sql_hub_eligible & is_sql_vm & is_enterprise_sql_license & (F.col('ai_VCPUs') >= 5), F.concat(F.lit('SQL Server Enterprise - '), F.col('ai_VCPUs'), F.lit(' vCPU VM License')))\r\n",
+					"        .otherwise(None)\r\n",
+					"    )\r\n",
+					"\r\n",
+					"    pricesheet_df = pricesheet_df \\\r\n",
+					"        .select('Product', 'NormalizedUnitPrice') \\\r\n",
+					"        .withColumnRenamed('Product', 'HUBPricesheetJoinKey') \\\r\n",
+					"        .withColumnRenamed('NormalizedUnitPrice', 'NormalizedHUBPayGUnitPrice')\r\n",
+					"\r\n",
+					"    cost_df = cost_df.join(pricesheet_df, 'HUBPricesheetJoinKey', 'left').drop('HUBPricesheetJoinKey')\r\n",
+					"\r\n",
+					"    return cost_df"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def cost_cast_column_types(cost_df):\r\n",
 					"    cost_df = cost_df.withColumn('UnitPrice', F.col('UnitPrice').cast(T.DoubleType()))\\\r\n",
 					"                     .withColumn('PayGPrice', F.col('PayGPrice').cast(T.DoubleType()))\\\r\n",
 					"                     .withColumn('Quantity', F.col('Quantity').cast(T.DoubleType()))\\\r\n",
@@ -584,15 +690,35 @@
 					"\r\n",
 					"    warnings.simplefilter(action='ignore', category=FutureWarning)\r\n",
 					"    cost_df = cost_extend_additional_info(cost_df)\r\n",
-					"    cost_df = cost_populate_vm_columns(cost_df)\r\n",
-					"    cost_df = cost_AHB_column(cost_df)\r\n",
-					"    cost_df = cost_set_instance_name(cost_df)\r\n",
+					"    cost_df = cost_cast_column_types(cost_df)\r\n",
 					"    cost_df = expand_cost_tags(cost_df)\r\n",
 					"    cost_df = cost_df.withColumn(\"ResourceLocation\", F.lower(F.trim(F.regexp_replace(F.col('ResourceLocation'), \"\\s+\", \"\"))))\r\n",
 					"    \r\n",
 					"    return cost_df"
 				],
 				"execution_count": 11
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def compute_hub_and_sp(cost_df, pricesheet_df):\r\n",
+					"    pricesheet_df = preprocess_pricesheet(pricesheet_df)\r\n",
+					"    cost_df = compute_sp_columns(cost_df, pricesheet_df)\r\n",
+					"    cost_df = compute_AHB_columns(cost_df, pricesheet_df)\r\n",
+					"    return cost_df"
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
