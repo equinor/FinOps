@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "000edd9c-3d7d-4290-847c-6469f3fc5dae"
+				"spark.autotune.trackingId": "41ce87c9-2c71-4edd-a060-fafc30ac64dd"
 			}
 		},
 		"metadata": {
@@ -234,6 +234,10 @@
 					"application_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\r\n",
 					"print(f\"Application path: {application_path}\")\r\n",
 					"\r\n",
+					"# Load pricesheet data\r\n",
+					"pricesheet_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/pricesheet-converted/{date_range}.parquet'\r\n",
+					"pricesheet_df = spark.read.format('parquet').load(pricesheet_path)\r\n",
+					"\r\n",
 					"# Load cost file\r\n",
 					"cost_csv_options = {'header' : True,\r\n",
 					"                'delimiter' : ',',\r\n",
@@ -260,6 +264,7 @@
 					"# Transform data\r\n",
 					"cost_df = transform_cost_data(cost_df)\r\n",
 					"cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\r\n",
+					"cost_df = compute_hub_and_sp(cost_df, pricesheet_df)\r\n",
 					"cost_df = add_azure_service_information(cost_df, service_df)\r\n",
 					"write_output_file(cost_df, cost_target_path)\r\n",
 					"\r\n",
