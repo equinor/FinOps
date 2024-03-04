@@ -945,30 +945,6 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
-		"sparkpool32_delayInMinutes": {
-			"type": "int",
-			"defaultValue": 15
-		},
-		"sparkpool32_maxNodeCount": {
-			"type": "int",
-			"defaultValue": 5
-		},
-		"sparkpool32_minNodeCount": {
-			"type": "int",
-			"defaultValue": 3
-		},
-		"sparkpool32_nodeCount": {
-			"type": "int",
-			"defaultValue": 0
-		},
-		"sparkpool32_nodeSize": {
-			"type": "string",
-			"defaultValue": "Medium"
-		},
-		"sparkpool32_sparkVersion": {
-			"type": "string",
-			"defaultValue": "3.2"
-		},
 		"sprkpool33large_delayInMinutes": {
 			"type": "int",
 			"defaultValue": 10
@@ -992,6 +968,30 @@
 		"sprkpool33large_sparkVersion": {
 			"type": "string",
 			"defaultValue": "3.3"
+		},
+		"sparkpool32_delayInMinutes": {
+			"type": "int",
+			"defaultValue": 15
+		},
+		"sparkpool32_maxNodeCount": {
+			"type": "int",
+			"defaultValue": 5
+		},
+		"sparkpool32_minNodeCount": {
+			"type": "int",
+			"defaultValue": 3
+		},
+		"sparkpool32_nodeCount": {
+			"type": "int",
+			"defaultValue": 0
+		},
+		"sparkpool32_nodeSize": {
+			"type": "string",
+			"defaultValue": "Medium"
+		},
+		"sparkpool32_sparkVersion": {
+			"type": "string",
+			"defaultValue": "3.2"
 		}
 	},
 	"variables": {
@@ -35468,7 +35468,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "3ffea203-78fe-4ffc-b97c-6eeb29bf2fea"
+						"spark.autotune.trackingId": "c3bfcb14-3f29-4bc7-aa43-4f4fb5f65b8a"
 					}
 				},
 				"metadata": {
@@ -35493,7 +35493,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -35581,7 +35582,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 2
+						"execution_count": null
 					},
 					{
 						"cell_type": "markdown",
@@ -35650,7 +35651,6 @@
 							"    'CostAllocationType',\r\n",
 							"    'CostAllocationCodeTag',\r\n",
 							"    'CostAllocationTypeTag',\r\n",
-							"    'IsRIUsage',\r\n",
 							"    'ResourceLocation',\r\n",
 							"    'ServiceFamily',\r\n",
 							"    'SubscriptionId',\r\n",
@@ -35672,7 +35672,10 @@
 							"    'SQLAHB_VCPUS',\r\n",
 							"    'CPUHours',\r\n",
 							"    'ServiceModel',\r\n",
-							"    'benefitName'\r\n",
+							"    'benefitName',\r\n",
+							"    'SPStatus',\r\n",
+							"    'NormalizedP3YSPUnitPrice',\r\n",
+							"    'NormalizedHUBPayGUnitPrice'\r\n",
 							"]\r\n",
 							"\r\n",
 							"df_schema_extended = df_schema_extended.select(*columns_to_keep) \r\n",
@@ -35681,7 +35684,7 @@
 							"df_schema_extended = df_schema_extended.withColumn('Report_Date_Partition',lit('') )"
 						],
 						"outputs": [],
-						"execution_count": 3
+						"execution_count": null
 					},
 					{
 						"cell_type": "markdown",
@@ -35758,7 +35761,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 4
+						"execution_count": null
 					},
 					{
 						"cell_type": "markdown",
@@ -35791,7 +35794,7 @@
 							"df = df.withColumn(\"Report_Date\", col(\"Report_Date\").cast(\"timestamp\"))"
 						],
 						"outputs": [],
-						"execution_count": 5
+						"execution_count": null
 					},
 					{
 						"cell_type": "code",
@@ -35811,7 +35814,7 @@
 							"df = df.withColumnRenamed(\"Application_Name\", \"ApplicationName\")"
 						],
 						"outputs": [],
-						"execution_count": 6
+						"execution_count": null
 					},
 					{
 						"cell_type": "markdown",
@@ -35847,7 +35850,7 @@
 							"df.write.format('parquet').mode('overwrite').partitionBy('Report_Date_Partition').option('overwriteSchema', 'true').save(optimized_path)"
 						],
 						"outputs": [],
-						"execution_count": 7
+						"execution_count": null
 					}
 				]
 			},
@@ -35879,7 +35882,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "f756c86c-71d5-439a-891a-b43b6370e8a4"
+						"spark.autotune.trackingId": "0b75dbe1-e757-4a86-81f6-d2add95cc4b5"
 					}
 				},
 				"metadata": {
@@ -35904,7 +35907,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -35950,7 +35954,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 11
+						"execution_count": 1
 					},
 					{
 						"cell_type": "markdown",
@@ -35993,7 +35997,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 12
+						"execution_count": null
 					},
 					{
 						"cell_type": "markdown",
@@ -36049,7 +36053,7 @@
 							"df_schema_extended = df_schema_extended.withColumn('Report_Date_Partition',lit('') )"
 						],
 						"outputs": [],
-						"execution_count": 13
+						"execution_count": null
 					},
 					{
 						"cell_type": "markdown",
@@ -36124,7 +36128,7 @@
 							"                        print(len(df_temp.columns),len(df.columns))"
 						],
 						"outputs": [],
-						"execution_count": 14
+						"execution_count": null
 					},
 					{
 						"cell_type": "markdown",
@@ -36157,7 +36161,7 @@
 							"df = df.withColumnRenamed(\"Application_Name\", \"ApplicationName\")"
 						],
 						"outputs": [],
-						"execution_count": 15
+						"execution_count": null
 					},
 					{
 						"cell_type": "markdown",
@@ -36169,10 +36173,7 @@
 							}
 						},
 						"source": [
-							"# Aggregate the data \r\n",
-							"Reduce the size of the data to fit PowerBI performance\r\n",
-							"\r\n",
-							"Only select the useful fields"
+							"# Aggregate the data "
 						]
 					},
 					{
@@ -36212,11 +36213,14 @@
 							"    'EffectivePrice',\r\n",
 							"    'ChargeType',\r\n",
 							"    'benefitName',\r\n",
+							"    'SPStatus',\r\n",
+							"    'NormalizedP3YSPUnitPrice',\r\n",
+							"    'NormalizedHUBPayGUnitPrice',\r\n",
 							"    'Date'\r\n",
 							"]"
 						],
 						"outputs": [],
-						"execution_count": 20
+						"execution_count": null
 					},
 					{
 						"cell_type": "code",
@@ -36237,7 +36241,7 @@
 							"    .agg(F.sum('Quantity').alias('TotalQuantity'),F.sum('CostInBillingCurrency').alias('CostInKroner'))"
 						],
 						"outputs": [],
-						"execution_count": 21
+						"execution_count": null
 					},
 					{
 						"cell_type": "code",
@@ -36257,7 +36261,7 @@
 							"df_agg = df_agg.withColumn(\"Report_Date_Partition\", col(\"Report_Date_Partition\").cast(\"timestamp\"))"
 						],
 						"outputs": [],
-						"execution_count": 22
+						"execution_count": null
 					},
 					{
 						"cell_type": "code",
@@ -36278,7 +36282,7 @@
 							"df_agg = df_agg.withColumn(\"month_partition\", month(df_agg[\"Report_Date_Partition\"]))"
 						],
 						"outputs": [],
-						"execution_count": 23
+						"execution_count": null
 					},
 					{
 						"cell_type": "markdown",
@@ -36311,7 +36315,7 @@
 							"df_agg = df_agg.withColumn(\"Report_Date\", col(\"Report_Date\").cast(\"timestamp\"))"
 						],
 						"outputs": [],
-						"execution_count": 24
+						"execution_count": null
 					},
 					{
 						"cell_type": "code",
@@ -36340,7 +36344,7 @@
 							"selected_cols = selected_cols + new_cols"
 						],
 						"outputs": [],
-						"execution_count": 25
+						"execution_count": null
 					},
 					{
 						"cell_type": "code",
@@ -36359,7 +36363,7 @@
 							"df_agg = df_agg.select(*selected_cols)"
 						],
 						"outputs": [],
-						"execution_count": 26
+						"execution_count": null
 					},
 					{
 						"cell_type": "markdown",
@@ -36398,7 +36402,7 @@
 							"#df_agg.write.format('parquet').mode('overwrite').partitionBy('Report_date).option('overwriteSchema', 'true').save(optimized_path)"
 						],
 						"outputs": [],
-						"execution_count": 27
+						"execution_count": null
 					},
 					{
 						"cell_type": "markdown",
@@ -36431,7 +36435,7 @@
 							"currentSparkSession.catalog.clearCache()"
 						],
 						"outputs": [],
-						"execution_count": 28
+						"execution_count": null
 					}
 				]
 			},
@@ -41892,7 +41896,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "c323ed83-c64d-4540-bd1f-d131581e6427"
+						"spark.autotune.trackingId": "299d87ef-7d3f-4b00-aab9-5771214aaa8d"
 					}
 				},
 				"metadata": {
@@ -41917,7 +41921,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -41993,6 +41998,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"def get_last_day_prev_month(to_date):\r\n",
 							"    current_month = int(to_date[4:6])\r\n",
@@ -42664,7 +42670,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "6978506e-3d62-4f94-be13-389fad3ae6f9"
+						"spark.autotune.trackingId": "41ce87c9-2c71-4edd-a060-fafc30ac64dd"
 					}
 				},
 				"metadata": {
@@ -42689,8 +42695,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -43235,7 +43240,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "abaa5289-5ef7-43e7-bdd2-d41001375610"
+						"spark.autotune.trackingId": "ef203d12-f73c-43f2-94dd-c229488a5150"
 					}
 				},
 				"metadata": {
@@ -43260,8 +43265,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -46556,6 +46560,31 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
+				},
+				"autoScale": {
+					"enabled": true,
+					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
+					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
+				},
+				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
+				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": true,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "northeurope"
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/sparkpool32')]",
 			"type": "Microsoft.Synapse/workspaces/bigDataPools",
 			"apiVersion": "2019-06-01-preview",
@@ -46578,31 +46607,6 @@
 					"filename": "requirements.txt",
 					"time": "2023-01-25T09:06:41.7702231Z"
 				},
-				"isComputeIsolationEnabled": false,
-				"sessionLevelPackagesEnabled": true,
-				"annotations": []
-			},
-			"dependsOn": [],
-			"location": "northeurope"
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
-			"type": "Microsoft.Synapse/workspaces/bigDataPools",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"autoPause": {
-					"enabled": true,
-					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
-				},
-				"autoScale": {
-					"enabled": true,
-					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
-					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
-				},
-				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
-				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
-				"nodeSizeFamily": "MemoryOptimized",
-				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
 				"isComputeIsolationEnabled": false,
 				"sessionLevelPackagesEnabled": true,
 				"annotations": []
