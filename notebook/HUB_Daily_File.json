@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "b7886129-a220-4eb8-a8bc-deaa2dd32f37"
+				"spark.autotune.trackingId": "d6d121d0-1fc6-4241-8d48-d06ef265cad3"
 			}
 		},
 		"metadata": {
@@ -84,9 +84,10 @@
 					"import calendar\n",
 					"import json\n",
 					"from notebookutils import mssparkutils\n",
-					"from azure.storage.blob import BlobServiceClient"
+					"from azure.storage.blob import BlobServiceClient\n",
+					"import pyspark.sql.functions as F"
 				],
-				"execution_count": 2
+				"execution_count": 17
 			},
 			{
 				"cell_type": "code",
@@ -147,7 +148,7 @@
 					"    print(end_date)\r\n",
 					"    return start_date, end_date"
 				],
-				"execution_count": 5
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -175,7 +176,7 @@
 					"\r\n",
 					"    return last_month_start, last_month_end"
 				],
-				"execution_count": 6
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -197,7 +198,7 @@
 					"\r\n",
 					"    current_day = datetime.now().strftime('%d')\r\n",
 					"    if current_day == '01' or current_day == '02':\r\n",
-					"        last_month_start, last_month_end = get_dates_last_month()\r\n",
+					"        last_month_start, last_month_end = get_dates_last_month()s\r\n",
 					"        monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/{last_month_start}-{last_month_end}/ACMMonthlyActualCost_{last_month_start}-{last_month_end}.parquet'\r\n",
 					"        monthly_df = pd.read_parquet(monthly_path)\r\n",
 					"\r\n",
@@ -206,7 +207,105 @@
 					"    cost_df = cost_df.loc[(cost_df['Date'] >= start_date)]\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 7
+				"execution_count": 10
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"start_date, end_date = get_start_and_end_date()"
+				],
+				"execution_count": 18
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
+					"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
+					"cost_df = cost_df.where(F.col('Date') >= start_date)"
+				],
+				"execution_count": 19
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"vm_cost_df = cost_df.alias('vm_cost_df')\r\n",
+					"sql_cost_df = cost_df.alias('sql_cost_df')"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"vm_columns_to_keep = ['SubscriptionId', 'SubscriptionName','Date','ResourceGroup', 'ResourceName', 'ResourceId', \r\n",
+					"    'MeterCategory', 'MeterSubCategory', 'MeterName','UnitOfMeasure','Quantity','UnitPrice','EffectivePrice',\r\n",
+					"    'CostInBillingCurrency', 'ServiceInfo2', 'PartNumber', 'AdditionalInfo']\r\n",
+					"\r\n",
+					"vm_cost_df = vm_cost_df.select(*vm_columns_to_keep)"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(cost_df)"
+				],
+				"execution_count": 20
 			},
 			{
 				"cell_type": "markdown",
@@ -276,7 +375,25 @@
 					"vm_cost_df = load_cost_data(start_date)\r\n",
 					"sql_cost_df = vm_cost_df.copy()"
 				],
-				"execution_count": 10
+				"execution_count": 11
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"print(vm_cost_df)"
+				],
+				"execution_count": 12
 			},
 			{
 				"cell_type": "markdown",
