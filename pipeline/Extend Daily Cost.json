@@ -90,13 +90,7 @@
 				"typeProperties": {
 					"dataset": {
 						"referenceName": "ds_test_delete_files",
-						"type": "DatasetReference",
-						"parameters": {
-							"ReportType": {
-								"value": "@pipeline().parameters.ReportType",
-								"type": "Expression"
-							}
-						}
+						"type": "DatasetReference"
 					},
 					"enableLogging": false,
 					"storeSettings": {
@@ -106,7 +100,7 @@
 							"value": "@addHours(utcnow(),-12)",
 							"type": "Expression"
 						},
-						"wildcardFileName": "*",
+						"wildcardFileName": "*/*.csv",
 						"enablePartitionDiscovery": false
 					}
 				}
@@ -302,7 +296,7 @@
 							"type": "AzureBlobFSReadSettings",
 							"recursive": false,
 							"wildcardFolderPath": {
-								"value": "@concat('exports/daily/ACMDaily',pipeline().parameters.ReportType,'/*')",
+								"value": "@concat('exports/daily/ACMDaily',pipeline().parameters.ReportType, variables('dateRange'))",
 								"type": "Expression"
 							},
 							"wildcardFileName": "*.csv",
