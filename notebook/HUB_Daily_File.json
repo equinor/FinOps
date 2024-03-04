@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "d6d121d0-1fc6-4241-8d48-d06ef265cad3"
+				"spark.autotune.trackingId": "c09c8418-6eb3-4ce0-8b7a-d69966611414"
 			}
 		},
 		"metadata": {
@@ -62,7 +62,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 1
+				"execution_count": 41
 			},
 			{
 				"cell_type": "code",
@@ -80,14 +80,14 @@
 				"source": [
 					"from datetime import timedelta, datetime\n",
 					"from dateutil.relativedelta import relativedelta\n",
-					"import pandas as pd\n",
 					"import calendar\n",
 					"import json\n",
+					"import pandas as pd\n",
 					"from notebookutils import mssparkutils\n",
 					"from azure.storage.blob import BlobServiceClient\n",
 					"import pyspark.sql.functions as F"
 				],
-				"execution_count": 17
+				"execution_count": 56
 			},
 			{
 				"cell_type": "code",
@@ -106,7 +106,7 @@
 					"KEY_VAULT_NAME = 'acm-toolkit-kv'\r\n",
 					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'"
 				],
-				"execution_count": 3
+				"execution_count": 43
 			},
 			{
 				"cell_type": "code",
@@ -124,7 +124,7 @@
 				"source": [
 					"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 				],
-				"execution_count": 4
+				"execution_count": 44
 			},
 			{
 				"cell_type": "code",
@@ -148,7 +148,7 @@
 					"    print(end_date)\r\n",
 					"    return start_date, end_date"
 				],
-				"execution_count": 8
+				"execution_count": 45
 			},
 			{
 				"cell_type": "code",
@@ -176,7 +176,7 @@
 					"\r\n",
 					"    return last_month_start, last_month_end"
 				],
-				"execution_count": 9
+				"execution_count": 46
 			},
 			{
 				"cell_type": "code",
@@ -194,118 +194,19 @@
 				"source": [
 					"def load_cost_data(start_date):\r\n",
 					"    daily_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/daily/ACMDailyActualCost/ACMDailyActualCost.parquet'\r\n",
-					"    cost_df = pd.read_parquet(daily_path)\r\n",
+					"    cost_df = spark.read.format('parquet').load(daily_path)\r\n",
 					"\r\n",
 					"    current_day = datetime.now().strftime('%d')\r\n",
 					"    if current_day == '01' or current_day == '02':\r\n",
-					"        last_month_start, last_month_end = get_dates_last_month()s\r\n",
+					"        last_month_start, last_month_end = get_dates_last_month()\r\n",
 					"        monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/{last_month_start}-{last_month_end}/ACMMonthlyActualCost_{last_month_start}-{last_month_end}.parquet'\r\n",
-					"        monthly_df = pd.read_parquet(monthly_path)\r\n",
+					"        monthly_df = spark.read.format('parquet').load(monthly_path)\r\n",
+					"        cost_df = cost_df.union(monthly_df)\r\n",
 					"\r\n",
-					"        cost_df = pd.concat([cost_df, monthly_df])\r\n",
-					"\r\n",
-					"    cost_df = cost_df.loc[(cost_df['Date'] >= start_date)]\r\n",
+					"    cost_df = cost_df.where(F.col('Date') >= start_date)\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 10
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"start_date, end_date = get_start_and_end_date()"
-				],
-				"execution_count": 18
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
-					"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
-					"cost_df = cost_df.where(F.col('Date') >= start_date)"
-				],
-				"execution_count": 19
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"vm_cost_df = cost_df.alias('vm_cost_df')\r\n",
-					"sql_cost_df = cost_df.alias('sql_cost_df')"
-				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"vm_columns_to_keep = ['SubscriptionId', 'SubscriptionName','Date','ResourceGroup', 'ResourceName', 'ResourceId', \r\n",
-					"    'MeterCategory', 'MeterSubCategory', 'MeterName','UnitOfMeasure','Quantity','UnitPrice','EffectivePrice',\r\n",
-					"    'CostInBillingCurrency', 'ServiceInfo2', 'PartNumber', 'AdditionalInfo']\r\n",
-					"\r\n",
-					"vm_cost_df = vm_cost_df.select(*vm_columns_to_keep)"
-				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(cost_df)"
-				],
-				"execution_count": 20
+				"execution_count": 47
 			},
 			{
 				"cell_type": "markdown",
@@ -338,11 +239,11 @@
 					"pricesheet_target_path = 'abfss://win-activity@hubautomation.dfs.core.windows.net/usage_details/pricesheet.csv'\r\n",
 					"\r\n",
 					"print('Loading the latest pricesheet from source parquet')\r\n",
-					"pricesheet = pd.read_parquet(pricesheet_source_path)\r\n",
+					"pricesheet = spark.read.format('parquet').load(pricesheet_source_path)\r\n",
 					"print('Writing pricesheet to destination csv file')\r\n",
-					"pricesheet.to_csv(pricesheet_target_path)"
+					"pricesheet.toPandas().to_csv(pricesheet_target_path, index=False)"
 				],
-				"execution_count": 9
+				"execution_count": 57
 			},
 			{
 				"cell_type": "markdown",
@@ -373,27 +274,9 @@
 				"source": [
 					"start_date, end_date = get_start_and_end_date()\r\n",
 					"vm_cost_df = load_cost_data(start_date)\r\n",
-					"sql_cost_df = vm_cost_df.copy()"
+					"sql_cost_df = vm_cost_df.alias('sql_cost_df')"
 				],
-				"execution_count": 11
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"print(vm_cost_df)"
-				],
-				"execution_count": 12
+				"execution_count": 58
 			},
 			{
 				"cell_type": "markdown",
@@ -422,40 +305,22 @@
 					}
 				},
 				"source": [
+					"print(vm_cost_df.count())\n",
+					"\n",
+					"is_vm_cost = ((F.col('ResourceId').contains('/virtualMachines/')) | (F.col('ResourceId').contains('/virtualMachineScaleSets/'))) \\\n",
+					"    & ((F.col('MeterSubCategory').contains('Windows')) | (F.col('ServiceInfo2').contains('Wubdiws Server BYOL')))\n",
+					"\n",
+					"vm_cost_df = vm_cost_df.where(is_vm_cost)\n",
+					"\n",
 					"vm_columns_to_keep = ['SubscriptionId', 'SubscriptionName','Date','ResourceGroup', 'ResourceName', 'ResourceId', \n",
 					"    'MeterCategory', 'MeterSubCategory', 'MeterName','UnitOfMeasure','Quantity','UnitPrice','EffectivePrice',\n",
 					"    'CostInBillingCurrency', 'ServiceInfo2', 'PartNumber', 'AdditionalInfo']\n",
-					"vm_cost_df.drop(columns=vm_cost_df.columns.difference(vm_columns_to_keep), inplace=True)"
+					"\n",
+					"vm_cost_df = vm_cost_df.select(*vm_columns_to_keep)\n",
+					"\n",
+					"print(vm_cost_df.count())"
 				],
-				"execution_count": 11
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"print(len(vm_cost_df))\n",
-					"\n",
-					"vm_cost_df = vm_cost_df.loc[vm_cost_df.index[((vm_cost_df['ResourceId'].astype(str).str.contains('/virtualMachines/')) |\n",
-					"        (vm_cost_df['ResourceId'].astype(str).str.contains('/virtualMachineScaleSets/'))) &\n",
-					"        ((vm_cost_df['MeterSubCategory'].astype(str).str.contains('Windows')) |\n",
-					"        (vm_cost_df['ServiceInfo2'].astype(str).str.contains('Windows Server BYOL')))]]\n",
-					"\n",
-					"vm_cost_df.reset_index(inplace=True, drop=True)\n",
-					"\n",
-					"print(len(vm_cost_df))\n",
-					"print(vm_cost_df)"
-				],
-				"execution_count": 12
+				"execution_count": 59
 			},
 			{
 				"cell_type": "markdown",
@@ -501,7 +366,7 @@
 					"sql_metersubcategory_array = sql_config['MeterSubCategory']\r\n",
 					"print(sql_metersubcategory_array)"
 				],
-				"execution_count": 13
+				"execution_count": 60
 			},
 			{
 				"cell_type": "markdown",
@@ -534,9 +399,9 @@
 					"    'MeterCategory', 'MeterSubCategory', 'MeterName','UnitOfMeasure','Quantity','UnitPrice','EffectivePrice',\r\n",
 					"    'CostInBillingCurrency', 'ServiceInfo2', 'PartNumber', 'ProductName', 'AdditionalInfo']\r\n",
 					"\r\n",
-					"sql_cost_df.drop(columns=sql_cost_df.columns.difference(sql_columns_to_keep), inplace=True)"
+					"sql_cost_df = sql_cost_df.select(*sql_columns_to_keep)"
 				],
-				"execution_count": 14
+				"execution_count": 61
 			},
 			{
 				"cell_type": "code",
@@ -552,15 +417,11 @@
 					}
 				},
 				"source": [
-					"print(len(sql_cost_df))\r\n",
-					"\r\n",
-					"sql_cost_df = sql_cost_df.loc[sql_cost_df.index[(sql_cost_df[\"MeterSubCategory\"].isin(sql_metersubcategory_array))]]\r\n",
-					"sql_cost_df.reset_index(inplace=True, drop=True)\r\n",
-					"\r\n",
-					"print(len(sql_cost_df))\r\n",
-					"print(sql_cost_df)"
+					"print(sql_cost_df.count())\r\n",
+					"sql_cost_df = sql_cost_df.where(F.col('MeterSubCategory').isin(sql_metersubcategory_array))\r\n",
+					"print(sql_cost_df.count())"
 				],
-				"execution_count": 15
+				"execution_count": 62
 			},
 			{
 				"cell_type": "markdown",
@@ -594,21 +455,21 @@
 					"\n",
 					"# Write VM usage details\n",
 					"print('Writing DataFrame to parquet file: ', win_output_path + 'vm_' + end_date + '.csv')\n",
-					"vm_cost_df.to_csv(win_output_path + 'vm_' + end_date + '.csv')\n",
+					"vm_cost_df.toPandas().to_csv(win_output_path + 'vm_' + end_date + '.csv')\n",
 					"\n",
 					"print('Writing DataFrame to parquet file: ', win_output_path + 'vm_today.csv')\n",
-					"vm_cost_df.to_csv(win_output_path + 'vm_today.csv')\n",
+					"vm_cost_df.toPandas().to_csv(win_output_path + 'vm_today.csv')\n",
 					"\n",
 					"# Write SQL usage details\n",
 					"print('Writing DataFrame to parquet file: ', sql_output_path + 'sql_' + end_date + '.csv')\n",
-					"sql_cost_df.to_csv(sql_output_path + 'sql_' + end_date + '.csv')\n",
+					"sql_cost_df.toPandas().to_csv(sql_output_path + 'sql_' + end_date + '.csv')\n",
 					"\n",
 					"print('Writing DataFrame to parquet file: ', sql_output_path + 'sql_today.csv')\n",
-					"sql_cost_df.to_csv(sql_output_path + 'sql_today.csv')\n",
+					"sql_cost_df.toPandas().to_csv(sql_output_path + 'sql_today.csv')\n",
 					"\n",
 					"print('File write complete.')"
 				],
-				"execution_count": 16
+				"execution_count": 63
 			}
 		]
 	}
