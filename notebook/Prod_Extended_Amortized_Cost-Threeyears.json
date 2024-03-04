@@ -22,7 +22,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "f756c86c-71d5-439a-891a-b43b6370e8a4"
+				"spark.autotune.trackingId": "64577370-d9af-460a-ab3e-0aafc639ace2"
 			}
 		},
 		"metadata": {
@@ -93,7 +93,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 11
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",
@@ -135,7 +135,7 @@
 					"from pyspark.sql.functions import when\r\n",
 					""
 				],
-				"execution_count": 12
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",
@@ -190,7 +190,7 @@
 					"df_schema_extended = df_schema_extended.withColumn('Report_Date',lit('') )\r\n",
 					"df_schema_extended = df_schema_extended.withColumn('Report_Date_Partition',lit('') )"
 				],
-				"execution_count": 13
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",
@@ -264,7 +264,7 @@
 					"                        print(df)\r\n",
 					"                        print(len(df_temp.columns),len(df.columns))"
 				],
-				"execution_count": 14
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",
@@ -296,7 +296,7 @@
 					"# Change the column name\r\n",
 					"df = df.withColumnRenamed(\"Application_Name\", \"ApplicationName\")"
 				],
-				"execution_count": 15
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",
@@ -308,10 +308,7 @@
 					}
 				},
 				"source": [
-					"# Aggregate the data \r\n",
-					"Reduce the size of the data to fit PowerBI performance\r\n",
-					"\r\n",
-					"Only select the useful fields"
+					"# Aggregate the data "
 				]
 			},
 			{
@@ -351,10 +348,13 @@
 					"    'EffectivePrice',\r\n",
 					"    'ChargeType',\r\n",
 					"    'benefitName',\r\n",
+					"    'SPStatus',\r\n",
+					"    'NormalizedP3YSPUnitPrice',\r\n",
+					"    'NormalizedHUBPayGUnitPrice',\r\n",
 					"    'Date'\r\n",
 					"]"
 				],
-				"execution_count": 20
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -374,7 +374,7 @@
 					"    .groupBy(*selected_cols) \\\r\n",
 					"    .agg(F.sum('Quantity').alias('TotalQuantity'),F.sum('CostInBillingCurrency').alias('CostInKroner'))"
 				],
-				"execution_count": 21
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -393,7 +393,7 @@
 					"# Change the data type of the 'Report_Date_Partition' column to Datetime\r\n",
 					"df_agg = df_agg.withColumn(\"Report_Date_Partition\", col(\"Report_Date_Partition\").cast(\"timestamp\"))"
 				],
-				"execution_count": 22
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -413,7 +413,7 @@
 					"df_agg = df_agg.withColumn(\"year_partition\", year(df_agg[\"Report_Date_Partition\"]))\r\n",
 					"df_agg = df_agg.withColumn(\"month_partition\", month(df_agg[\"Report_Date_Partition\"]))"
 				],
-				"execution_count": 23
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",
@@ -445,7 +445,7 @@
 					"# Change the data type of the 'Report_Date' column to Datetime\r\n",
 					"df_agg = df_agg.withColumn(\"Report_Date\", col(\"Report_Date\").cast(\"timestamp\"))"
 				],
-				"execution_count": 24
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -473,7 +473,7 @@
 					"\r\n",
 					"selected_cols = selected_cols + new_cols"
 				],
-				"execution_count": 25
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -491,7 +491,7 @@
 				"source": [
 					"df_agg = df_agg.select(*selected_cols)"
 				],
-				"execution_count": 26
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",
@@ -529,7 +529,7 @@
 					"# Save the data with no partition.\r\n",
 					"#df_agg.write.format('parquet').mode('overwrite').partitionBy('Report_date).option('overwriteSchema', 'true').save(optimized_path)"
 				],
-				"execution_count": 27
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",
