@@ -32593,7 +32593,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "a3f79c4a-c7ac-4916-87fe-b645366ed028"
+						"spark.autotune.trackingId": "47bde5b3-b322-4fa0-839b-a523d088417d"
 					}
 				},
 				"metadata": {
@@ -32876,7 +32876,7 @@
 							"print(vm_cost_df.count())\n",
 							"\n",
 							"is_vm_cost = ((F.col('ResourceId').contains('/virtualMachines/')) | (F.col('ResourceId').contains('/virtualMachineScaleSets/'))) \\\n",
-							"    & ((F.col('MeterSubCategory').contains('Windows')) | (F.col('ServiceInfo2').contains('Wubdiws Server BYOL')))\n",
+							"    & ((F.col('MeterSubCategory').contains('Windows')) | (F.col('ServiceInfo2').contains('Windows Server BYOL')))\n",
 							"\n",
 							"vm_cost_df = vm_cost_df.where(is_vm_cost)\n",
 							"\n",
@@ -40401,7 +40401,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "a2c20567-64d1-456a-beed-c67b99b98fe3"
+						"spark.autotune.trackingId": "31e11bfb-eb88-4cf9-8ca9-47d376ad6bc5"
 					}
 				},
 				"metadata": {
@@ -42171,7 +42171,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "50f62ce1-8498-4192-a60e-96bb04437381"
+						"spark.autotune.trackingId": "14b55c2a-da63-4988-8687-2453e5c84e37"
 					}
 				},
 				"metadata": {
@@ -46920,7 +46920,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "b1106a88-03ee-42e8-be83-c10bc3dc679f"
+						"spark.autotune.trackingId": "bdc0ef45-4cac-484c-bd66-1a9c512a9aca"
 					}
 				},
 				"metadata": {
@@ -46964,7 +46964,7 @@
 							"import pyspark.sql.functions as F"
 						],
 						"outputs": [],
-						"execution_count": 1
+						"execution_count": 2
 					},
 					{
 						"cell_type": "code",
@@ -46983,7 +46983,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 3
 					},
 					{
 						"cell_type": "code",
@@ -47004,7 +47004,40 @@
 							"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 4
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"blob_service_client = BlobServiceClient.from_connection_string(hubAutomationConnectionString)\r\n",
+							"\r\n",
+							"# get a reference to the blob container and file\r\n",
+							"container_name = 'sql-config'\r\n",
+							"blob_name = 'config.json'\r\n",
+							"container_client = blob_service_client.get_container_client(container_name)\r\n",
+							"blob_client = container_client.get_blob_client(blob_name)\r\n",
+							"\r\n",
+							"# download the blob content as a string\r\n",
+							"blob_content = blob_client.download_blob().content_as_text()\r\n",
+							"\r\n",
+							"# parse the JSON string into a Python dictionary\r\n",
+							"sql_config = json.loads(blob_content)\r\n",
+							"\r\n",
+							"sql_metersubcategory_array = sql_config['MeterSubCategory']"
+						],
+						"outputs": [],
+						"execution_count": 5
 					},
 					{
 						"cell_type": "code",
@@ -47025,10 +47058,144 @@
 							"\r\n",
 							"end_date = (datetime.now().strftime('%Y-%m-%d'))\r\n",
 							"vm_start_date = (datetime.now() - timedelta(days=2)).strftime('%Y-%m-%d')\r\n",
-							"sql_start_date = (datetime.now() - timedelta(days=3)).strftime('%Y-%m-%d')"
+							"sql_start_date = (datetime.now() - timedelta(days=3)).strftime('%Y-%m-%d')\r\n",
+							"\r\n",
+							"daily_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/daily/ACMDailyActualCost/ACMDailyActualCost.parquet'\r\n",
+							"daily_df = spark.read.format('parquet').load(daily_path)\r\n",
+							"\r\n",
+							"monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/{last_month_start}-{last_month_end}/ACMMonthlyActualCost_{last_month_start}-{last_month_end}.parquet'\r\n",
+							"monthly_df = spark.read.format('parquet').load(monthly_path)\r\n",
+							"\r\n",
+							"cost_df = daily_df.union(monthly_df)"
+						],
+						"outputs": [],
+						"execution_count": 7
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"vm_cost_df = cost_df.where(F.col('Date') >= vm_start_date)\r\n",
+							"sql_cost_df = cost_df.where(F.col('Date') == sql_start_date)"
+						],
+						"outputs": [],
+						"execution_count": 8
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"columns_to_keep = [\r\n",
+							"    'SubscriptionId',\r\n",
+							"    'SubscriptionName',\r\n",
+							"    'Date',\r\n",
+							"    'ResourceGroup', \r\n",
+							"    'ResourceName', \r\n",
+							"    'ResourceId', \r\n",
+							"    'MeterCategory', \r\n",
+							"    'MeterSubCategory', \r\n",
+							"    'MeterName',\r\n",
+							"    'UnitOfMeasure',\r\n",
+							"    'Quantity',\r\n",
+							"    'UnitPrice',\r\n",
+							"    'EffectivePrice',\r\n",
+							"    'CostInBillingCurrency', \r\n",
+							"    'ServiceInfo2', \r\n",
+							"    'PartNumber', \r\n",
+							"    'AdditionalInfo'\r\n",
+							"]\r\n",
+							"\r\n",
+							"sql_columns = [\r\n",
+							"    'ai_VCPUs',\r\n",
+							"    \r\n",
+							"]"
 						],
 						"outputs": [],
 						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"is_vm_cost = ((F.col('ResourceId').contains('/virtualMachines/')) | (F.col('ResourceId').contains('/virtualMachineScaleSets/'))) \\\r\n",
+							"    & ((F.col('MeterSubCategory').contains('Windows')) | (F.col('ServiceInfo2').contains('Windows Server BYOL')))\r\n",
+							"\r\n",
+							"vm_cost_df = vm_cost_df.where(is_vm_cost)\r\n",
+							"\r\n",
+							"vm_cost_df = vm_cost_df.select(*vm_columns_to_keep)"
+						],
+						"outputs": [],
+						"execution_count": 9
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"sql_cost_df = sql_cost_df.select(*sql_columns_to_keep)\r\n",
+							"sql_cost_df = sql_cost_df.where(F.col('MeterSubCategory').isin(sql_metersubcategory_array))"
+						],
+						"outputs": [],
+						"execution_count": 10
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"display(sql_cost_df.select('AdditionalInfo'))"
+						],
+						"outputs": [],
+						"execution_count": 11
 					}
 				]
 			},
