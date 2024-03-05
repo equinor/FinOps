@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "18758905-4294-45c6-a0f8-03f6741a0da5"
+				"spark.autotune.trackingId": "ba5b2bab-23d4-46bd-be2e-1ab9f17d97a8"
 			}
 		},
 		"metadata": {
@@ -73,7 +73,7 @@
 				"source": [
 					"import pyspark.sql.functions as F"
 				],
-				"execution_count": 6
+				"execution_count": 34
 			},
 			{
 				"cell_type": "code",
@@ -92,7 +92,7 @@
 					"cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20240201-20240229/Extended_v3_ACMMonthlyAmortizedCost_20240201-20240229.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 42
+				"execution_count": 35
 			},
 			{
 				"cell_type": "code",
@@ -110,7 +110,45 @@
 				"source": [
 					"cost_df = cost_df.where(F.col('Date') == '2024-02-25')"
 				],
-				"execution_count": 43
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(cost_df.where(F.col('WindowsAHB') != 'Not Supported').select('Date', 'ResourceName', 'WindowsAHB', 'WindowsAHB_VCPUs').distinct().groupBy('WindowsAHB', 'Date').agg(F.countDistinct('ResourceName'), F.sum('WindowsAHB_VCPUs')))"
+				],
+				"execution_count": 23
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(cost_df.where(F.col('SQLAHB') != 'Not Supported').select('Date', 'ResourceName', 'SQLAHB', 'SQLAHB_VCPUs').distinct().groupBy('SQLAHB', 'Date').agg(F.countDistinct('ResourceName'), F.sum('SQLAHB_VCPUs')))"
+				],
+				"execution_count": 24
 			},
 			{
 				"cell_type": "code",
@@ -150,7 +188,7 @@
 					"                'quote' : '\"',\r\n",
 					"                'escape' : '\"'}"
 				],
-				"execution_count": null
+				"execution_count": 40
 			},
 			{
 				"cell_type": "code",
@@ -169,7 +207,26 @@
 					"sql_deploy_path = 'abfss://sql-hub-logs@hubautomation.dfs.core.windows.net/2024-02-24-AHUB-Deployment.csv'\r\n",
 					"sql_deploy_df = spark.read.options(**csv_options).format('csv').load(sql_deploy_path)"
 				],
-				"execution_count": 19
+				"execution_count": 47
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(sql_deploy_df)"
+				],
+				"execution_count": 28
 			},
 			{
 				"cell_type": "code",
@@ -207,7 +264,7 @@
 				"source": [
 					"display(sql_deploy_df)"
 				],
-				"execution_count": 34
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -223,9 +280,9 @@
 					}
 				},
 				"source": [
-					"display(sql_deploy_df.select('ResourceName').distinct().count())"
+					"display(sql_deploy_df.select('ResourceName', 'SubscriptionName').distinct().count())"
 				],
-				"execution_count": 36
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
