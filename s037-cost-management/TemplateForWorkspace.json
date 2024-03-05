@@ -1004,6 +1004,18 @@
 		"sprkpool33large_sparkVersion": {
 			"type": "string",
 			"defaultValue": "3.3"
+		},
+		"sql-hub-deployments_notebookSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"sql-hub-deployments_notebookSparkPoolIdRef": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"sql-hub-deployments_notebookSparkPoolEndpointRef": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		}
 	},
 	"variables": {
@@ -32581,7 +32593,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "1fa97920-cd80-4288-81b6-41566a8973c1"
+						"spark.autotune.trackingId": "a3f79c4a-c7ac-4916-87fe-b645366ed028"
 					}
 				},
 				"metadata": {
@@ -39000,7 +39012,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "fe8ca342-c1dc-4d9f-a524-d53bf91cb7c1"
+						"spark.autotune.trackingId": "09fef7be-9d83-4300-b793-2fd6300b6dac"
 					}
 				},
 				"metadata": {
@@ -39025,8 +39037,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -39050,7 +39061,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F"
 						],
@@ -40391,7 +40401,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "8a60cf0e-7ed6-4072-8d83-9c136c39f479"
+						"spark.autotune.trackingId": "a2c20567-64d1-456a-beed-c67b99b98fe3"
 					}
 				},
 				"metadata": {
@@ -40416,7 +40426,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -40436,6 +40447,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"from enum import Enum\r\n",
@@ -42159,7 +42171,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "6e3e5c92-0872-4667-8967-7c5ef0e360ae"
+						"spark.autotune.trackingId": "50f62ce1-8498-4192-a60e-96bb04437381"
 					}
 				},
 				"metadata": {
@@ -42211,7 +42223,7 @@
 							"from enum import Enum"
 						],
 						"outputs": [],
-						"execution_count": 1
+						"execution_count": 9
 					},
 					{
 						"cell_type": "code",
@@ -42230,7 +42242,7 @@
 							"PROD_OFFER_ID = 'MS-AZR-0017P'"
 						],
 						"outputs": [],
-						"execution_count": 2
+						"execution_count": 10
 					},
 					{
 						"cell_type": "code",
@@ -42257,7 +42269,7 @@
 							"    NotSupported = \"Not Supported\""
 						],
 						"outputs": [],
-						"execution_count": 3
+						"execution_count": 11
 					},
 					{
 						"cell_type": "code",
@@ -42277,7 +42289,7 @@
 							"    return f\"{previous_year}-{str(previous_month).zfill(2)}-{str(last_day).zfill(2)}\""
 						],
 						"outputs": [],
-						"execution_count": 4
+						"execution_count": 12
 					},
 					{
 						"cell_type": "code",
@@ -42319,7 +42331,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 5
+						"execution_count": 13
 					},
 					{
 						"cell_type": "code",
@@ -42342,7 +42354,7 @@
 							"    return pricesheet_df"
 						],
 						"outputs": [],
-						"execution_count": 6
+						"execution_count": 14
 					},
 					{
 						"cell_type": "code",
@@ -42396,7 +42408,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 7
+						"execution_count": 15
 					},
 					{
 						"cell_type": "code",
@@ -42462,12 +42474,12 @@
 							"        F.when(is_sql_vm & F.col('ai_VCPUs') == 0, 0)\r\n",
 							"        .when(is_sql_vm & is_standard_sql_license & (F.col('ai_VCPUs') <= 4), 4)\r\n",
 							"        .when(is_sql_vm & is_standard_sql_license & (F.col('ai_VCPUs') > 4), F.col('ai_VCPUs'))\r\n",
-							"        .when(is_sql_vm & is_enterpr ise_sql_license & (F.col('ai_VCPUs') <= 4), 16)\r\n",
+							"        .when(is_sql_vm & is_enterprise_sql_license & (F.col('ai_VCPUs') <= 4), 16)\r\n",
 							"        .when(is_sql_vm & is_enterprise_sql_license & (F.col('ai_VCPUs') > 4), F.col('ai_VCPUs') * 4)\r\n",
 							"        .when((is_sql_mi | is_sql_db) & F.col('ai_vCores') == 0, 0)\r\n",
 							"        .when((is_sql_mi | is_sql_db) & is_standard_sql_license & (F.col('ai_vCores') <= 4), 4)\r\n",
 							"        .when((is_sql_mi | is_sql_db) & is_standard_sql_license & (F.col('ai_vCores') > 4), F.col('ai_vCores'))\r\n",
-							"        .when((is_sql_mi | is_sql_db) & is_enterpr ise_sql_license & (F.col('ai_vCores') <= 4), 16)\r\n",
+							"        .when((is_sql_mi | is_sql_db) & is_enterprise_sql_license & (F.col('ai_vCores') <= 4), 16)\r\n",
 							"        .when((is_sql_mi | is_sql_db) & is_enterprise_sql_license & (F.col('ai_vCores') > 4), F.col('ai_vCores') * 4)\r\n",
 							"        .otherwise(0)\r\n",
 							"    )\r\n",
@@ -42507,7 +42519,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 8
+						"execution_count": 16
 					},
 					{
 						"cell_type": "code",
@@ -42537,7 +42549,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 9
+						"execution_count": 17
 					},
 					{
 						"cell_type": "code",
@@ -42574,7 +42586,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 10
+						"execution_count": 18
 					},
 					{
 						"cell_type": "code",
@@ -42674,7 +42686,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 11
+						"execution_count": 19
 					},
 					{
 						"cell_type": "code",
@@ -42763,7 +42775,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 12
+						"execution_count": 20
 					},
 					{
 						"cell_type": "code",
@@ -42830,7 +42842,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 13
+						"execution_count": 21
 					},
 					{
 						"cell_type": "code",
@@ -42857,7 +42869,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 14
+						"execution_count": 22
 					},
 					{
 						"cell_type": "code",
@@ -42880,7 +42892,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 15
+						"execution_count": 23
 					},
 					{
 						"cell_type": "code",
@@ -42909,7 +42921,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 16
+						"execution_count": 24
 					}
 				]
 			},
@@ -46883,6 +46895,144 @@
 			},
 			"dependsOn": [],
 			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/sql-hub-deployments')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "NotebookInProduction/HUB and RI Savings"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "[parameters('sql-hub-deployments_notebookSparkPoolNameRef')]",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "112g",
+					"driverCores": 16,
+					"executorMemory": "112g",
+					"executorCores": 16,
+					"numExecutors": 1,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "5",
+						"spark.autotune.trackingId": "b1106a88-03ee-42e8-be83-c10bc3dc679f"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "[parameters('sql-hub-deployments_notebookSparkPoolIdRef')]",
+						"name": "[parameters('sql-hub-deployments_notebookSparkPoolNameRef')]",
+						"type": "Spark",
+						"endpoint": "[parameters('sql-hub-deployments_notebookSparkPoolEndpointRef')]",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 16,
+						"memory": 112,
+						"automaticScaleJobs": true
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"from datetime import timedelta, datetime\r\n",
+							"from dateutil.relativedelta import relativedelta\r\n",
+							"import calendar\r\n",
+							"import json\r\n",
+							"from notebookutils import mssparkutils\r\n",
+							"from azure.storage.blob import BlobServiceClient\r\n",
+							"import pyspark.sql.functions as F"
+						],
+						"outputs": [],
+						"execution_count": 1
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"KEY_VAULT_NAME = 'acm-toolkit-kv'\r\n",
+							"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'\r\n",
+							"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"last_month_start = (datetime.now() - relativedelta(months=1)).strftime('%Y%m01')\r\n",
+							"last_month_end = ((datetime.now().replace(day=1)) - timedelta(days=1)).date().strftime('%Y%m%d')\r\n",
+							"\r\n",
+							"end_date = (datetime.now().strftime('%Y-%m-%d'))\r\n",
+							"vm_start_date = (datetime.now() - timedelta(days=2)).strftime('%Y-%m-%d')\r\n",
+							"sql_start_date = (datetime.now() - timedelta(days=3)).strftime('%Y-%m-%d')"
+						],
+						"outputs": [],
+						"execution_count": null
+					}
+				]
+			},
+			"dependsOn": []
 		}
 	]
 }
