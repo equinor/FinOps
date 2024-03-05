@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "f1b51fb3-b9ab-40cc-8a24-1d5dc78b6de9"
+				"spark.autotune.trackingId": "d4b491e5-efe8-465a-972e-f15625a6940f"
 			}
 		},
 		"metadata": {
@@ -62,7 +62,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 41
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -87,7 +87,7 @@
 					"from azure.storage.blob import BlobServiceClient\n",
 					"import pyspark.sql.functions as F"
 				],
-				"execution_count": 56
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -106,7 +106,7 @@
 					"KEY_VAULT_NAME = 'acm-toolkit-kv'\r\n",
 					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'"
 				],
-				"execution_count": 43
+				"execution_count": 7
 			},
 			{
 				"cell_type": "code",
@@ -124,31 +124,7 @@
 				"source": [
 					"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 				],
-				"execution_count": 44
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"def get_start_and_end_date():\r\n",
-					"    start_date = (datetime.now() - timedelta(days=2)).strftime('%Y-%m-%d')\r\n",
-					"    print(start_date)\r\n",
-					"\r\n",
-					"    end_date = (datetime.now().strftime('%Y-%m-%d'))\r\n",
-					"    print(end_date)\r\n",
-					"    return start_date, end_date"
-				],
-				"execution_count": 45
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -166,17 +142,13 @@
 				"source": [
 					"def get_dates_last_month():\r\n",
 					"    last_month_start = (datetime.now() - relativedelta(months=1)).strftime('%Y%m01')\r\n",
-					"    print(last_month_start)\r\n",
-					"\r\n",
-					"    input_dt = datetime.now()\r\n",
-					"    first = input_dt.replace(day=1)\r\n",
+					"    today = datetime.now()\r\n",
+					"    first = today.replace(day=1)\r\n",
 					"    res = first - timedelta(days=1)\r\n",
 					"    last_month_end = res.date().strftime('%Y%m%d')\r\n",
-					"    print(last_month_end)\r\n",
-					"\r\n",
 					"    return last_month_start, last_month_end"
 				],
-				"execution_count": 46
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -192,21 +164,37 @@
 					}
 				},
 				"source": [
-					"def load_cost_data(start_date):\r\n",
-					"    daily_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/daily/ACMDailyActualCost/ACMDailyActualCost.parquet'\r\n",
-					"    cost_df = spark.read.format('parquet').load(daily_path)\r\n",
-					"\r\n",
-					"    current_day = datetime.now().strftime('%d')\r\n",
-					"    if current_day == '01' or current_day == '02':\r\n",
-					"        last_month_start, last_month_end = get_dates_last_month()\r\n",
-					"        monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/{last_month_start}-{last_month_end}/ACMMonthlyActualCost_{last_month_start}-{last_month_end}.parquet'\r\n",
-					"        monthly_df = spark.read.format('parquet').load(monthly_path)\r\n",
-					"        cost_df = cost_df.union(monthly_df)\r\n",
-					"\r\n",
-					"    cost_df = cost_df.where(F.col('Date') >= start_date)\r\n",
-					"    return cost_df"
+					"end_date = (datetime.now().strftime('%Y-%m-%d'))\r\n",
+					"vm_start_date = (datetime.now() - timedelta(days=2)).strftime('%Y-%m-%d')\r\n",
+					"sql_start_date = (datetime.now() - timedelta(days=3)).strftime('%Y-%m-%d')"
 				],
-				"execution_count": 47
+				"execution_count": 10
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"daily_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/daily/ACMDailyActualCost/ACMDailyActualCost.parquet'\r\n",
+					"daily_df = spark.read.format('parquet').load(daily_path)\r\n",
+					"\r\n",
+					"last_month_start, last_month_end = get_dates_last_month()\r\n",
+					"\r\n",
+					"monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/{last_month_start}-{last_month_end}/ACMMonthlyActualCost_{last_month_start}-{last_month_end}.parquet'\r\n",
+					"monthly_df = spark.read.format('parquet').load(monthly_path)\r\n",
+					"\r\n",
+					"cost_df = daily_df.union(monthly_df)"
+				],
+				"execution_count": 11
 			},
 			{
 				"cell_type": "markdown",
@@ -243,7 +231,7 @@
 					"print('Writing pricesheet to destination csv file')\r\n",
 					"pricesheet.toPandas().to_csv(pricesheet_target_path, index=False)"
 				],
-				"execution_count": 57
+				"execution_count": 12
 			},
 			{
 				"cell_type": "markdown",
@@ -272,11 +260,10 @@
 					}
 				},
 				"source": [
-					"start_date, end_date = get_start_and_end_date()\r\n",
-					"vm_cost_df = load_cost_data(start_date)\r\n",
-					"sql_cost_df = vm_cost_df.alias('sql_cost_df')"
+					"vm_cost_df = cost_df.where(F.col('Date') >= vm_start_date)\r\n",
+					"sql_cost_df = cost_df.where(F.col('Date') == sql_start_date)"
 				],
-				"execution_count": 58
+				"execution_count": 13
 			},
 			{
 				"cell_type": "markdown",
@@ -320,7 +307,7 @@
 					"\n",
 					"print(vm_cost_df.count())"
 				],
-				"execution_count": 59
+				"execution_count": 14
 			},
 			{
 				"cell_type": "markdown",
@@ -366,7 +353,7 @@
 					"sql_metersubcategory_array = sql_config['MeterSubCategory']\r\n",
 					"print(sql_metersubcategory_array)"
 				],
-				"execution_count": 60
+				"execution_count": 15
 			},
 			{
 				"cell_type": "markdown",
@@ -401,7 +388,7 @@
 					"\r\n",
 					"sql_cost_df = sql_cost_df.select(*sql_columns_to_keep)"
 				],
-				"execution_count": 61
+				"execution_count": 16
 			},
 			{
 				"cell_type": "code",
@@ -421,7 +408,7 @@
 					"sql_cost_df = sql_cost_df.where(F.col('MeterSubCategory').isin(sql_metersubcategory_array))\r\n",
 					"print(sql_cost_df.count())"
 				],
-				"execution_count": 62
+				"execution_count": 17
 			},
 			{
 				"cell_type": "markdown",
@@ -469,7 +456,7 @@
 					"\n",
 					"print('File write complete.')"
 				],
-				"execution_count": 63
+				"execution_count": 22
 			}
 		]
 	}
