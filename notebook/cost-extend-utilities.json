@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "531e925d-5763-4943-b60b-e13f379c92e1"
+				"spark.autotune.trackingId": "71d99140-a779-4130-a155-0a60ad8e2d0f"
 			}
 		},
 		"metadata": {
@@ -71,7 +71,7 @@
 					"import warnings\r\n",
 					"from enum import Enum"
 				],
-				"execution_count": 1
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -89,7 +89,7 @@
 				"source": [
 					"PROD_OFFER_ID = 'MS-AZR-0017P'"
 				],
-				"execution_count": 2
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -115,7 +115,7 @@
 					"    NotEnabled = \"Not Enabled\"\r\n",
 					"    NotSupported = \"Not Supported\""
 				],
-				"execution_count": 3
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -133,7 +133,7 @@
 					"    # Creating a string date for last month\r\n",
 					"    return f\"{previous_year}-{str(previous_month).zfill(2)}-{str(last_day).zfill(2)}\""
 				],
-				"execution_count": 4
+				"execution_count": 12
 			},
 			{
 				"cell_type": "code",
@@ -174,7 +174,7 @@
 					"        cost_df = cost_df.withColumn('ai_' + col, F.coalesce(F.col(f'AdditionalInfo.{col}'), F.lit(None)))\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 5
+				"execution_count": 13
 			},
 			{
 				"cell_type": "code",
@@ -196,7 +196,7 @@
 					"    pricesheet_df = pricesheet_df.withColumn('NormalizedUnitPrice', F.col('UnitPrice') / F.col('NormalizedUnit'))\r\n",
 					"    return pricesheet_df"
 				],
-				"execution_count": 6
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -249,7 +249,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 7
+				"execution_count": 15
 			},
 			{
 				"cell_type": "code",
@@ -315,12 +315,12 @@
 					"        F.when(is_sql_vm & F.col('ai_VCPUs') == 0, 0)\r\n",
 					"        .when(is_sql_vm & is_standard_sql_license & (F.col('ai_VCPUs') <= 4), 4)\r\n",
 					"        .when(is_sql_vm & is_standard_sql_license & (F.col('ai_VCPUs') > 4), F.col('ai_VCPUs'))\r\n",
-					"        .when(is_sql_vm & is_enterpr ise_sql_license & (F.col('ai_VCPUs') <= 4), 16)\r\n",
+					"        .when(is_sql_vm & is_enterprise_sql_license & (F.col('ai_VCPUs') <= 4), 16)\r\n",
 					"        .when(is_sql_vm & is_enterprise_sql_license & (F.col('ai_VCPUs') > 4), F.col('ai_VCPUs') * 4)\r\n",
 					"        .when((is_sql_mi | is_sql_db) & F.col('ai_vCores') == 0, 0)\r\n",
 					"        .when((is_sql_mi | is_sql_db) & is_standard_sql_license & (F.col('ai_vCores') <= 4), 4)\r\n",
 					"        .when((is_sql_mi | is_sql_db) & is_standard_sql_license & (F.col('ai_vCores') > 4), F.col('ai_vCores'))\r\n",
-					"        .when((is_sql_mi | is_sql_db) & is_enterpr ise_sql_license & (F.col('ai_vCores') <= 4), 16)\r\n",
+					"        .when((is_sql_mi | is_sql_db) & is_enterprise_sql_license & (F.col('ai_vCores') <= 4), 16)\r\n",
 					"        .when((is_sql_mi | is_sql_db) & is_enterprise_sql_license & (F.col('ai_vCores') > 4), F.col('ai_vCores') * 4)\r\n",
 					"        .otherwise(0)\r\n",
 					"    )\r\n",
@@ -359,7 +359,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 8
+				"execution_count": 16
 			},
 			{
 				"cell_type": "code",
@@ -388,7 +388,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 9
+				"execution_count": 17
 			},
 			{
 				"cell_type": "code",
@@ -424,7 +424,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 10
+				"execution_count": 18
 			},
 			{
 				"cell_type": "code",
@@ -523,7 +523,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 11
+				"execution_count": 19
 			},
 			{
 				"cell_type": "code",
@@ -611,7 +611,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 12
+				"execution_count": 20
 			},
 			{
 				"cell_type": "code",
@@ -677,7 +677,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 13
+				"execution_count": 21
 			},
 			{
 				"cell_type": "code",
@@ -703,7 +703,7 @@
 					"    \r\n",
 					"    return cost_df"
 				],
-				"execution_count": 14
+				"execution_count": 22
 			},
 			{
 				"cell_type": "code",
@@ -725,7 +725,7 @@
 					"    cost_df = compute_AHB_columns(cost_df, pricesheet_df)\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 15
+				"execution_count": 23
 			},
 			{
 				"cell_type": "code",
@@ -753,7 +753,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 16
+				"execution_count": 24
 			}
 		]
 	}
