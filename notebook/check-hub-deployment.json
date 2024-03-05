@@ -16,11 +16,12 @@
 			"executorMemory": "112g",
 			"executorCores": 16,
 			"numExecutors": 1,
+			"runAsWorkspaceSystemIdentity": true,
 			"conf": {
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "ba5b2bab-23d4-46bd-be2e-1ab9f17d97a8"
+				"spark.autotune.trackingId": "c5b0dccf-dcfe-4406-a65b-605c284e7862"
 			}
 		},
 		"metadata": {
@@ -73,7 +74,7 @@
 				"source": [
 					"import pyspark.sql.functions as F"
 				],
-				"execution_count": 34
+				"execution_count": 21
 			},
 			{
 				"cell_type": "code",
@@ -92,7 +93,7 @@
 					"cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20240201-20240229/Extended_v3_ACMMonthlyAmortizedCost_20240201-20240229.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 35
+				"execution_count": 22
 			},
 			{
 				"cell_type": "code",
@@ -105,12 +106,13 @@
 						"transient": {
 							"deleting": false
 						}
-					}
+					},
+					"collapsed": false
 				},
 				"source": [
-					"cost_df = cost_df.where(F.col('Date') == '2024-02-25')"
+					"display(cost_df.where((F.col('MeterSubCategory') == 'Managed Instance General Purpose - SQL License') & (F.col('ResourceName') == 's072sqlcdm01p')))"
 				],
-				"execution_count": null
+				"execution_count": 27
 			},
 			{
 				"cell_type": "code",
@@ -129,7 +131,7 @@
 				"source": [
 					"display(cost_df.where(F.col('WindowsAHB') != 'Not Supported').select('Date', 'ResourceName', 'WindowsAHB', 'WindowsAHB_VCPUs').distinct().groupBy('WindowsAHB', 'Date').agg(F.countDistinct('ResourceName'), F.sum('WindowsAHB_VCPUs')))"
 				],
-				"execution_count": 23
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -148,7 +150,7 @@
 				"source": [
 					"display(cost_df.where(F.col('SQLAHB') != 'Not Supported').select('Date', 'ResourceName', 'SQLAHB', 'SQLAHB_VCPUs').distinct().groupBy('SQLAHB', 'Date').agg(F.countDistinct('ResourceName'), F.sum('SQLAHB_VCPUs')))"
 				],
-				"execution_count": 24
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -167,7 +169,7 @@
 				"source": [
 					"display(cost_df.where(F.col('SQLAHB') == 'Not Enabled').select('ResourceName').distinct().count())"
 				],
-				"execution_count": 45
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -188,7 +190,7 @@
 					"                'quote' : '\"',\r\n",
 					"                'escape' : '\"'}"
 				],
-				"execution_count": 40
+				"execution_count": 23
 			},
 			{
 				"cell_type": "code",
@@ -207,7 +209,7 @@
 					"sql_deploy_path = 'abfss://sql-hub-logs@hubautomation.dfs.core.windows.net/2024-02-24-AHUB-Deployment.csv'\r\n",
 					"sql_deploy_df = spark.read.options(**csv_options).format('csv').load(sql_deploy_path)"
 				],
-				"execution_count": 47
+				"execution_count": 24
 			},
 			{
 				"cell_type": "code",
@@ -226,7 +228,7 @@
 				"source": [
 					"display(sql_deploy_df)"
 				],
-				"execution_count": 28
+				"execution_count": 25
 			},
 			{
 				"cell_type": "code",
@@ -245,7 +247,7 @@
 					"sql_remove_path = 'abfss://sql-hub-logs@hubautomation.dfs.core.windows.net/2024-02-24-AHUB-Removal.csv'\r\n",
 					"sql_remove_df = spark.read.options(**csv_options).format('csv').load(sql_remove_path)"
 				],
-				"execution_count": 15
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -262,9 +264,9 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(sql_deploy_df)"
+					"display(sql_remove_df.select('ResourceId').distinct().count())"
 				],
-				"execution_count": 9
+				"execution_count": 18
 			},
 			{
 				"cell_type": "code",
@@ -282,7 +284,7 @@
 				"source": [
 					"display(sql_deploy_df.select('ResourceName', 'SubscriptionName').distinct().count())"
 				],
-				"execution_count": 8
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -301,7 +303,7 @@
 				"source": [
 					"display(sql_remove_df.select('ResourceName').distinct().count())"
 				],
-				"execution_count": 35
+				"execution_count": null
 			}
 		]
 	}
