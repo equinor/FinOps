@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "56806e03-13ec-40f2-8a6d-0816bb2746b4"
+				"spark.autotune.trackingId": "5002c529-0844-4e54-812e-f973c4d855ee"
 			}
 		},
 		"metadata": {
@@ -77,9 +77,9 @@
 					"fromDate = '20240301'\n",
 					"container = 'usage'\n",
 					"storageAccount = 's037costmgmt'\n",
-					"reportType = 'AmortizedCost'"
+					"reportType = 'ActualCost'"
 				],
-				"execution_count": 1
+				"execution_count": 7
 			},
 			{
 				"cell_type": "code",
@@ -106,7 +106,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 2
+				"execution_count": 8
 			},
 			{
 				"cell_type": "markdown",
@@ -137,7 +137,7 @@
 				"source": [
 					"%run /cost-extend-utilities"
 				],
-				"execution_count": 3
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -160,7 +160,7 @@
 					"    subscriptions_df = subscriptions_df.withColumnRenamed('Application', 'SubscriptionServiceNow-App')\r\n",
 					"    return subscriptions_df"
 				],
-				"execution_count": 4
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -183,7 +183,7 @@
 					"    cost_df.write.format('parquet').mode('overwrite').option('path', destinationFilename).save()\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": 5
+				"execution_count": 11
 			},
 			{
 				"cell_type": "markdown",
@@ -266,11 +266,11 @@
 					"cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\r\n",
 					"cost_df = compute_hub_and_sp(cost_df, pricesheet_df)\r\n",
 					"cost_df = add_azure_service_information(cost_df, service_df)\r\n",
-					"# write_output_file(cost_df, cost_target_path)\r\n",
+					"write_output_file(cost_df, cost_target_path)\r\n",
 					"\r\n",
 					"print(' ')"
 				],
-				"execution_count": 6
+				"execution_count": 12
 			}
 		]
 	}
