@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "ad0a6094-8efc-4e03-905b-54730bf0a33e"
+				"spark.autotune.trackingId": "a7638681-d788-4716-a7bc-655246bec09f"
 			}
 		},
 		"metadata": {
@@ -315,12 +315,12 @@
 					"\r\n",
 					"    # Compute the SQL AHB equivalent VCPUs\r\n",
 					"    cost_df = cost_df.withColumn('SQLAHB_VCPUS', \r\n",
-					"        F.when(is_sql_vm & F.col('ai_VCPUs') == 0, 0)\r\n",
+					"        F.when(is_sql_vm & (F.col('ai_VCPUs') == 0), 0)\r\n",
 					"        .when(is_sql_vm & is_standard_sql_license & (F.col('ai_VCPUs') <= 4), 4)\r\n",
 					"        .when(is_sql_vm & is_standard_sql_license & (F.col('ai_VCPUs') > 4), F.col('ai_VCPUs'))\r\n",
 					"        .when(is_sql_vm & is_enterprise_sql_license & (F.col('ai_VCPUs') <= 4), 16)\r\n",
 					"        .when(is_sql_vm & is_enterprise_sql_license & (F.col('ai_VCPUs') > 4), F.col('ai_VCPUs') * 4)\r\n",
-					"        .when((is_sql_mi | is_sql_db) & F.col('ai_vCores') == 0, 0)\r\n",
+					"        .when((is_sql_mi | is_sql_db) & (F.col('ai_vCores') == 0), 0)\r\n",
 					"        .when((is_sql_mi | is_sql_db) & is_standard_sql_license & (F.col('ai_vCores') <= 4), 4)\r\n",
 					"        .when((is_sql_mi | is_sql_db) & is_standard_sql_license & (F.col('ai_vCores') > 4), F.col('ai_vCores'))\r\n",
 					"        .when((is_sql_mi | is_sql_db) & is_enterprise_sql_license & (F.col('ai_vCores') <= 4), 16)\r\n",
