@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "71d99140-a779-4130-a155-0a60ad8e2d0f"
+				"spark.autotune.trackingId": "ad0a6094-8efc-4e03-905b-54730bf0a33e"
 			}
 		},
 		"metadata": {
@@ -296,6 +296,9 @@
 					"    \r\n",
 					"    cost_df = cost_df.withColumn('ai_VCPUs', F.col('ai_VCPUs').cast('int'))\r\n",
 					"    cost_df = cost_df.na.fill({'ai_VCPUs' : 0})\r\n",
+					"\r\n",
+					"    cost_df = cost_df.withColumn('ai_vCores', F.col('ai_vCores').cast('int'))\r\n",
+					"    cost_df = cost_df.na.fill({'ai_vCores' : 0})\r\n",
 					"\r\n",
 					"    is_standard_sql_license = F.col('ProductName').like('%Standard%') | F.col('ProductName').like('%General%')\r\n",
 					"    is_enterprise_sql_license = F.col('ProductName').like('%Enterprise%') | F.col('ProductName').like('%Critical%')\r\n",
