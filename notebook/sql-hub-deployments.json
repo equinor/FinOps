@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "94b9dcb3-8659-41ad-a633-414629f11922"
+				"spark.autotune.trackingId": "5bc8ae17-9e40-4d66-8f03-9696f12604b5"
 			}
 		},
 		"metadata": {
@@ -62,7 +62,7 @@
 					"from azure.storage.blob import BlobServiceClient\r\n",
 					"import pyspark.sql.functions as F"
 				],
-				"execution_count": 118
+				"execution_count": 137
 			},
 			{
 				"cell_type": "code",
@@ -80,7 +80,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 119
+				"execution_count": 138
 			},
 			{
 				"cell_type": "code",
@@ -100,7 +100,7 @@
 					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'\r\n",
 					"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 				],
-				"execution_count": 120
+				"execution_count": 139
 			},
 			{
 				"cell_type": "code",
@@ -132,7 +132,7 @@
 					"\r\n",
 					"sql_metersubcategory_array = sql_config['MeterSubCategory']"
 				],
-				"execution_count": 121
+				"execution_count": 140
 			},
 			{
 				"cell_type": "code",
@@ -166,7 +166,7 @@
 					"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/20240301-20240331/Extended_v3_ACMMonthlyActualCost_20240301-20240331.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 122
+				"execution_count": 141
 			},
 			{
 				"cell_type": "code",
@@ -185,7 +185,7 @@
 					"vm_cost_df = cost_df.where(F.col('Date') >= vm_start_date)\r\n",
 					"sql_cost_df = cost_df.where(F.col('Date') == sql_start_date)"
 				],
-				"execution_count": 123
+				"execution_count": 142
 			},
 			{
 				"cell_type": "code",
@@ -233,7 +233,7 @@
 					"    'WindowsAHB_VCPUs'\r\n",
 					"]"
 				],
-				"execution_count": 124
+				"execution_count": 143
 			},
 			{
 				"cell_type": "code",
@@ -256,7 +256,7 @@
 					"\r\n",
 					"vm_cost_df = vm_cost_df.select(*vm_columns)"
 				],
-				"execution_count": 125
+				"execution_count": 144
 			},
 			{
 				"cell_type": "code",
@@ -276,7 +276,7 @@
 					"sql_cost_df = sql_cost_df.where(F.col('MeterSubCategory').isin(sql_metersubcategory_array))\r\n",
 					"sql_cost_df = sql_cost_df.where(~F.upper(F.col('ResourceName')).startswith('CVD-'))"
 				],
-				"execution_count": 126
+				"execution_count": 145
 			},
 			{
 				"cell_type": "code",
@@ -296,7 +296,7 @@
 					"is_sql_db = (F.col('ResourceId').like('%Microsoft.Sql/servers%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
 					"is_sql_mi = (F.col('ResourceId').like('%Microsoft.Sql/managedInstances%')) & (F.col('MeterCategory').like('SQL%'))"
 				],
-				"execution_count": 127
+				"execution_count": 146
 			},
 			{
 				"cell_type": "code",
@@ -319,7 +319,7 @@
 					"sql_vm_df = sql_vm_df.withColumn('Runtime', F.col('Quantity') / (vm_days * 24))\r\n",
 					"sql_vm_df = sql_vm_df.orderBy(F.col('Runtime').desc(), F.col('ai_VCPUs').desc(), F.col('ResourceId').desc())"
 				],
-				"execution_count": 128
+				"execution_count": 147
 			},
 			{
 				"cell_type": "code",
@@ -337,7 +337,7 @@
 				"source": [
 					"sql_mi_df = sql_cost_df.where(is_sql_mi)"
 				],
-				"execution_count": 129
+				"execution_count": 148
 			},
 			{
 				"cell_type": "code",
@@ -355,7 +355,7 @@
 				"source": [
 					"sql_db_df = sql_cost_df.where(is_sql_db)"
 				],
-				"execution_count": 130
+				"execution_count": 149
 			},
 			{
 				"cell_type": "code",
@@ -373,7 +373,7 @@
 				"source": [
 					"sql_db_df = sql_db_df.withColumn('HoursPerCore', F.col('Quantity') / F.col('ai_vCores'))"
 				],
-				"execution_count": 131
+				"execution_count": 150
 			},
 			{
 				"cell_type": "code",
@@ -392,7 +392,7 @@
 				"source": [
 					"display(sql_db_df)"
 				],
-				"execution_count": 132
+				"execution_count": 151
 			},
 			{
 				"cell_type": "code",
@@ -411,7 +411,7 @@
 				"source": [
 					"display(sql_mi_df)"
 				],
-				"execution_count": 133
+				"execution_count": 152
 			},
 			{
 				"cell_type": "code",
@@ -429,7 +429,7 @@
 				"source": [
 					"display(sql_cost_df.count())"
 				],
-				"execution_count": 134
+				"execution_count": 153
 			},
 			{
 				"cell_type": "code",
@@ -447,7 +447,7 @@
 				"source": [
 					"display(sql_cost_df.where(F.col('ResourceId').contains('/managedInstances/')).count())"
 				],
-				"execution_count": 135
+				"execution_count": 154
 			},
 			{
 				"cell_type": "code",
@@ -466,7 +466,7 @@
 				"source": [
 					"display(sql_cost_df.where(is_sql_mi).count())"
 				],
-				"execution_count": 136
+				"execution_count": 155
 			}
 		]
 	}
