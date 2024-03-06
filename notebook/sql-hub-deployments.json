@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "5bc8ae17-9e40-4d66-8f03-9696f12604b5"
+				"spark.autotune.trackingId": "885ab8c2-1ce6-466d-bf18-3671dc7b753d"
 			}
 		},
 		"metadata": {
@@ -62,7 +62,7 @@
 					"from azure.storage.blob import BlobServiceClient\r\n",
 					"import pyspark.sql.functions as F"
 				],
-				"execution_count": 137
+				"execution_count": 256
 			},
 			{
 				"cell_type": "code",
@@ -80,7 +80,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 138
+				"execution_count": 257
 			},
 			{
 				"cell_type": "code",
@@ -100,7 +100,7 @@
 					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'\r\n",
 					"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 				],
-				"execution_count": 139
+				"execution_count": 258
 			},
 			{
 				"cell_type": "code",
@@ -130,9 +130,33 @@
 					"# parse the JSON string into a Python dictionary\r\n",
 					"sql_config = json.loads(blob_content)\r\n",
 					"\r\n",
-					"sql_metersubcategory_array = sql_config['MeterSubCategory']"
+					"sql_metersubcategory_array = sql_config['MeterSubCategory']\r\n",
+					"sql_days_back_from = sql_config['daysBackFrom']\r\n",
+					"sql_days_back_to = sql_config['daysBackTo']\r\n",
+					"sql_enterprise_licence_cores = sql_config['enterprise_licence_cores']\r\n",
+					"sql_standard_licence_cores = sql_config['enterprise_licence_cores']\r\n",
+					"\r\n",
+					"sql_normalized_licence_cores = (4 * sql_enterprise_licence_cores) + sql_standard_licence_cores"
 				],
-				"execution_count": 140
+				"execution_count": 259
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"print(sql_config)"
+				],
+				"execution_count": 260
 			},
 			{
 				"cell_type": "code",
@@ -166,7 +190,7 @@
 					"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/20240301-20240331/Extended_v3_ACMMonthlyActualCost_20240301-20240331.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 141
+				"execution_count": 261
 			},
 			{
 				"cell_type": "code",
@@ -185,7 +209,46 @@
 					"vm_cost_df = cost_df.where(F.col('Date') >= vm_start_date)\r\n",
 					"sql_cost_df = cost_df.where(F.col('Date') == sql_start_date)"
 				],
-				"execution_count": 142
+				"execution_count": 262
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"sql_max_date = sql_cost_df.agg(F.max('Date')).collect()[0][0]\r\n",
+					"sql_min_date = sql_cost_df.agg(F.min('Date')).collect()[0][0]\r\n",
+					"sql_interval_days = (sql_max_date - sql_min_date).days + 1\r\n",
+					"sql_interval_hours = sql_interval_days * 24"
+				],
+				"execution_count": 263
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"print(sql_date_diff)"
+				],
+				"execution_count": 264
 			},
 			{
 				"cell_type": "code",
@@ -233,7 +296,7 @@
 					"    'WindowsAHB_VCPUs'\r\n",
 					"]"
 				],
-				"execution_count": 143
+				"execution_count": 265
 			},
 			{
 				"cell_type": "code",
@@ -256,7 +319,7 @@
 					"\r\n",
 					"vm_cost_df = vm_cost_df.select(*vm_columns)"
 				],
-				"execution_count": 144
+				"execution_count": 266
 			},
 			{
 				"cell_type": "code",
@@ -276,7 +339,7 @@
 					"sql_cost_df = sql_cost_df.where(F.col('MeterSubCategory').isin(sql_metersubcategory_array))\r\n",
 					"sql_cost_df = sql_cost_df.where(~F.upper(F.col('ResourceName')).startswith('CVD-'))"
 				],
-				"execution_count": 145
+				"execution_count": 267
 			},
 			{
 				"cell_type": "code",
@@ -296,7 +359,7 @@
 					"is_sql_db = (F.col('ResourceId').like('%Microsoft.Sql/servers%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
 					"is_sql_mi = (F.col('ResourceId').like('%Microsoft.Sql/managedInstances%')) & (F.col('MeterCategory').like('SQL%'))"
 				],
-				"execution_count": 146
+				"execution_count": 268
 			},
 			{
 				"cell_type": "code",
@@ -312,14 +375,97 @@
 					}
 				},
 				"source": [
-					"sql_vm_df = sql_cost_df.where(is_sql_vm)\r\n",
-					"\r\n",
-					"compute_hours = sql_vm_df.select(F.max(F.col('Quantity'))).collect()[0][0]\r\n",
-					"vm_days = compute_hours / 24\r\n",
-					"sql_vm_df = sql_vm_df.withColumn('Runtime', F.col('Quantity') / (vm_days * 24))\r\n",
-					"sql_vm_df = sql_vm_df.orderBy(F.col('Runtime').desc(), F.col('ai_VCPUs').desc(), F.col('ResourceId').desc())"
+					"sql_cost_df = sql_cost_df.withColumn('Priority',\r\n",
+					"    F.when(is_sql_mi & (F.col('ProductName').contains('General Purpose')), 1)\r\n",
+					"    .when(is_sql_mi & (F.col('ProductName').contains('Business Critical')), 2)\r\n",
+					"    .when(is_sql_db & (F.col('ProductName').contains('General Purpose')), 3)\r\n",
+					"    .when(is_sql_vm & (F.col('ProductName').startswith('SQL Server Enterprise') | (F.col('ProductName') == 'SQL Server Azure Hybrid Benefit - Enterprise Edition')), 4)\r\n",
+					"    .when(is_sql_db & (F.col('ProductName').contains('Business Critical')), 5)\r\n",
+					"    .when(is_sql_vm & (F.col('ProductName').startswith('SQL Server Standard') | (F.col('ProductName') == 'SQL Server Azure Hybrid Benefit - Standard Edition')), 6)\r\n",
+					"    .otherwise(0)\r\n",
+					")"
 				],
-				"execution_count": 147
+				"execution_count": 269
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"sql_cost_df = sql_cost_df.where(is_sql_vm | is_sql_mi | is_sql_db)\r\n",
+					"\r\n",
+					"sql_cost_df = sql_vm_df \\\r\n",
+					"    .select('ResourceId', 'Quantity', 'ai_VCPUs', 'ai_vCores', 'SQLAHB_VCPUs') \\\r\n",
+					"    .groupBy('ResourceId', 'ai_VCPUs', 'ai_vCores', 'SQLAHB_VCPUs') \\\r\n",
+					"    .agg(F.sum('Quantity').alias('ResourceHours'))\r\n",
+					"\r\n",
+					"# SQL VM instances will have a quantity per resource per day at 0-24 hours\r\n",
+					"vm_utilization = F.col('ResourceHours') / sql_interval_hours\r\n",
+					"\r\n",
+					"# SQL MI and DB instances will have a quantity per resource per day at 0-24 hours * vCores\r\n",
+					"resource_hours_per_core = F.col('ResourceHours') / F.col('ai_vCores')\r\n",
+					"\r\n",
+					"mi_utilization = resource_hours_per_core / sql_interval_hours\r\n",
+					"db_utilization = resource_hours_per_core / sql_interval_hours\r\n",
+					"\r\n",
+					"sql_cost_df = sql_cost_df.withColumn('Utilization',\r\n",
+					"    F.when(is_sql_vm, vm_utilization)\r\n",
+					"    .when(is_sql_db, db_utilization)\r\n",
+					"    .when(is_sql_mi, mi_utilization)\r\n",
+					"    .otherwise(0)\r\n",
+					")"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"sql_vm_df = sql_cost_df.where(is_sql_vm)"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"vm_utilization_df = sql_vm_df \\\r\n",
+					"    .select('ResourceId', 'Quantity', 'ai_VCPUs', 'SQLAHB_VCPUs') \\\r\n",
+					"    .groupBy('ResourceId', 'ai_VCPUs', 'SQLAHB_VCPUs') \\\r\n",
+					"    .agg(F.sum('Quantity').alias('ResourceHours'))\r\n",
+					"\r\n",
+					"vm_utilization_df = vm_utilization_df.withColumn('Utilization', F.col('ResourceHours') / sql_interval_hours)"
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -337,7 +483,31 @@
 				"source": [
 					"sql_mi_df = sql_cost_df.where(is_sql_mi)"
 				],
-				"execution_count": 148
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"mi_utilization_df = sql_mi_df \\\r\n",
+					"    .select('ResourceId', 'Quantity', 'ai_vCores', 'SQLAHB_VCPUs') \\\r\n",
+					"    .groupBy('ResourceId', 'ai_vCores', 'SQLAHB_VCPUs') \\\r\n",
+					"    .agg(F.sum('Quantity').alias('CoreHours'))\r\n",
+					"\r\n",
+					"mi_utilization_df = mi_utilization_df.withColumn('HoursPerCore', F.col('CoreHours') / F.col('ai_vCores'))\r\n",
+					"mi_utilization_df = mi_utilization_df.withColumn('Utilization', F.col('HoursPerCore') / sql_interval_hours)"
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -355,7 +525,7 @@
 				"source": [
 					"sql_db_df = sql_cost_df.where(is_sql_db)"
 				],
-				"execution_count": 149
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -371,9 +541,15 @@
 					}
 				},
 				"source": [
-					"sql_db_df = sql_db_df.withColumn('HoursPerCore', F.col('Quantity') / F.col('ai_vCores'))"
+					"db_utilization_df = sql_db_df \\\r\n",
+					"    .select('ResourceId', 'Quantity', 'ai_vCores', 'SQLAHB_VCPUs') \\\r\n",
+					"    .groupBy('ResourceId', 'ai_vCores', 'SQLAHB_VCPUs') \\\r\n",
+					"    .agg(F.sum('Quantity').alias('CoreHours'))\r\n",
+					"\r\n",
+					"db_utilization_df = db_utilization_df.withColumn('HoursPerCore', F.col('CoreHours') / F.col('ai_vCores'))\r\n",
+					"db_utilization_df = db_utilization_df.withColumn('Utilization', F.col('HoursPerCore') / sql_interval_hours)"
 				],
-				"execution_count": 150
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -390,83 +566,9 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(sql_db_df)"
+					"display(db_utilization_df)"
 				],
-				"execution_count": 151
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(sql_mi_df)"
-				],
-				"execution_count": 152
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"display(sql_cost_df.count())"
-				],
-				"execution_count": 153
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"display(sql_cost_df.where(F.col('ResourceId').contains('/managedInstances/')).count())"
-				],
-				"execution_count": 154
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(sql_cost_df.where(is_sql_mi).count())"
-				],
-				"execution_count": 155
+				"execution_count": null
 			}
 		]
 	}
