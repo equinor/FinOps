@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "f696380a-dacd-42e6-b1a9-a74da2eba081"
+				"spark.autotune.trackingId": "3c3177f1-ce4c-404a-b61e-20befa6645ce"
 			}
 		},
 		"metadata": {
@@ -63,7 +63,7 @@
 					"import pyspark.sql.functions as F\r\n",
 					"import pyspark.sql.window as W"
 				],
-				"execution_count": 274
+				"execution_count": 317
 			},
 			{
 				"cell_type": "code",
@@ -81,7 +81,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 275
+				"execution_count": 318
 			},
 			{
 				"cell_type": "code",
@@ -101,7 +101,7 @@
 					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'\r\n",
 					"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 				],
-				"execution_count": 276
+				"execution_count": 319
 			},
 			{
 				"cell_type": "code",
@@ -151,7 +151,7 @@
 					"    'WindowsAHB_VCPUs'\r\n",
 					"]"
 				],
-				"execution_count": 277
+				"execution_count": 320
 			},
 			{
 				"cell_type": "code",
@@ -189,7 +189,7 @@
 					"\r\n",
 					"sql_normalized_licence_cores = (4 * sql_enterprise_licence_cores) + sql_standard_licence_cores"
 				],
-				"execution_count": 278
+				"execution_count": 321
 			},
 			{
 				"cell_type": "code",
@@ -207,7 +207,7 @@
 				"source": [
 					"end_date = (datetime.now().strftime('%Y-%m-%d'))"
 				],
-				"execution_count": 279
+				"execution_count": 322
 			},
 			{
 				"cell_type": "code",
@@ -226,7 +226,7 @@
 					"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/20240301-20240331/Extended_v3_ACMMonthlyActualCost_20240301-20240331.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 280
+				"execution_count": 323
 			},
 			{
 				"cell_type": "code",
@@ -253,7 +253,7 @@
 					"\r\n",
 					"vm_cost_df = vm_cost_df.select(*vm_columns)"
 				],
-				"execution_count": 281
+				"execution_count": 324
 			},
 			{
 				"cell_type": "code",
@@ -269,15 +269,16 @@
 					}
 				},
 				"source": [
-					"sql_start_date = (datetime.now() - timedelta(days=3)).strftime('%Y-%m-%d')\r\n",
-					"sql_cost_df = cost_df.where(F.col('Date') == sql_start_date)\r\n",
+					"sql_start_date = (datetime.now() - timedelta(days=sql_days_back_from)).strftime('%Y-%m-%d')\r\n",
+					"sql_end_date = (datetime.now() - timedelta(days=sql_days_back_to)).strftime('%Y-%m-%d')\r\n",
+					"sql_cost_df = cost_df.where((F.col('Date') >= sql_start_date) & (F.col('Date') <= sql_end_date))\r\n",
 					"\r\n",
 					"sql_max_date = sql_cost_df.agg(F.max('Date')).collect()[0][0]\r\n",
 					"sql_min_date = sql_cost_df.agg(F.min('Date')).collect()[0][0]\r\n",
 					"sql_interval_days = (sql_max_date - sql_min_date).days + 1\r\n",
 					"sql_interval_hours = sql_interval_days * 24"
 				],
-				"execution_count": 282
+				"execution_count": 325
 			},
 			{
 				"cell_type": "code",
@@ -321,7 +322,7 @@
 					"sql_cost_df = sql_cost_df.where(F.col('SQLType').isNotNull())\r\n",
 					"sql_cost_copy = sql_cost_df.alias('sql_cost_copy')"
 				],
-				"execution_count": 283
+				"execution_count": 326
 			},
 			{
 				"cell_type": "code",
@@ -360,7 +361,7 @@
 					"\r\n",
 					"sql_cost_df = sql_cost_df.orderBy(F.desc('Priority'), F.desc('Utilization'))"
 				],
-				"execution_count": 284
+				"execution_count": 327
 			},
 			{
 				"cell_type": "code",
@@ -382,7 +383,7 @@
 					"sql_enable_df = sql_cost_df.where(F.col('TotalNormalizedCores') <= sql_normalized_licence_cores)\r\n",
 					"sql_enable_df = sql_enable_df.select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup')"
 				],
-				"execution_count": 285
+				"execution_count": 328
 			},
 			{
 				"cell_type": "code",
@@ -403,7 +404,7 @@
 					"sql_disable_df = sql_disable_df.dropDuplicates([\"ResourceId\"])\r\n",
 					"sql_disable_df = sql_disable_df.join(sql_enable_df, 'ResourceId', 'left_anti')"
 				],
-				"execution_count": 286
+				"execution_count": 329
 			}
 		]
 	}
