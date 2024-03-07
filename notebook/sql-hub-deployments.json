@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "daeba297-c234-4267-9522-0426d3682f51"
+				"spark.autotune.trackingId": "c6794bd9-aba2-43e8-af25-44178d9e8013"
 			}
 		},
 		"metadata": {
@@ -60,9 +60,10 @@
 					"import json\r\n",
 					"from notebookutils import mssparkutils\r\n",
 					"from azure.storage.blob import BlobServiceClient\r\n",
-					"import pyspark.sql.functions as F"
+					"import pyspark.sql.functions as F\r\n",
+					"import pyspark.sql.window as W"
 				],
-				"execution_count": 256
+				"execution_count": 213
 			},
 			{
 				"cell_type": "code",
@@ -80,7 +81,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 257
+				"execution_count": 214
 			},
 			{
 				"cell_type": "code",
@@ -100,7 +101,7 @@
 					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'\r\n",
 					"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 				],
-				"execution_count": 258
+				"execution_count": 215
 			},
 			{
 				"cell_type": "code",
@@ -138,7 +139,7 @@
 					"\r\n",
 					"sql_normalized_licence_cores = (4 * sql_enterprise_licence_cores) + sql_standard_licence_cores"
 				],
-				"execution_count": 259
+				"execution_count": 216
 			},
 			{
 				"cell_type": "code",
@@ -172,7 +173,7 @@
 					"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/20240301-20240331/Extended_v3_ACMMonthlyActualCost_20240301-20240331.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 261
+				"execution_count": 217
 			},
 			{
 				"cell_type": "code",
@@ -191,7 +192,7 @@
 					"vm_cost_df = cost_df.where(F.col('Date') >= vm_start_date)\r\n",
 					"sql_cost_df = cost_df.where(F.col('Date') == sql_start_date)"
 				],
-				"execution_count": 262
+				"execution_count": 218
 			},
 			{
 				"cell_type": "code",
@@ -212,25 +213,7 @@
 					"sql_interval_days = (sql_max_date - sql_min_date).days + 1\r\n",
 					"sql_interval_hours = sql_interval_days * 24"
 				],
-				"execution_count": 263
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"print(sql_date_diff)"
-				],
-				"execution_count": 264
+				"execution_count": 219
 			},
 			{
 				"cell_type": "code",
@@ -262,7 +245,8 @@
 					"    'EffectivePrice',\r\n",
 					"    'CostInBillingCurrency', \r\n",
 					"    'ServiceInfo2',\r\n",
-					"    'PartNumber', \r\n",
+					"    'PartNumber',\r\n",
+					"    'ProductName', \r\n",
 					"    'ai_VCPUs',\r\n",
 					"    'ai_AHB'\r\n",
 					"]\r\n",
@@ -278,7 +262,7 @@
 					"    'WindowsAHB_VCPUs'\r\n",
 					"]"
 				],
-				"execution_count": 265
+				"execution_count": 220
 			},
 			{
 				"cell_type": "code",
@@ -301,7 +285,7 @@
 					"\r\n",
 					"vm_cost_df = vm_cost_df.select(*vm_columns)"
 				],
-				"execution_count": 266
+				"execution_count": 221
 			},
 			{
 				"cell_type": "code",
@@ -321,7 +305,7 @@
 					"sql_cost_df = sql_cost_df.where(F.col('MeterSubCategory').isin(sql_metersubcategory_array))\r\n",
 					"sql_cost_df = sql_cost_df.where(~F.upper(F.col('ResourceName')).startswith('CVD-'))"
 				],
-				"execution_count": 267
+				"execution_count": 222
 			},
 			{
 				"cell_type": "code",
@@ -341,7 +325,66 @@
 					"is_sql_db = (F.col('ResourceId').like('%Microsoft.Sql/servers%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
 					"is_sql_mi = (F.col('ResourceId').like('%Microsoft.Sql/managedInstances%')) & (F.col('MeterCategory').like('SQL%'))"
 				],
-				"execution_count": 268
+				"execution_count": 223
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"sql_cost_df = sql_cost_df.withColumn('SQLType', \r\n",
+					"    F.when(is_sql_vm, 'VM')\r\n",
+					"    .when(is_sql_mi, 'MI')\r\n",
+					"    .when(is_sql_db, 'DB')\r\n",
+					"    .otherwise(None)\r\n",
+					")"
+				],
+				"execution_count": 224
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"sql_cost_df = sql_cost_df.where(F.col('SQLType').isNotNull())"
+				],
+				"execution_count": 225
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"sql_cost_copy = sql_cost_df.alias('sql_cost_copy')"
+				],
+				"execution_count": 226
 			},
 			{
 				"cell_type": "code",
@@ -358,16 +401,16 @@
 				},
 				"source": [
 					"sql_cost_df = sql_cost_df.withColumn('Priority',\r\n",
-					"    F.when(is_sql_mi & (F.col('ProductName').contains('General Purpose')), 1)\r\n",
-					"    .when(is_sql_mi & (F.col('ProductName').contains('Business Critical')), 2)\r\n",
-					"    .when(is_sql_db & (F.col('ProductName').contains('General Purpose')), 3)\r\n",
-					"    .when(is_sql_vm & (F.col('ProductName').startswith('SQL Server Enterprise') | (F.col('ProductName') == 'SQL Server Azure Hybrid Benefit - Enterprise Edition')), 4)\r\n",
-					"    .when(is_sql_db & (F.col('ProductName').contains('Business Critical')), 5)\r\n",
-					"    .when(is_sql_vm & (F.col('ProductName').startswith('SQL Server Standard') | (F.col('ProductName') == 'SQL Server Azure Hybrid Benefit - Standard Edition')), 6)\r\n",
+					"    F.when(is_sql_mi & (F.col('ProductName').contains('General Purpose')), 6)\r\n",
+					"    .when(is_sql_mi & (F.col('ProductName').contains('Business Critical')), 5)\r\n",
+					"    .when(is_sql_db & (F.col('ProductName').contains('General Purpose')), 4)\r\n",
+					"    .when(is_sql_vm & (F.col('ProductName').startswith('SQL Server Enterprise') | (F.col('ProductName') == 'SQL Server Azure Hybrid Benefit - Enterprise Edition License')), 3)\r\n",
+					"    .when(is_sql_db & (F.col('ProductName').contains('Business Critical')), 2)\r\n",
+					"    .when(is_sql_vm & (F.col('ProductName').startswith('SQL Server Standard') | (F.col('ProductName') == 'SQL Server Azure Hybrid Benefit - Standard Edition License')), 1)\r\n",
 					"    .otherwise(0)\r\n",
 					")"
 				],
-				"execution_count": 269
+				"execution_count": 227
 			},
 			{
 				"cell_type": "code",
@@ -383,11 +426,9 @@
 					}
 				},
 				"source": [
-					"sql_cost_df = sql_cost_df.where(is_sql_vm | is_sql_mi | is_sql_db)\r\n",
-					"\r\n",
-					"sql_cost_df = sql_vm_df \\\r\n",
-					"    .select('ResourceId', 'Quantity', 'ai_VCPUs', 'ai_vCores', 'SQLAHB_VCPUs') \\\r\n",
-					"    .groupBy('ResourceId', 'ai_VCPUs', 'ai_vCores', 'SQLAHB_VCPUs') \\\r\n",
+					"sql_cost_df = sql_cost_df \\\r\n",
+					"    .select('ResourceId', 'Quantity', 'ai_VCPUs', 'ai_vCores', 'SQLAHB_VCPUs', 'SQLType', 'Priority') \\\r\n",
+					"    .groupBy('ResourceId', 'ai_VCPUs', 'ai_vCores', 'SQLAHB_VCPUs', 'SQLType', 'Priority') \\\r\n",
 					"    .agg(F.sum('Quantity').alias('ResourceHours'))\r\n",
 					"\r\n",
 					"# SQL VM instances will have a quantity per resource per day at 0-24 hours\r\n",
@@ -400,54 +441,15 @@
 					"db_utilization = resource_hours_per_core / sql_interval_hours\r\n",
 					"\r\n",
 					"sql_cost_df = sql_cost_df.withColumn('Utilization',\r\n",
-					"    F.when(is_sql_vm, vm_utilization)\r\n",
-					"    .when(is_sql_db, db_utilization)\r\n",
-					"    .when(is_sql_mi, mi_utilization)\r\n",
+					"    F.when(F.col('SQLType') == 'VM', vm_utilization)\r\n",
+					"    .when(F.col('SQLType') == 'DB', db_utilization)\r\n",
+					"    .when(F.col('SQLType') == 'MI', mi_utilization)\r\n",
 					"    .otherwise(0)\r\n",
-					")"
-				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"sql_vm_df = sql_cost_df.where(is_sql_vm)"
-				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"vm_utilization_df = sql_vm_df \\\r\n",
-					"    .select('ResourceId', 'Quantity', 'ai_VCPUs', 'SQLAHB_VCPUs') \\\r\n",
-					"    .groupBy('ResourceId', 'ai_VCPUs', 'SQLAHB_VCPUs') \\\r\n",
-					"    .agg(F.sum('Quantity').alias('ResourceHours'))\r\n",
+					")\r\n",
 					"\r\n",
-					"vm_utilization_df = vm_utilization_df.withColumn('Utilization', F.col('ResourceHours') / sql_interval_hours)"
+					"sql_cost_df = sql_cost_df.orderBy(F.desc('Priority'), F.desc('Utilization'))"
 				],
-				"execution_count": null
+				"execution_count": 228
 			},
 			{
 				"cell_type": "code",
@@ -463,9 +465,10 @@
 					}
 				},
 				"source": [
-					"sql_mi_df = sql_cost_df.where(is_sql_mi)"
+					"window = W.Window.rowsBetween(W.Window.unboundedPreceding, 0)\r\n",
+					"sql_cost_df = sql_cost_df.withColumn(\"TotalNormalizedCores\", F.sum(\"SQLAHB_VCPUs\").over(window))"
 				],
-				"execution_count": null
+				"execution_count": 229
 			},
 			{
 				"cell_type": "code",
@@ -481,15 +484,9 @@
 					}
 				},
 				"source": [
-					"mi_utilization_df = sql_mi_df \\\r\n",
-					"    .select('ResourceId', 'Quantity', 'ai_vCores', 'SQLAHB_VCPUs') \\\r\n",
-					"    .groupBy('ResourceId', 'ai_vCores', 'SQLAHB_VCPUs') \\\r\n",
-					"    .agg(F.sum('Quantity').alias('CoreHours'))\r\n",
-					"\r\n",
-					"mi_utilization_df = mi_utilization_df.withColumn('HoursPerCore', F.col('CoreHours') / F.col('ai_vCores'))\r\n",
-					"mi_utilization_df = mi_utilization_df.withColumn('Utilization', F.col('HoursPerCore') / sql_interval_hours)"
+					"sql_enable_df = sql_cost_df.where(F.col('TotalNormalizedCores') <= sql_normalized_licence_cores)"
 				],
-				"execution_count": null
+				"execution_count": 230
 			},
 			{
 				"cell_type": "code",
@@ -505,9 +502,10 @@
 					}
 				},
 				"source": [
-					"sql_db_df = sql_cost_df.where(is_sql_db)"
+					"sql_disable_df = sql_cost_copy.where(F.col('SQLAHB') == 'Enabled')\r\n",
+					"sql_disable_df = sql_disable_df.select('ResourceId')"
 				],
-				"execution_count": null
+				"execution_count": 231
 			},
 			{
 				"cell_type": "code",
@@ -523,15 +521,9 @@
 					}
 				},
 				"source": [
-					"db_utilization_df = sql_db_df \\\r\n",
-					"    .select('ResourceId', 'Quantity', 'ai_vCores', 'SQLAHB_VCPUs') \\\r\n",
-					"    .groupBy('ResourceId', 'ai_vCores', 'SQLAHB_VCPUs') \\\r\n",
-					"    .agg(F.sum('Quantity').alias('CoreHours'))\r\n",
-					"\r\n",
-					"db_utilization_df = db_utilization_df.withColumn('HoursPerCore', F.col('CoreHours') / F.col('ai_vCores'))\r\n",
-					"db_utilization_df = db_utilization_df.withColumn('Utilization', F.col('HoursPerCore') / sql_interval_hours)"
+					"sql_disable_df = sql_disable_df.dropDuplicates([\"ResourceId\"])"
 				],
-				"execution_count": null
+				"execution_count": 232
 			},
 			{
 				"cell_type": "code",
@@ -544,13 +536,12 @@
 						"transient": {
 							"deleting": false
 						}
-					},
-					"collapsed": false
+					}
 				},
 				"source": [
-					"display(db_utilization_df)"
+					"sql_disable_df = sql_disable_df.join(sql_enable_df, 'ResourceId', 'left_anti')"
 				],
-				"execution_count": null
+				"execution_count": 240
 			}
 		]
 	}
