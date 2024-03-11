@@ -16,11 +16,12 @@
 			"executorMemory": "112g",
 			"executorCores": 16,
 			"numExecutors": 1,
+			"runAsWorkspaceSystemIdentity": true,
 			"conf": {
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "c48cefc2-de35-4ba8-8f23-fbf8b18a8eaf"
+				"spark.autotune.trackingId": "2d9ccf77-5742-4a01-b59b-b248fff0a390"
 			}
 		},
 		"metadata": {
@@ -468,7 +469,30 @@
 					}
 				},
 				"source": [
-					""
+					"activity_path = f'abfss://sql-activity@hubautomation.dfs.core.windows.net/activity.csv'\r\n",
+					"csv_options = {'header' : True,\r\n",
+					"                'delimiter' : ',',\r\n",
+					"                'quote' : '\"',\r\n",
+					"                'escape' : '\"'}\r\n",
+					"activity_df = spark.read.options(**csv_options).csv(activity_path)"
+				],
+				"execution_count": 4
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"display(activity_df)"
 				],
 				"execution_count": null
 			}
