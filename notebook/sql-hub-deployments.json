@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "ae13c266-94cd-4cab-874d-a741098cd594"
+				"spark.autotune.trackingId": "ab350b29-0d17-44f4-8ef2-6518084d2077"
 			}
 		},
 		"metadata": {
@@ -148,12 +148,6 @@
 					"    'SQLAHB',\r\n",
 					"    'SQLAHB_VCPUs',\r\n",
 					"    'ai_vCores'\r\n",
-					"]\r\n",
-					"\r\n",
-					"#TODO: NOT USED YET\r\n",
-					"vm_columns = columns_to_keep + [\r\n",
-					"    'WindowsAHB',\r\n",
-					"    'WindowsAHB_VCPUs'\r\n",
 					"]"
 				],
 				"execution_count": 111
@@ -232,33 +226,6 @@
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
 				"execution_count": 114
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"#TODO: NOT USED YET\r\n",
-					"vm_start_date = (datetime.now() - timedelta(days=2)).strftime('%Y-%m-%d')\r\n",
-					"vm_cost_df = cost_df.where(F.col('Date') >= vm_start_date)\r\n",
-					"\r\n",
-					"is_vm_cost = ((F.col('ResourceId').contains('/virtualMachines/')) | (F.col('ResourceId').contains('/virtualMachineScaleSets/'))) \\\r\n",
-					"    & ((F.col('MeterSubCategory').contains('Windows')) | (F.col('ServiceInfo2').contains('Windows Server BYOL')))\r\n",
-					"\r\n",
-					"vm_cost_df = vm_cost_df.where(is_vm_cost)\r\n",
-					"\r\n",
-					"vm_cost_df = vm_cost_df.select(*vm_columns)"
-				],
-				"execution_count": 115
 			},
 			{
 				"cell_type": "code",
