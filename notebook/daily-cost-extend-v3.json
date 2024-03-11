@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "5002c529-0844-4e54-812e-f973c4d855ee"
+				"spark.autotune.trackingId": "2aead65c-42be-4070-9c2a-1c54e1c70085"
 			}
 		},
 		"metadata": {
@@ -79,7 +79,7 @@
 					"storageAccount = 's037costmgmt'\n",
 					"reportType = 'ActualCost'"
 				],
-				"execution_count": 7
+				"execution_count": 1
 			},
 			{
 				"cell_type": "code",
@@ -106,7 +106,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 8
+				"execution_count": 2
 			},
 			{
 				"cell_type": "markdown",
@@ -137,7 +137,7 @@
 				"source": [
 					"%run /cost-extend-utilities"
 				],
-				"execution_count": 9
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -160,7 +160,7 @@
 					"    subscriptions_df = subscriptions_df.withColumnRenamed('Application', 'SubscriptionServiceNow-App')\r\n",
 					"    return subscriptions_df"
 				],
-				"execution_count": 10
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -183,7 +183,7 @@
 					"    cost_df.write.format('parquet').mode('overwrite').option('path', destinationFilename).save()\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": 11
+				"execution_count": 5
 			},
 			{
 				"cell_type": "markdown",
@@ -239,19 +239,15 @@
 					"pricesheet_df = spark.read.format('parquet').load(pricesheet_path)\r\n",
 					"\r\n",
 					"# Load cost file\r\n",
-					"cost_csv_options = {'header' : True,\r\n",
+					"csv_options = {'header' : True,\r\n",
 					"                'delimiter' : ',',\r\n",
 					"                'quote' : '\"',\r\n",
 					"                'escape' : '\"'}\r\n",
-					"cost_df = spark.read.options(**cost_csv_options).csv(cost_source_path)\r\n",
+					"cost_df = spark.read.options(**csv_options).csv(cost_source_path)\r\n",
 					"\r\n",
 					"# Load service file\r\n",
 					"service_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/services/services-raw.csv'\r\n",
-					"service_csv_options = {'header' : True,\r\n",
-					"                'delimiter' : ';',\r\n",
-					"                'quote' : '\"',\r\n",
-					"                'escape' : '\"'}\r\n",
-					"service_df = spark.read.options(**service_csv_options).csv(service_path)\r\n",
+					"service_df = spark.read.options(**csv_options).csv(service_path)\r\n",
 					"\r\n",
 					"# Load subscription file\r\n",
 					"subscription_df = spark.read.format('parquet').load(subscription_path)\r\n",
@@ -266,7 +262,7 @@
 					"cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\r\n",
 					"cost_df = compute_hub_and_sp(cost_df, pricesheet_df)\r\n",
 					"cost_df = add_azure_service_information(cost_df, service_df)\r\n",
-					"write_output_file(cost_df, cost_target_path)\r\n",
+					"# write_output_file(cost_df, cost_target_path)\r\n",
 					"\r\n",
 					"print(' ')"
 				],
