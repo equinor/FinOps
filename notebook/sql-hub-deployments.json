@@ -16,12 +16,12 @@
 			"executorMemory": "112g",
 			"executorCores": 16,
 			"numExecutors": 1,
-			"runAsWorkspaceSystemIdentity": true,
+			"runAsWorkspaceSystemIdentity": false,
 			"conf": {
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "2d9ccf77-5742-4a01-b59b-b248fff0a390"
+				"spark.autotune.trackingId": "5f79ca1f-17eb-40da-97a4-3b63cc30e758"
 			}
 		},
 		"metadata": {
@@ -62,9 +62,10 @@
 					"from notebookutils import mssparkutils\r\n",
 					"from azure.storage.blob import BlobServiceClient\r\n",
 					"import pyspark.sql.functions as F\r\n",
-					"import pyspark.sql.window as W"
+					"import pyspark.sql.window as W\r\n",
+					"from pyspark.sql import Row"
 				],
-				"execution_count": 1
+				"execution_count": 108
 			},
 			{
 				"cell_type": "code",
@@ -82,7 +83,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 2
+				"execution_count": 109
 			},
 			{
 				"cell_type": "code",
@@ -102,7 +103,7 @@
 					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'\r\n",
 					"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 				],
-				"execution_count": 3
+				"execution_count": 110
 			},
 			{
 				"cell_type": "code",
@@ -152,7 +153,7 @@
 					"    'WindowsAHB_VCPUs'\r\n",
 					"]"
 				],
-				"execution_count": 4
+				"execution_count": 111
 			},
 			{
 				"cell_type": "code",
@@ -190,7 +191,7 @@
 					"\r\n",
 					"sql_normalized_licence_cores = (4 * sql_enterprise_licence_cores) + sql_standard_licence_cores"
 				],
-				"execution_count": 5
+				"execution_count": 112
 			},
 			{
 				"cell_type": "code",
@@ -208,7 +209,7 @@
 				"source": [
 					"end_date = (datetime.now().strftime('%Y-%m-%d'))"
 				],
-				"execution_count": 6
+				"execution_count": 113
 			},
 			{
 				"cell_type": "code",
@@ -227,7 +228,7 @@
 					"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/20240301-20240331/Extended_v3_ACMMonthlyActualCost_20240301-20240331.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 7
+				"execution_count": 114
 			},
 			{
 				"cell_type": "code",
@@ -254,7 +255,7 @@
 					"\r\n",
 					"vm_cost_df = vm_cost_df.select(*vm_columns)"
 				],
-				"execution_count": 8
+				"execution_count": 115
 			},
 			{
 				"cell_type": "code",
@@ -270,8 +271,8 @@
 					}
 				},
 				"source": [
-					"sql_start_date = (datetime.now() - timedelta(days=sql_days_back_from)).strftime('%Y-%m-%d')\r\n",
-					"sql_end_date = (datetime.now() - timedelta(days=sql_days_back_to)).strftime('%Y-%m-%d')\r\n",
+					"sql_start_date = (datetime.now() - timedelta(days=sql_days_back_from+6)).strftime('%Y-%m-%d')\r\n",
+					"sql_end_date = (datetime.now() - timedelta(days=sql_days_back_to+6)).strftime('%Y-%m-%d')\r\n",
 					"sql_cost_df = cost_df.where((F.col('Date') >= sql_start_date) & (F.col('Date') <= sql_end_date))\r\n",
 					"\r\n",
 					"sql_max_date = sql_cost_df.agg(F.max('Date')).collect()[0][0]\r\n",
@@ -279,7 +280,7 @@
 					"sql_interval_days = (sql_max_date - sql_min_date).days + 1\r\n",
 					"sql_interval_hours = sql_interval_days * 24"
 				],
-				"execution_count": 9
+				"execution_count": 116
 			},
 			{
 				"cell_type": "code",
@@ -323,7 +324,7 @@
 					"sql_cost_df = sql_cost_df.where(F.col('SQLType').isNotNull())\r\n",
 					"sql_cost_copy = sql_cost_df.alias('sql_cost_copy')"
 				],
-				"execution_count": 10
+				"execution_count": 117
 			},
 			{
 				"cell_type": "code",
@@ -362,7 +363,7 @@
 					"\r\n",
 					"sql_cost_df = sql_cost_df.orderBy(F.desc('Priority'), F.desc('Utilization'))"
 				],
-				"execution_count": 11
+				"execution_count": 118
 			},
 			{
 				"cell_type": "code",
@@ -382,9 +383,16 @@
 					"sql_cost_df = sql_cost_df.withColumn(\"TotalNormalizedCores\", F.sum(\"SQLAHB_VCPUs\").over(window))\r\n",
 					"\r\n",
 					"sql_enable_df = sql_cost_df.where(F.col('TotalNormalizedCores') <= sql_normalized_licence_cores)\r\n",
+					"\r\n",
+					"# Compute the number of cores ACTUALLY assigned\r\n",
+					"sql_assigned_cores = sql_enable_df.agg(F.max('TotalNormalizedCores')).collect()[0][0]\r\n",
+					"\r\n",
+					"# Aggregate enabled resources for activity log entry\r\n",
+					"log_df = sql_enable_df.select('SQLAHB_VCPUs', 'Priority').groupBy('Priority').agg(F.sum('SQLAHB_VCPUs').alias('TotalCores'))\r\n",
+					"\r\n",
 					"sql_enable_df = sql_enable_df.select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup')"
 				],
-				"execution_count": 12
+				"execution_count": 119
 			},
 			{
 				"cell_type": "code",
@@ -405,7 +413,7 @@
 					"sql_disable_df = sql_disable_df.dropDuplicates([\"ResourceId\"])\r\n",
 					"sql_disable_df = sql_disable_df.join(sql_enable_df, 'ResourceId', 'left_anti')"
 				],
-				"execution_count": 13
+				"execution_count": 120
 			},
 			{
 				"cell_type": "markdown",
@@ -440,7 +448,7 @@
 					"#sql_enable_df.toPandas().to_csv(enable_path)\r\n",
 					"#sql_disable_df.toPandas().to_csv(disable_path)"
 				],
-				"execution_count": null
+				"execution_count": 121
 			},
 			{
 				"cell_type": "markdown",
@@ -476,7 +484,7 @@
 					"                'escape' : '\"'}\r\n",
 					"activity_df = spark.read.options(**csv_options).csv(activity_path)"
 				],
-				"execution_count": 4
+				"execution_count": 122
 			},
 			{
 				"cell_type": "code",
@@ -492,9 +500,21 @@
 					}
 				},
 				"source": [
-					"display(activity_df)"
+					"# Construct new activity log entry and write back to file\r\n",
+					"\r\n",
+					"log_entry = log_df.collect()\r\n",
+					"activity_values = [0, 0, 0, 0, 0, 0]\r\n",
+					"index = 0\r\n",
+					"for value in log_entry:\r\n",
+					"    activity_values[index] = value['TotalCores']\r\n",
+					"    index+=1\r\n",
+					"\r\n",
+					"new_activity_row = spark.createDataFrame([(end_date, *activity_values, sql_normalized_licence_cores, sql_assigned_cores)], activity_df.columns)\r\n",
+					"activity_df = activity_df.union(new_activity_row)\r\n",
+					"\r\n",
+					"# activity_df.toPandas().to_csv(activity_path)"
 				],
-				"execution_count": null
+				"execution_count": 124
 			}
 		]
 	}
