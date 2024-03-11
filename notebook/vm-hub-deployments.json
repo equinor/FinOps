@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "29d7972c-785c-4c7c-b329-f771f33c7f3f"
+				"spark.autotune.trackingId": "6295321c-85f3-4810-bca4-f955aa09bde6"
 			}
 		},
 		"metadata": {
@@ -85,7 +85,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": null
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -104,7 +104,7 @@
 					"HOURS_PER_YEAR = 8760\r\n",
 					"VCPUS_PER_LICENSE = 16"
 				],
-				"execution_count": null
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -124,7 +124,7 @@
 					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'\r\n",
 					"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 				],
-				"execution_count": null
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -167,7 +167,7 @@
 					"    'WindowsAHB_VCPUs'\r\n",
 					"]"
 				],
-				"execution_count": null
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -201,9 +201,9 @@
 					"ts_vms = vm_config['ts_vms']\r\n",
 					"timespan = vm_config['timespan']\r\n",
 					"yearly_license_cost = vm_config['lic_cost_yearly']\r\n",
-					"hourly_vcpu_cost = yearly_license_cost / (license_cost_yearly * HOURS_PER_YEAR * VCPUS_PER_LICENSE)"
+					"hourly_vcpu_cost = yearly_license_cost / (license_count * HOURS_PER_YEAR * VCPUS_PER_LICENSE)"
 				],
-				"execution_count": null
+				"execution_count": 7
 			},
 			{
 				"cell_type": "code",
@@ -221,7 +221,7 @@
 				"source": [
 					"end_date = (datetime.now().strftime('%Y-%m-%d'))"
 				],
-				"execution_count": null
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -240,7 +240,7 @@
 					"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/20240301-20240331/Extended_v3_ACMMonthlyActualCost_20240301-20240331.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": null
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -266,7 +266,7 @@
 					"\r\n",
 					"vm_cost_df = vm_cost_df.select(*vm_columns)"
 				],
-				"execution_count": null
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -285,7 +285,26 @@
 					"pricesheet_source_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/pricesheet-latest'\r\n",
 					"pricesheet_df = spark.read.format('parquet').load(pricesheet_source_path)"
 				],
-				"execution_count": null
+				"execution_count": 11
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"vm_cost_df = vm_cost_df.where(F.col('MeterCategory') == 'Virtual Machines')"
+				],
+				"execution_count": 13
 			}
 		]
 	}
