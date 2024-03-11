@@ -1,0 +1,17 @@
+{
+	"name": "ambiguous-services",
+	"properties": {
+		"content": {
+			"query": "-- This is auto-generated code\nSelect ResourceType, COUNT(*) as UniqueCount from (SELECT\n    ResourceType, ServiceModel, count(*) as GroupCount\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/services/services-raw.csv',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW = TRUE\n    ) AS [result]\n    group by ResourceType, ServiceModel) as [unique_result]\n    Group by ResourceType\n    having count(*) > 1\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "master",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}
