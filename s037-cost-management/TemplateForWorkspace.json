@@ -32593,7 +32593,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "70726124-010e-4f40-8317-2773d96a3410"
+						"spark.autotune.trackingId": "8eaa0d12-895b-4a65-bc7d-5735d32ee980"
 					}
 				},
 				"metadata": {
@@ -32618,8 +32618,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -40401,7 +40400,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "1bdcc707-97d3-4624-9542-22123b8eb36e"
+						"spark.autotune.trackingId": "8a60cf0e-7ed6-4072-8d83-9c136c39f479"
 					}
 				},
 				"metadata": {
@@ -40426,8 +40425,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -40447,7 +40445,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"from enum import Enum\r\n",
@@ -42171,7 +42168,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "fdfc3504-5dcb-4d03-9930-a7621ad54d00"
+						"spark.autotune.trackingId": "914fd4d8-ca2d-4496-a4e8-ef5156034001"
 					}
 				},
 				"metadata": {
@@ -42953,7 +42950,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "5002c529-0844-4e54-812e-f973c4d855ee"
+						"spark.autotune.trackingId": "91225900-26c0-4ff4-a9e7-c7bfce12ceba"
 					}
 				},
 				"metadata": {
@@ -43012,7 +43009,7 @@
 							"reportType = 'ActualCost'"
 						],
 						"outputs": [],
-						"execution_count": 7
+						"execution_count": 10
 					},
 					{
 						"cell_type": "code",
@@ -43040,7 +43037,7 @@
 							"import pyspark.sql.types as T"
 						],
 						"outputs": [],
-						"execution_count": 8
+						"execution_count": 11
 					},
 					{
 						"cell_type": "markdown",
@@ -43072,7 +43069,7 @@
 							"%run /cost-extend-utilities"
 						],
 						"outputs": [],
-						"execution_count": 9
+						"execution_count": 12
 					},
 					{
 						"cell_type": "code",
@@ -43096,7 +43093,7 @@
 							"    return subscriptions_df"
 						],
 						"outputs": [],
-						"execution_count": 10
+						"execution_count": 13
 					},
 					{
 						"cell_type": "code",
@@ -43120,7 +43117,7 @@
 							"    print('File write complete!')"
 						],
 						"outputs": [],
-						"execution_count": 11
+						"execution_count": 14
 					},
 					{
 						"cell_type": "markdown",
@@ -43176,19 +43173,15 @@
 							"pricesheet_df = spark.read.format('parquet').load(pricesheet_path)\r\n",
 							"\r\n",
 							"# Load cost file\r\n",
-							"cost_csv_options = {'header' : True,\r\n",
+							"csv_options = {'header' : True,\r\n",
 							"                'delimiter' : ',',\r\n",
 							"                'quote' : '\"',\r\n",
 							"                'escape' : '\"'}\r\n",
-							"cost_df = spark.read.options(**cost_csv_options).csv(cost_source_path)\r\n",
+							"cost_df = spark.read.options(**csv_options).csv(cost_source_path)\r\n",
 							"\r\n",
 							"# Load service file\r\n",
 							"service_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/services/services-raw.csv'\r\n",
-							"service_csv_options = {'header' : True,\r\n",
-							"                'delimiter' : ';',\r\n",
-							"                'quote' : '\"',\r\n",
-							"                'escape' : '\"'}\r\n",
-							"service_df = spark.read.options(**service_csv_options).csv(service_path)\r\n",
+							"service_df = spark.read.options(**csv_options).csv(service_path)\r\n",
 							"\r\n",
 							"# Load subscription file\r\n",
 							"subscription_df = spark.read.format('parquet').load(subscription_path)\r\n",
@@ -43208,7 +43201,7 @@
 							"print(' ')"
 						],
 						"outputs": [],
-						"execution_count": 12
+						"execution_count": 15
 					}
 				]
 			},
@@ -43524,7 +43517,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "ef203d12-f73c-43f2-94dd-c229488a5150"
+						"spark.autotune.trackingId": "13ef7afe-de4f-4fdb-a181-f7b136003dcc"
 					}
 				},
 				"metadata": {
@@ -43549,7 +43542,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -43786,7 +43780,7 @@
 							"# Load service file\n",
 							"service_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/services/services-raw.csv'\n",
 							"service_csv_options = {'header' : True,\n",
-							"                'delimiter' : ';',\n",
+							"                'delimiter' : ',',\n",
 							"                'quote' : '\"',\n",
 							"                'escape' : '\"'}\n",
 							"service_df = spark.read.options(**service_csv_options).csv(service_path)\n",
@@ -45385,7 +45379,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "f8e338d0-b4fd-4369-864a-413a192a76c5"
+						"spark.autotune.trackingId": "c48cefc2-de35-4ba8-8f23-fbf8b18a8eaf"
 					}
 				},
 				"metadata": {
@@ -45410,15 +45404,13 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"from datetime import timedelta, datetime\r\n",
 							"from dateutil.relativedelta import relativedelta\r\n",
@@ -45426,10 +45418,11 @@
 							"import json\r\n",
 							"from notebookutils import mssparkutils\r\n",
 							"from azure.storage.blob import BlobServiceClient\r\n",
-							"import pyspark.sql.functions as F"
+							"import pyspark.sql.functions as F\r\n",
+							"import pyspark.sql.window as W"
 						],
 						"outputs": [],
-						"execution_count": 137
+						"execution_count": 1
 					},
 					{
 						"cell_type": "code",
@@ -45448,7 +45441,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 138
+						"execution_count": 2
 					},
 					{
 						"cell_type": "code",
@@ -45469,95 +45462,7 @@
 							"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 						],
 						"outputs": [],
-						"execution_count": 139
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"blob_service_client = BlobServiceClient.from_connection_string(hubAutomationConnectionString)\r\n",
-							"\r\n",
-							"# get a reference to the blob container and file\r\n",
-							"container_name = 'sql-config'\r\n",
-							"blob_name = 'config.json'\r\n",
-							"container_client = blob_service_client.get_container_client(container_name)\r\n",
-							"blob_client = container_client.get_blob_client(blob_name)\r\n",
-							"\r\n",
-							"# download the blob content as a string\r\n",
-							"blob_content = blob_client.download_blob().content_as_text()\r\n",
-							"\r\n",
-							"# parse the JSON string into a Python dictionary\r\n",
-							"sql_config = json.loads(blob_content)\r\n",
-							"\r\n",
-							"sql_metersubcategory_array = sql_config['MeterSubCategory']"
-						],
-						"outputs": [],
-						"execution_count": 140
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"# last_month_start = (datetime.now() - relativedelta(months=1)).strftime('%Y%m01')\r\n",
-							"# last_month_end = ((datetime.now().replace(day=1)) - timedelta(days=1)).date().strftime('%Y%m%d')\r\n",
-							"\r\n",
-							"end_date = (datetime.now().strftime('%Y-%m-%d'))\r\n",
-							"vm_start_date = (datetime.now() - timedelta(days=2)).strftime('%Y-%m-%d')\r\n",
-							"sql_start_date = (datetime.now() - timedelta(days=3)).strftime('%Y-%m-%d')\r\n",
-							"\r\n",
-							"# daily_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/daily/ACMDailyActualCost/ACMDailyActualCost.parquet'\r\n",
-							"# daily_df = spark.read.format('parquet').load(daily_path)\r\n",
-							"\r\n",
-							"# monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/{last_month_start}-{last_month_end}/ACMMonthlyActualCost_{last_month_start}-{last_month_end}.parquet'\r\n",
-							"# monthly_df = spark.read.format('parquet').load(monthly_path)\r\n",
-							"\r\n",
-							"# cost_df = daily_df.union(monthly_df)\r\n",
-							"\r\n",
-							"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/20240301-20240331/Extended_v3_ACMMonthlyActualCost_20240301-20240331.parquet'\r\n",
-							"cost_df = spark.read.format('parquet').load(cost_path)"
-						],
-						"outputs": [],
-						"execution_count": 141
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"vm_cost_df = cost_df.where(F.col('Date') >= vm_start_date)\r\n",
-							"sql_cost_df = cost_df.where(F.col('Date') == sql_start_date)"
-						],
-						"outputs": [],
-						"execution_count": 142
+						"execution_count": 3
 					},
 					{
 						"cell_type": "code",
@@ -45588,8 +45493,9 @@
 							"    'UnitPrice',\r\n",
 							"    'EffectivePrice',\r\n",
 							"    'CostInBillingCurrency', \r\n",
-							"    'ServiceInfo2', \r\n",
-							"    'PartNumber', \r\n",
+							"    'ServiceInfo2',\r\n",
+							"    'PartNumber',\r\n",
+							"    'ProductName', \r\n",
 							"    'ai_VCPUs',\r\n",
 							"    'ai_AHB'\r\n",
 							"]\r\n",
@@ -45600,13 +45506,14 @@
 							"    'ai_vCores'\r\n",
 							"]\r\n",
 							"\r\n",
+							"#TODO: NOT USED YET\r\n",
 							"vm_columns = columns_to_keep + [\r\n",
 							"    'WindowsAHB',\r\n",
 							"    'WindowsAHB_VCPUs'\r\n",
 							"]"
 						],
 						"outputs": [],
-						"execution_count": 143
+						"execution_count": 4
 					},
 					{
 						"cell_type": "code",
@@ -45622,6 +45529,88 @@
 							}
 						},
 						"source": [
+							"blob_service_client = BlobServiceClient.from_connection_string(hubAutomationConnectionString)\r\n",
+							"\r\n",
+							"# get a reference to the blob container and file\r\n",
+							"container_name = 'sql-config'\r\n",
+							"blob_name = 'config.json'\r\n",
+							"container_client = blob_service_client.get_container_client(container_name)\r\n",
+							"blob_client = container_client.get_blob_client(blob_name)\r\n",
+							"\r\n",
+							"# download the blob content as a string\r\n",
+							"blob_content = blob_client.download_blob().content_as_text()\r\n",
+							"\r\n",
+							"# parse the JSON string into a Python dictionary\r\n",
+							"sql_config = json.loads(blob_content)\r\n",
+							"\r\n",
+							"sql_metersubcategory_array = sql_config['MeterSubCategory']\r\n",
+							"sql_days_back_from = sql_config['daysBackFrom']\r\n",
+							"sql_days_back_to = sql_config['daysBackTo']\r\n",
+							"sql_enterprise_licence_cores = sql_config['enterprise_licence_cores']\r\n",
+							"sql_standard_licence_cores = sql_config['enterprise_licence_cores']\r\n",
+							"\r\n",
+							"sql_normalized_licence_cores = (4 * sql_enterprise_licence_cores) + sql_standard_licence_cores"
+						],
+						"outputs": [],
+						"execution_count": 5
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"end_date = (datetime.now().strftime('%Y-%m-%d'))"
+						],
+						"outputs": [],
+						"execution_count": 6
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/20240301-20240331/Extended_v3_ACMMonthlyActualCost_20240301-20240331.parquet'\r\n",
+							"cost_df = spark.read.format('parquet').load(cost_path)"
+						],
+						"outputs": [],
+						"execution_count": 7
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"#TODO: NOT USED YET\r\n",
+							"vm_start_date = (datetime.now() - timedelta(days=2)).strftime('%Y-%m-%d')\r\n",
+							"vm_cost_df = cost_df.where(F.col('Date') >= vm_start_date)\r\n",
+							"\r\n",
 							"is_vm_cost = ((F.col('ResourceId').contains('/virtualMachines/')) | (F.col('ResourceId').contains('/virtualMachineScaleSets/'))) \\\r\n",
 							"    & ((F.col('MeterSubCategory').contains('Windows')) | (F.col('ServiceInfo2').contains('Windows Server BYOL')))\r\n",
 							"\r\n",
@@ -45630,7 +45619,33 @@
 							"vm_cost_df = vm_cost_df.select(*vm_columns)"
 						],
 						"outputs": [],
-						"execution_count": 144
+						"execution_count": 8
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"sql_start_date = (datetime.now() - timedelta(days=sql_days_back_from)).strftime('%Y-%m-%d')\r\n",
+							"sql_end_date = (datetime.now() - timedelta(days=sql_days_back_to)).strftime('%Y-%m-%d')\r\n",
+							"sql_cost_df = cost_df.where((F.col('Date') >= sql_start_date) & (F.col('Date') <= sql_end_date))\r\n",
+							"\r\n",
+							"sql_max_date = sql_cost_df.agg(F.max('Date')).collect()[0][0]\r\n",
+							"sql_min_date = sql_cost_df.agg(F.min('Date')).collect()[0][0]\r\n",
+							"sql_interval_days = (sql_max_date - sql_min_date).days + 1\r\n",
+							"sql_interval_hours = sql_interval_days * 24"
+						],
+						"outputs": [],
+						"execution_count": 9
 					},
 					{
 						"cell_type": "code",
@@ -45648,55 +45663,34 @@
 						"source": [
 							"sql_cost_df = sql_cost_df.select(*sql_columns)\r\n",
 							"sql_cost_df = sql_cost_df.where(F.col('MeterSubCategory').isin(sql_metersubcategory_array))\r\n",
-							"sql_cost_df = sql_cost_df.where(~F.upper(F.col('ResourceName')).startswith('CVD-'))"
-						],
-						"outputs": [],
-						"execution_count": 145
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
+							"sql_cost_df = sql_cost_df.where(~F.upper(F.col('ResourceName')).startswith('CVD-'))\r\n",
+							"\r\n",
 							"is_sql_vm = (F.col('MeterCategory') == 'Virtual Machines Licenses') & (F.col('MeterSubCategory').like('SQL Server%'))\r\n",
 							"is_sql_db = (F.col('ResourceId').like('%Microsoft.Sql/servers%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
-							"is_sql_mi = (F.col('ResourceId').like('%Microsoft.Sql/managedInstances%')) & (F.col('MeterCategory').like('SQL%'))"
-						],
-						"outputs": [],
-						"execution_count": 146
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"sql_vm_df = sql_cost_df.where(is_sql_vm)\r\n",
+							"is_sql_mi = (F.col('ResourceId').like('%Microsoft.Sql/managedInstances%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
 							"\r\n",
-							"compute_hours = sql_vm_df.select(F.max(F.col('Quantity'))).collect()[0][0]\r\n",
-							"vm_days = compute_hours / 24\r\n",
-							"sql_vm_df = sql_vm_df.withColumn('Runtime', F.col('Quantity') / (vm_days * 24))\r\n",
-							"sql_vm_df = sql_vm_df.orderBy(F.col('Runtime').desc(), F.col('ai_VCPUs').desc(), F.col('ResourceId').desc())"
+							"sql_cost_df = sql_cost_df.withColumn('SQLType', \r\n",
+							"    F.when(is_sql_vm, 'VM')\r\n",
+							"    .when(is_sql_mi, 'MI')\r\n",
+							"    .when(is_sql_db, 'DB')\r\n",
+							"    .otherwise(None)\r\n",
+							")\r\n",
+							"\r\n",
+							"sql_cost_df = sql_cost_df.withColumn('Priority',\r\n",
+							"    F.when(is_sql_mi & (F.col('ProductName').contains('General Purpose')), 6)\r\n",
+							"    .when(is_sql_mi & (F.col('ProductName').contains('Business Critical')), 5)\r\n",
+							"    .when(is_sql_db & (F.col('ProductName').contains('General Purpose')), 4)\r\n",
+							"    .when(is_sql_vm & (F.col('ProductName').startswith('SQL Server Enterprise') | (F.col('ProductName') == 'SQL Server Azure Hybrid Benefit - Enterprise Edition License')), 3)\r\n",
+							"    .when(is_sql_db & (F.col('ProductName').contains('Business Critical')), 2)\r\n",
+							"    .when(is_sql_vm & (F.col('ProductName').startswith('SQL Server Standard') | (F.col('ProductName') == 'SQL Server Azure Hybrid Benefit - Standard Edition License')), 1)\r\n",
+							"    .otherwise(0)\r\n",
+							")\r\n",
+							"\r\n",
+							"sql_cost_df = sql_cost_df.where(F.col('SQLType').isNotNull())\r\n",
+							"sql_cost_copy = sql_cost_df.alias('sql_cost_copy')"
 						],
 						"outputs": [],
-						"execution_count": 147
+						"execution_count": 10
 					},
 					{
 						"cell_type": "code",
@@ -45712,10 +45706,31 @@
 							}
 						},
 						"source": [
-							"sql_mi_df = sql_cost_df.where(is_sql_mi)"
+							"sql_cost_df = sql_cost_df \\\r\n",
+							"    .select('ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'Quantity', 'ai_VCPUs', 'ai_vCores', 'SQLAHB_VCPUs', 'SQLType', 'Priority') \\\r\n",
+							"    .groupBy('ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'ai_VCPUs', 'ai_vCores', 'SQLAHB_VCPUs', 'SQLType', 'Priority') \\\r\n",
+							"    .agg(F.sum('Quantity').alias('ResourceHours'))\r\n",
+							"\r\n",
+							"# SQL VM instances will have a quantity per resource per day at 0-24 hours\r\n",
+							"vm_utilization = F.col('ResourceHours') / sql_interval_hours\r\n",
+							"\r\n",
+							"# SQL MI and DB instances will have a quantity per resource per day at 0-24 hours * vCores\r\n",
+							"resource_hours_per_core = F.col('ResourceHours') / F.col('ai_vCores')\r\n",
+							"\r\n",
+							"mi_utilization = resource_hours_per_core / sql_interval_hours\r\n",
+							"db_utilization = resource_hours_per_core / sql_interval_hours\r\n",
+							"\r\n",
+							"sql_cost_df = sql_cost_df.withColumn('Utilization',\r\n",
+							"    F.when(F.col('SQLType') == 'VM', vm_utilization)\r\n",
+							"    .when(F.col('SQLType') == 'DB', db_utilization)\r\n",
+							"    .when(F.col('SQLType') == 'MI', mi_utilization)\r\n",
+							"    .otherwise(0)\r\n",
+							")\r\n",
+							"\r\n",
+							"sql_cost_df = sql_cost_df.orderBy(F.desc('Priority'), F.desc('Utilization'))"
 						],
 						"outputs": [],
-						"execution_count": 148
+						"execution_count": 11
 					},
 					{
 						"cell_type": "code",
@@ -45731,10 +45746,14 @@
 							}
 						},
 						"source": [
-							"sql_db_df = sql_cost_df.where(is_sql_db)"
+							"window = W.Window.rowsBetween(W.Window.unboundedPreceding, 0)\r\n",
+							"sql_cost_df = sql_cost_df.withColumn(\"TotalNormalizedCores\", F.sum(\"SQLAHB_VCPUs\").over(window))\r\n",
+							"\r\n",
+							"sql_enable_df = sql_cost_df.where(F.col('TotalNormalizedCores') <= sql_normalized_licence_cores)\r\n",
+							"sql_enable_df = sql_enable_df.select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup')"
 						],
 						"outputs": [],
-						"execution_count": 149
+						"execution_count": 12
 					},
 					{
 						"cell_type": "code",
@@ -45750,50 +45769,26 @@
 							}
 						},
 						"source": [
-							"sql_db_df = sql_db_df.withColumn('HoursPerCore', F.col('Quantity') / F.col('ai_vCores'))"
+							"sql_disable_df = sql_cost_copy.where(F.col('SQLAHB') == 'Enabled')\r\n",
+							"sql_disable_df = sql_disable_df.select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup')\r\n",
+							"sql_disable_df = sql_disable_df.dropDuplicates([\"ResourceId\"])\r\n",
+							"sql_disable_df = sql_disable_df.join(sql_enable_df, 'ResourceId', 'left_anti')"
 						],
 						"outputs": [],
-						"execution_count": 150
+						"execution_count": 13
 					},
 					{
-						"cell_type": "code",
+						"cell_type": "markdown",
 						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
 							"nteract": {
 								"transient": {
 									"deleting": false
 								}
-							},
-							"collapsed": false
+							}
 						},
 						"source": [
-							"display(sql_db_df)"
-						],
-						"outputs": [],
-						"execution_count": 151
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							},
-							"collapsed": false
-						},
-						"source": [
-							"display(sql_mi_df)"
-						],
-						"outputs": [],
-						"execution_count": 152
+							"## Store deployment results"
+						]
 					},
 					{
 						"cell_type": "code",
@@ -45809,10 +45804,27 @@
 							}
 						},
 						"source": [
-							"display(sql_cost_df.count())"
+							"enable_path = f'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/{end_date}-AHUB-Deployment.csv'\r\n",
+							"disable_path = f'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/{end_date}-AHUB-Removal.csv'\r\n",
+							"\r\n",
+							"#sql_enable_df.toPandas().to_csv(enable_path)\r\n",
+							"#sql_disable_df.toPandas().to_csv(disable_path)"
 						],
 						"outputs": [],
-						"execution_count": 153
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Generate activity log entry"
+						]
 					},
 					{
 						"cell_type": "code",
@@ -45828,30 +45840,10 @@
 							}
 						},
 						"source": [
-							"display(sql_cost_df.where(F.col('ResourceId').contains('/managedInstances/')).count())"
+							""
 						],
 						"outputs": [],
-						"execution_count": 154
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							},
-							"collapsed": false
-						},
-						"source": [
-							"display(sql_cost_df.where(is_sql_mi).count())"
-						],
-						"outputs": [],
-						"execution_count": 155
+						"execution_count": null
 					}
 				]
 			},
