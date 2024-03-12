@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "6295321c-85f3-4810-bca4-f955aa09bde6"
+				"spark.autotune.trackingId": "9e7e9f3b-d675-43b4-abb9-d0a67960fb94"
 			}
 		},
 		"metadata": {
@@ -64,7 +64,7 @@
 					"import pyspark.sql.window as W\r\n",
 					"from pyspark.sql import Row"
 				],
-				"execution_count": 1
+				"execution_count": 12
 			},
 			{
 				"cell_type": "code",
@@ -85,7 +85,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 2
+				"execution_count": 13
 			},
 			{
 				"cell_type": "code",
@@ -104,7 +104,7 @@
 					"HOURS_PER_YEAR = 8760\r\n",
 					"VCPUS_PER_LICENSE = 16"
 				],
-				"execution_count": 3
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -124,7 +124,7 @@
 					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'\r\n",
 					"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 				],
-				"execution_count": 4
+				"execution_count": 15
 			},
 			{
 				"cell_type": "code",
@@ -164,10 +164,11 @@
 					"\r\n",
 					"vm_columns = columns_to_keep + [\r\n",
 					"    'WindowsAHB',\r\n",
-					"    'WindowsAHB_VCPUs'\r\n",
+					"    'WindowsAHB_VCPUs',\r\n",
+					"    'ai_VMName'\r\n",
 					"]"
 				],
-				"execution_count": 5
+				"execution_count": 16
 			},
 			{
 				"cell_type": "code",
@@ -203,7 +204,7 @@
 					"yearly_license_cost = vm_config['lic_cost_yearly']\r\n",
 					"hourly_vcpu_cost = yearly_license_cost / (license_count * HOURS_PER_YEAR * VCPUS_PER_LICENSE)"
 				],
-				"execution_count": 7
+				"execution_count": 17
 			},
 			{
 				"cell_type": "code",
@@ -221,7 +222,7 @@
 				"source": [
 					"end_date = (datetime.now().strftime('%Y-%m-%d'))"
 				],
-				"execution_count": 8
+				"execution_count": 18
 			},
 			{
 				"cell_type": "code",
@@ -240,7 +241,7 @@
 					"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/20240301-20240331/Extended_v3_ACMMonthlyActualCost_20240301-20240331.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 9
+				"execution_count": 19
 			},
 			{
 				"cell_type": "code",
@@ -266,7 +267,7 @@
 					"\r\n",
 					"vm_cost_df = vm_cost_df.select(*vm_columns)"
 				],
-				"execution_count": 10
+				"execution_count": 20
 			},
 			{
 				"cell_type": "code",
@@ -285,7 +286,7 @@
 					"pricesheet_source_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/pricesheet-latest'\r\n",
 					"pricesheet_df = spark.read.format('parquet').load(pricesheet_source_path)"
 				],
-				"execution_count": 11
+				"execution_count": 21
 			},
 			{
 				"cell_type": "code",
@@ -302,9 +303,29 @@
 					"collapsed": false
 				},
 				"source": [
-					"vm_cost_df = vm_cost_df.where(F.col('MeterCategory') == 'Virtual Machines')"
+					"vm_cost_df = vm_cost_df.where(F.col('MeterCategory') == 'Virtual Machines')\r\n",
+					"vm_cost_df = vm_cost_df.where(F.col('ai_VCPUs').isNotNull())"
 				],
-				"execution_count": 13
+				"execution_count": 29
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(vm_cost_df.where(F.col('ai_VCPUs') == ''))"
+				],
+				"execution_count": 28
 			}
 		]
 	}
