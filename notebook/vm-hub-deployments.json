@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "8fd95489-4312-4e7b-8445-587582d23f5f"
+				"spark.autotune.trackingId": "34ae018e-6587-4911-9061-352ad998c29e"
 			}
 		},
 		"metadata": {
@@ -127,6 +127,19 @@
 				"execution_count": 64
 			},
 			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Fetch pricesheet"
+				]
+			},
+			{
 				"cell_type": "code",
 				"metadata": {
 					"jupyter": {
@@ -140,35 +153,53 @@
 					}
 				},
 				"source": [
-					"columns_to_keep = [\r\n",
-					"    'SubscriptionId',\r\n",
-					"    'SubscriptionName',\r\n",
-					"    'Date',\r\n",
-					"    'ResourceGroup', \r\n",
-					"    'ResourceName', \r\n",
-					"    'ResourceId', \r\n",
+					"pricesheet_source_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/pricesheet-latest'\r\n",
+					"pricesheet_df = spark.read.format('parquet').load(pricesheet_source_path)"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"pricesheet_columns = [\r\n",
+					"    'MeterName', \r\n",
 					"    'MeterCategory', \r\n",
 					"    'MeterSubCategory', \r\n",
-					"    'MeterName',\r\n",
-					"    'UnitOfMeasure',\r\n",
-					"    'Quantity',\r\n",
-					"    'UnitPrice',\r\n",
-					"    'EffectivePrice',\r\n",
-					"    'CostInBillingCurrency', \r\n",
-					"    'ServiceInfo2',\r\n",
-					"    'PartNumber',\r\n",
-					"    'ProductName', \r\n",
-					"    'ai_VCPUs',\r\n",
-					"    'ai_AHB'\r\n",
+					"    'UnitOfMeasure', \r\n",
+					"    'PartNumber', \r\n",
+					"    'UnitPrice', \r\n",
+					"    'CurrencyCode', \r\n",
+					"    'OfferID', \r\n",
+					"    'PriceType'\r\n",
 					"]\r\n",
 					"\r\n",
-					"vm_columns = columns_to_keep + [\r\n",
-					"    'WindowsAHB',\r\n",
-					"    'WindowsAHB_VCPUs',\r\n",
-					"    'ai_VMName'\r\n",
-					"]"
+					"pricesheet_df = pricesheet_df.select(*pricesheet_columns)"
 				],
-				"execution_count": 65
+				"execution_count": null
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Lookup HUB Windows configuration"
+				]
 			},
 			{
 				"cell_type": "code",
@@ -225,6 +256,19 @@
 				"execution_count": 67
 			},
 			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Load and filter usage "
+				]
+			},
+			{
 				"cell_type": "code",
 				"metadata": {
 					"jupyter": {
@@ -257,17 +301,35 @@
 					}
 				},
 				"source": [
-					"vm_start_date = (datetime.now() - timedelta(days=timespan)).strftime('%Y-%m-%d')\r\n",
-					"vm_cost_df = cost_df.where(F.col('Date') >= vm_start_date)\r\n",
+					"columns_to_keep = [\r\n",
+					"    'SubscriptionId',\r\n",
+					"    'SubscriptionName',\r\n",
+					"    'Date',\r\n",
+					"    'ResourceGroup', \r\n",
+					"    'ResourceName', \r\n",
+					"    'ResourceId', \r\n",
+					"    'MeterCategory', \r\n",
+					"    'MeterSubCategory', \r\n",
+					"    'MeterName',\r\n",
+					"    'UnitOfMeasure',\r\n",
+					"    'Quantity',\r\n",
+					"    'UnitPrice',\r\n",
+					"    'EffectivePrice',\r\n",
+					"    'CostInBillingCurrency', \r\n",
+					"    'ServiceInfo2',\r\n",
+					"    'PartNumber',\r\n",
+					"    'ProductName', \r\n",
+					"    'ai_VCPUs',\r\n",
+					"    'ai_AHB'\r\n",
+					"]\r\n",
 					"\r\n",
-					"is_vm_cost = ((F.col('ResourceId').contains('/virtualMachines/')) | (F.col('ResourceId').contains('/virtualMachineScaleSets/'))) \\\r\n",
-					"    & ((F.col('MeterSubCategory').contains('Windows')) | (F.col('ServiceInfo2').contains('Windows Server BYOL')))\r\n",
-					"\r\n",
-					"vm_cost_df = vm_cost_df.where(is_vm_cost)\r\n",
-					"\r\n",
-					"vm_cost_df = vm_cost_df.select(*vm_columns)"
+					"vm_columns = columns_to_keep + [\r\n",
+					"    'WindowsAHB',\r\n",
+					"    'WindowsAHB_VCPUs',\r\n",
+					"    'ai_VMName'\r\n",
+					"]"
 				],
-				"execution_count": 69
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -283,10 +345,17 @@
 					}
 				},
 				"source": [
-					"pricesheet_source_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/pricesheet-latest'\r\n",
-					"pricesheet_df = spark.read.format('parquet').load(pricesheet_source_path)"
+					"vm_start_date = (datetime.now() - timedelta(days=timespan)).strftime('%Y-%m-%d')\r\n",
+					"vm_cost_df = cost_df.where(F.col('Date') >= vm_start_date)\r\n",
+					"\r\n",
+					"is_vm_cost = ((F.col('ResourceId').contains('/virtualMachines/')) | (F.col('ResourceId').contains('/virtualMachineScaleSets/'))) \\\r\n",
+					"    & ((F.col('MeterSubCategory').contains('Windows')) | (F.col('ServiceInfo2').contains('Windows Server BYOL')))\r\n",
+					"\r\n",
+					"vm_cost_df = vm_cost_df.where(is_vm_cost)\r\n",
+					"\r\n",
+					"vm_cost_df = vm_cost_df.select(*vm_columns)"
 				],
-				"execution_count": 70
+				"execution_count": 69
 			},
 			{
 				"cell_type": "code",
