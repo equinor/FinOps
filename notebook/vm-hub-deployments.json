@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "7d0d9d4f-2595-4ca5-8cee-30b5e940fe07"
+				"spark.autotune.trackingId": "8fd95489-4312-4e7b-8445-587582d23f5f"
 			}
 		},
 		"metadata": {
@@ -64,7 +64,7 @@
 					"import pyspark.sql.window as W\r\n",
 					"from pyspark.sql import Row"
 				],
-				"execution_count": 32
+				"execution_count": 61
 			},
 			{
 				"cell_type": "code",
@@ -85,7 +85,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 33
+				"execution_count": 62
 			},
 			{
 				"cell_type": "code",
@@ -104,7 +104,7 @@
 					"HOURS_PER_YEAR = 8760\r\n",
 					"VCPUS_PER_LICENSE = 16"
 				],
-				"execution_count": 34
+				"execution_count": 63
 			},
 			{
 				"cell_type": "code",
@@ -124,7 +124,7 @@
 					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'\r\n",
 					"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 				],
-				"execution_count": 35
+				"execution_count": 64
 			},
 			{
 				"cell_type": "code",
@@ -168,7 +168,7 @@
 					"    'ai_VMName'\r\n",
 					"]"
 				],
-				"execution_count": 36
+				"execution_count": 65
 			},
 			{
 				"cell_type": "code",
@@ -204,7 +204,7 @@
 					"yearly_license_cost = vm_config['lic_cost_yearly']\r\n",
 					"hourly_vcpu_cost = yearly_license_cost / (license_count * HOURS_PER_YEAR * VCPUS_PER_LICENSE)"
 				],
-				"execution_count": 37
+				"execution_count": 66
 			},
 			{
 				"cell_type": "code",
@@ -222,7 +222,7 @@
 				"source": [
 					"end_date = (datetime.now().strftime('%Y-%m-%d'))"
 				],
-				"execution_count": 38
+				"execution_count": 67
 			},
 			{
 				"cell_type": "code",
@@ -241,7 +241,7 @@
 					"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/20240301-20240331/Extended_v3_ACMMonthlyActualCost_20240301-20240331.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 39
+				"execution_count": 68
 			},
 			{
 				"cell_type": "code",
@@ -267,7 +267,7 @@
 					"\r\n",
 					"vm_cost_df = vm_cost_df.select(*vm_columns)"
 				],
-				"execution_count": 40
+				"execution_count": 69
 			},
 			{
 				"cell_type": "code",
@@ -286,7 +286,7 @@
 					"pricesheet_source_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/pricesheet-latest'\r\n",
 					"pricesheet_df = spark.read.format('parquet').load(pricesheet_source_path)"
 				],
-				"execution_count": 41
+				"execution_count": 70
 			},
 			{
 				"cell_type": "code",
@@ -306,7 +306,66 @@
 					"vm_cost_df = vm_cost_df.where(F.col('MeterCategory') == 'Virtual Machines')\r\n",
 					"vm_cost_df = vm_cost_df.where(F.col('ai_VCPUs').isNotNull())"
 				],
-				"execution_count": 42
+				"execution_count": 71
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Exclude TS VMs (these always have 8 vCPUs) and only consider other VMs with 2 or more vCPUs (for cost efficiency)\r\n",
+					"vm_cost_df = vm_cost_df.where(\r\n",
+					"    ~(F.col('ResourceName').startswith('TS') & (F.col('ai_VCPUs') == 8)) &\r\n",
+					"    (F.col('ai_VCPUs') >= 2)\r\n",
+					")"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Removing the VMs who's ResourceName begins with 'CVD-' as these are Windows Client VM's and not relevant for consideration of a Windows Server licence\r\n",
+					"vm_cost_df = vm_cost_df.where(~F.upper(F.col('ResourceName')).startswith('CVD-'))"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				],
+				"execution_count": null
 			}
 		]
 	}
