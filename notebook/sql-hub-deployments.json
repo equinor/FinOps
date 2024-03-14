@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "ab350b29-0d17-44f4-8ef2-6518084d2077"
+				"spark.autotune.trackingId": "203f7ad4-60f3-459d-be7f-77225cdceb77"
 			}
 		},
 		"metadata": {
@@ -189,24 +189,6 @@
 					"sql_normalized_licence_cores = (4 * sql_enterprise_licence_cores) + sql_standard_licence_cores"
 				],
 				"execution_count": 112
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"end_date = (datetime.now().strftime('%Y-%m-%d'))"
-				],
-				"execution_count": 113
 			},
 			{
 				"cell_type": "code",
@@ -412,8 +394,26 @@
 					}
 				},
 				"source": [
-					"enable_path = f'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/{end_date}-AHUB-Deployment.csv'\r\n",
-					"disable_path = f'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/{end_date}-AHUB-Removal.csv'\r\n",
+					"today = (datetime.now().strftime('%Y-%m-%d'))"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"enable_path = f'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/{today}-AHUB-Deployment.csv'\r\n",
+					"disable_path = f'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/{today}-AHUB-Removal.csv'\r\n",
 					"\r\n",
 					"#sql_enable_df.toPandas().to_csv(enable_path)\r\n",
 					"#sql_disable_df.toPandas().to_csv(disable_path)"
@@ -479,7 +479,7 @@
 					"    activity_values[index] = value['TotalCores']\r\n",
 					"    index+=1\r\n",
 					"\r\n",
-					"new_activity_row = spark.createDataFrame([(end_date, *activity_values, sql_normalized_licence_cores, sql_assigned_cores)], activity_df.columns)\r\n",
+					"new_activity_row = spark.createDataFrame([(today, *activity_values, sql_normalized_licence_cores, sql_assigned_cores)], activity_df.columns)\r\n",
 					"activity_df = activity_df.union(new_activity_row)\r\n",
 					"\r\n",
 					"# activity_df.toPandas().to_csv(activity_path)"
