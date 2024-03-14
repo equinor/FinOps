@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "9e5ed151-a006-4b20-ad36-947ee7e0e8be"
+				"spark.autotune.trackingId": "1c5340c4-f9e7-44d9-9991-b7f0de7931fa"
 			}
 		},
 		"metadata": {
@@ -53,6 +53,19 @@
 		},
 		"cells": [
 			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Initialize script"
+				]
+			},
+			{
 				"cell_type": "code",
 				"source": [
 					"from datetime import timedelta, datetime\r\n",
@@ -65,7 +78,7 @@
 					"import pyspark.sql.window as W\r\n",
 					"from pyspark.sql import Row"
 				],
-				"execution_count": 108
+				"execution_count": 1
 			},
 			{
 				"cell_type": "code",
@@ -110,6 +123,74 @@
 				"execution_count": 110
 			},
 			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Lookup HUB SQL configuration"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"blob_service_client = BlobServiceClient.from_connection_string(hubAutomationConnectionString)\r\n",
+					"\r\n",
+					"# get a reference to the blob container and file of the SQL HUB configuration\r\n",
+					"container_name = 'sql-config'\r\n",
+					"blob_name = 'config.json'\r\n",
+					"container_client = blob_service_client.get_container_client(container_name)\r\n",
+					"blob_client = container_client.get_blob_client(blob_name)\r\n",
+					"\r\n",
+					"# download the blob content as a string\r\n",
+					"blob_content = blob_client.download_blob().content_as_text()\r\n",
+					"\r\n",
+					"# parse the JSON string into a Python dictionary\r\n",
+					"sql_config = json.loads(blob_content)\r\n",
+					"\r\n",
+					"# Compute the variable determining if results should be written to file\r\n",
+					"day_name = datetime.now().strftime(\"%A\")\r\n",
+					"should_run = vm_config['runDays'][day_name]\r\n",
+					"\r\n",
+					"sql_metersubcategory_array = sql_config['MeterSubCategory']\r\n",
+					"sql_days_back_from = sql_config['daysBackFrom']\r\n",
+					"sql_days_back_to = sql_config['daysBackTo']\r\n",
+					"sql_enterprise_licence_cores = sql_config['enterprise_licence_cores']\r\n",
+					"sql_standard_licence_cores = sql_config['enterprise_licence_cores']\r\n",
+					"\r\n",
+					"sql_normalized_licence_cores = (4 * sql_enterprise_licence_cores) + sql_standard_licence_cores"
+				],
+				"execution_count": 112
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Load and filter usage "
+				]
+			},
+			{
 				"cell_type": "code",
 				"metadata": {
 					"jupyter": {
@@ -151,45 +232,7 @@
 					"    'ai_vCores'\r\n",
 					"]"
 				],
-				"execution_count": 111
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"blob_service_client = BlobServiceClient.from_connection_string(hubAutomationConnectionString)\r\n",
-					"\r\n",
-					"# get a reference to the blob container and file\r\n",
-					"container_name = 'sql-config'\r\n",
-					"blob_name = 'config.json'\r\n",
-					"container_client = blob_service_client.get_container_client(container_name)\r\n",
-					"blob_client = container_client.get_blob_client(blob_name)\r\n",
-					"\r\n",
-					"# download the blob content as a string\r\n",
-					"blob_content = blob_client.download_blob().content_as_text()\r\n",
-					"\r\n",
-					"# parse the JSON string into a Python dictionary\r\n",
-					"sql_config = json.loads(blob_content)\r\n",
-					"\r\n",
-					"sql_metersubcategory_array = sql_config['MeterSubCategory']\r\n",
-					"sql_days_back_from = sql_config['daysBackFrom']\r\n",
-					"sql_days_back_to = sql_config['daysBackTo']\r\n",
-					"sql_enterprise_licence_cores = sql_config['enterprise_licence_cores']\r\n",
-					"sql_standard_licence_cores = sql_config['enterprise_licence_cores']\r\n",
-					"\r\n",
-					"sql_normalized_licence_cores = (4 * sql_enterprise_licence_cores) + sql_standard_licence_cores"
-				],
-				"execution_count": 112
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -224,10 +267,12 @@
 					}
 				},
 				"source": [
-					"sql_start_date = (datetime.now() - timedelta(days=sql_days_back_from+6)).strftime('%Y-%m-%d')\r\n",
-					"sql_end_date = (datetime.now() - timedelta(days=sql_days_back_to+6)).strftime('%Y-%m-%d')\r\n",
-					"sql_cost_df = cost_df.where((F.col('Date') >= sql_start_date) & (F.col('Date') <= sql_end_date))\r\n",
+					"# Only select usage from the period specified in the configuration file\r\n",
+					"sql_start_date = (datetime.now() - timedelta(days=sql_days_back_from)).strftime('%Y-%m-%d')\r\n",
+					"sql_end_date = (datetime.now() - timedelta(days=sql_days_back_to)).strftime('%Y-%m-%d')\r\n",
+					"cost_df = cost_df.where((F.col('Date') >= sql_start_date) & (F.col('Date') <= sql_end_date))\r\n",
 					"\r\n",
+					"# Compute the interval in days and hours of the specified interval\r\n",
 					"sql_max_date = sql_cost_df.agg(F.max('Date')).collect()[0][0]\r\n",
 					"sql_min_date = sql_cost_df.agg(F.min('Date')).collect()[0][0]\r\n",
 					"sql_interval_days = (sql_max_date - sql_min_date).days + 1\r\n",
@@ -249,22 +294,22 @@
 					}
 				},
 				"source": [
-					"sql_cost_df = sql_cost_df.select(*sql_columns)\r\n",
-					"sql_cost_df = sql_cost_df.where(F.col('MeterSubCategory').isin(sql_metersubcategory_array))\r\n",
-					"sql_cost_df = sql_cost_df.where(~F.upper(F.col('ResourceName')).startswith('CVD-'))\r\n",
+					"cost_df = cost_df.select(*sql_columns)\r\n",
+					"cost_df = cost_df.where(F.col('MeterSubCategory').isin(sql_metersubcategory_array))\r\n",
+					"cost_df = cost_df.where(~F.upper(F.col('ResourceName')).startswith('CVD-'))\r\n",
 					"\r\n",
 					"is_sql_vm = (F.col('MeterCategory') == 'Virtual Machines Licenses') & (F.col('MeterSubCategory').like('SQL Server%'))\r\n",
 					"is_sql_db = (F.col('ResourceId').like('%Microsoft.Sql/servers%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
 					"is_sql_mi = (F.col('ResourceId').like('%Microsoft.Sql/managedInstances%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
 					"\r\n",
-					"sql_cost_df = sql_cost_df.withColumn('SQLType', \r\n",
+					"cost_df = cost_df.withColumn('SQLType', \r\n",
 					"    F.when(is_sql_vm, 'VM')\r\n",
 					"    .when(is_sql_mi, 'MI')\r\n",
 					"    .when(is_sql_db, 'DB')\r\n",
 					"    .otherwise(None)\r\n",
 					")\r\n",
 					"\r\n",
-					"sql_cost_df = sql_cost_df.withColumn('Priority',\r\n",
+					"cost_df = cost_df.withColumn('Priority',\r\n",
 					"    F.when(is_sql_mi & (F.col('ProductName').contains('General Purpose')), 6)\r\n",
 					"    .when(is_sql_mi & (F.col('ProductName').contains('Business Critical')), 5)\r\n",
 					"    .when(is_sql_db & (F.col('ProductName').contains('General Purpose')), 4)\r\n",
@@ -274,10 +319,23 @@
 					"    .otherwise(0)\r\n",
 					")\r\n",
 					"\r\n",
-					"sql_cost_df = sql_cost_df.where(F.col('SQLType').isNotNull())\r\n",
-					"sql_cost_copy = sql_cost_df.alias('sql_cost_copy')"
+					"cost_df = cost_df.where(F.col('SQLType').isNotNull())\r\n",
+					"cost_copy_df = cost_df.alias('cost_copy_df')"
 				],
 				"execution_count": 117
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Compute set of SQL instances getting HUB enabled"
+				]
 			},
 			{
 				"cell_type": "code",
@@ -293,7 +351,7 @@
 					}
 				},
 				"source": [
-					"sql_cost_df = sql_cost_df \\\r\n",
+					"cost_df = cost_df \\\r\n",
 					"    .select('ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'Quantity', 'ai_VCPUs', 'ai_vCores', 'SQLAHB_VCPUs', 'SQLType', 'Priority') \\\r\n",
 					"    .groupBy('ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'ai_VCPUs', 'ai_vCores', 'SQLAHB_VCPUs', 'SQLType', 'Priority') \\\r\n",
 					"    .agg(F.sum('Quantity').alias('ResourceHours'))\r\n",
@@ -307,24 +365,30 @@
 					"mi_utilization = resource_hours_per_core / sql_interval_hours\r\n",
 					"db_utilization = resource_hours_per_core / sql_interval_hours\r\n",
 					"\r\n",
-					"sql_cost_df = sql_cost_df.withColumn('Utilization',\r\n",
+					"cost_df = cost_df.withColumn('Utilization',\r\n",
 					"    F.when(F.col('SQLType') == 'VM', vm_utilization)\r\n",
 					"    .when(F.col('SQLType') == 'DB', db_utilization)\r\n",
 					"    .when(F.col('SQLType') == 'MI', mi_utilization)\r\n",
 					"    .otherwise(0)\r\n",
 					")\r\n",
 					"\r\n",
-					"sql_cost_df = sql_cost_df.orderBy(F.desc('Priority'), F.desc('Utilization'))"
+					"# Sort resources according to which we want to enable HUB for first\r\n",
+					"cost_df = cost_df.orderBy(F.desc('Priority'), F.desc('Utilization'))\r\n",
+					"\r\n",
+					"window = W.Window.rowsBetween(W.Window.unboundedPreceding, 0)\r\n",
+					"cost_df = cost_df.withColumn(\"TotalNormalizedCores\", F.sum(\"SQLAHB_VCPUs\").over(window))\r\n",
+					"\r\n",
+					"# Only include instances that doesnt overshoot the number of available license cores\r\n",
+					"cost_df = cost_df.where(F.col('TotalNormalizedCores') <= sql_normalized_licence_cores)\r\n",
+					"\r\n",
+					"# Remove redundant columns from results\r\n",
+					"sql_enable_df = cost_df.select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup')"
 				],
 				"execution_count": 118
 			},
 			{
-				"cell_type": "code",
+				"cell_type": "markdown",
 				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
 					"nteract": {
 						"transient": {
 							"deleting": false
@@ -332,20 +396,8 @@
 					}
 				},
 				"source": [
-					"window = W.Window.rowsBetween(W.Window.unboundedPreceding, 0)\r\n",
-					"sql_cost_df = sql_cost_df.withColumn(\"TotalNormalizedCores\", F.sum(\"SQLAHB_VCPUs\").over(window))\r\n",
-					"\r\n",
-					"sql_enable_df = sql_cost_df.where(F.col('TotalNormalizedCores') <= sql_normalized_licence_cores)\r\n",
-					"\r\n",
-					"# Compute the number of cores ACTUALLY assigned\r\n",
-					"sql_assigned_cores = sql_enable_df.agg(F.max('TotalNormalizedCores')).collect()[0][0]\r\n",
-					"\r\n",
-					"# Aggregate enabled resources for activity log entry\r\n",
-					"log_df = sql_enable_df.select('SQLAHB_VCPUs', 'Priority').groupBy('Priority').agg(F.sum('SQLAHB_VCPUs').alias('TotalCores'))\r\n",
-					"\r\n",
-					"sql_enable_df = sql_enable_df.select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup')"
-				],
-				"execution_count": 119
+					"## Compute set of SQL instances getting HUB disabled"
+				]
 			},
 			{
 				"cell_type": "code",
@@ -361,6 +413,7 @@
 					}
 				},
 				"source": [
+					"# Compute list of disabled instances by removing references from the enabled liste\r\n",
 					"sql_disable_df = sql_cost_copy.where(F.col('SQLAHB') == 'Enabled')\r\n",
 					"sql_disable_df = sql_disable_df.select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup')\r\n",
 					"sql_disable_df = sql_disable_df.dropDuplicates([\"ResourceId\"])\r\n",
@@ -413,8 +466,8 @@
 					}
 				},
 				"source": [
-					"enable_path = f'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/{today}-AHUB-Deployment.csv'\r\n",
-					"disable_path = f'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/{today}-AHUB-Removal.csv'\r\n",
+					"enable_path = f'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Deployment.csv'\r\n",
+					"disable_path = f'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Removal.csv'\r\n",
 					"\r\n",
 					"#sql_enable_df.toPandas().to_csv(enable_path)\r\n",
 					"#sql_disable_df.toPandas().to_csv(disable_path)"
@@ -431,7 +484,7 @@
 					}
 				},
 				"source": [
-					"## Generate activity log entry"
+					"## Store HUB deployment results and update activity log"
 				]
 			},
 			{
@@ -448,7 +501,7 @@
 					}
 				},
 				"source": [
-					"activity_path = f'abfss://sql-activity@hubautomation.dfs.core.windows.net/activity.csv'\r\n",
+					"activity_path = f'abfss://sql-activity-v2@hubautomation.dfs.core.windows.net/activity.csv'\r\n",
 					"csv_options = {'header' : True,\r\n",
 					"                'delimiter' : ',',\r\n",
 					"                'quote' : '\"',\r\n",
@@ -471,27 +524,15 @@
 					}
 				},
 				"source": [
-					""
-				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
 					"# Construct new activity log entry and write back to file\r\n",
 					"\r\n",
+					"# Compute the number of cores ACTUALLY assigned\r\n",
+					"sql_assigned_cores = sql_enable_df.agg(F.max('TotalNormalizedCores')).collect()[0][0]\r\n",
+					"\r\n",
+					"# Aggregate enabled resources for activity log entry\r\n",
+					"log_df = sql_enable_df.select('SQLAHB_VCPUs', 'Priority').groupBy('Priority').agg(F.sum('SQLAHB_VCPUs').alias('TotalCores'))\r\n",
 					"log_entry = log_df.collect()\r\n",
+					"\r\n",
 					"activity_values = [0, 0, 0, 0, 0, 0]\r\n",
 					"index = 0\r\n",
 					"for value in log_entry:\r\n",
