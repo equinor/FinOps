@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "2c4b21e9-d533-4bd2-b1c7-48969e45f731"
+				"spark.autotune.trackingId": "c2dbc9d1-c139-42dd-bf30-d23a071084d8"
 			}
 		},
 		"metadata": {
@@ -64,7 +64,7 @@
 					"import pyspark.sql.window as W\r\n",
 					"from pyspark.sql import Row"
 				],
-				"execution_count": 112
+				"execution_count": 1
 			},
 			{
 				"cell_type": "code",
@@ -85,7 +85,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 113
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -105,7 +105,7 @@
 					"VCPUS_PER_LICENSE = 16\r\n",
 					"PROD_OFFER_ID = 'MS-AZR-0017P'"
 				],
-				"execution_count": 114
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -125,7 +125,7 @@
 					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'\r\n",
 					"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 				],
-				"execution_count": 115
+				"execution_count": 4
 			},
 			{
 				"cell_type": "markdown",
@@ -157,7 +157,7 @@
 					"pricesheet_source_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/pricesheet-latest'\r\n",
 					"pricesheet_df = spark.read.format('parquet').load(pricesheet_source_path)"
 				],
-				"execution_count": 116
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -199,7 +199,7 @@
 					"pricesheet_df = pricesheet_df.withColumn('VCPUs', F.split(F.col('MeterName'), ' ').getItem(0).cast('int'))\r\n",
 					"pricesheet_df = pricesheet_df.withColumn('VCPUBaseUnitPrice', F.col('BaseUnitPrice') / F.col('VCPUs'))"
 				],
-				"execution_count": 117
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -218,7 +218,7 @@
 				"source": [
 					"VCPUBaseUnitPrice = pricesheet_df.where(F.col('MeterName') == '1 vCPU VM License').select('VCPUBaseUnitPrice').collect()[0][0]"
 				],
-				"execution_count": 118
+				"execution_count": 7
 			},
 			{
 				"cell_type": "markdown",
@@ -267,7 +267,7 @@
 					"yearly_license_cost = vm_config['lic_cost_yearly']\r\n",
 					"hourly_vcpu_cost = yearly_license_cost / (license_count * HOURS_PER_YEAR * VCPUS_PER_LICENSE)"
 				],
-				"execution_count": 119
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -285,7 +285,7 @@
 				"source": [
 					"end_date = (datetime.now().strftime('%Y-%m-%d'))"
 				],
-				"execution_count": 120
+				"execution_count": 9
 			},
 			{
 				"cell_type": "markdown",
@@ -317,7 +317,7 @@
 					"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/20240301-20240331/Extended_v3_ACMMonthlyActualCost_20240301-20240331.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 121
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -360,7 +360,7 @@
 					"    'ai_VMName'\r\n",
 					"]"
 				],
-				"execution_count": 122
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -386,7 +386,7 @@
 					"\r\n",
 					"cost_df = cost_df.select(*vm_columns)"
 				],
-				"execution_count": 123
+				"execution_count": 12
 			},
 			{
 				"cell_type": "code",
@@ -406,7 +406,7 @@
 					"cost_df = cost_df.where(F.col('MeterCategory') == 'Virtual Machines')\r\n",
 					"cost_df = cost_df.where(F.col('ai_VCPUs').isNotNull())"
 				],
-				"execution_count": 124
+				"execution_count": 13
 			},
 			{
 				"cell_type": "code",
@@ -428,7 +428,7 @@
 					"    (F.col('ai_VCPUs') >= 2)\r\n",
 					")"
 				],
-				"execution_count": 125
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -447,7 +447,33 @@
 					"# Removing the VMs who's ResourceName begins with 'CVD-' as these are Windows Client VM's and not relevant for consideration of a Windows Server licence\r\n",
 					"cost_df = cost_df.where(~F.upper(F.col('ResourceName')).startswith('CVD-'))"
 				],
-				"execution_count": 126
+				"execution_count": 15
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"aggregate_columns = [\r\n",
+					"    'ResourceId',\r\n",
+					"    'SubscriptionId',\r\n",
+					"    'ResourceGroup',\r\n",
+					"    'ResourceName',\r\n",
+					"    'ai_VCPUs',\r\n",
+					"    'Quantity',\r\n",
+					"    'WindowsAHB_VCPUs'\r\n",
+					"]"
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -466,17 +492,12 @@
 					"scaleset_df = cost_df.where(F.col('ResourceId').contains('/virtualMachineScaleSets/'))\r\n",
 					"\r\n",
 					"scaleset_df = scaleset_df \\\r\n",
-					"    .select( \\\r\n",
-					"        'ResourceId',\r\n",
-					"        'ai_VCPUs',\r\n",
-					"        'Quantity',\r\n",
-					"        'WindowsAHB_VCPUs'\r\n",
-					"    ) \\\r\n",
+					"    .select(*aggregate_columns) \\\r\n",
 					"    .withColumn('NodeCount', F.lit(1)) \\\r\n",
 					"    .groupBy('ResourceId', 'ai_VCPUs', 'WindowsAHB_VCPUs')\\\r\n",
 					"    .agg(F.sum('Quantity').alias('Quantity'), F.sum('NodeCount').alias('NodeCount'))"
 				],
-				"execution_count": 127
+				"execution_count": 16
 			},
 			{
 				"cell_type": "code",
@@ -496,7 +517,7 @@
 					"scaleset_df = scaleset_df.withColumn('HUBLicenseCost', (F.col('Quantity') / F.col('NodeCount')) * F.col('WindowsAHB_VCPUs') * hourly_vcpu_cost)\r\n",
 					"scaleset_df = scaleset_df.withColumn('HUBSavingsPerVCPU', (F.col('PAYGLicenseCost') - F.col('HUBLicenseCost')) / F.col('WindowsAHB_VCPUs'))"
 				],
-				"execution_count": 128
+				"execution_count": 17
 			},
 			{
 				"cell_type": "code",
@@ -514,7 +535,7 @@
 				"source": [
 					"scaleset_df = scaleset_df.drop('NodeCount')"
 				],
-				"execution_count": 135
+				"execution_count": 18
 			},
 			{
 				"cell_type": "code",
@@ -533,12 +554,7 @@
 					"vm_df = cost_df.where(F.col('ResourceId').contains('/virtualMachines/'))\r\n",
 					"\r\n",
 					"vm_df = vm_df \\\r\n",
-					"    .select( \\\r\n",
-					"        'ResourceId',\r\n",
-					"        'ai_VCPUs',\r\n",
-					"        'Quantity',\r\n",
-					"        'WindowsAHB_VCPUs'\r\n",
-					"    ) \\\r\n",
+					"    .select(*aggregate_columns) \\\r\n",
 					"    .groupBy('ResourceId', 'ai_VCPUs', 'WindowsAHB_VCPUs')\\\r\n",
 					"    .agg(F.sum('Quantity').alias('Quantity'))\r\n",
 					"\r\n",
@@ -546,7 +562,7 @@
 					"vm_df = vm_df.withColumn('HUBLicenseCost', F.col('Quantity') * F.col('WindowsAHB_VCPUs') * hourly_vcpu_cost)\r\n",
 					"vm_df = vm_df.withColumn('HUBSavingsPerVCPU', (F.col('PAYGLicenseCost') - F.col('HUBLicenseCost')) / F.col('WindowsAHB_VCPUs'))"
 				],
-				"execution_count": 134
+				"execution_count": 19
 			},
 			{
 				"cell_type": "code",
@@ -562,9 +578,10 @@
 					}
 				},
 				"source": [
-					"cost_df = scaleset_df.union(vm_df)"
+					"cost_df = scaleset_df.union(vm_df)\r\n",
+					"cost_df = cost_df.orderBy(F.desc('HUBSavingsPerVCPU'))"
 				],
-				"execution_count": 136
+				"execution_count": 20
 			},
 			{
 				"cell_type": "code",
@@ -577,13 +594,12 @@
 						"transient": {
 							"deleting": false
 						}
-					},
-					"collapsed": false
+					}
 				},
 				"source": [
-					"display(cost_df)"
+					""
 				],
-				"execution_count": 137
+				"execution_count": null
 			}
 		]
 	}
