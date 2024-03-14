@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "d16cba43-4cf7-48c4-ba84-61cbb8090031"
+				"spark.autotune.trackingId": "3fd56fe7-f8b0-4635-9055-ea85e31ce6ea"
 			}
 		},
 		"metadata": {
@@ -77,7 +77,7 @@
 					"import pyspark.sql.window as W\r\n",
 					"from pyspark.sql import Row"
 				],
-				"execution_count": 366
+				"execution_count": 397
 			},
 			{
 				"cell_type": "code",
@@ -98,7 +98,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 349
+				"execution_count": 398
 			},
 			{
 				"cell_type": "code",
@@ -122,7 +122,7 @@
 					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'\r\n",
 					"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 				],
-				"execution_count": 350
+				"execution_count": 399
 			},
 			{
 				"cell_type": "markdown",
@@ -155,7 +155,7 @@
 					"pricesheet_source_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/pricesheet-latest'\r\n",
 					"pricesheet_df = spark.read.format('parquet').load(pricesheet_source_path)"
 				],
-				"execution_count": 351
+				"execution_count": 400
 			},
 			{
 				"cell_type": "code",
@@ -201,7 +201,7 @@
 					"# Get license cost for 1 vCPU\r\n",
 					"VCPUBASEUNITPRICE = pricesheet_df.where(F.col('MeterName') == '1 vCPU VM License').select('VCPUBaseUnitPrice').collect()[0][0]"
 				],
-				"execution_count": 352
+				"execution_count": 401
 			},
 			{
 				"cell_type": "markdown",
@@ -257,7 +257,7 @@
 					"# Hourly cost of license per vCPU\r\n",
 					"hourly_vcpu_cost = yearly_license_cost / (license_count * HOURS_PER_YEAR * VCPUS_PER_LICENSE)"
 				],
-				"execution_count": 353
+				"execution_count": 402
 			},
 			{
 				"cell_type": "markdown",
@@ -313,7 +313,7 @@
 					"    'ai_VMName'\r\n",
 					"]"
 				],
-				"execution_count": 354
+				"execution_count": 403
 			},
 			{
 				"cell_type": "code",
@@ -332,7 +332,7 @@
 					"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/20240301-20240331/Extended_v3_ACMMonthlyActualCost_20240301-20240331.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 355
+				"execution_count": 404
 			},
 			{
 				"cell_type": "code",
@@ -371,7 +371,7 @@
 					"# Persist a df copy for disable list calculation\r\n",
 					"cost_copy_df = cost_df.alias('cost_copy_df')"
 				],
-				"execution_count": 356
+				"execution_count": 405
 			},
 			{
 				"cell_type": "markdown",
@@ -452,7 +452,7 @@
 					"# Remove redundant columns\r\n",
 					"vm_enable_df = vm_enable_df.select(*selected_columns)"
 				],
-				"execution_count": 357
+				"execution_count": 406
 			},
 			{
 				"cell_type": "markdown",
@@ -492,7 +492,7 @@
 					"# Exclude VMs that are already in the list of enabled VMs\r\n",
 					"vm_disable_df = vm_disable_df.join(vm_enable_df, 'ResourceId', 'left_anti')"
 				],
-				"execution_count": 358
+				"execution_count": 407
 			},
 			{
 				"cell_type": "markdown",
@@ -521,8 +521,8 @@
 					}
 				},
 				"source": [
-					"enable_path = f'abfss://win-hub-logs@hubautomation.dfs.core.windows.net/LATEST-AHUB-Deployment.csv'\r\n",
-					"disable_path = f'abfss://win-hub-logs@hubautomation.dfs.core.windows.net/LATEST-AHUB-Removal.csv'\r\n",
+					"enable_path = f'abfss://win-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Deployment.csv'\r\n",
+					"disable_path = f'abfss://win-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Removal.csv'\r\n",
 					"\r\n",
 					"if should_run:\r\n",
 					"    # Write enabled list to storage account\r\n",
@@ -531,7 +531,7 @@
 					"    # Write disabled list to storage account\r\n",
 					"    vm_disable_df.toPandas().to_csv(disable_path)"
 				],
-				"execution_count": null
+				"execution_count": 408
 			},
 			{
 				"cell_type": "markdown",
@@ -564,9 +564,72 @@
 					}
 				},
 				"source": [
-					"end_date = (datetime.now().strftime('%Y-%m-%d'))"
+					"activity_path = 'abfss://win-activity-v2@hubautomation.dfs.core.windows.net/activity.csv'\r\n",
+					"csv_options = {'header' : True,\r\n",
+					"                'delimiter' : ',',\r\n",
+					"                'quote' : '\"',\r\n",
+					"                'escape' : '\"'}\r\n",
+					"activity_df = spark.read.options(**csv_options).csv(activity_path)"
 				],
-				"execution_count": 359
+				"execution_count": 409
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"today = (datetime.now().strftime('%Y-%m-%d'))\r\n",
+					"disabled_vms_count = vm_disable_df.count()\r\n",
+					"enabled_vms_count = vm_enable_df.count()\r\n",
+					"normalized_cores_disabled = vm_disable_df.select('WindowsAHB_VCPUs').agg(F.sum('WindowsAHB_VCPUs')).collect()[0][0] or 0\r\n",
+					"normalized_cores_enabled = vm_enable_df.select('WindowsAHB_VCPUs').agg(F.sum('WindowsAHB_VCPUs')).collect()[0][0] or 0\r\n",
+					"licenses_removed = normalized_cores_disabled / VCPUS_PER_LICENSE\r\n",
+					"licenses_applied = normalized_cores_enabled / VCPUS_PER_LICENSE\r\n",
+					"\r\n",
+					"row_values = [ \r\n",
+					"    disabled_vms_count, \r\n",
+					"    enabled_vms_count, \r\n",
+					"    normalized_cores_disabled, \r\n",
+					"    normalized_cores_enabled, \r\n",
+					"    licenses_removed, \r\n",
+					"    licenses_applied,\r\n",
+					"    license_count,\r\n",
+					"    ts_vms,\r\n",
+					"    available_licenses\r\n",
+					"]\r\n",
+					"\r\n",
+					"new_activity_row = spark.createDataFrame([(today, *row_values)], activity_df.columns)\r\n",
+					"activity_df = activity_df.union(new_activity_row)"
+				],
+				"execution_count": 410
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(activity_df)"
+				],
+				"execution_count": 411
 			}
 		]
 	}
