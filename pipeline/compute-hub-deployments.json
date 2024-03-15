@@ -26,6 +26,15 @@
 						"referenceName": "vm-hub-deployments",
 						"type": "NotebookReference"
 					},
+					"parameters": {
+						"storageAccount": {
+							"value": {
+								"value": "@pipeline().parameters.storageAccount",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
 					"snapshot": true
 				}
 			},
@@ -52,6 +61,15 @@
 					"notebook": {
 						"referenceName": "sql-hub-deployments",
 						"type": "NotebookReference"
+					},
+					"parameters": {
+						"storageAccount": {
+							"value": {
+								"value": "@pipeline().parameters.storageAccount",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
 					},
 					"snapshot": true
 				}
@@ -358,6 +376,12 @@
 				]
 			}
 		],
+		"parameters": {
+			"storageAccount": {
+				"type": "string",
+				"defaultValue": "s037costmgmt"
+			}
+		},
 		"variables": {
 			"today": {
 				"type": "String"
