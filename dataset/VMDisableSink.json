@@ -1,0 +1,31 @@
+{
+	"name": "VMDisableSink",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "HUB Storage Account",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"today": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@concat(dataset().today, '-AHUB-Removal.csv')",
+					"type": "Expression"
+				},
+				"fileSystem": "win-hub-logs-v2"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": []
+	}
+}
