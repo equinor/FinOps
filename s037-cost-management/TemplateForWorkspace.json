@@ -981,6 +981,30 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
+		"sparkpool32_delayInMinutes": {
+			"type": "int",
+			"defaultValue": 15
+		},
+		"sparkpool32_maxNodeCount": {
+			"type": "int",
+			"defaultValue": 5
+		},
+		"sparkpool32_minNodeCount": {
+			"type": "int",
+			"defaultValue": 3
+		},
+		"sparkpool32_nodeCount": {
+			"type": "int",
+			"defaultValue": 0
+		},
+		"sparkpool32_nodeSize": {
+			"type": "string",
+			"defaultValue": "Medium"
+		},
+		"sparkpool32_sparkVersion": {
+			"type": "string",
+			"defaultValue": "3.2"
+		},
 		"sprkpool33large_delayInMinutes": {
 			"type": "int",
 			"defaultValue": 10
@@ -1005,29 +1029,41 @@
 			"type": "string",
 			"defaultValue": "3.3"
 		},
-		"sparkpool32_delayInMinutes": {
-			"type": "int",
-			"defaultValue": 15
-		},
-		"sparkpool32_maxNodeCount": {
-			"type": "int",
-			"defaultValue": 5
-		},
-		"sparkpool32_minNodeCount": {
-			"type": "int",
-			"defaultValue": 3
-		},
-		"sparkpool32_nodeCount": {
-			"type": "int",
-			"defaultValue": 0
-		},
-		"sparkpool32_nodeSize": {
+		"compute-hub-deployments_pipelineStorageAccountParameter": {
 			"type": "string",
-			"defaultValue": "Medium"
+			"defaultValue": "s037costmgmt"
 		},
-		"sparkpool32_sparkVersion": {
+		"VMDeploymentsSource_dataSetLinkedServiceName": {
 			"type": "string",
-			"defaultValue": "3.2"
+			"defaultValue": "HUB Storage Account"
+		},
+		"VMDisableSource_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "HUB Storage Account"
+		},
+		"VMDeploymentSink_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "HUB Storage Account"
+		},
+		"VMDisableSink_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "HUB Storage Account"
+		},
+		"SQLDeploymentSource_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "HUB Storage Account"
+		},
+		"SQLDeploymentSink_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "HUB Storage Account"
+		},
+		"SQLDisableSource_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "HUB Storage Account"
+		},
+		"SQLDisableSink_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "HUB Storage Account"
 		}
 	},
 	"variables": {
@@ -35925,8 +35961,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -42202,7 +42237,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "2066d6a4-3321-430f-9f51-6ca0b6469414"
+						"spark.autotune.trackingId": "b5f26089-ca59-454e-8aeb-52e9c498e5b8"
 					}
 				},
 				"metadata": {
@@ -42227,7 +42262,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -42303,6 +42339,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"def get_last_day_prev_month(to_date):\r\n",
 							"    current_month = int(to_date[4:6])\r\n",
@@ -45409,7 +45446,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "ab350b29-0d17-44f4-8ef2-6518084d2077"
+						"spark.autotune.trackingId": "551d7798-553c-48ee-9b2d-74f75767591d"
 					}
 				},
 				"metadata": {
@@ -45434,13 +45471,28 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
 					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Initialize script"
+						]
+					},
+					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"from datetime import timedelta, datetime\r\n",
 							"from dateutil.relativedelta import relativedelta\r\n",
@@ -45453,7 +45505,7 @@
 							"from pyspark.sql import Row"
 						],
 						"outputs": [],
-						"execution_count": 108
+						"execution_count": 57
 					},
 					{
 						"cell_type": "code",
@@ -45475,7 +45527,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 109
+						"execution_count": null
 					},
 					{
 						"cell_type": "code",
@@ -45491,12 +45543,82 @@
 							}
 						},
 						"source": [
+							"# Constants\r\n",
 							"KEY_VAULT_NAME = 'acm-toolkit-kv'\r\n",
 							"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'\r\n",
 							"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 						],
 						"outputs": [],
-						"execution_count": 110
+						"execution_count": 59
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Lookup HUB SQL configuration"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"blob_service_client = BlobServiceClient.from_connection_string(hubAutomationConnectionString)\r\n",
+							"\r\n",
+							"# get a reference to the blob container and file of the SQL HUB configuration\r\n",
+							"container_name = 'sql-config'\r\n",
+							"blob_name = 'config.json'\r\n",
+							"container_client = blob_service_client.get_container_client(container_name)\r\n",
+							"blob_client = container_client.get_blob_client(blob_name)\r\n",
+							"\r\n",
+							"# download the blob content as a string\r\n",
+							"blob_content = blob_client.download_blob().content_as_text()\r\n",
+							"\r\n",
+							"# parse the JSON string into a Python dictionary\r\n",
+							"sql_config = json.loads(blob_content)\r\n",
+							"\r\n",
+							"# Compute the variable determining if results should be written to file\r\n",
+							"day_name = datetime.now().strftime(\"%A\")\r\n",
+							"should_run = sql_config['runDays'][day_name]\r\n",
+							"\r\n",
+							"sql_metersubcategory_array = sql_config['MeterSubCategory']\r\n",
+							"sql_days_back_from = sql_config['daysBackFrom']\r\n",
+							"sql_days_back_to = sql_config['daysBackTo']\r\n",
+							"sql_enterprise_licence_cores = sql_config['enterprise_licence_cores']\r\n",
+							"sql_standard_licence_cores = sql_config['enterprise_licence_cores']\r\n",
+							"\r\n",
+							"sql_normalized_licence_cores = (4 * sql_enterprise_licence_cores) + sql_standard_licence_cores"
+						],
+						"outputs": [],
+						"execution_count": 60
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Load and filter usage "
+						]
 					},
 					{
 						"cell_type": "code",
@@ -45541,7 +45663,7 @@
 							"]"
 						],
 						"outputs": [],
-						"execution_count": 111
+						"execution_count": 61
 					},
 					{
 						"cell_type": "code",
@@ -45557,69 +45679,11 @@
 							}
 						},
 						"source": [
-							"blob_service_client = BlobServiceClient.from_connection_string(hubAutomationConnectionString)\r\n",
-							"\r\n",
-							"# get a reference to the blob container and file\r\n",
-							"container_name = 'sql-config'\r\n",
-							"blob_name = 'config.json'\r\n",
-							"container_client = blob_service_client.get_container_client(container_name)\r\n",
-							"blob_client = container_client.get_blob_client(blob_name)\r\n",
-							"\r\n",
-							"# download the blob content as a string\r\n",
-							"blob_content = blob_client.download_blob().content_as_text()\r\n",
-							"\r\n",
-							"# parse the JSON string into a Python dictionary\r\n",
-							"sql_config = json.loads(blob_content)\r\n",
-							"\r\n",
-							"sql_metersubcategory_array = sql_config['MeterSubCategory']\r\n",
-							"sql_days_back_from = sql_config['daysBackFrom']\r\n",
-							"sql_days_back_to = sql_config['daysBackTo']\r\n",
-							"sql_enterprise_licence_cores = sql_config['enterprise_licence_cores']\r\n",
-							"sql_standard_licence_cores = sql_config['enterprise_licence_cores']\r\n",
-							"\r\n",
-							"sql_normalized_licence_cores = (4 * sql_enterprise_licence_cores) + sql_standard_licence_cores"
-						],
-						"outputs": [],
-						"execution_count": 112
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"end_date = (datetime.now().strftime('%Y-%m-%d'))"
-						],
-						"outputs": [],
-						"execution_count": 113
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/20240301-20240331/Extended_v3_ACMMonthlyActualCost_20240301-20240331.parquet'\r\n",
+							"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 							"cost_df = spark.read.format('parquet').load(cost_path)"
 						],
 						"outputs": [],
-						"execution_count": 114
+						"execution_count": 62
 					},
 					{
 						"cell_type": "code",
@@ -45635,17 +45699,19 @@
 							}
 						},
 						"source": [
-							"sql_start_date = (datetime.now() - timedelta(days=sql_days_back_from+6)).strftime('%Y-%m-%d')\r\n",
-							"sql_end_date = (datetime.now() - timedelta(days=sql_days_back_to+6)).strftime('%Y-%m-%d')\r\n",
-							"sql_cost_df = cost_df.where((F.col('Date') >= sql_start_date) & (F.col('Date') <= sql_end_date))\r\n",
+							"# Only select usage from the period specified in the configuration file\r\n",
+							"sql_start_date = (datetime.now() - timedelta(days=sql_days_back_from)).strftime('%Y-%m-%d')\r\n",
+							"sql_end_date = (datetime.now() - timedelta(days=sql_days_back_to)).strftime('%Y-%m-%d')\r\n",
+							"cost_df = cost_df.where((F.col('Date') >= sql_start_date) & (F.col('Date') <= sql_end_date))\r\n",
 							"\r\n",
-							"sql_max_date = sql_cost_df.agg(F.max('Date')).collect()[0][0]\r\n",
-							"sql_min_date = sql_cost_df.agg(F.min('Date')).collect()[0][0]\r\n",
+							"# Compute the interval in days and hours of the specified interval\r\n",
+							"sql_max_date = cost_df.agg(F.max('Date')).collect()[0][0]\r\n",
+							"sql_min_date = cost_df.agg(F.min('Date')).collect()[0][0]\r\n",
 							"sql_interval_days = (sql_max_date - sql_min_date).days + 1\r\n",
 							"sql_interval_hours = sql_interval_days * 24"
 						],
 						"outputs": [],
-						"execution_count": 116
+						"execution_count": 63
 					},
 					{
 						"cell_type": "code",
@@ -45661,22 +45727,24 @@
 							}
 						},
 						"source": [
-							"sql_cost_df = sql_cost_df.select(*sql_columns)\r\n",
-							"sql_cost_df = sql_cost_df.where(F.col('MeterSubCategory').isin(sql_metersubcategory_array))\r\n",
-							"sql_cost_df = sql_cost_df.where(~F.upper(F.col('ResourceName')).startswith('CVD-'))\r\n",
+							"cost_df = cost_df.select(*sql_columns)\r\n",
+							"cost_df = cost_df.where(F.col('MeterSubCategory').isin(sql_metersubcategory_array))\r\n",
+							"cost_df = cost_df.where(~F.upper(F.col('ResourceName')).startswith('CVD-'))\r\n",
 							"\r\n",
 							"is_sql_vm = (F.col('MeterCategory') == 'Virtual Machines Licenses') & (F.col('MeterSubCategory').like('SQL Server%'))\r\n",
 							"is_sql_db = (F.col('ResourceId').like('%Microsoft.Sql/servers%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
 							"is_sql_mi = (F.col('ResourceId').like('%Microsoft.Sql/managedInstances%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
 							"\r\n",
-							"sql_cost_df = sql_cost_df.withColumn('SQLType', \r\n",
+							"# Split SQL usage into different categories\r\n",
+							"cost_df = cost_df.withColumn('SQLType', \r\n",
 							"    F.when(is_sql_vm, 'VM')\r\n",
 							"    .when(is_sql_mi, 'MI')\r\n",
 							"    .when(is_sql_db, 'DB')\r\n",
 							"    .otherwise(None)\r\n",
 							")\r\n",
 							"\r\n",
-							"sql_cost_df = sql_cost_df.withColumn('Priority',\r\n",
+							"# Determine priority of SQL instances of getting HUB enabled - higher number indicates higher priority\r\n",
+							"cost_df = cost_df.withColumn('Priority',\r\n",
 							"    F.when(is_sql_mi & (F.col('ProductName').contains('General Purpose')), 6)\r\n",
 							"    .when(is_sql_mi & (F.col('ProductName').contains('Business Critical')), 5)\r\n",
 							"    .when(is_sql_db & (F.col('ProductName').contains('General Purpose')), 4)\r\n",
@@ -45686,11 +45754,24 @@
 							"    .otherwise(0)\r\n",
 							")\r\n",
 							"\r\n",
-							"sql_cost_df = sql_cost_df.where(F.col('SQLType').isNotNull())\r\n",
-							"sql_cost_copy = sql_cost_df.alias('sql_cost_copy')"
+							"cost_df = cost_df.where(F.col('SQLType').isNotNull())\r\n",
+							"cost_copy_df = cost_df.alias('cost_copy_df')"
 						],
 						"outputs": [],
-						"execution_count": 117
+						"execution_count": 64
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Compute set of SQL instances getting HUB enabled"
+						]
 					},
 					{
 						"cell_type": "code",
@@ -45706,7 +45787,7 @@
 							}
 						},
 						"source": [
-							"sql_cost_df = sql_cost_df \\\r\n",
+							"sql_enable_df = cost_df \\\r\n",
 							"    .select('ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'Quantity', 'ai_VCPUs', 'ai_vCores', 'SQLAHB_VCPUs', 'SQLType', 'Priority') \\\r\n",
 							"    .groupBy('ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'ai_VCPUs', 'ai_vCores', 'SQLAHB_VCPUs', 'SQLType', 'Priority') \\\r\n",
 							"    .agg(F.sum('Quantity').alias('ResourceHours'))\r\n",
@@ -45720,47 +45801,43 @@
 							"mi_utilization = resource_hours_per_core / sql_interval_hours\r\n",
 							"db_utilization = resource_hours_per_core / sql_interval_hours\r\n",
 							"\r\n",
-							"sql_cost_df = sql_cost_df.withColumn('Utilization',\r\n",
+							"sql_enable_df = sql_enable_df.withColumn('Utilization',\r\n",
 							"    F.when(F.col('SQLType') == 'VM', vm_utilization)\r\n",
 							"    .when(F.col('SQLType') == 'DB', db_utilization)\r\n",
 							"    .when(F.col('SQLType') == 'MI', mi_utilization)\r\n",
 							"    .otherwise(0)\r\n",
 							")\r\n",
 							"\r\n",
-							"sql_cost_df = sql_cost_df.orderBy(F.desc('Priority'), F.desc('Utilization'))"
-						],
-						"outputs": [],
-						"execution_count": 118
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
+							"# Sort resources according to which we want to enable HUB for first\r\n",
+							"sql_enable_df = sql_enable_df.orderBy(F.desc('Priority'), F.desc('Utilization'))\r\n",
+							"\r\n",
 							"window = W.Window.rowsBetween(W.Window.unboundedPreceding, 0)\r\n",
-							"sql_cost_df = sql_cost_df.withColumn(\"TotalNormalizedCores\", F.sum(\"SQLAHB_VCPUs\").over(window))\r\n",
+							"sql_enable_df = sql_enable_df.withColumn(\"TotalNormalizedCores\", F.sum(\"SQLAHB_VCPUs\").over(window))\r\n",
 							"\r\n",
-							"sql_enable_df = sql_cost_df.where(F.col('TotalNormalizedCores') <= sql_normalized_licence_cores)\r\n",
+							"# Only include instances that doesnt overshoot the number of available license cores\r\n",
+							"sql_enable_df = sql_enable_df.where(F.col('TotalNormalizedCores') <= sql_normalized_licence_cores)\r\n",
 							"\r\n",
-							"# Compute the number of cores ACTUALLY assigned\r\n",
-							"sql_assigned_cores = sql_enable_df.agg(F.max('TotalNormalizedCores')).collect()[0][0]\r\n",
+							"# Persist copy for activity log computation\r\n",
+							"enable_copy_df = sql_enable_df.alias('enable_copy_df')\r\n",
 							"\r\n",
-							"# Aggregate enabled resources for activity log entry\r\n",
-							"log_df = sql_enable_df.select('SQLAHB_VCPUs', 'Priority').groupBy('Priority').agg(F.sum('SQLAHB_VCPUs').alias('TotalCores'))\r\n",
-							"\r\n",
-							"sql_enable_df = sql_enable_df.select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup')"
+							"# Remove redundant columns from results\r\n",
+							"sql_enable_df = cost_df.select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup')"
 						],
 						"outputs": [],
-						"execution_count": 119
+						"execution_count": 65
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Compute set of SQL instances getting HUB disabled"
+						]
 					},
 					{
 						"cell_type": "code",
@@ -45776,13 +45853,14 @@
 							}
 						},
 						"source": [
-							"sql_disable_df = sql_cost_copy.where(F.col('SQLAHB') == 'Enabled')\r\n",
+							"# Compute list of disabled instances by removing references from the enabled liste\r\n",
+							"sql_disable_df = cost_copy_df.where(F.col('SQLAHB') == 'Enabled')\r\n",
 							"sql_disable_df = sql_disable_df.select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup')\r\n",
 							"sql_disable_df = sql_disable_df.dropDuplicates([\"ResourceId\"])\r\n",
 							"sql_disable_df = sql_disable_df.join(sql_enable_df, 'ResourceId', 'left_anti')"
 						],
 						"outputs": [],
-						"execution_count": 120
+						"execution_count": 66
 					},
 					{
 						"cell_type": "markdown",
@@ -45794,7 +45872,7 @@
 							}
 						},
 						"source": [
-							"## Store deployment results"
+							"## Store HUB deployment results and update activity log"
 						]
 					},
 					{
@@ -45811,51 +45889,34 @@
 							}
 						},
 						"source": [
-							"enable_path = f'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/{end_date}-AHUB-Deployment.csv'\r\n",
-							"disable_path = f'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/{end_date}-AHUB-Removal.csv'\r\n",
-							"\r\n",
-							"#sql_enable_df.toPandas().to_csv(enable_path)\r\n",
-							"#sql_disable_df.toPandas().to_csv(disable_path)"
-						],
-						"outputs": [],
-						"execution_count": 121
-					},
-					{
-						"cell_type": "markdown",
-						"metadata": {
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"## Generate activity log entry"
-						]
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"activity_path = f'abfss://sql-activity@hubautomation.dfs.core.windows.net/activity.csv'\r\n",
-							"csv_options = {'header' : True,\r\n",
+							"def compute_activity_log_entry(activity_path):\r\n",
+							"    csv_options = {'header' : True,\r\n",
 							"                'delimiter' : ',',\r\n",
 							"                'quote' : '\"',\r\n",
 							"                'escape' : '\"'}\r\n",
-							"activity_df = spark.read.options(**csv_options).csv(activity_path)"
+							"    activity_df = spark.read.options(**csv_options).csv(activity_path)\r\n",
+							"\r\n",
+							"    # Compute the number of cores ACTUALLY assigned\r\n",
+							"    sql_assigned_cores = enable_copy_df.agg(F.max('TotalNormalizedCores')).collect()[0][0]\r\n",
+							"\r\n",
+							"    # Aggregate normalized core per priority level \r\n",
+							"    normalized_cores_by_priority = enable_copy_df.select('SQLAHB_VCPUs', 'Priority').groupBy('Priority').agg(F.sum('SQLAHB_VCPUs').alias('TotalCores')).collect()\r\n",
+							"\r\n",
+							"    # Loop through aggregations and persist values in array \r\n",
+							"    activity_values = [0, 0, 0, 0, 0, 0]\r\n",
+							"    index = 0\r\n",
+							"    for value in normalized_cores_by_priority:\r\n",
+							"        activity_values[index] = value['TotalCores']\r\n",
+							"        index+=1\r\n",
+							"\r\n",
+							"    today = (datetime.now().strftime('%Y-%m-%d'))\r\n",
+							"    new_activity_row = spark.createDataFrame([(today, *activity_values, sql_normalized_licence_cores, sql_assigned_cores)], activity_df.columns)\r\n",
+							"    activity_df = activity_df.union(new_activity_row)\r\n",
+							"\r\n",
+							"    return activity_df"
 						],
 						"outputs": [],
-						"execution_count": 122
+						"execution_count": 67
 					},
 					{
 						"cell_type": "code",
@@ -45871,22 +45932,43 @@
 							}
 						},
 						"source": [
-							"# Construct new activity log entry and write back to file\r\n",
+							"enable_path = f'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Deployment.csv'\r\n",
+							"disable_path = f'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Removal.csv'\r\n",
+							"activity_path = f'abfss://sql-activity-v2@hubautomation.dfs.core.windows.net/activity.csv'\r\n",
 							"\r\n",
-							"log_entry = log_df.collect()\r\n",
-							"activity_values = [0, 0, 0, 0, 0, 0]\r\n",
-							"index = 0\r\n",
-							"for value in log_entry:\r\n",
-							"    activity_values[index] = value['TotalCores']\r\n",
-							"    index+=1\r\n",
+							"if should_run:\r\n",
+							"    # Store enabled list in storage account\r\n",
+							"    sql_enable_df.toPandas().to_csv(enable_path)\r\n",
 							"\r\n",
-							"new_activity_row = spark.createDataFrame([(end_date, *activity_values, sql_normalized_licence_cores, sql_assigned_cores)], activity_df.columns)\r\n",
-							"activity_df = activity_df.union(new_activity_row)\r\n",
+							"    # Store disabled list in storage account\r\n",
+							"    sql_disable_df.toPandas().to_csv(disable_path)\r\n",
 							"\r\n",
-							"# activity_df.toPandas().to_csv(activity_path)"
+							"    # Compute activity log entry and write back to file\r\n",
+							"    activity_df = compute_activity_log_entry(activity_path)\r\n",
+							"    activity_df.toPandas().to_csv(activity_path, index=False)"
 						],
 						"outputs": [],
-						"execution_count": 124
+						"execution_count": 68
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Output 'should_run' indication when running in pipeline\r\n",
+							"mssparkutils.notebook.exit(should_run)"
+						],
+						"outputs": [],
+						"execution_count": null
 					}
 				]
 			},
@@ -47211,7 +47293,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "c58b038f-01df-4822-8244-677a14cb4d65"
+						"spark.autotune.trackingId": "845688ee-c910-4ca1-9972-2bf802860c3b"
 					}
 				},
 				"metadata": {
@@ -47236,13 +47318,28 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
 					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Initialize script"
+						]
+					},
+					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"from datetime import timedelta, datetime\r\n",
 							"from dateutil.relativedelta import relativedelta\r\n",
@@ -47255,7 +47352,7 @@
 							"from pyspark.sql import Row"
 						],
 						"outputs": [],
-						"execution_count": 137
+						"execution_count": 14
 					},
 					{
 						"cell_type": "code",
@@ -47277,7 +47374,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 138
+						"execution_count": null
 					},
 					{
 						"cell_type": "code",
@@ -47293,33 +47390,16 @@
 							}
 						},
 						"source": [
+							"# Constants\r\n",
 							"HOURS_PER_YEAR = 8760\r\n",
 							"VCPUS_PER_LICENSE = 16\r\n",
-							"PROD_OFFER_ID = 'MS-AZR-0017P'"
-						],
-						"outputs": [],
-						"execution_count": 139
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
+							"PROD_OFFER_ID = 'MS-AZR-0017P'\r\n",
 							"KEY_VAULT_NAME = 'acm-toolkit-kv'\r\n",
 							"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'\r\n",
 							"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 						],
 						"outputs": [],
-						"execution_count": 140
+						"execution_count": 16
 					},
 					{
 						"cell_type": "markdown",
@@ -47348,11 +47428,12 @@
 							}
 						},
 						"source": [
+							"# Load pricesheet\r\n",
 							"pricesheet_source_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/pricesheet-latest'\r\n",
 							"pricesheet_df = spark.read.format('parquet').load(pricesheet_source_path)"
 						],
 						"outputs": [],
-						"execution_count": 141
+						"execution_count": 17
 					},
 					{
 						"cell_type": "code",
@@ -47389,33 +47470,17 @@
 							"    (F.col('PriceType') == 'Consumption')\r\n",
 							")\r\n",
 							"\r\n",
+							"# Compute normalized units based on the given unit of measure\r\n",
 							"pricesheet_df = pricesheet_df.withColumn('BaseUnits', F.split(F.col('UnitOfMeasure'), ' ').getItem(0).cast('int'))\r\n",
 							"pricesheet_df = pricesheet_df.withColumn('BaseUnitPrice', F.col('UnitPrice') / F.col('BaseUnits'))\r\n",
 							"pricesheet_df = pricesheet_df.withColumn('VCPUs', F.split(F.col('MeterName'), ' ').getItem(0).cast('int'))\r\n",
-							"pricesheet_df = pricesheet_df.withColumn('BaseUnitPricePerVCPU', F.col('BaseUnitPrice') / F.col('VCPUs'))"
+							"pricesheet_df = pricesheet_df.withColumn('VCPUBaseUnitPrice', F.col('BaseUnitPrice') / F.col('VCPUs'))\r\n",
+							"\r\n",
+							"# Get license cost for 1 vCPU\r\n",
+							"VCPUBASEUNITPRICE = pricesheet_df.where(F.col('MeterName') == '1 vCPU VM License').select('VCPUBaseUnitPrice').collect()[0][0]"
 						],
 						"outputs": [],
-						"execution_count": 142
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							},
-							"collapsed": false
-						},
-						"source": [
-							"display(pricesheet_df)"
-						],
-						"outputs": [],
-						"execution_count": 143
+						"execution_count": 18
 					},
 					{
 						"cell_type": "markdown",
@@ -47446,45 +47511,33 @@
 						"source": [
 							"blob_service_client = BlobServiceClient.from_connection_string(hubAutomationConnectionString)\r\n",
 							"\r\n",
-							"# get a reference to the blob container and file\r\n",
+							"# Get a reference to the blob container and file of the VM HUB configuration\r\n",
 							"container_name = 'win-config'\r\n",
 							"blob_name = 'config.json'\r\n",
 							"container_client = blob_service_client.get_container_client(container_name)\r\n",
 							"blob_client = container_client.get_blob_client(blob_name)\r\n",
 							"\r\n",
-							"# download the blob content as a string\r\n",
+							"# Download the blob content as a string\r\n",
 							"blob_content = blob_client.download_blob().content_as_text()\r\n",
 							"\r\n",
-							"# parse the JSON string into a Python dictionary\r\n",
+							"# Parse downloaded blob as json\r\n",
 							"vm_config = json.loads(blob_content)\r\n",
+							"\r\n",
+							"# Compute the variable determining if results should be written to file\r\n",
+							"day_name = datetime.now().strftime(\"%A\")\r\n",
+							"should_run = vm_config['runDays'][day_name]\r\n",
 							"\r\n",
 							"license_count = vm_config['lic_count']\r\n",
 							"ts_vms = vm_config['ts_vms']\r\n",
 							"timespan = vm_config['timespan']\r\n",
 							"yearly_license_cost = vm_config['lic_cost_yearly']\r\n",
+							"available_licenses = license_count - ts_vms\r\n",
+							"\r\n",
+							"# Hourly cost of license per vCPU\r\n",
 							"hourly_vcpu_cost = yearly_license_cost / (license_count * HOURS_PER_YEAR * VCPUS_PER_LICENSE)"
 						],
 						"outputs": [],
-						"execution_count": 144
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"end_date = (datetime.now().strftime('%Y-%m-%d'))"
-						],
-						"outputs": [],
-						"execution_count": 145
+						"execution_count": 19
 					},
 					{
 						"cell_type": "markdown",
@@ -47498,26 +47551,6 @@
 						"source": [
 							"## Load and filter usage "
 						]
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/20240301-20240331/Extended_v3_ACMMonthlyActualCost_20240301-20240331.parquet'\r\n",
-							"cost_df = spark.read.format('parquet').load(cost_path)"
-						],
-						"outputs": [],
-						"execution_count": 146
 					},
 					{
 						"cell_type": "code",
@@ -47551,8 +47584,7 @@
 							"    'ServiceInfo2',\r\n",
 							"    'PartNumber',\r\n",
 							"    'ProductName', \r\n",
-							"    'ai_VCPUs',\r\n",
-							"    'ai_AHB'\r\n",
+							"    'ai_VCPUs'\r\n",
 							"]\r\n",
 							"\r\n",
 							"vm_columns = columns_to_keep + [\r\n",
@@ -47562,7 +47594,7 @@
 							"]"
 						],
 						"outputs": [],
-						"execution_count": 147
+						"execution_count": 20
 					},
 					{
 						"cell_type": "code",
@@ -47578,82 +47610,64 @@
 							}
 						},
 						"source": [
+							"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
+							"cost_df = spark.read.format('parquet').load(cost_path)"
+						],
+						"outputs": [],
+						"execution_count": 21
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Filter usage to timespan defined in configuration file\r\n",
 							"vm_start_date = (datetime.now() - timedelta(days=timespan)).strftime('%Y-%m-%d')\r\n",
-							"vm_cost_df = cost_df.where(F.col('Date') >= vm_start_date)\r\n",
+							"cost_df = cost_df.where(F.col('Date') >= vm_start_date)\r\n",
 							"\r\n",
+							"# Use only VM related cost\r\n",
 							"is_vm_cost = ((F.col('ResourceId').contains('/virtualMachines/')) | (F.col('ResourceId').contains('/virtualMachineScaleSets/'))) \\\r\n",
-							"    & ((F.col('MeterSubCategory').contains('Windows')) | (F.col('ServiceInfo2').contains('Windows Server BYOL')))\r\n",
+							"    & ((F.col('MeterSubCategory').contains('Windows')) | (F.col('ServiceInfo2').contains('Windows Server BYOL'))) \\\r\n",
+							"    & (F.col('MeterCategory') == 'Virtual Machines') & (F.col('ai_VCPUs').isNotNull())\r\n",
 							"\r\n",
-							"vm_cost_df = vm_cost_df.where(is_vm_cost)\r\n",
+							"cost_df = cost_df.where(is_vm_cost).select(*vm_columns)\r\n",
 							"\r\n",
-							"vm_cost_df = vm_cost_df.select(*vm_columns)"
-						],
-						"outputs": [],
-						"execution_count": 148
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							},
-							"collapsed": false
-						},
-						"source": [
-							"vm_cost_df = vm_cost_df.where(F.col('MeterCategory') == 'Virtual Machines')\r\n",
-							"vm_cost_df = vm_cost_df.where(F.col('ai_VCPUs').isNotNull())"
-						],
-						"outputs": [],
-						"execution_count": 149
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
 							"# Exclude TS VMs (these always have 8 vCPUs) and only consider other VMs with 2 or more vCPUs (for cost efficiency)\r\n",
-							"vm_cost_df = vm_cost_df.where(\r\n",
+							"cost_df = cost_df.where(\r\n",
 							"    ~(F.col('ResourceName').startswith('TS') & (F.col('ai_VCPUs') == 8)) &\r\n",
 							"    (F.col('ai_VCPUs') >= 2)\r\n",
-							")"
-						],
-						"outputs": [],
-						"execution_count": 150
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
+							")\r\n",
+							"\r\n",
 							"# Removing the VMs who's ResourceName begins with 'CVD-' as these are Windows Client VM's and not relevant for consideration of a Windows Server licence\r\n",
-							"vm_cost_df = vm_cost_df.where(~F.upper(F.col('ResourceName')).startswith('CVD-'))"
+							"cost_df = cost_df.where(~F.upper(F.col('ResourceName')).startswith('CVD-'))\r\n",
+							"\r\n",
+							"# Persist a df copy for disable list calculation\r\n",
+							"cost_copy_df = cost_df.alias('cost_copy_df')"
 						],
 						"outputs": [],
-						"execution_count": 151
+						"execution_count": 22
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Compute set VMs getting HUB Enabled"
+						]
 					},
 					{
 						"cell_type": "code",
@@ -47669,7 +47683,213 @@
 							}
 						},
 						"source": [
-							""
+							"# Columns used for aggregated result\r\n",
+							"selected_columns = [\r\n",
+							"    'ResourceId',\r\n",
+							"    'SubscriptionId',\r\n",
+							"    'ResourceGroup',\r\n",
+							"    'ResourceName',\r\n",
+							"    'WindowsAHB_VCPUs',\r\n",
+							"    'ai_VCPUs'\r\n",
+							"]\r\n",
+							"\r\n",
+							"# Scalesets and virtual machines is different in how the licence cost is calculated\r\n",
+							"# In order to retain the correct number of vCPUs when later grouping by ResourceId the Quantity needs to be divided by the \r\n",
+							"# number of nodes in the scaleset before multiplying by vCPUs and price per hour\r\n",
+							"cost_df = cost_df.withColumn('NodeCount',\r\n",
+							"    F.when(F.col('ResourceId').contains('/virtualMachineScaleSets/'), 1)\r\n",
+							"    .otherwise(0)\r\n",
+							")\r\n",
+							"\r\n",
+							"# Aggregate quantities and node counts in order to make HUB savings calculation simpler\r\n",
+							"cost_df = cost_df \\\r\n",
+							"    .select(*selected_columns, 'NodeCount', 'Quantity') \\\r\n",
+							"    .groupBy(*selected_columns)\\\r\n",
+							"    .agg(F.sum('Quantity').alias('Quantity'), F.sum('NodeCount').alias('NodeCount'))\r\n",
+							"\r\n",
+							"# Compute hourly PAYG license cost\r\n",
+							"cost_df = cost_df.withColumn('PAYGLicenseCost', F.col('Quantity') * F.col('ai_VCPUs') * VCPUBASEUNITPRICE)\r\n",
+							"\r\n",
+							"# If cost is related to scaleset, the license cost must be divided by the number of nodes\r\n",
+							"cost_df = cost_df.withColumn('PAYGLicenseCost', F.when(F.col('NodeCount') > 0, F.col('PAYGLicenseCost') / F.col('NodeCount')).otherwise(F.col('PAYGLicenseCost')))\r\n",
+							"\r\n",
+							"# Compute hourly HUB license cost \r\n",
+							"cost_df = cost_df.withColumn('HUBLicenseCost', F.col('Quantity') * F.col('WindowsAHB_VCPUs') * hourly_vcpu_cost)\r\n",
+							"\r\n",
+							"# If cost is related to scaleset, the license cost must be divided by the number of nodes\r\n",
+							"cost_df = cost_df.withColumn('HUBLicenseCost', F.when(F.col('NodeCount') > 0, F.col('HUBLicenseCost') / F.col('NodeCount')).otherwise(F.col('HUBLicenseCost')))\r\n",
+							"\r\n",
+							"# Compute savings per VCPU\r\n",
+							"cost_df = cost_df.withColumn('HUBSavingsPerVCPU', (F.col('PAYGLicenseCost') - F.col('HUBLicenseCost')) / F.col('WindowsAHB_VCPUs'))\r\n",
+							"\r\n",
+							"cost_df = cost_df.drop('NodeCount')\r\n",
+							"cost_df = cost_df.orderBy(F.desc('HUBSavingsPerVCPU'))\r\n",
+							"\r\n",
+							"# Compute the cumulative number of normalized VCPUs\r\n",
+							"window = W.Window.rowsBetween(W.Window.unboundedPreceding, 0)\r\n",
+							"cost_df = cost_df.withColumn(\"TotalNormalizedCores\", F.sum(\"WindowsAHB_VCPUs\").over(window))\r\n",
+							"\r\n",
+							"# Only include the highest yielding resources up until the cumulative normalized cores equals the equivalent amount of available licenses\r\n",
+							"vm_enable_df = cost_df.where(F.col('TotalNormalizedCores') / VCPUS_PER_LICENSE <= available_licenses)\r\n",
+							"\r\n",
+							"# Remove redundant columns\r\n",
+							"vm_enable_df = vm_enable_df.select(*selected_columns)"
+						],
+						"outputs": [],
+						"execution_count": 23
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Compute set of VMs getting HUB disabled"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Only VMs with HUB enabled are eligible to being disabled\r\n",
+							"vm_disable_df = cost_copy_df.where(F.col('WindowsAHB') == 'Enabled')\r\n",
+							"\r\n",
+							"vm_disable_df = vm_disable_df \\\r\n",
+							"    .select(*selected_columns) \\\r\n",
+							"    .groupBy(selected_columns) \\\r\n",
+							"    .count().drop('count')\r\n",
+							"\r\n",
+							"# Exclude VMs that are already in the list of enabled VMs\r\n",
+							"vm_disable_df = vm_disable_df.join(vm_enable_df, 'ResourceId', 'left_anti')"
+						],
+						"outputs": [],
+						"execution_count": 24
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Store HUB deployment results and update activity log"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"def compute_activity_log_entry(activity_path):\r\n",
+							"    # Load existing log\r\n",
+							"    csv_options = {'header' : True,\r\n",
+							"                    'delimiter' : ',',\r\n",
+							"                    'quote' : '\"',\r\n",
+							"                    'escape' : '\"'}\r\n",
+							"    activity_df = spark.read.options(**csv_options).csv(activity_path)\r\n",
+							"\r\n",
+							"    today = (datetime.now().strftime('%Y-%m-%d'))\r\n",
+							"    disabled_vms_count = vm_disable_df.count()\r\n",
+							"    enabled_vms_count = vm_enable_df.count()\r\n",
+							"    normalized_cores_disabled = vm_disable_df.select('WindowsAHB_VCPUs').agg(F.sum('WindowsAHB_VCPUs')).collect()[0][0] or 0\r\n",
+							"    normalized_cores_enabled = vm_enable_df.select('WindowsAHB_VCPUs').agg(F.sum('WindowsAHB_VCPUs')).collect()[0][0] or 0\r\n",
+							"    licenses_removed = normalized_cores_disabled / VCPUS_PER_LICENSE\r\n",
+							"    licenses_applied = normalized_cores_enabled / VCPUS_PER_LICENSE\r\n",
+							"\r\n",
+							"    row_values = [ \r\n",
+							"        disabled_vms_count, \r\n",
+							"        enabled_vms_count, \r\n",
+							"        normalized_cores_disabled, \r\n",
+							"        normalized_cores_enabled, \r\n",
+							"        licenses_removed, \r\n",
+							"        licenses_applied,\r\n",
+							"        license_count,\r\n",
+							"        ts_vms,\r\n",
+							"        available_licenses\r\n",
+							"    ]\r\n",
+							"\r\n",
+							"    new_activity_row = spark.createDataFrame([(today, *row_values)], activity_df.columns)\r\n",
+							"    activity_df = activity_df.union(new_activity_row)\r\n",
+							"    return activity_df"
+						],
+						"outputs": [],
+						"execution_count": 25
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"enable_path = f'abfss://win-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Deployment.csv'\r\n",
+							"disable_path = f'abfss://win-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Removal.csv'\r\n",
+							"\r\n",
+							"# Only persist result according to storage account configuration\r\n",
+							"if should_run:\r\n",
+							"    # Write enabled list to storage account\r\n",
+							"    vm_enable_df.toPandas().to_csv(enable_path)\r\n",
+							"\r\n",
+							"    # Write disabled list to storage account\r\n",
+							"    vm_disable_df.toPandas().to_csv(disable_path)\r\n",
+							"\r\n",
+							"    # Compute updated activity log and write back to file\r\n",
+							"    activity_path = 'abfss://win-activity-v2@hubautomation.dfs.core.windows.net/activity.csv'\r\n",
+							"    activity_df = compute_activity_log_entry(activity_path)\r\n",
+							"    activity_df.toPandas().to_csv(activity_path, index=False)"
+						],
+						"outputs": [],
+						"execution_count": 26
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Output 'should_run' indication when running in pipeline\r\n",
+							"mssparkutils.notebook.exit(should_run)"
 						],
 						"outputs": [],
 						"execution_count": null
@@ -47866,31 +48086,6 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
-			"type": "Microsoft.Synapse/workspaces/bigDataPools",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"autoPause": {
-					"enabled": true,
-					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
-				},
-				"autoScale": {
-					"enabled": true,
-					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
-					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
-				},
-				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
-				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
-				"nodeSizeFamily": "MemoryOptimized",
-				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
-				"isComputeIsolationEnabled": false,
-				"sessionLevelPackagesEnabled": true,
-				"annotations": []
-			},
-			"dependsOn": [],
-			"location": "northeurope"
-		},
-		{
 			"name": "[concat(parameters('workspaceName'), '/sparkpool32')]",
 			"type": "Microsoft.Synapse/workspaces/bigDataPools",
 			"apiVersion": "2019-06-01-preview",
@@ -47919,6 +48114,773 @@
 			},
 			"dependsOn": [],
 			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
+				},
+				"autoScale": {
+					"enabled": true,
+					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
+					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
+				},
+				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
+				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": true,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/compute-hub-deployments')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Compute VM HUB deployments",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "Set todays date",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "vm-hub-deployments",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@pipeline().parameters.storageAccount",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"conf": {}
+						}
+					},
+					{
+						"name": "Compute SQL HUB deployments",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "Set todays date",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "sql-hub-deployments",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@pipeline().parameters.storageAccount",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"conf": {}
+						}
+					},
+					{
+						"name": "Set todays date",
+						"type": "SetVariable",
+						"dependsOn": [],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "today",
+							"value": {
+								"value": "@concat(formatDateTime(utcnow(),'yyyy-MM-dd'))",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Persist VM logs",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "Compute VM HUB deployments",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@activity('Compute VM HUB deployments').output.status.Output.result.exitValue",
+								"type": "Expression"
+							},
+							"ifTrueActivities": [
+								{
+									"name": "Persist VM deployment log",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "DelimitedTextSource",
+											"storeSettings": {
+												"type": "AzureBlobFSReadSettings",
+												"recursive": true,
+												"enablePartitionDiscovery": false
+											},
+											"formatSettings": {
+												"type": "DelimitedTextReadSettings"
+											}
+										},
+										"sink": {
+											"type": "DelimitedTextSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "DelimitedTextWriteSettings",
+												"quoteAllText": true,
+												"fileExtension": ".txt"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "VMDeploymentsSource",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "VMDeploymentSink",
+											"type": "DatasetReference",
+											"parameters": {
+												"today": {
+													"value": "@variables('today')",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								},
+								{
+									"name": "Persist VM disable log",
+									"type": "Copy",
+									"dependsOn": [
+										{
+											"activity": "Persist VM deployment log",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "DelimitedTextSource",
+											"storeSettings": {
+												"type": "AzureBlobFSReadSettings",
+												"recursive": true,
+												"enablePartitionDiscovery": false
+											},
+											"formatSettings": {
+												"type": "DelimitedTextReadSettings"
+											}
+										},
+										"sink": {
+											"type": "DelimitedTextSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "DelimitedTextWriteSettings",
+												"quoteAllText": true,
+												"fileExtension": ".txt"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "VMDisableSource",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "VMDisableSink",
+											"type": "DatasetReference",
+											"parameters": {
+												"today": {
+													"value": "@variables('today')",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					},
+					{
+						"name": "Persist SQL logs",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "Compute SQL HUB deployments",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@activity('Compute SQL HUB deployments').output.status.Output.result.exitValue",
+								"type": "Expression"
+							},
+							"ifTrueActivities": [
+								{
+									"name": "Persist SQL deployment log",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "DelimitedTextSource",
+											"storeSettings": {
+												"type": "AzureBlobFSReadSettings",
+												"recursive": true,
+												"enablePartitionDiscovery": false
+											},
+											"formatSettings": {
+												"type": "DelimitedTextReadSettings"
+											}
+										},
+										"sink": {
+											"type": "DelimitedTextSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "DelimitedTextWriteSettings",
+												"quoteAllText": true,
+												"fileExtension": ".txt"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "SQLDeploymentSource",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "SQLDeploymentSink",
+											"type": "DatasetReference",
+											"parameters": {
+												"today": {
+													"value": "@variables('today')",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								},
+								{
+									"name": "Persist SQL disable log",
+									"type": "Copy",
+									"dependsOn": [
+										{
+											"activity": "Persist SQL deployment log",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "DelimitedTextSource",
+											"storeSettings": {
+												"type": "AzureBlobFSReadSettings",
+												"recursive": true,
+												"enablePartitionDiscovery": false
+											},
+											"formatSettings": {
+												"type": "DelimitedTextReadSettings"
+											}
+										},
+										"sink": {
+											"type": "DelimitedTextSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "DelimitedTextWriteSettings",
+												"quoteAllText": true,
+												"fileExtension": ".txt"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "SQLDisableSource",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "SQLDisableSink",
+											"type": "DatasetReference",
+											"parameters": {
+												"today": {
+													"value": "@variables('today')",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"storageAccount": {
+						"type": "string",
+						"defaultValue": "[parameters('compute-hub-deployments_pipelineStorageAccountParameter')]"
+					}
+				},
+				"variables": {
+					"today": {
+						"type": "String"
+					}
+				},
+				"folder": {
+					"name": "PipelinesInProduction/HUB and RI"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/notebooks/vm-hub-deployments')]",
+				"[concat(variables('workspaceId'), '/notebooks/sql-hub-deployments')]",
+				"[concat(variables('workspaceId'), '/datasets/VMDeploymentsSource')]",
+				"[concat(variables('workspaceId'), '/datasets/VMDeploymentSink')]",
+				"[concat(variables('workspaceId'), '/datasets/VMDisableSource')]",
+				"[concat(variables('workspaceId'), '/datasets/VMDisableSink')]",
+				"[concat(variables('workspaceId'), '/datasets/SQLDeploymentSource')]",
+				"[concat(variables('workspaceId'), '/datasets/SQLDeploymentSink')]",
+				"[concat(variables('workspaceId'), '/datasets/SQLDisableSource')]",
+				"[concat(variables('workspaceId'), '/datasets/SQLDisableSink')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/VMDeploymentsSource')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('VMDeploymentsSource_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "LATEST-AHUB-Deployment.csv",
+						"fileSystem": "win-hub-logs-v2"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('VMDeploymentsSource_dataSetLinkedServiceName'))]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/VMDisableSource')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('VMDisableSource_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "LATEST-AHUB-Removal.csv",
+						"fileSystem": "win-hub-logs-v2"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('VMDisableSource_dataSetLinkedServiceName'))]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/VMDeploymentSink')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('VMDeploymentSink_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"today": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@concat(dataset().today, '-AHUB-Deployment.csv')",
+							"type": "Expression"
+						},
+						"fileSystem": "win-hub-logs-v2"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('VMDeploymentSink_dataSetLinkedServiceName'))]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/VMDisableSink')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('VMDisableSink_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"today": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@concat(dataset().today, '-AHUB-Removal.csv')",
+							"type": "Expression"
+						},
+						"fileSystem": "win-hub-logs-v2"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('VMDisableSink_dataSetLinkedServiceName'))]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQLDeploymentSource')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('SQLDeploymentSource_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "LATEST-AHUB-Deployment.csv",
+						"fileSystem": "sql-hub-logs-v2"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('SQLDeploymentSource_dataSetLinkedServiceName'))]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQLDeploymentSink')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('SQLDeploymentSink_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"today": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@concat(dataset().today, '-AHUB-Deployment.csv')",
+							"type": "Expression"
+						},
+						"fileSystem": "sql-hub-logs-v2"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('SQLDeploymentSink_dataSetLinkedServiceName'))]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQLDisableSource')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('SQLDisableSource_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "LATEST-AHUB-Removal.csv",
+						"fileSystem": "sql-hub-logs-v2"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('SQLDisableSource_dataSetLinkedServiceName'))]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQLDisableSink')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('SQLDisableSink_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"today": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@concat(dataset().today, '-AHUB-Removal.csv')",
+							"type": "Expression"
+						},
+						"fileSystem": "sql-hub-logs-v2"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('SQLDisableSink_dataSetLinkedServiceName'))]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Daily at 1am')]",
+			"type": "Microsoft.Synapse/workspaces/triggers",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "compute-hub-deployments",
+							"type": "PipelineReference"
+						},
+						"parameters": {
+							"storageAccount": "s037costmgmt"
+						}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2024-03-15T13:12:00",
+						"timeZone": "W. Europe Standard Time",
+						"schedule": {
+							"minutes": [
+								0
+							],
+							"hours": [
+								1
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/compute-hub-deployments')]"
+			]
 		}
 	]
 }
