@@ -1,0 +1,31 @@
+{
+	"name": "SQLDeploymentSink",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "HUB Storage Account",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"today": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@concat(dataset().today, '-AHUB-Deployment.csv')",
+					"type": "Expression"
+				},
+				"fileSystem": "sql-hub-logs-v2"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": []
+	}
+}
