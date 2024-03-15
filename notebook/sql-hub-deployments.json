@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "1c5340c4-f9e7-44d9-9991-b7f0de7931fa"
+				"spark.autotune.trackingId": "673e3d03-c930-4fb8-8d99-f0148129797b"
 			}
 		},
 		"metadata": {
@@ -302,6 +302,7 @@
 					"is_sql_db = (F.col('ResourceId').like('%Microsoft.Sql/servers%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
 					"is_sql_mi = (F.col('ResourceId').like('%Microsoft.Sql/managedInstances%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
 					"\r\n",
+					"# Split SQL usage into different categories\r\n",
 					"cost_df = cost_df.withColumn('SQLType', \r\n",
 					"    F.when(is_sql_vm, 'VM')\r\n",
 					"    .when(is_sql_mi, 'MI')\r\n",
@@ -309,6 +310,7 @@
 					"    .otherwise(None)\r\n",
 					")\r\n",
 					"\r\n",
+					"# Determine priority of SQL instances of getting HUB enabled - higher number indicates higher priority\r\n",
 					"cost_df = cost_df.withColumn('Priority',\r\n",
 					"    F.when(is_sql_mi & (F.col('ProductName').contains('General Purpose')), 6)\r\n",
 					"    .when(is_sql_mi & (F.col('ProductName').contains('Business Critical')), 5)\r\n",
@@ -431,7 +433,7 @@
 					}
 				},
 				"source": [
-					"## Store deployment results"
+					"## Store HUB deployment results and update activity log"
 				]
 			},
 			{
@@ -448,7 +450,30 @@
 					}
 				},
 				"source": [
-					"today = (datetime.now().strftime('%Y-%m-%d'))"
+					"def compute_activity_log_entry(activity_path):\r\n",
+					"    csv_options = {'header' : True,\r\n",
+					"                'delimiter' : ',',\r\n",
+					"                'quote' : '\"',\r\n",
+					"                'escape' : '\"'}\r\n",
+					"    activity_df = spark.read.options(**csv_options).csv(activity_path)\r\n",
+					"\r\n",
+					"    # Compute the number of cores ACTUALLY assigned\r\n",
+					"    sql_assigned_cores = sql_enable_df.agg(F.max('TotalNormalizedCores')).collect()[0][0]\r\n",
+					"\r\n",
+					"    # Aggregate normalized core per priority level \r\n",
+					"    normalized_cores_by_priority = sql_enable_df.select('SQLAHB_VCPUs', 'Priority').groupBy('Priority').agg(F.sum('SQLAHB_VCPUs').alias('TotalCores')).collect()\r\n",
+					"\r\n",
+					"    # Loop through aggregations and persist values in array \r\n",
+					"    activity_values = [0, 0, 0, 0, 0, 0]\r\n",
+					"    index = 0\r\n",
+					"    for value in normalized_cores_by_priority:\r\n",
+					"        activity_values[index] = value['TotalCores']\r\n",
+					"        index+=1\r\n",
+					"\r\n",
+					"    new_activity_row = spark.createDataFrame([(today, *activity_values, sql_normalized_licence_cores, sql_assigned_cores)], activity_df.columns)\r\n",
+					"    activity_df = activity_df.union(new_activity_row)\r\n",
+					"\r\n",
+					"    return activity_df"
 				],
 				"execution_count": null
 			},
@@ -468,83 +493,19 @@
 				"source": [
 					"enable_path = f'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Deployment.csv'\r\n",
 					"disable_path = f'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Removal.csv'\r\n",
+					"activity_path = f'abfss://sql-activity-v2@hubautomation.dfs.core.windows.net/activity.csv'\r\n",
 					"\r\n",
-					"#sql_enable_df.toPandas().to_csv(enable_path)\r\n",
-					"#sql_disable_df.toPandas().to_csv(disable_path)"
+					"if should_run:\r\n",
+					"    # Store enabled list in storage account\r\n",
+					"    sql_enable_df.toPandas().to_csv(enable_path)\r\n",
+					"\r\n",
+					"    # Store disabled list in storage account\r\n",
+					"    sql_disable_df.toPandas().to_csv(disable_path)\r\n",
+					"\r\n",
+					"    # Compute activity log entry and write back to file\r\n",
+					"    activity_df.toPandas().to_csv(activity_path)"
 				],
 				"execution_count": 121
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"## Store HUB deployment results and update activity log"
-				]
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"activity_path = f'abfss://sql-activity-v2@hubautomation.dfs.core.windows.net/activity.csv'\r\n",
-					"csv_options = {'header' : True,\r\n",
-					"                'delimiter' : ',',\r\n",
-					"                'quote' : '\"',\r\n",
-					"                'escape' : '\"'}\r\n",
-					"activity_df = spark.read.options(**csv_options).csv(activity_path)"
-				],
-				"execution_count": 122
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# Construct new activity log entry and write back to file\r\n",
-					"\r\n",
-					"# Compute the number of cores ACTUALLY assigned\r\n",
-					"sql_assigned_cores = sql_enable_df.agg(F.max('TotalNormalizedCores')).collect()[0][0]\r\n",
-					"\r\n",
-					"# Aggregate enabled resources for activity log entry\r\n",
-					"log_df = sql_enable_df.select('SQLAHB_VCPUs', 'Priority').groupBy('Priority').agg(F.sum('SQLAHB_VCPUs').alias('TotalCores'))\r\n",
-					"log_entry = log_df.collect()\r\n",
-					"\r\n",
-					"activity_values = [0, 0, 0, 0, 0, 0]\r\n",
-					"index = 0\r\n",
-					"for value in log_entry:\r\n",
-					"    activity_values[index] = value['TotalCores']\r\n",
-					"    index+=1\r\n",
-					"\r\n",
-					"new_activity_row = spark.createDataFrame([(today, *activity_values, sql_normalized_licence_cores, sql_assigned_cores)], activity_df.columns)\r\n",
-					"activity_df = activity_df.union(new_activity_row)\r\n",
-					"\r\n",
-					"# activity_df.toPandas().to_csv(activity_path)"
-				],
-				"execution_count": 124
 			}
 		]
 	}
