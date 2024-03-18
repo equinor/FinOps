@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "e6663974-df60-428c-b8ff-3a987b0f053b"
+				"spark.autotune.trackingId": "449b64ce-104d-4f7a-a7b2-8013d5b295fb"
 			}
 		},
 		"metadata": {
@@ -78,7 +78,7 @@
 					"import pyspark.sql.window as W\r\n",
 					"from pyspark.sql import Row"
 				],
-				"execution_count": 57
+				"execution_count": 106
 			},
 			{
 				"cell_type": "code",
@@ -99,7 +99,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": null
+				"execution_count": 107
 			},
 			{
 				"cell_type": "code",
@@ -120,7 +120,7 @@
 					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'\r\n",
 					"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 				],
-				"execution_count": 59
+				"execution_count": 108
 			},
 			{
 				"cell_type": "markdown",
@@ -175,7 +175,7 @@
 					"\r\n",
 					"sql_normalized_licence_cores = (4 * sql_enterprise_licence_cores) + sql_standard_licence_cores"
 				],
-				"execution_count": 60
+				"execution_count": 109
 			},
 			{
 				"cell_type": "markdown",
@@ -232,7 +232,7 @@
 					"    'ai_vCores'\r\n",
 					"]"
 				],
-				"execution_count": 61
+				"execution_count": 110
 			},
 			{
 				"cell_type": "code",
@@ -251,7 +251,7 @@
 					"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 62
+				"execution_count": 111
 			},
 			{
 				"cell_type": "code",
@@ -268,7 +268,7 @@
 				},
 				"source": [
 					"# Only select usage from the period specified in the configuration file\r\n",
-					"sql_start_date = (datetime.now() - timedelta(days=sql_days_back_from)).strftime('%Y-%m-%d')\r\n",
+					"sql_start_date = (datetime.now() - timedelta(days=sql_days_back_from+3)).strftime('%Y-%m-%d')\r\n",
 					"sql_end_date = (datetime.now() - timedelta(days=sql_days_back_to)).strftime('%Y-%m-%d')\r\n",
 					"cost_df = cost_df.where((F.col('Date') >= sql_start_date) & (F.col('Date') <= sql_end_date))\r\n",
 					"\r\n",
@@ -278,7 +278,7 @@
 					"sql_interval_days = (sql_max_date - sql_min_date).days + 1\r\n",
 					"sql_interval_hours = sql_interval_days * 24"
 				],
-				"execution_count": 63
+				"execution_count": 112
 			},
 			{
 				"cell_type": "code",
@@ -324,7 +324,7 @@
 					"cost_df = cost_df.where(F.col('SQLType').isNotNull())\r\n",
 					"cost_copy_df = cost_df.alias('cost_copy_df')"
 				],
-				"execution_count": 64
+				"execution_count": 113
 			},
 			{
 				"cell_type": "markdown",
@@ -353,16 +353,17 @@
 					}
 				},
 				"source": [
+					"# Max aggregation on vCores are used to mitigate duplicate instances, as they can occur if # of vCores are altered on a given day\r\n",
 					"sql_enable_df = cost_df \\\r\n",
 					"    .select('ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'Quantity', 'ai_VCPUs', 'ai_vCores', 'SQLAHB_VCPUs', 'SQLType', 'Priority') \\\r\n",
-					"    .groupBy('ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'ai_VCPUs', 'ai_vCores', 'SQLAHB_VCPUs', 'SQLType', 'Priority') \\\r\n",
-					"    .agg(F.sum('Quantity').alias('ResourceHours'))\r\n",
+					"    .groupBy('ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'ai_VCPUs', 'SQLType', 'Priority') \\\r\n",
+					"    .agg(F.sum('Quantity').alias('ResourceHours'), F.max('ai_vCores').alias('vCores'), F.max('SQLAHB_VCPUs').alias('SQLAHB_VCPUs')) \r\n",
 					"\r\n",
 					"# SQL VM instances will have a quantity per resource per day at 0-24 hours\r\n",
 					"vm_utilization = F.col('ResourceHours') / sql_interval_hours\r\n",
 					"\r\n",
 					"# SQL MI and DB instances will have a quantity per resource per day at 0-24 hours * vCores\r\n",
-					"resource_hours_per_core = F.col('ResourceHours') / F.col('ai_vCores')\r\n",
+					"resource_hours_per_core = F.col('ResourceHours') / F.col('vCores')\r\n",
 					"\r\n",
 					"mi_utilization = resource_hours_per_core / sql_interval_hours\r\n",
 					"db_utilization = resource_hours_per_core / sql_interval_hours\r\n",
@@ -389,7 +390,7 @@
 					"# Remove redundant columns from results\r\n",
 					"sql_enable_df = cost_df.select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup')"
 				],
-				"execution_count": 65
+				"execution_count": 114
 			},
 			{
 				"cell_type": "markdown",
@@ -424,7 +425,7 @@
 					"sql_disable_df = sql_disable_df.dropDuplicates([\"ResourceId\"])\r\n",
 					"sql_disable_df = sql_disable_df.join(sql_enable_df, 'ResourceId', 'left_anti')"
 				],
-				"execution_count": 66
+				"execution_count": 115
 			},
 			{
 				"cell_type": "markdown",
@@ -479,7 +480,7 @@
 					"\r\n",
 					"    return activity_df"
 				],
-				"execution_count": 67
+				"execution_count": 116
 			},
 			{
 				"cell_type": "code",
@@ -495,9 +496,9 @@
 					}
 				},
 				"source": [
-					"enable_path = f'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Deployment.csv'\r\n",
-					"disable_path = f'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Removal.csv'\r\n",
-					"activity_path = f'abfss://sql-activity-v2@hubautomation.dfs.core.windows.net/activity.csv'\r\n",
+					"enable_path = 'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Deployment.csv'\r\n",
+					"disable_path = 'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Removal.csv'\r\n",
+					"activity_path = 'abfss://sql-activity-v2@hubautomation.dfs.core.windows.net/activity.csv'\r\n",
 					"\r\n",
 					"if should_run:\r\n",
 					"    # Store enabled list in storage account\r\n",
@@ -510,7 +511,7 @@
 					"    activity_df = compute_activity_log_entry(activity_path)\r\n",
 					"    activity_df.toPandas().to_csv(activity_path, index=False)"
 				],
-				"execution_count": 68
+				"execution_count": 117
 			},
 			{
 				"cell_type": "code",
@@ -528,6 +529,47 @@
 				"source": [
 					"# Output 'should_run' indication when running in pipeline\r\n",
 					"mssparkutils.notebook.exit(should_run)"
+				],
+				"execution_count": 118
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"test_path = 'abfss://sql-hub-logs@hubautomation.dfs.core.windows.net/2024-03-13-AHUB-Deployment.csv'\r\n",
+					"csv_options = {'header' : True,\r\n",
+					"                'delimiter' : ',',\r\n",
+					"                'quote' : '\"',\r\n",
+					"                'escape' : '\"'}\r\n",
+					"test_df = spark.read.options(**csv_options).csv(test_path)"
+				],
+				"execution_count": 119
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
 				],
 				"execution_count": null
 			}
