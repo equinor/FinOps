@@ -1,0 +1,109 @@
+{
+	"name": "test-core-assignment",
+	"properties": {
+		"folder": {
+			"name": "NotebookInProduction/HUB and RI Savings"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "ebbd95c7-bebd-45cc-a8d0-6421ea31ac92"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "python"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"#### Calculate over/under assignment of HUB\r\n",
+					"1. Compute # of resources with HUB and # of VCPUs on 12th of March (pre)\r\n",
+					"2. Compute # of resources with HUB and # of VCPUs on 14th of March (post)\r\n",
+					"3. Compute # of resources with HUB enabled and # of VCPUs on 13th of March (added)\r\n",
+					"4. Compute # of resources with HUB disabled and # of VCPUs on 13th of March (removed)\r\n",
+					"5. How many resources/vCPUs was included kept from 12th to 14th (kept)?\r\n",
+					"6. How many resources/vCPUs was similar on the 12th and the enabled list?\r\n",
+					"7. How many resources/vCPUs was similar on the 14th and the enabled list?\r\n",
+					"8. How many resources in the disabled list was enabled on the 12th? (should be all)\r\n",
+					"9. How many resources in the disabled list was enabled on the 14th? (should be none)\r\n",
+					"10. How many resources on the enable list was not enabled on the 14th?\r\n",
+					"11. How many enabled resources on the 14th was not in the enable list?\r\n",
+					"12. How many resources was failed to enabled/diabled on the 13th?"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"test_path = 'abfss://sql-hub-logs@hubautomation.dfs.core.windows.net/2024-03-13-AHUB-Deployment.csv'\r\n",
+					"csv_options = {'header' : True,\r\n",
+					"                'delimiter' : ',',\r\n",
+					"                'quote' : '\"',\r\n",
+					"                'escape' : '\"'}\r\n",
+					"add_df = spark.read.options(**csv_options).csv(test_path)\r\n",
+					"\r\n",
+					"add_ids = [row[0] for row in add_df.select(\"ResourceId\").collect()]\r\n",
+					"\r\n",
+					"test_path = 'abfss://sql-hub-logs@hubautomation.dfs.core.windows.net/2024-03-13-AHUB-Removal.csv'\r\n",
+					"csv_options = {'header' : True,\r\n",
+					"                'delimiter' : ',',\r\n",
+					"                'quote' : '\"',\r\n",
+					"                'escape' : '\"'}\r\n",
+					"rm_df = spark.read.options(**csv_options).csv(test_path)\r\n",
+					"\r\n",
+					"rm_ids = [row[0] for row in rm_df.select(\"ResourceId\").collect()]\r\n",
+					"\r\n",
+					"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
+					"test_cost = spark.read.format('parquet').load(cost_path)\r\n",
+					"\r\n",
+					"cost_pre = test_cost.where(F.col('Date') == '2024-03-12')\r\n",
+					"cost_pre = cost_pre.where(F.col('SQLAHB') == 'Enabled')\r\n",
+					"\r\n",
+					"cost_post = test_cost.where(F.col('Date') == '2024-03-14')\r\n",
+					"cost_post = cost_post.where(F.col('SQLAHB') == 'Enabled')\r\n",
+					"\r\n",
+					"pre_ids = [row[0] for row in cost_pre.dropDuplicates(['ResourceId']).select(\"ResourceId\").collect()]\r\n",
+					"post_ids = [row[0] for row in cost_post.dropDuplicates(['ResourceId']).select(\"ResourceId\").collect()]\r\n",
+					"\r\n",
+					"pre = set(pre_ids)\r\n",
+					"post = set(post_ids)\r\n",
+					"added = set(add_ids)\r\n",
+					"removed = set(rm_ids)\r\n",
+					"\r\n",
+					"kept = pre.intersection(post)\r\n",
+					"diff = added.intersection(pre)\r\n",
+					"display(cost_post.agg(F.sum('SQLAHB_VCPUs')))\r\n",
+					"display(cost_post.where(F.col('ResourceId').isin(kept)).orderBy(F.desc('SQLAHB_VCPUs')))\r\n",
+					"display(add_df.join(cost_post, 'ResourceId', 'left').dropDuplicates(['Resourceid']).agg(F.sum('SQLAHB_VCPUs')))\r\n",
+					""
+				],
+				"execution_count": null
+			}
+		]
+	}
+}
