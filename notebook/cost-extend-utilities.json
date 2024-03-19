@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "c8ad43cc-0907-40e0-a0f2-6aafd77c5fe2"
+				"spark.autotune.trackingId": "7fa01ea4-2a2e-4542-be26-823af7d4cb69"
 			}
 		},
 		"metadata": {
@@ -278,7 +278,7 @@
 					"    is_sql_db = (F.col('ResourceId').like('%Microsoft.Sql/servers%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
 					"    is_sql_mi = (F.col('ResourceId').like('%Microsoft.Sql/managedInstances%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
 					"    is_sql_vm = (F.col('MeterCategory') == 'Virtual Machines Licenses') & (F.col('MeterSubCategory').like('SQL Server%'))\r\n",
-					"    is_sql_arc = (F.col('ResourceType') == 'microsoft.azurearcdata/sqlserverinstances') & (F.col('ai_AHB').isNotNull())\r\n",
+					"    is_sql_arc = (F.col('ResourceId').like('Microsoft.AzureArcData/sqlServerInstances')) & (F.col('ai_AHB').isNotNull())\r\n",
 					"    is_sql_adf = (F.col('MeterCategory') == 'Azure Data Factory v2') & (F.col('MeterSubCategory').like('SSIS%'))\r\n",
 					"\r\n",
 					"    is_sql_cost = is_sql_db | is_sql_mi | is_sql_vm | is_sql_arc | is_sql_adf\r\n",
