@@ -6,17 +6,21 @@
 		},
 		"nbformat": 4,
 		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sprkpool33large",
+			"type": "BigDataPoolReference"
+		},
 		"sessionProperties": {
-			"driverMemory": "28g",
-			"driverCores": 4,
-			"executorMemory": "28g",
-			"executorCores": 4,
-			"numExecutors": 2,
+			"driverMemory": "112g",
+			"driverCores": 16,
+			"executorMemory": "112g",
+			"executorCores": 16,
+			"numExecutors": 1,
 			"conf": {
-				"spark.dynamicAllocation.enabled": "false",
-				"spark.dynamicAllocation.minExecutors": "2",
-				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "f44a4d12-24d8-4305-b230-76e0a859085c"
+				"spark.dynamicAllocation.enabled": "true",
+				"spark.dynamicAllocation.minExecutors": "1",
+				"spark.dynamicAllocation.maxExecutors": "5",
+				"spark.autotune.trackingId": "7656b2cb-141f-4998-bb75-9184ed805854"
 			}
 		},
 		"metadata": {
@@ -24,10 +28,25 @@
 			"enableDebugMode": false,
 			"kernelspec": {
 				"name": "synapse_pyspark",
-				"display_name": "python"
+				"display_name": "Synapse PySpark"
 			},
 			"language_info": {
 				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
+				"name": "sprkpool33large",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 16,
+				"memory": 112,
+				"automaticScaleJobs": true
 			},
 			"sessionKeepAliveTimeout": 30
 		},
@@ -43,12 +62,18 @@
 				},
 				"source": [
 					"#### Calculate over/under assignment of HUB\r\n",
-					"1. Compute # of resources with HUB and # of VCPUs on 12th of March (pre)\r\n",
-					"2. Compute # of resources with HUB and # of VCPUs on 14th of March (post)\r\n",
-					"3. Compute # of resources with HUB enabled and # of VCPUs on 13th of March (added)\r\n",
-					"4. Compute # of resources with HUB disabled and # of VCPUs on 13th of March (removed)\r\n",
-					"5. How many resources/vCPUs was included kept from 12th to 14th (kept)?\r\n",
-					"6. How many resources/vCPUs was similar on the 12th and the enabled list?\r\n",
+					"1. Compute # of resources with HUB and # of VCPUs on 12th of March (pre) **317** (1817)\r\n",
+					"2. Compute # of resources with HUB and # of VCPUs on 14th of March (post) **293** (2481)\r\n",
+					"3. Compute # of resources with HUB enabled and # of VCPUs on 13th of March (added) **313** (1341)\r\n",
+					"\r\n",
+					"- **11** of these resources does not exist any longer, and deployment fails for these. These account for **80** normalized cores\r\n",
+					"\r\n",
+					"4. Compute # of resources with HUB disabled and # of VCPUs on 13th of March (removed) **50** (528)\r\n",
+					"5. How many resources/vCPUs was included kept from 12th to 14th (kept)? **243** (1289)\r\n",
+					"\r\n",
+					"- **9** of the resources marked as _HUB Enabled_ is not reflected in the normalized core column. These are **Azure Arc-Enabled SQL Server** instances and amount to **184** normalized cores (but are not reflected in the extend files)\r\n",
+					" \r\n",
+					"6. How many resources/vCPUs was similar on the 12th and the enabled list? (1199)\r\n",
 					"7. How many resources/vCPUs was similar on the 14th and the enabled list?\r\n",
 					"8. How many resources in the disabled list was enabled on the 12th? (should be all)\r\n",
 					"9. How many resources in the disabled list was enabled on the 14th? (should be none)\r\n",
@@ -62,6 +87,99 @@
 					"- Get list of resources that are enabled but are not in the enabled list\r\n",
 					"- Do the same for Windows HUB"
 				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"add_w_vcpu = add_df.join(cost_today, 'ResourceId', 'left')\r\n",
+					"rm_w_vcpu = rm_df.join(cost_today, 'ResourceId', 'left')"
+				],
+				"execution_count": 55
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(rm_w_vcpu.where((F.col('SQLAHB_VCPUS') == 0) | F.col('SQLAHB_VCPUS').isNull()))"
+				],
+				"execution_count": 39
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(cost_pre.where((F.col('ResourceId').isin(pre.intersection(added))) & (F.col('SQLAHB') == 'Enabled')).dropDuplicates(['ResourceId']).count())"
+				],
+				"execution_count": 65
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"import pyspark.sql.functions as F"
+				],
+				"execution_count": 52
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"storageAccount = 's037costmgmt'"
+				],
+				"execution_count": 53
 			},
 			{
 				"cell_type": "code",
@@ -90,6 +208,9 @@
 					"cost_pre = test_cost.where(F.col('Date') == '2024-03-12')\r\n",
 					"cost_pre = cost_pre.where(F.col('SQLAHB') == 'Enabled')\r\n",
 					"\r\n",
+					"cost_today = test_cost.where(F.col('Date') >= '2024-03-01')\r\n",
+					"cost_today = cost_today.where(F.col('SQLAHB') == 'Enabled')\r\n",
+					"\r\n",
 					"cost_post = test_cost.where(F.col('Date') == '2024-03-14')\r\n",
 					"cost_post = cost_post.where(F.col('SQLAHB') == 'Enabled')\r\n",
 					"\r\n",
@@ -103,12 +224,12 @@
 					"\r\n",
 					"kept = pre.intersection(post)\r\n",
 					"diff = added.intersection(pre)\r\n",
-					"display(cost_post.agg(F.sum('SQLAHB_VCPUs')))\r\n",
-					"display(cost_post.where(F.col('ResourceId').isin(kept)).orderBy(F.desc('SQLAHB_VCPUs')))\r\n",
-					"display(add_df.join(cost_post, 'ResourceId', 'left').dropDuplicates(['Resourceid']).agg(F.sum('SQLAHB_VCPUs')))\r\n",
+					"# display(cost_post.agg(F.sum('SQLAHB_VCPUs')))\r\n",
+					"# display(cost_post.where(F.col('ResourceId').isin(kept)).orderBy(F.desc('SQLAHB_VCPUs')))\r\n",
+					"# display(add_df.join(cost_post, 'ResourceId', 'left').dropDuplicates(['Resourceid']).agg(F.sum('SQLAHB_VCPUs')))\r\n",
 					""
 				],
-				"execution_count": null
+				"execution_count": 54
 			}
 		]
 	}
