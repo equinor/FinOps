@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "2066d6a4-3321-430f-9f51-6ca0b6469414"
+				"spark.autotune.trackingId": "c8ad43cc-0907-40e0-a0f2-6aafd77c5fe2"
 			}
 		},
 		"metadata": {
@@ -68,10 +68,11 @@
 					"from datetime import datetime\r\n",
 					"import calendar\r\n",
 					"import pyspark.sql.functions as F\r\n",
+					"import pyspark.sql.types as T\r\n",
 					"import warnings\r\n",
 					"from enum import Enum"
 				],
-				"execution_count": 9
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -89,7 +90,7 @@
 				"source": [
 					"PROD_OFFER_ID = 'MS-AZR-0017P'"
 				],
-				"execution_count": 10
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -115,7 +116,7 @@
 					"    NotEnabled = \"Not Enabled\"\r\n",
 					"    NotSupported = \"Not Supported\""
 				],
-				"execution_count": 11
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -133,7 +134,7 @@
 					"    # Creating a string date for last month\r\n",
 					"    return f\"{previous_year}-{str(previous_month).zfill(2)}-{str(last_day).zfill(2)}\""
 				],
-				"execution_count": 12
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -174,7 +175,7 @@
 					"        cost_df = cost_df.withColumn('ai_' + col, F.coalesce(F.col(f'AdditionalInfo.{col}'), F.lit(None)))\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 13
+				"execution_count": 7
 			},
 			{
 				"cell_type": "code",
@@ -196,7 +197,7 @@
 					"    pricesheet_df = pricesheet_df.withColumn('NormalizedUnitPrice', F.col('UnitPrice') / F.col('NormalizedUnit'))\r\n",
 					"    return pricesheet_df"
 				],
-				"execution_count": 14
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -249,7 +250,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 15
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -277,7 +278,10 @@
 					"    is_sql_db = (F.col('ResourceId').like('%Microsoft.Sql/servers%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
 					"    is_sql_mi = (F.col('ResourceId').like('%Microsoft.Sql/managedInstances%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
 					"    is_sql_vm = (F.col('MeterCategory') == 'Virtual Machines Licenses') & (F.col('MeterSubCategory').like('SQL Server%'))\r\n",
-					"    is_sql_cost = is_sql_db | is_sql_mi | is_sql_vm\r\n",
+					"    is_sql_arc = (F.col('ResourceType') == 'microsoft.azurearcdata/sqlserverinstances') & (F.col('ai_AHB').isNotNull())\r\n",
+					"    is_sql_adf = (F.col('MeterCategory') == 'Azure Data Factory v2') & (F.col('MeterSubCategory').like('SSIS%'))\r\n",
+					"\r\n",
+					"    is_sql_cost = is_sql_db | is_sql_mi | is_sql_vm | is_sql_arc | is_sql_adf\r\n",
 					"\r\n",
 					"    is_vm = F.col('ResourceId').like('%Microsoft.Compute/virtualMachines%')\r\n",
 					"    is_vm_ahb = is_vm & (F.col('MeterSubCategory') == 'SQL Server Azure Hybrid Benefit')\r\n",
@@ -287,8 +291,10 @@
 					"        F.when(is_sql_cost & is_vm_ahb, AHBStatus.Enabled.value)\r\n",
 					"        .when(is_sql_cost & is_vm_not_supported, AHBStatus.NotSupported.value)\r\n",
 					"        .when(is_sql_cost & is_vm, AHBStatus.NotEnabled.value)\r\n",
-					"        .when(F.col('ai_AHB') == True, AHBStatus.Enabled.value)\r\n",
-					"        .when(F.col('ai_AHB') == False, AHBStatus.NotEnabled.value)\r\n",
+					"        .when(is_sql_cost & F.col('ai_AHB') == True, AHBStatus.Enabled.value)\r\n",
+					"        .when(is_sql_cost & F.col('ai_AHB') == False, AHBStatus.NotEnabled.value)\r\n",
+					"        .when(is_sql_adf & F.col('MeterName').like('%AHB%'), AHBStatus.Enabled.value)\r\n",
+					"        .when(is_sql_adf & F.col('MeterName').like('%License Included%'), AHBStatus.NotEnabled.value)\r\n",
 					"        .otherwise(AHBStatus.NotSupported.value)\r\n",
 					"    )\r\n",
 					"\r\n",
@@ -300,8 +306,8 @@
 					"    cost_df = cost_df.withColumn('ai_vCores', F.col('ai_vCores').cast('int'))\r\n",
 					"    cost_df = cost_df.na.fill({'ai_vCores' : 0})\r\n",
 					"\r\n",
-					"    is_standard_sql_license = F.col('ProductName').like('%Standard%') | F.col('ProductName').like('%General%')\r\n",
-					"    is_enterprise_sql_license = F.col('ProductName').like('%Enterprise%') | F.col('ProductName').like('%Critical%')\r\n",
+					"    is_standard_sql_license = F.col('ProductName').like('%Standard%') | F.col('ProductName').like('%General%') | F.col('ProductName').like('%Std%')\r\n",
+					"    is_enterprise_sql_license = F.col('ProductName').like('%Enterprise%') | F.col('ProductName').like('%Critical%') | F.col('ProductName').like('%Ent%')\r\n",
 					"\r\n",
 					"    # Compute the Windows AHB equivalent VCPUs\r\n",
 					"    cost_df = cost_df.withColumn('WindowsAHB_VCPUS', \r\n",
@@ -313,6 +319,10 @@
 					"        .otherwise(0)\r\n",
 					"    )\r\n",
 					"\r\n",
+					"    # Extract vCore count for ADF SQL resource with this pattern\r\n",
+					"    adf_vcore_pattern = r'[A-Za-z](\\d+)'\r\n",
+					"    adf_vcores = F.regexp_extract(F.col('MeterName'), adf_vcore_pattern, 1).cast(T.IntegerType())\r\n",
+					"\r\n",
 					"    # Compute the SQL AHB equivalent VCPUs\r\n",
 					"    cost_df = cost_df.withColumn('SQLAHB_VCPUS', \r\n",
 					"        F.when(is_sql_vm & (F.col('ai_VCPUs') == 0), 0)\r\n",
@@ -320,9 +330,11 @@
 					"        .when(is_sql_vm & is_standard_sql_license & (F.col('ai_VCPUs') > 4), F.col('ai_VCPUs'))\r\n",
 					"        .when(is_sql_vm & is_enterprise_sql_license & (F.col('ai_VCPUs') <= 4), 16)\r\n",
 					"        .when(is_sql_vm & is_enterprise_sql_license & (F.col('ai_VCPUs') > 4), F.col('ai_VCPUs') * 4)\r\n",
-					"        .when((is_sql_mi | is_sql_db) & (F.col('ai_vCores') == 0), 0)\r\n",
-					"        .when((is_sql_mi | is_sql_db) & is_standard_sql_license, F.col('ai_vCores'))\r\n",
-					"        .when((is_sql_mi | is_sql_db) & is_enterprise_sql_license, F.col('ai_vCores') * 4)\r\n",
+					"        .when((is_sql_mi | is_sql_db | is_sql_arc) & (F.col('ai_vCores') == 0), 0)\r\n",
+					"        .when((is_sql_mi | is_sql_db | is_sql_arc) & is_standard_sql_license, F.col('ai_vCores'))\r\n",
+					"        .when((is_sql_mi | is_sql_db | is_sql_arc) & is_enterprise_sql_license, F.col('ai_vCores') * 4)\r\n",
+					"        .when(is_sql_adf & is_standard_sql_license, adf_vcores)\r\n",
+					"        .when(is_sql_adf & is_enterprise_sql_license, adf_vcores * 4)\r\n",
 					"        .otherwise(0)\r\n",
 					"    )\r\n",
 					"\r\n",
@@ -360,7 +372,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 16
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -388,7 +400,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 17
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -424,7 +436,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 18
+				"execution_count": 12
 			},
 			{
 				"cell_type": "code",
@@ -523,7 +535,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 19
+				"execution_count": 13
 			},
 			{
 				"cell_type": "code",
@@ -611,7 +623,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 20
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -677,7 +689,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 21
+				"execution_count": 15
 			},
 			{
 				"cell_type": "code",
@@ -703,7 +715,7 @@
 					"    \r\n",
 					"    return cost_df"
 				],
-				"execution_count": 22
+				"execution_count": 16
 			},
 			{
 				"cell_type": "code",
@@ -725,7 +737,7 @@
 					"    cost_df = compute_AHB_columns(cost_df, pricesheet_df)\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 23
+				"execution_count": 17
 			},
 			{
 				"cell_type": "code",
@@ -753,7 +765,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 24
+				"execution_count": 18
 			}
 		]
 	}
