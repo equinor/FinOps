@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "60c25f58-2373-45d7-b4c8-f8e6e9b3c8b5"
+				"spark.autotune.trackingId": "a1202aaf-3c60-42fd-8f4d-34b48a1fa547"
 			}
 		},
 		"metadata": {
@@ -52,6 +52,113 @@
 		},
 		"cells": [
 			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"import pyspark.sql.functions as F"
+				],
+				"execution_count": 55
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"storageAccount = 's037costmgmt'"
+				],
+				"execution_count": 56
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"pre_date = '2024-03-12'\r\n",
+					"post_date = '2024-03-14'\r\n",
+					"deploy_date = '2024-03-13'\r\n",
+					"start_of_month = '2024-03-01'\r\n",
+					"end_of_month = '2024-03-31'"
+				],
+				"execution_count": 57
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"test_path = f'abfss://sql-hub-logs@hubautomation.dfs.core.windows.net/{deploy_date}-AHUB-Deployment.csv'\r\n",
+					"csv_options = {'header' : True,\r\n",
+					"                'delimiter' : ',',\r\n",
+					"                'quote' : '\"',\r\n",
+					"                'escape' : '\"'}\r\n",
+					"add_df = spark.read.options(**csv_options).csv(test_path)\r\n",
+					"\r\n",
+					"add_ids = [row[0] for row in add_df.select(\"ResourceId\").collect()]\r\n",
+					"\r\n",
+					"test_path = f'abfss://sql-hub-logs@hubautomation.dfs.core.windows.net/{deploy_date}-AHUB-Removal.csv'\r\n",
+					"csv_options = {'header' : True,\r\n",
+					"                'delimiter' : ',',\r\n",
+					"                'quote' : '\"',\r\n",
+					"                'escape' : '\"'}\r\n",
+					"rm_df = spark.read.options(**csv_options).csv(test_path)\r\n",
+					"\r\n",
+					"rm_ids = [row[0] for row in rm_df.select(\"ResourceId\").collect()]\r\n",
+					"\r\n",
+					"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/{start_of_month.replace(\"-\", \"\")}-{end_of_month.replace(\"-\", \"\")}/Extended_v3_ACMMonthlyActualCost_{start_of_month.replace(\"-\", \"\")}-{end_of_month.replace(\"-\", \"\")}.parquet'\r\n",
+					"test_cost = spark.read.format('parquet').load(cost_path)\r\n",
+					"\r\n",
+					"cost_pre = test_cost.where(F.col('Date') == pre_date)\r\n",
+					"cost_pre = cost_pre.where(F.col('SQLAHB') == 'Enabled').dropDuplicates(['ResourceId'])\r\n",
+					"\r\n",
+					"cost_today = test_cost.where(F.col('Date') >= start_of_month)\r\n",
+					"cost_today = cost_today.where(F.col('SQLAHB') == 'Enabled').dropDuplicates(['ResourceId'])\r\n",
+					"\r\n",
+					"cost_post = test_cost.where(F.col('Date') == post_date)\r\n",
+					"cost_post = cost_post.where(F.col('SQLAHB') == 'Enabled').dropDuplicates(['ResourceId'])\r\n",
+					"\r\n",
+					"pre_ids = [row[0] for row in cost_pre.select(\"ResourceId\").collect()]\r\n",
+					"post_ids = [row[0] for row in cost_post.select(\"ResourceId\").collect()]\r\n",
+					"\r\n",
+					"pre = set(pre_ids)\r\n",
+					"post = set(post_ids)\r\n",
+					"added = set(add_ids)\r\n",
+					"removed = set(rm_ids)\r\n",
+					"\r\n",
+					"kept = pre.intersection(post)\r\n",
+					"diff = added.intersection(pre)\r\n",
+					"\r\n",
+					"add_w_vcpu = add_df.join(cost_today, 'ResourceId', 'left')\r\n",
+					"rm_w_vcpu = rm_df.join(cost_today, 'ResourceId', 'left')"
+				],
+				"execution_count": 59
+			},
+			{
 				"cell_type": "markdown",
 				"metadata": {
 					"nteract": {
@@ -62,8 +169,8 @@
 				},
 				"source": [
 					"#### Calculate over/under assignment of HUB\r\n",
-					"1. Compute # of resources with HUB and # of VCPUs on 12th of March (pre) **317** (1817)\r\n",
-					"2. Compute # of resources with HUB and # of VCPUs on 14th of March (post) **293** (2481)\r\n",
+					"1. Compute # of resources with HUB and # of VCPUs on 12th of March (pre) **318** (2025)\r\n",
+					"2. Compute # of resources with HUB and # of VCPUs on 14th of March (post) **294** (2689)\r\n",
 					"3. Compute # of resources with HUB enabled and # of VCPUs on 13th of March (added) **313** (1341)\r\n",
 					"\r\n",
 					"- **11** of these resources does not exist any longer, and deployment fails for these. These account for **80** normalized cores\r\n",
@@ -99,137 +206,150 @@
 						"transient": {
 							"deleting": false
 						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(rm_w_vcpu.where((F.col('SQLAHB_VCPUS') == 0) | F.col('SQLAHB_VCPUS').isNull()))"
-				],
-				"execution_count": 39
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(cost_pre.where((F.col('ResourceId').isin(pre.intersection(added))) & (F.col('SQLAHB') == 'Enabled')).dropDuplicates(['ResourceId']).count())"
-				],
-				"execution_count": 65
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
 					}
 				},
 				"source": [
-					"import pyspark.sql.functions as F"
-				],
-				"execution_count": 70
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"storageAccount = 's037costmgmt'"
-				],
-				"execution_count": 53
-			},
-			{
-				"cell_type": "code",
-				"source": [
-					"test_path = 'abfss://sql-hub-logs@hubautomation.dfs.core.windows.net/2024-03-13-AHUB-Deployment.csv'\r\n",
-					"csv_options = {'header' : True,\r\n",
-					"                'delimiter' : ',',\r\n",
-					"                'quote' : '\"',\r\n",
-					"                'escape' : '\"'}\r\n",
-					"add_df = spark.read.options(**csv_options).csv(test_path)\r\n",
-					"\r\n",
-					"add_ids = [row[0] for row in add_df.select(\"ResourceId\").collect()]\r\n",
-					"\r\n",
-					"test_path = 'abfss://sql-hub-logs@hubautomation.dfs.core.windows.net/2024-03-13-AHUB-Removal.csv'\r\n",
-					"csv_options = {'header' : True,\r\n",
-					"                'delimiter' : ',',\r\n",
-					"                'quote' : '\"',\r\n",
-					"                'escape' : '\"'}\r\n",
-					"rm_df = spark.read.options(**csv_options).csv(test_path)\r\n",
-					"\r\n",
-					"rm_ids = [row[0] for row in rm_df.select(\"ResourceId\").collect()]\r\n",
-					"\r\n",
-					"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
-					"test_cost = spark.read.format('parquet').load(cost_path)\r\n",
-					"\r\n",
-					"cost_pre = test_cost.where(F.col('Date') == '2024-03-12')\r\n",
-					"cost_pre = cost_pre.where(F.col('SQLAHB') == 'Enabled')\r\n",
-					"\r\n",
-					"cost_today = test_cost.where(F.col('Date') >= '2024-03-01')\r\n",
-					"cost_today = cost_today.where(F.col('SQLAHB') == 'Enabled')\r\n",
-					"\r\n",
-					"cost_post = test_cost.where(F.col('Date') == '2024-03-14')\r\n",
-					"cost_post = cost_post.where(F.col('SQLAHB') == 'Enabled')\r\n",
-					"\r\n",
-					"pre_ids = [row[0] for row in cost_pre.dropDuplicates(['ResourceId']).select(\"ResourceId\").collect()]\r\n",
-					"post_ids = [row[0] for row in cost_post.dropDuplicates(['ResourceId']).select(\"ResourceId\").collect()]\r\n",
-					"\r\n",
-					"pre = set(pre_ids)\r\n",
-					"post = set(post_ids)\r\n",
-					"added = set(add_ids)\r\n",
-					"removed = set(rm_ids)\r\n",
-					"\r\n",
-					"kept = pre.intersection(post)\r\n",
-					"diff = added.intersection(pre)\r\n",
-					"# display(cost_post.agg(F.sum('SQLAHB_VCPUs')))\r\n",
-					"# display(cost_post.where(F.col('ResourceId').isin(kept)).orderBy(F.desc('SQLAHB_VCPUs')))\r\n",
-					"# display(add_df.join(cost_post, 'ResourceId', 'left').dropDuplicates(['Resourceid']).agg(F.sum('SQLAHB_VCPUs')))\r\n",
-					""
-				],
-				"execution_count": 68
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"add_w_vcpu = add_df.join(cost_today, 'ResourceId', 'left')\r\n",
-					"rm_w_vcpu = rm_df.join(cost_today, 'ResourceId', 'left')"
+					"pre_count = cost_pre.count()\r\n",
+					"pre_cores = cost_pre.agg(F.sum('SQLAHB_VCPUS')).collect()[0][0]\r\n",
+					"post_count = cost_post.count()\r\n",
+					"post_cores = cost_post.agg(F.sum('SQLAHB_VCPUS')).collect()[0][0]"
 				],
 				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"added_count = add_w_vcpu.count()\r\n",
+					"added_cores = add_w_vcpu.agg(F.sum('SQLAHB_VCPUS')).collect()[0][0]\r\n",
+					"added_not_exists_count = add_w_vcpu.where(F.col('SQLAHB').isNull()).count()\r\n",
+					"added_not_exists_cores = add_w_vcpu.where(F.col('SQLAHB').isNull()).agg(F.sum('vCores')) # Not normalized"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"rm_count = rm_w_vcpu.count()\r\n",
+					"rm_cores = rm_w_vcpu.agg(F.sum('SQLAHB_VCPUS')).collect()[0][0]"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"kept_count = cost_today.where(F.col('ResourceId').isin(kept)).count()\r\n",
+					"kept_cores = cost_today.where(F.col('ResourceId').isin(kept)).agg(F.sum('SQLAHB_VCPUS')).collect()[0][0]"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"pre_added_count = cost_today.where(F.col('ResourceId').isin(pre.intersection(added))).count()\r\n",
+					"pre_added_cores = cost_today.where(F.col('ResourceId').isin(pre.intersection(added))).agg(F.sum('SQLAHB_VCPUS'))"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"post_added_count = cost_today.where(F.col('ResourceId').isin(post.intersection(added))).count()\r\n",
+					"post_added_cores = cost_today.where(F.col('ResourceId').isin(post.intersection(added))).agg(F.sum('SQLAHB_VCPUS'))"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(cost_today.where(F.col('ResourceId').isin(kept)).where((F.col('SQLAHB_VCPUS') == 0) | (F.col('SQLAHB_VCPUS').isNull())))"
+				],
+				"execution_count": 52
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(cost_today.where(F.col('ResourceId').isin(pre.intersection(added))).agg(F.sum('SQLAHB_VCPUS')))"
+				],
+				"execution_count": 64
 			}
 		]
 	}
