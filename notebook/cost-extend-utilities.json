@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "53cfd905-b65a-4e66-8440-315a2ebc9780"
+				"spark.autotune.trackingId": "2ad4caef-c08d-4c68-85fc-1a0ade2b4fac"
 			}
 		},
 		"metadata": {
@@ -278,7 +278,7 @@
 					"    is_sql_db = (F.col('ResourceId').like('%Microsoft.Sql/servers%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
 					"    is_sql_mi = (F.col('ResourceId').like('%Microsoft.Sql/managedInstances%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
 					"    is_sql_vm = (F.col('MeterCategory') == 'Virtual Machines Licenses') & (F.col('MeterSubCategory').like('SQL Server%'))\r\n",
-					"    is_sql_arc = (F.col('ResourceId').like('%Microsoft.AzureArcData/sqlServerInstances%'))\r\n",
+					"    is_sql_arc = (F.col('ResourceId').like('%Microsoft.AzureArcData/sqlServerInstances%')) & (F.col('ai_AHB').isNotNull())\r\n",
 					"    is_sql_adf = (F.col('MeterCategory') == 'Azure Data Factory v2') & (F.col('MeterSubCategory').like('SSIS%'))\r\n",
 					"\r\n",
 					"    is_sql_cost = is_sql_db | is_sql_mi | is_sql_vm | is_sql_arc | is_sql_adf\r\n",
@@ -291,8 +291,8 @@
 					"        F.when(is_sql_cost & is_vm_ahb, AHBStatus.Enabled.value)\r\n",
 					"        .when(is_sql_cost & is_vm_not_supported, AHBStatus.NotSupported.value)\r\n",
 					"        .when(is_sql_cost & is_vm, AHBStatus.NotEnabled.value)\r\n",
-					"        .when(is_sql_cost & F.col('ai_AHB') == True, AHBStatus.Enabled.value)\r\n",
-					"        .when(is_sql_cost & F.col('ai_AHB') == False, AHBStatus.NotEnabled.value)\r\n",
+					"        .when(is_sql_cost & (F.col('ai_AHB') == True), AHBStatus.Enabled.value)\r\n",
+					"        .when(is_sql_cost & (F.col('ai_AHB') == False), AHBStatus.NotEnabled.value)\r\n",
 					"        .when(is_sql_adf & F.col('MeterName').like('%AHB%'), AHBStatus.Enabled.value)\r\n",
 					"        .when(is_sql_adf & F.col('MeterName').like('%License Included%'), AHBStatus.NotEnabled.value)\r\n",
 					"        .otherwise(AHBStatus.NotSupported.value)\r\n",
