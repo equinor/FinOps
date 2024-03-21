@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "2ad4caef-c08d-4c68-85fc-1a0ade2b4fac"
+				"spark.autotune.trackingId": "c702ed30-0250-4df8-821d-0fa83571addb"
 			}
 		},
 		"metadata": {
@@ -283,9 +283,14 @@
 					"\r\n",
 					"    is_sql_cost = is_sql_db | is_sql_mi | is_sql_vm | is_sql_arc | is_sql_adf\r\n",
 					"\r\n",
+					"    NOT_SUPPORTED_VM_SUBCATEGORIES = [\r\n",
+					"        'SQL Server Express Edition',\r\n",
+					"        'SQL Server Developer Edition'\r\n",
+					"    ]\r\n",
+					"    \r\n",
 					"    is_vm = F.col('ResourceId').like('%Microsoft.Compute/virtualMachines%')\r\n",
 					"    is_vm_ahb = is_vm & (F.col('MeterSubCategory') == 'SQL Server Azure Hybrid Benefit')\r\n",
-					"    is_vm_not_supported = is_vm & (F.col('MeterSubCategory') == 'SQL Server Express Edition')\r\n",
+					"    is_vm_not_supported = is_vm & (F.col('MeterSubCategory').isin(NOT_SUPPORTED_VM_SUBCATEGORIES))\r\n",
 					"\r\n",
 					"    cost_df = cost_df.withColumn('SQLAHB', \r\n",
 					"        F.when(is_sql_cost & is_vm_ahb, AHBStatus.Enabled.value)\r\n",
