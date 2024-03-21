@@ -1029,30 +1029,6 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
-		"sprkpool33large_delayInMinutes": {
-			"type": "int",
-			"defaultValue": 10
-		},
-		"sprkpool33large_maxNodeCount": {
-			"type": "int",
-			"defaultValue": 12
-		},
-		"sprkpool33large_minNodeCount": {
-			"type": "int",
-			"defaultValue": 3
-		},
-		"sprkpool33large_nodeCount": {
-			"type": "int",
-			"defaultValue": 3
-		},
-		"sprkpool33large_nodeSize": {
-			"type": "string",
-			"defaultValue": "Large"
-		},
-		"sprkpool33large_sparkVersion": {
-			"type": "string",
-			"defaultValue": "3.3"
-		},
 		"sparkpool32_delayInMinutes": {
 			"type": "int",
 			"defaultValue": 15
@@ -1076,6 +1052,30 @@
 		"sparkpool32_sparkVersion": {
 			"type": "string",
 			"defaultValue": "3.2"
+		},
+		"sprkpool33large_delayInMinutes": {
+			"type": "int",
+			"defaultValue": 10
+		},
+		"sprkpool33large_maxNodeCount": {
+			"type": "int",
+			"defaultValue": 12
+		},
+		"sprkpool33large_minNodeCount": {
+			"type": "int",
+			"defaultValue": 3
+		},
+		"sprkpool33large_nodeCount": {
+			"type": "int",
+			"defaultValue": 3
+		},
+		"sprkpool33large_nodeSize": {
+			"type": "string",
+			"defaultValue": "Large"
+		},
+		"sprkpool33large_sparkVersion": {
+			"type": "string",
+			"defaultValue": "3.3"
 		}
 	},
 	"variables": {
@@ -43001,7 +43001,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "463f312a-3845-4ac0-aed4-36a4453005a1"
+						"spark.autotune.trackingId": "457faf6f-2946-4c0c-92a5-3d16a6aac2f0"
 					}
 				},
 				"metadata": {
@@ -43272,9 +43272,14 @@
 							"\r\n",
 							"    is_sql_cost = is_sql_db | is_sql_mi | is_sql_vm | is_sql_arc | is_sql_adf\r\n",
 							"\r\n",
+							"    NOT_SUPPORTED_VM_SUBCATEGORIES = [\r\n",
+							"        'SQL Server Express Edition',\r\n",
+							"        'SQL Server Developer Edition'\r\n",
+							"    ]\r\n",
+							"    \r\n",
 							"    is_vm = F.col('ResourceId').like('%Microsoft.Compute/virtualMachines%')\r\n",
 							"    is_vm_ahb = is_vm & (F.col('MeterSubCategory') == 'SQL Server Azure Hybrid Benefit')\r\n",
-							"    is_vm_not_supported = is_vm & (F.col('MeterSubCategory') == 'SQL Server Express Edition')\r\n",
+							"    is_vm_not_supported = is_vm & (F.col('MeterSubCategory').isin(NOT_SUPPORTED_VM_SUBCATEGORIES))\r\n",
 							"\r\n",
 							"    cost_df = cost_df.withColumn('SQLAHB', \r\n",
 							"        F.when(is_sql_cost & is_vm_ahb, AHBStatus.Enabled.value)\r\n",
@@ -46773,7 +46778,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "60c25f58-2373-45d7-b4c8-f8e6e9b3c8b5"
+						"spark.autotune.trackingId": "a8c22b30-0326-4d55-991d-6847f4b96557"
 					}
 				},
 				"metadata": {
@@ -46798,11 +46803,127 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"import pyspark.sql.functions as F"
+						],
+						"outputs": [],
+						"execution_count": 47
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": 48
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"pre_date = '2024-03-12'\r\n",
+							"post_date = '2024-03-14'\r\n",
+							"deploy_date = '2024-03-13'\r\n",
+							"start_of_month = '2024-03-01'\r\n",
+							"end_of_month = '2024-03-31'"
+						],
+						"outputs": [],
+						"execution_count": 49
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"test_path = f'abfss://win-hub-logs@hubautomation.dfs.core.windows.net/{deploy_date}-AHUB-Deployment.csv'\r\n",
+							"csv_options = {'header' : True,\r\n",
+							"                'delimiter' : ';',\r\n",
+							"                'quote' : '\"',\r\n",
+							"                'escape' : '\"'}\r\n",
+							"add_df = spark.read.options(**csv_options).csv(test_path)\r\n",
+							"\r\n",
+							"add_ids = [row[0] for row in add_df.select(\"ResourceId\").collect()]\r\n",
+							"\r\n",
+							"test_path = f'abfss://win-hub-logs@hubautomation.dfs.core.windows.net/{deploy_date}-AHUB-Removal.csv'\r\n",
+							"csv_options = {'header' : True,\r\n",
+							"                'delimiter' : ';',\r\n",
+							"                'quote' : '\"',\r\n",
+							"                'escape' : '\"'}\r\n",
+							"rm_df = spark.read.options(**csv_options).csv(test_path)\r\n",
+							"\r\n",
+							"rm_ids = [row[0] for row in rm_df.select(\"ResourceId\").collect()]\r\n",
+							"\r\n",
+							"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/{start_of_month.replace(\"-\", \"\")}-{end_of_month.replace(\"-\", \"\")}/Extended_v3_ACMMonthlyActualCost_{start_of_month.replace(\"-\", \"\")}-{end_of_month.replace(\"-\", \"\")}.parquet'\r\n",
+							"test_cost = spark.read.format('parquet').load(cost_path)\r\n",
+							"\r\n",
+							"cost_pre = test_cost.where(F.col('Date') == pre_date)\r\n",
+							"cost_pre_ne = cost_pre.where(F.col('WindowsAHB') == 'Not Enabled').dropDuplicates(['ResourceId'])\r\n",
+							"cost_pre = cost_pre.where(F.col('WindowsAHB') == 'Enabled').dropDuplicates(['ResourceId'])\r\n",
+							"\r\n",
+							"cost_today = test_cost.where(F.col('Date') >= start_of_month)\r\n",
+							"cost_today_ne = cost_today.where(F.col('WindowsAHB') == 'Not Enabled').dropDuplicates(['ResourceId'])\r\n",
+							"cost_today = cost_today.where(F.col('WindowsAHB') == 'Enabled').dropDuplicates(['ResourceId'])\r\n",
+							"\r\n",
+							"cost_post = test_cost.where(F.col('Date') == post_date)\r\n",
+							"cost_post_ne = cost_post.where(F.col('WindowsAHB') == 'Not Enabled').dropDuplicates(['ResourceId'])\r\n",
+							"cost_post = cost_post.where(F.col('WindowsAHB') == 'Enabled').dropDuplicates(['ResourceId'])\r\n",
+							"\r\n",
+							"pre_ids = [row[0] for row in cost_pre.select(\"ResourceId\").collect()]\r\n",
+							"post_ids = [row[0] for row in cost_post.select(\"ResourceId\").collect()]\r\n",
+							"\r\n",
+							"pre = set(pre_ids)\r\n",
+							"post = set(post_ids)\r\n",
+							"added = set(add_ids)\r\n",
+							"removed = set(rm_ids)\r\n",
+							"\r\n",
+							"kept = pre.intersection(post)\r\n",
+							"diff = added.intersection(pre)\r\n",
+							"\r\n",
+							"add_w_vcpu = add_df.join(cost_today, 'ResourceId', 'left')\r\n",
+							"rm_w_vcpu = rm_df.join(cost_today, 'ResourceId', 'left')"
+						],
+						"outputs": [],
+						"execution_count": 51
+					},
 					{
 						"cell_type": "markdown",
 						"metadata": {
@@ -46814,8 +46935,8 @@
 						},
 						"source": [
 							"#### Calculate over/under assignment of HUB\r\n",
-							"1. Compute # of resources with HUB and # of VCPUs on 12th of March (pre) **317** (1817)\r\n",
-							"2. Compute # of resources with HUB and # of VCPUs on 14th of March (post) **293** (2481)\r\n",
+							"1. Compute # of resources with HUB and # of VCPUs on 12th of March (pre) **318** (2025)\r\n",
+							"2. Compute # of resources with HUB and # of VCPUs on 14th of March (post) **294** (2689)\r\n",
 							"3. Compute # of resources with HUB enabled and # of VCPUs on 13th of March (added) **313** (1341)\r\n",
 							"\r\n",
 							"- **11** of these resources does not exist any longer, and deployment fails for these. These account for **80** normalized cores\r\n",
@@ -46837,7 +46958,19 @@
 							"- Are more/less normalized cores being enabled than available licenses?\r\n",
 							"- Get list of resources not being enabled that should be enabled\r\n",
 							"- Get list of resources that are enabled but are not in the enabled list\r\n",
-							"- Do the same for Windows HUB"
+							"- Do the same for Windows HUB\r\n",
+							"\r\n",
+							"### SUMMARY\r\n",
+							"\r\n",
+							"HOW MANY RESOURCES ON 12th\r\n",
+							"\r\n",
+							"HOW MANY ENABLED ON 13th\r\n",
+							"\r\n",
+							"HOW MANY RESOURCE ON 14th\r\n",
+							"\r\n",
+							"HOW MANY RESOURCES ON 12th NOT IN ENABLED LIST\r\n",
+							"\r\n",
+							"HOW MANY RESOURCES ON 14th NOT IN ENABLED LIST"
 						]
 					},
 					{
@@ -46851,14 +46984,16 @@
 								"transient": {
 									"deleting": false
 								}
-							},
-							"collapsed": false
+							}
 						},
 						"source": [
-							"display(rm_w_vcpu.where((F.col('SQLAHB_VCPUS') == 0) | F.col('SQLAHB_VCPUS').isNull()))"
+							"pre_count = cost_pre.count()\r\n",
+							"pre_cores = cost_pre.agg(F.sum('WindowsAHB_VCPUS')).collect()[0][0]\r\n",
+							"post_count = cost_post.count()\r\n",
+							"post_cores = cost_post.agg(F.sum('WindowsAHB_VCPUS')).collect()[0][0]"
 						],
 						"outputs": [],
-						"execution_count": 39
+						"execution_count": 52
 					},
 					{
 						"cell_type": "code",
@@ -46871,123 +47006,235 @@
 								"transient": {
 									"deleting": false
 								}
-							},
-							"collapsed": false
+							}
 						},
 						"source": [
-							"display(cost_pre.where((F.col('ResourceId').isin(pre.intersection(added))) & (F.col('SQLAHB') == 'Enabled')).dropDuplicates(['ResourceId']).count())"
+							"added_count = add_w_vcpu.count()\r\n",
+							"added_cores = add_w_vcpu.agg(F.sum('WindowsAHB_VCPUS')).collect()[0][0]\r\n",
+							"added_not_exists_count = add_w_vcpu.where(F.col('WindowsAHB').isNull()).count() or 0\r\n",
+							"added_not_exists_cores = add_w_vcpu.where(F.col('WindowsAHB').isNull()).agg(F.sum('ai_VCPUs')).collect()[0][0] or 0 # Not normalized"
+						],
+						"outputs": [],
+						"execution_count": 64
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"rm_count = rm_w_vcpu.count()\r\n",
+							"rm_cores = rm_w_vcpu.agg(F.sum('WindowsAHB_VCPUS')).collect()[0][0]"
+						],
+						"outputs": [],
+						"execution_count": 55
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"kept_count = cost_today.where(F.col('ResourceId').isin(kept)).count()\r\n",
+							"kept_cores = cost_today.where(F.col('ResourceId').isin(kept)).agg(F.sum('WindowsAHB_VCPUS')).collect()[0][0]"
+						],
+						"outputs": [],
+						"execution_count": 56
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"pre_added_count = cost_today.where(F.col('ResourceId').isin(pre.intersection(added))).count()\r\n",
+							"pre_added_cores = cost_today.where(F.col('ResourceId').isin(pre.intersection(added))).agg(F.sum('WindowsAHB_VCPUS')).collect()[0][0]"
+						],
+						"outputs": [],
+						"execution_count": 57
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"post_added_count = cost_today.where(F.col('ResourceId').isin(post.intersection(added))).count()\r\n",
+							"post_added_cores = cost_today.where(F.col('ResourceId').isin(post.intersection(added))).agg(F.sum('WindowsAHB_VCPUS')).collect()[0][0]"
+						],
+						"outputs": [],
+						"execution_count": 58
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"pre_removed_count = cost_today.where(F.col('ResourceId').isin(pre.intersection(removed))).count()\r\n",
+							"pre_removed_cores = cost_today.where(F.col('ResourceId').isin(pre.intersection(removed))).agg(F.sum('WindowsAHB_VCPUS')).collect()[0][0]\r\n",
+							"\r\n",
+							"post_removed_count = cost_today.where(F.col('ResourceId').isin(post.intersection(removed))).count()\r\n",
+							"post_removed_cores = cost_today.where(F.col('ResourceId').isin(post.intersection(removed))).agg(F.sum('WindowsAHB_VCPUS')).collect()[0][0] or 0"
+						],
+						"outputs": [],
+						"execution_count": 59
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"post_added_ne_count = cost_post_ne.where(F.col('ResourceId').isin(added)).count()\r\n",
+							"post_added_ne_cores = cost_post_ne.where(F.col('ResourceId').isin(added)).agg(F.sum('WindowsAHB_VCPUS')).collect()[0][0]"
+						],
+						"outputs": [],
+						"execution_count": 60
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"post_not_in_added_count = cost_post.where(F.col('ResourceId').isin(post.difference(added))).count()\r\n",
+							"post_not_in_added_cores = cost_post.where(F.col('ResourceId').isin(post.difference(added))).agg(F.sum('WindowsAHB_VCPUS')).collect()[0][0]"
+						],
+						"outputs": [],
+						"execution_count": 61
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"pre_not_in_added_count = cost_pre.where(F.col('ResourceId').isin(pre.difference(added))).count()\r\n",
+							"pre_not_in_added_cores = cost_pre.where(F.col('ResourceId').isin(pre.difference(added))).agg(F.sum('WindowsAHB_VCPUS')).collect()[0][0]"
+						],
+						"outputs": [],
+						"execution_count": 62
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"print(f\"Number of resources with HUB on date before deployment {pre_date}: {pre_count} ({pre_cores} normalized cores)\")\r\n",
+							"print(f\"Number of resources in HUB deployment on {deploy_date}: {added_count} ({added_cores} normalized cores)\")\r\n",
+							"print(f\"Number of resource with HUB on date after deployment {post_date}: {post_count} ({post_cores} normalized cores)\")\r\n",
+							"print(' ')\r\n",
+							"print(f\"Expected number of HUB resources on {post_date}: {added_count} ({added_cores} normalized cores)\")\r\n",
+							"print(f\"Actual number of HUB resources on {post_date}: {post_count} ({post_cores} normalized cores)\")\r\n",
+							"print(' ')\r\n",
+							"print(f\"Number of resources scheduled for HUB deployment that doesn't exist per {deploy_date}: {added_not_exists_count} ({added_not_exists_cores} NOT normalized cores)\")\r\n",
+							"print(f\"The new expected number of HUB resources on {post_date}: {added_count - added_not_exists_count} ({added_cores - added_not_exists_cores} NOT normalized cores)\")\r\n",
+							"print(' ')\r\n",
+							"print(f\"Out of the {pre_count} HUB resources day before deployment, {rm_count} were scheduled for removal ({rm_cores} normalized cores)\")\r\n",
+							"print(f\"Out of the {rm_count} HUB resources scheduled for removal on {deploy_date}, {pre_removed_count} ({pre_removed_cores} normalized cores) resources had HUB deployed on {pre_date}\")\r\n",
+							"print('')\r\n",
+							"print(f\"Out of the {pre_count} HUB resources from {pre_date}, {kept_count} ({kept_cores} normalized cores) of the same resources still had HUB applied {post_date}\")\r\n",
+							"print(f\"Out of the {pre_count} HUB resources from {pre_date}, {pre_added_count} ({pre_added_cores} normalized cores) of the same resources were in the deploy list on {deploy_date}\")\r\n",
+							"print(f\"Out of the {post_count} HUB resources from {post_date}, {post_added_count} ({post_added_cores} normalized cores) of the same resources were in the deploy list on {deploy_date}\")\r\n",
+							"print(' ')\r\n",
+							"print(f\"{post_added_ne_count} ({post_added_ne_cores} normalized cores) resources that were scheduled for deployment on {deploy_date}, did not have HUB enabled on {post_date}\")\r\n",
+							"print(' ')\r\n",
+							"print(f\"Out of the {post_count} HUB resources on {post_date}, there are {post_not_in_added_count} ({post_not_in_added_cores} normalized cores) that are not referenced on the deployment list on {deploy_date}\")\r\n",
+							"print(f\"Out of the {pre_count} HUB resources on {pre_date}, there are {pre_not_in_added_count} ({pre_not_in_added_cores} normalized cores) that are not referenced on the deployment list on {deploy_date}\")\r\n",
+							"print(\" \")\r\n",
+							"\r\n",
+							"expected_count = added_count\r\n",
+							"expected_cores = added_cores\r\n",
+							"print(f\"Having {expected_count} ({expected_cores} normalized cores) resources scheduled for deployment, but there are {post_count} ({post_cores} normalized cores) HUB resources day after deployment\")\r\n",
+							"\r\n",
+							"expected_count -= added_not_exists_count\r\n",
+							"expected_cores -= added_not_exists_cores\r\n",
+							"print(f\"Subtracting the scheduled resources that doesent exist {added_not_exists_count} ({added_not_exists_cores} NOT normalized cores), we can expect {expected_count} ({expected_cores} normalized cores) resources for deployment\")\r\n",
+							"\r\n",
+							"expected_post_count = post_not_in_added_count + expected_count\r\n",
+							"expected_post_cores = post_not_in_added_cores + expected_cores\r\n",
+							"print(f\"Taking into account the resources with HUB post deployment that weren't referenced in HUB schedule {post_not_in_added_count} ({post_not_in_added_cores} normalized cores), the expected number of HUB resources day after deployment should be {expected_post_count} ({expected_post_cores} normalized cores)\")\r\n",
+							"\r\n",
+							"expected_diff_count = expected_post_count - post_count \r\n",
+							"expected_diff_cores = expected_post_cores - post_cores\r\n",
+							"print(f\"Conclusion: there are being deployed {expected_diff_count} ({expected_diff_cores} normalized cores) less HUB resources than expected\")"
 						],
 						"outputs": [],
 						"execution_count": 65
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"import pyspark.sql.functions as F"
-						],
-						"outputs": [],
-						"execution_count": 70
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"storageAccount = 's037costmgmt'"
-						],
-						"outputs": [],
-						"execution_count": 53
-					},
-					{
-						"cell_type": "code",
-						"source": [
-							"test_path = 'abfss://sql-hub-logs@hubautomation.dfs.core.windows.net/2024-03-13-AHUB-Deployment.csv'\r\n",
-							"csv_options = {'header' : True,\r\n",
-							"                'delimiter' : ',',\r\n",
-							"                'quote' : '\"',\r\n",
-							"                'escape' : '\"'}\r\n",
-							"add_df = spark.read.options(**csv_options).csv(test_path)\r\n",
-							"\r\n",
-							"add_ids = [row[0] for row in add_df.select(\"ResourceId\").collect()]\r\n",
-							"\r\n",
-							"test_path = 'abfss://sql-hub-logs@hubautomation.dfs.core.windows.net/2024-03-13-AHUB-Removal.csv'\r\n",
-							"csv_options = {'header' : True,\r\n",
-							"                'delimiter' : ',',\r\n",
-							"                'quote' : '\"',\r\n",
-							"                'escape' : '\"'}\r\n",
-							"rm_df = spark.read.options(**csv_options).csv(test_path)\r\n",
-							"\r\n",
-							"rm_ids = [row[0] for row in rm_df.select(\"ResourceId\").collect()]\r\n",
-							"\r\n",
-							"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
-							"test_cost = spark.read.format('parquet').load(cost_path)\r\n",
-							"\r\n",
-							"cost_pre = test_cost.where(F.col('Date') == '2024-03-12')\r\n",
-							"cost_pre = cost_pre.where(F.col('SQLAHB') == 'Enabled')\r\n",
-							"\r\n",
-							"cost_today = test_cost.where(F.col('Date') >= '2024-03-01')\r\n",
-							"cost_today = cost_today.where(F.col('SQLAHB') == 'Enabled')\r\n",
-							"\r\n",
-							"cost_post = test_cost.where(F.col('Date') == '2024-03-14')\r\n",
-							"cost_post = cost_post.where(F.col('SQLAHB') == 'Enabled')\r\n",
-							"\r\n",
-							"pre_ids = [row[0] for row in cost_pre.dropDuplicates(['ResourceId']).select(\"ResourceId\").collect()]\r\n",
-							"post_ids = [row[0] for row in cost_post.dropDuplicates(['ResourceId']).select(\"ResourceId\").collect()]\r\n",
-							"\r\n",
-							"pre = set(pre_ids)\r\n",
-							"post = set(post_ids)\r\n",
-							"added = set(add_ids)\r\n",
-							"removed = set(rm_ids)\r\n",
-							"\r\n",
-							"kept = pre.intersection(post)\r\n",
-							"diff = added.intersection(pre)\r\n",
-							"# display(cost_post.agg(F.sum('SQLAHB_VCPUs')))\r\n",
-							"# display(cost_post.where(F.col('ResourceId').isin(kept)).orderBy(F.desc('SQLAHB_VCPUs')))\r\n",
-							"# display(add_df.join(cost_post, 'ResourceId', 'left').dropDuplicates(['Resourceid']).agg(F.sum('SQLAHB_VCPUs')))\r\n",
-							""
-						],
-						"outputs": [],
-						"execution_count": 68
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"add_w_vcpu = add_df.join(cost_today, 'ResourceId', 'left')\r\n",
-							"rm_w_vcpu = rm_df.join(cost_today, 'ResourceId', 'left')"
-						],
-						"outputs": [],
-						"execution_count": null
 					}
 				]
 			},
@@ -48312,7 +48559,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "f8d53572-95b3-4ff1-90df-c91109b747b0"
+						"spark.autotune.trackingId": "2bb39370-196d-4316-aeb9-5875fd1d14ce"
 					}
 				},
 				"metadata": {
@@ -48337,7 +48584,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -48357,6 +48605,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"from datetime import timedelta, datetime\r\n",
 							"from dateutil.relativedelta import relativedelta\r\n",
@@ -48369,7 +48618,7 @@
 							"from pyspark.sql import Row"
 						],
 						"outputs": [],
-						"execution_count": 14
+						"execution_count": 103
 					},
 					{
 						"cell_type": "code",
@@ -48391,7 +48640,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 76
 					},
 					{
 						"cell_type": "code",
@@ -48416,7 +48665,32 @@
 							"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 						],
 						"outputs": [],
-						"execution_count": 16
+						"execution_count": 77
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Name of resource groups containing terminal server (TS) virtual machines\r\n",
+							"# The TS VMs have a pre-allocated set of HUB licenses, and should be excluded from the calculation in this script\r\n",
+							"TS_VM_RG = [\r\n",
+							"    'RG-TERMINAL_SERVERS-NOE',\r\n",
+							"    'RG-TERMINAL_SERVERS-NOW',\r\n",
+							"    'RG-TERMINAL_SERVERS-SCUS'\r\n",
+							"]"
+						],
+						"outputs": [],
+						"execution_count": 100
 					},
 					{
 						"cell_type": "markdown",
@@ -48450,7 +48724,7 @@
 							"pricesheet_df = spark.read.format('parquet').load(pricesheet_source_path)"
 						],
 						"outputs": [],
-						"execution_count": 17
+						"execution_count": 89
 					},
 					{
 						"cell_type": "code",
@@ -48497,7 +48771,7 @@
 							"VCPUBASEUNITPRICE = pricesheet_df.where(F.col('MeterName') == '1 vCPU VM License').select('VCPUBaseUnitPrice').collect()[0][0]"
 						],
 						"outputs": [],
-						"execution_count": 18
+						"execution_count": 90
 					},
 					{
 						"cell_type": "markdown",
@@ -48554,7 +48828,7 @@
 							"hourly_vcpu_cost = yearly_license_cost / (license_count * HOURS_PER_YEAR * VCPUS_PER_LICENSE)"
 						],
 						"outputs": [],
-						"execution_count": 19
+						"execution_count": 91
 					},
 					{
 						"cell_type": "markdown",
@@ -48611,7 +48885,7 @@
 							"]"
 						],
 						"outputs": [],
-						"execution_count": 20
+						"execution_count": 92
 					},
 					{
 						"cell_type": "code",
@@ -48631,7 +48905,7 @@
 							"cost_df = spark.read.format('parquet').load(cost_path)"
 						],
 						"outputs": [],
-						"execution_count": 21
+						"execution_count": 93
 					},
 					{
 						"cell_type": "code",
@@ -48654,15 +48928,13 @@
 							"# Use only VM related cost\r\n",
 							"is_vm_cost = ((F.col('ResourceId').contains('/virtualMachines/')) | (F.col('ResourceId').contains('/virtualMachineScaleSets/'))) \\\r\n",
 							"    & ((F.col('MeterSubCategory').contains('Windows')) | (F.col('ServiceInfo2').contains('Windows Server BYOL'))) \\\r\n",
-							"    & (F.col('MeterCategory') == 'Virtual Machines') & (F.col('ai_VCPUs').isNotNull())\r\n",
+							"    & ((F.col('MeterCategory') == 'Virtual Machines') | (F.col('MeterCategory') == 'Virtual Machines Licenses')) \\\r\n",
+							"    & (F.col('ai_VCPUs').isNotNull())\r\n",
 							"\r\n",
 							"cost_df = cost_df.where(is_vm_cost).select(*vm_columns)\r\n",
 							"\r\n",
-							"# Exclude TS VMs (these always have 8 vCPUs) and only consider other VMs with 2 or more vCPUs (for cost efficiency)\r\n",
-							"cost_df = cost_df.where(\r\n",
-							"    ~(F.col('ResourceName').startswith('TS') & (F.col('ai_VCPUs') == 8)) &\r\n",
-							"    (F.col('ai_VCPUs') >= 2)\r\n",
-							")\r\n",
+							"# Exclude terminal server VMs (as their HUB assignment are managed separately)\r\n",
+							"cost_df = cost_df.where(~F.col('ResourceGroup').isin(TS_VM_RG))\r\n",
 							"\r\n",
 							"# Removing the VMs who's ResourceName begins with 'CVD-' as these are Windows Client VM's and not relevant for consideration of a Windows Server licence\r\n",
 							"cost_df = cost_df.where(~F.upper(F.col('ResourceName')).startswith('CVD-'))\r\n",
@@ -48671,7 +48943,7 @@
 							"cost_copy_df = cost_df.alias('cost_copy_df')"
 						],
 						"outputs": [],
-						"execution_count": 22
+						"execution_count": 94
 					},
 					{
 						"cell_type": "markdown",
@@ -48749,11 +49021,11 @@
 							"# Only include the highest yielding resources up until the cumulative normalized cores equals the equivalent amount of available licenses\r\n",
 							"vm_enable_df = cost_df.where(F.col('TotalNormalizedCores') / VCPUS_PER_LICENSE <= available_licenses)\r\n",
 							"\r\n",
-							"# Remove redundant columns\r\n",
+							"# # Remove redundant columns\r\n",
 							"vm_enable_df = vm_enable_df.select(*selected_columns)"
 						],
 						"outputs": [],
-						"execution_count": 23
+						"execution_count": 86
 					},
 					{
 						"cell_type": "markdown",
@@ -49103,31 +49375,6 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
-			"type": "Microsoft.Synapse/workspaces/bigDataPools",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"autoPause": {
-					"enabled": true,
-					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
-				},
-				"autoScale": {
-					"enabled": true,
-					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
-					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
-				},
-				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
-				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
-				"nodeSizeFamily": "MemoryOptimized",
-				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
-				"isComputeIsolationEnabled": false,
-				"sessionLevelPackagesEnabled": true,
-				"annotations": []
-			},
-			"dependsOn": [],
-			"location": "northeurope"
-		},
-		{
 			"name": "[concat(parameters('workspaceName'), '/sparkpool32')]",
 			"type": "Microsoft.Synapse/workspaces/bigDataPools",
 			"apiVersion": "2019-06-01-preview",
@@ -49150,6 +49397,31 @@
 					"filename": "requirements.txt",
 					"time": "2023-01-25T09:06:41.7702231Z"
 				},
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": true,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
+				},
+				"autoScale": {
+					"enabled": true,
+					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
+					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
+				},
+				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
+				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
 				"isComputeIsolationEnabled": false,
 				"sessionLevelPackagesEnabled": true,
 				"annotations": []
