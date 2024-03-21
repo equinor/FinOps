@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "f8d53572-95b3-4ff1-90df-c91109b747b0"
+				"spark.autotune.trackingId": "bb103d68-1cf3-4ded-b818-a21ceec5bcc1"
 			}
 		},
 		"metadata": {
@@ -77,7 +77,7 @@
 					"import pyspark.sql.window as W\r\n",
 					"from pyspark.sql import Row"
 				],
-				"execution_count": 14
+				"execution_count": 103
 			},
 			{
 				"cell_type": "code",
@@ -98,7 +98,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": null
+				"execution_count": 76
 			},
 			{
 				"cell_type": "code",
@@ -122,7 +122,31 @@
 					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'\r\n",
 					"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 				],
-				"execution_count": 16
+				"execution_count": 77
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Name of resource groups containing terminal server (TS) virtual machines\r\n",
+					"# The TS VMs have a pre-allocated set of HUB licenses, and should be excluded from the calculation in this script\r\n",
+					"TS_VM_RG = [\r\n",
+					"    'RG-TERMINAL_SERVERS-NOE',\r\n",
+					"    'RG-TERMINAL_SERVERS-NOW',\r\n",
+					"    'RG-TERMINAL_SERVERS-SCUS'\r\n",
+					"]"
+				],
+				"execution_count": 100
 			},
 			{
 				"cell_type": "markdown",
@@ -155,7 +179,7 @@
 					"pricesheet_source_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/pricesheet-latest'\r\n",
 					"pricesheet_df = spark.read.format('parquet').load(pricesheet_source_path)"
 				],
-				"execution_count": 17
+				"execution_count": 89
 			},
 			{
 				"cell_type": "code",
@@ -201,7 +225,7 @@
 					"# Get license cost for 1 vCPU\r\n",
 					"VCPUBASEUNITPRICE = pricesheet_df.where(F.col('MeterName') == '1 vCPU VM License').select('VCPUBaseUnitPrice').collect()[0][0]"
 				],
-				"execution_count": 18
+				"execution_count": 90
 			},
 			{
 				"cell_type": "markdown",
@@ -257,7 +281,7 @@
 					"# Hourly cost of license per vCPU\r\n",
 					"hourly_vcpu_cost = yearly_license_cost / (license_count * HOURS_PER_YEAR * VCPUS_PER_LICENSE)"
 				],
-				"execution_count": 19
+				"execution_count": 91
 			},
 			{
 				"cell_type": "markdown",
@@ -313,7 +337,7 @@
 					"    'ai_VMName'\r\n",
 					"]"
 				],
-				"execution_count": 20
+				"execution_count": 92
 			},
 			{
 				"cell_type": "code",
@@ -332,7 +356,7 @@
 					"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 21
+				"execution_count": 93
 			},
 			{
 				"cell_type": "code",
@@ -355,15 +379,13 @@
 					"# Use only VM related cost\r\n",
 					"is_vm_cost = ((F.col('ResourceId').contains('/virtualMachines/')) | (F.col('ResourceId').contains('/virtualMachineScaleSets/'))) \\\r\n",
 					"    & ((F.col('MeterSubCategory').contains('Windows')) | (F.col('ServiceInfo2').contains('Windows Server BYOL'))) \\\r\n",
-					"    & (F.col('MeterCategory') == 'Virtual Machines') & (F.col('ai_VCPUs').isNotNull())\r\n",
+					"    & ((F.col('MeterCategory') == 'Virtual Machines') | (F.col('MeterCategory') == 'Virtual Machines Licenses')) \\\r\n",
+					"    & (F.col('ai_VCPUs').isNotNull())\r\n",
 					"\r\n",
 					"cost_df = cost_df.where(is_vm_cost).select(*vm_columns)\r\n",
 					"\r\n",
-					"# Exclude TS VMs (these always have 8 vCPUs) and only consider other VMs with 2 or more vCPUs (for cost efficiency)\r\n",
-					"cost_df = cost_df.where(\r\n",
-					"    ~(F.col('ResourceName').startswith('TS') & (F.col('ai_VCPUs') == 8)) &\r\n",
-					"    (F.col('ai_VCPUs') >= 2)\r\n",
-					")\r\n",
+					"# Exclude terminal server VMs (as their HUB assignment are managed separately)\r\n",
+					"cost_df = cost_df.where(~F.col('ResourceGroup').isin(TS_VM_RG))\r\n",
 					"\r\n",
 					"# Removing the VMs who's ResourceName begins with 'CVD-' as these are Windows Client VM's and not relevant for consideration of a Windows Server licence\r\n",
 					"cost_df = cost_df.where(~F.upper(F.col('ResourceName')).startswith('CVD-'))\r\n",
@@ -371,7 +393,7 @@
 					"# Persist a df copy for disable list calculation\r\n",
 					"cost_copy_df = cost_df.alias('cost_copy_df')"
 				],
-				"execution_count": 22
+				"execution_count": 94
 			},
 			{
 				"cell_type": "markdown",
@@ -449,10 +471,10 @@
 					"# Only include the highest yielding resources up until the cumulative normalized cores equals the equivalent amount of available licenses\r\n",
 					"vm_enable_df = cost_df.where(F.col('TotalNormalizedCores') / VCPUS_PER_LICENSE <= available_licenses)\r\n",
 					"\r\n",
-					"# Remove redundant columns\r\n",
+					"# # Remove redundant columns\r\n",
 					"vm_enable_df = vm_enable_df.select(*selected_columns)"
 				],
-				"execution_count": 23
+				"execution_count": 86
 			},
 			{
 				"cell_type": "markdown",
