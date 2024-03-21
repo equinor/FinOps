@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "7db7e3c3-5692-48e7-871b-a51d01ec7492"
+				"spark.autotune.trackingId": "dde8dd9c-029a-4cc5-bb22-bfdef2bd196b"
 			}
 		},
 		"metadata": {
@@ -67,7 +67,7 @@
 				"source": [
 					"import pyspark.sql.functions as F"
 				],
-				"execution_count": 1
+				"execution_count": 13
 			},
 			{
 				"cell_type": "code",
@@ -85,7 +85,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": null
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -107,7 +107,7 @@
 					"start_of_month = '2024-03-01'\r\n",
 					"end_of_month = '2024-03-31'"
 				],
-				"execution_count": null
+				"execution_count": 15
 			},
 			{
 				"cell_type": "code",
@@ -159,7 +159,7 @@
 					"add_w_vcpu = add_df.join(cost_today, 'ResourceId', 'left')\r\n",
 					"rm_w_vcpu = rm_df.join(cost_today, 'ResourceId', 'left')"
 				],
-				"execution_count": null
+				"execution_count": 16
 			},
 			{
 				"cell_type": "markdown",
@@ -221,25 +221,6 @@
 						"transient": {
 							"deleting": false
 						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(cost_pre.where(F.col('ResourceId').isin(pre.difference(added))).agg(F.sum('SQLAHB_VCPUS')))"
-				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
 					}
 				},
 				"source": [
@@ -248,7 +229,7 @@
 					"post_count = cost_post.count()\r\n",
 					"post_cores = cost_post.agg(F.sum('SQLAHB_VCPUS')).collect()[0][0]"
 				],
-				"execution_count": null
+				"execution_count": 18
 			},
 			{
 				"cell_type": "code",
@@ -269,7 +250,7 @@
 					"added_not_exists_count = add_w_vcpu.where(F.col('SQLAHB').isNull()).count()\r\n",
 					"added_not_exists_cores = add_w_vcpu.where(F.col('SQLAHB').isNull()).agg(F.sum('vCores')).collect()[0][0] # Not normalized"
 				],
-				"execution_count": null
+				"execution_count": 19
 			},
 			{
 				"cell_type": "code",
@@ -288,7 +269,7 @@
 					"rm_count = rm_w_vcpu.count()\r\n",
 					"rm_cores = rm_w_vcpu.agg(F.sum('SQLAHB_VCPUS')).collect()[0][0]"
 				],
-				"execution_count": null
+				"execution_count": 20
 			},
 			{
 				"cell_type": "code",
@@ -307,7 +288,7 @@
 					"kept_count = cost_today.where(F.col('ResourceId').isin(kept)).count()\r\n",
 					"kept_cores = cost_today.where(F.col('ResourceId').isin(kept)).agg(F.sum('SQLAHB_VCPUS')).collect()[0][0]"
 				],
-				"execution_count": null
+				"execution_count": 21
 			},
 			{
 				"cell_type": "code",
@@ -326,7 +307,7 @@
 					"pre_added_count = cost_today.where(F.col('ResourceId').isin(pre.intersection(added))).count()\r\n",
 					"pre_added_cores = cost_today.where(F.col('ResourceId').isin(pre.intersection(added))).agg(F.sum('SQLAHB_VCPUS')).collect()[0][0]"
 				],
-				"execution_count": null
+				"execution_count": 22
 			},
 			{
 				"cell_type": "code",
@@ -345,28 +326,7 @@
 					"post_added_count = cost_today.where(F.col('ResourceId').isin(post.intersection(added))).count()\r\n",
 					"post_added_cores = cost_today.where(F.col('ResourceId').isin(post.intersection(added))).agg(F.sum('SQLAHB_VCPUS')).collect()[0][0]"
 				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"print(pre_removed_count)\r\n",
-					"print(pre_removed_cores)\r\n",
-					"print(post_removed_count)\r\n",
-					"print(post_removed_cores)"
-				],
-				"execution_count": null
+				"execution_count": 23
 			},
 			{
 				"cell_type": "code",
@@ -388,7 +348,7 @@
 					"post_removed_count = cost_today.where(F.col('ResourceId').isin(post.intersection(removed))).count()\r\n",
 					"post_removed_cores = cost_today.where(F.col('ResourceId').isin(post.intersection(removed))).agg(F.sum('SQLAHB_VCPUS')).collect()[0][0] or 0"
 				],
-				"execution_count": null
+				"execution_count": 24
 			},
 			{
 				"cell_type": "code",
@@ -407,7 +367,7 @@
 					"post_added_ne_count = cost_post_ne.where(F.col('ResourceId').isin(added)).count()\r\n",
 					"post_added_ne_cores = cost_post_ne.where(F.col('ResourceId').isin(added)).agg(F.sum('SQLAHB_VCPUS')).collect()[0][0]"
 				],
-				"execution_count": null
+				"execution_count": 25
 			},
 			{
 				"cell_type": "code",
@@ -426,7 +386,7 @@
 					"post_not_in_added_count = cost_post.where(F.col('ResourceId').isin(post.difference(added))).count()\r\n",
 					"post_not_in_added_cores = cost_post.where(F.col('ResourceId').isin(post.difference(added))).agg(F.sum('SQLAHB_VCPUS')).collect()[0][0]"
 				],
-				"execution_count": null
+				"execution_count": 26
 			},
 			{
 				"cell_type": "code",
@@ -445,7 +405,7 @@
 					"pre_not_in_added_count = cost_pre.where(F.col('ResourceId').isin(pre.difference(added))).count()\r\n",
 					"pre_not_in_added_cores = cost_pre.where(F.col('ResourceId').isin(pre.difference(added))).agg(F.sum('SQLAHB_VCPUS')).collect()[0][0]"
 				],
-				"execution_count": null
+				"execution_count": 27
 			},
 			{
 				"cell_type": "code",
@@ -500,7 +460,7 @@
 					"expected_diff_cores = expected_post_cores - post_cores\r\n",
 					"print(f\"Conclusion: there are being deployed {expected_diff_count} ({expected_diff_cores} normalized cores) less HUB resources than expected\")"
 				],
-				"execution_count": null
+				"execution_count": 28
 			}
 		]
 	}
