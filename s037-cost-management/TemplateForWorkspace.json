@@ -36288,7 +36288,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "cd44ead1-3756-41fa-a4bb-26e2a40765eb"
+						"spark.autotune.trackingId": "a569f42a-842d-4574-85c1-81c335059130"
 					}
 				},
 				"metadata": {
@@ -36313,7 +36313,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -36493,7 +36494,7 @@
 							"    'benefitName',\r\n",
 							"    'SPStatus',\r\n",
 							"    'NormalizedP3YSPUnitPrice',\r\n",
-							"    'NormalizedHUBPayGUnitPrice'\r\n",
+							"    'LicensePayGUnitPrice'\r\n",
 							"]\r\n",
 							"\r\n",
 							"df_schema_extended = df_schema_extended.select(*columns_to_keep) \r\n",
@@ -36700,7 +36701,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "07444988-29ba-4b44-bf99-9cf18514519f"
+						"spark.autotune.trackingId": "5bf02eec-dc2a-47b6-a60d-0d03909705ed"
 					}
 				},
 				"metadata": {
@@ -36725,7 +36726,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -37033,7 +37035,7 @@
 							"    'benefitName',\r\n",
 							"    'SPStatus',\r\n",
 							"    'NormalizedP3YSPUnitPrice',\r\n",
-							"    'NormalizedHUBPayGUnitPrice',\r\n",
+							"    'LicensePayGUnitPrice',\r\n",
 							"    'ai_VCPUs',\r\n",
 							"    'Date'\r\n",
 							"]"
@@ -43001,7 +43003,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "457faf6f-2946-4c0c-92a5-3d16a6aac2f0"
+						"spark.autotune.trackingId": "6b3d1fdc-3ee4-4e9c-9f70-a7f21e686b55"
 					}
 				},
 				"metadata": {
@@ -43272,18 +43274,21 @@
 							"\r\n",
 							"    is_sql_cost = is_sql_db | is_sql_mi | is_sql_vm | is_sql_arc | is_sql_adf\r\n",
 							"\r\n",
-							"    NOT_SUPPORTED_VM_SUBCATEGORIES = [\r\n",
+							"    NOT_SUPPORTED_AHB_SUBCATEGORIES = [\r\n",
 							"        'SQL Server Express Edition',\r\n",
-							"        'SQL Server Developer Edition'\r\n",
+							"        'SQL Server Developer Edition',\r\n",
+							"        'SQL Server Web',\r\n",
+							"        'SingleDB/Elastic Pool Hyperscale - SQL License'\r\n",
 							"    ]\r\n",
-							"    \r\n",
+							"\r\n",
+							"    is_not_supported = (F.col('MeterSubCategory').isin(NOT_SUPPORTED_AHB_SUBCATEGORIES))\r\n",
+							"\r\n",
 							"    is_vm = F.col('ResourceId').like('%Microsoft.Compute/virtualMachines%')\r\n",
 							"    is_vm_ahb = is_vm & (F.col('MeterSubCategory') == 'SQL Server Azure Hybrid Benefit')\r\n",
-							"    is_vm_not_supported = is_vm & (F.col('MeterSubCategory').isin(NOT_SUPPORTED_VM_SUBCATEGORIES))\r\n",
 							"\r\n",
 							"    cost_df = cost_df.withColumn('SQLAHB', \r\n",
-							"        F.when(is_sql_cost & is_vm_ahb, AHBStatus.Enabled.value)\r\n",
-							"        .when(is_sql_cost & is_vm_not_supported, AHBStatus.NotSupported.value)\r\n",
+							"        F.when(is_sql_cost & is_not_supported, AHBStatus.NotSupported.value)\r\n",
+							"        .when(is_sql_cost & is_vm_ahb, AHBStatus.Enabled.value)\r\n",
 							"        .when(is_sql_cost & is_vm, AHBStatus.NotEnabled.value)\r\n",
 							"        .when(is_sql_cost & (F.col('ai_AHB') == True), AHBStatus.Enabled.value)\r\n",
 							"        .when(is_sql_cost & (F.col('ai_AHB') == False), AHBStatus.NotEnabled.value)\r\n",
@@ -43334,10 +43339,10 @@
 							"\r\n",
 							"    ## COMPUTE HUB PAYG LICENSE COST\r\n",
 							"\r\n",
-							"    is_windows_hub_eligible = (F.col('WindowsAHB') == AHBStatus.Enabled.value) | (F.col('WindowsAHB') == AHBStatus.NotEnabled.value)\r\n",
-							"    is_sql_hub_eligible = (F.col('SQLAHB') == AHBStatus.Enabled.value) | (F.col('SQLAHB') == AHBStatus.NotEnabled.value)\r\n",
+							"    is_windows_hub_eligible = (F.col('WindowsAHB') != AHBStatus.NotSupported.value)\r\n",
+							"    is_sql_hub_eligible = (F.col('SQLAHB') != AHBStatus.NotSupported.value)\r\n",
 							"\r\n",
-							"    cost_df = cost_df.withColumn('HUBPricesheetJoinKey', \r\n",
+							"    cost_df = cost_df.withColumn('PricesheetJoinKey', \r\n",
 							"        F.when(is_windows_hub_eligible,\r\n",
 							"            F.concat(\r\n",
 							"                F.lit('Windows Server'),\r\n",
@@ -43354,15 +43359,30 @@
 							"        .when(is_sql_hub_eligible & is_sql_vm & is_enterprise_sql_license & (F.col('ai_VCPUs') < 5), 'SQL Server Enterprise - 1-4 vCPU VM License')\r\n",
 							"        .when(is_sql_hub_eligible & is_sql_vm & is_standard_sql_license & (F.col('ai_VCPUs') >= 5), F.concat(F.lit('SQL Server Standard - '), F.col('ai_VCPUs'), F.lit(' vCPU VM License')))\r\n",
 							"        .when(is_sql_hub_eligible & is_sql_vm & is_enterprise_sql_license & (F.col('ai_VCPUs') >= 5), F.concat(F.lit('SQL Server Enterprise - '), F.col('ai_VCPUs'), F.lit(' vCPU VM License')))\r\n",
+							"        .when(is_sql_hub_eligible & is_sql_adf & is_standard_sql_license, F.concat(F.lit('SSIS '), F.split('MeterName', ' ').getItem(0), F.lit(' '), F.split('MeterName', ' ').getItem(1), F.lit(' - Standard')))\r\n",
+							"        .when(is_sql_hub_eligible & is_sql_adf & is_enterprise_sql_license, F.concat(F.lit('SSIS '), F.split('MeterName', ' ').getItem(0), F.lit(' '), F.split('MeterName', ' ').getItem(1), F.lit(' - Enterprise')))\r\n",
 							"        .otherwise(None)\r\n",
 							"    )\r\n",
 							"\r\n",
+							"    # Compute license priceses for ADF SSIS SQL compute\r\n",
+							"    adf_pricesheet = pricesheet_df.where(is_sql_adf)\r\n",
+							"    adf_pricesheet = adf_pricesheet.withColumn('LicenseType', F.split('MeterSubCategory', ' ').getItem(1))\r\n",
+							"    adf_pricesheet = adf_pricesheet.withColumn('ComputeResource', F.concat(F.split('MeterName', ' ').getItem(0), F.lit(' '), F.split('MeterName', ' ').getItem(1)))\r\n",
+							"    adf_pricesheet = adf_pricesheet.withColumn('PricesheetJoinKey', F.concat(F.lit('SSIS '), F.col('ComputeResource'), F.lit(' - '), F.col('LicenseType')))\r\n",
+							"    adf_pricesheet = adf_pricesheet.withColumn('AHB', F.when(F.col('MeterType').like('%AHB%'), 'AHBUnitPrice').otherwise('PayGUnitPrice'))\r\n",
+							"    adf_pricesheet = adf_pricesheet.groupBy('PricesheetJoinKey').pivot('AHB').agg(F.first('NormalizedUnitPrice'))\r\n",
+							"    adf_pricesheet = adf_pricesheet.withColumn('LicensePayGUnitPrice', F.col('PayGUnitPrice') - F.col('AHBUnitPrice'))\r\n",
+							"    adf_pricesheet = adf_pricesheet.select('PricesheetJoinKey', 'LicensePayGUnitPrice')\r\n",
+							"\r\n",
 							"    pricesheet_df = pricesheet_df \\\r\n",
 							"        .select('Product', 'NormalizedUnitPrice') \\\r\n",
-							"        .withColumnRenamed('Product', 'HUBPricesheetJoinKey') \\\r\n",
-							"        .withColumnRenamed('NormalizedUnitPrice', 'NormalizedHUBPayGUnitPrice')\r\n",
+							"        .withColumnRenamed('Product', 'PricesheetJoinKey') \\\r\n",
+							"        .withColumnRenamed('NormalizedUnitPrice', 'LicensePayGUnitPrice')\r\n",
+							"    \r\n",
+							"    # Add ADF SSIS License costs to pricesheet\r\n",
+							"    pricesheet_df = pricesheet_df.union(adf_pricesheet)\r\n",
 							"\r\n",
-							"    cost_df = cost_df.join(pricesheet_df, 'HUBPricesheetJoinKey', 'left').drop('HUBPricesheetJoinKey')\r\n",
+							"    cost_df = cost_df.join(pricesheet_df, 'PricesheetJoinKey', 'left').drop('PricesheetJoinKey')\r\n",
 							"\r\n",
 							"    return cost_df"
 						],
@@ -48559,7 +48579,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "2bb39370-196d-4316-aeb9-5875fd1d14ce"
+						"spark.autotune.trackingId": "73d3940e-03d6-472f-bfd7-1a97688cb4b3"
 					}
 				},
 				"metadata": {
@@ -48618,7 +48638,7 @@
 							"from pyspark.sql import Row"
 						],
 						"outputs": [],
-						"execution_count": 103
+						"execution_count": 102
 					},
 					{
 						"cell_type": "code",
@@ -48640,7 +48660,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 76
+						"execution_count": 103
 					},
 					{
 						"cell_type": "code",
@@ -48665,7 +48685,7 @@
 							"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 						],
 						"outputs": [],
-						"execution_count": 77
+						"execution_count": 104
 					},
 					{
 						"cell_type": "code",
@@ -48690,7 +48710,7 @@
 							"]"
 						],
 						"outputs": [],
-						"execution_count": 100
+						"execution_count": 105
 					},
 					{
 						"cell_type": "markdown",
@@ -48724,7 +48744,7 @@
 							"pricesheet_df = spark.read.format('parquet').load(pricesheet_source_path)"
 						],
 						"outputs": [],
-						"execution_count": 89
+						"execution_count": 106
 					},
 					{
 						"cell_type": "code",
@@ -48828,7 +48848,7 @@
 							"hourly_vcpu_cost = yearly_license_cost / (license_count * HOURS_PER_YEAR * VCPUS_PER_LICENSE)"
 						],
 						"outputs": [],
-						"execution_count": 91
+						"execution_count": 93
 					},
 					{
 						"cell_type": "markdown",
@@ -48905,7 +48925,7 @@
 							"cost_df = spark.read.format('parquet').load(cost_path)"
 						],
 						"outputs": [],
-						"execution_count": 93
+						"execution_count": 112
 					},
 					{
 						"cell_type": "code",
