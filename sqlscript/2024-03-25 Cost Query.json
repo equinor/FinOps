@@ -1,6 +1,9 @@
 {
 	"name": "2024-03-25 Cost Query",
 	"properties": {
+		"folder": {
+			"name": "ACDC"
+		},
 		"content": {
 			"query": "\nSELECT\n    --Top 100\n    upper(SubscriptionName) as SubscriptionName\n    ,upper(ResourceGroup) as ResourceGroup\n    --,CostInBillingCurrency as Cost\n    --,*\n    ,ActiveWBS\n    ,CostAllocationType\n    ,sum(CostInBillingCurrency) as Cost\n    --,*\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAmortizedCost/20240201-20240229/Extended_v3_ACMMonthlyAmortizedCost_20240201-20240229.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where \n    --upper(ActiveWBS) <> 'C.TDI.IT.00010' and\n    --upper(ActiveWBS) = 'E.RDI.10512' and\n    upper(SubscriptionName) like 'S913-AURORA-NON-PRODUCTION'\n    and lower(ResourceGroup) = 'mc_dev-aurora-ngrm-00_dev-aurora-ngrm-00_northeurope'\n    group by  upper(SubscriptionName), upper(ResourceGroup), ActiveWBS, CostAllocationType\n\n   ",
 			"metadata": {
