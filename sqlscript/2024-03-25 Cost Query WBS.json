@@ -1,0 +1,17 @@
+{
+	"name": "2024-03-25 Cost Query WBS",
+	"properties": {
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 \n    *\nFROM\n    OPENROWSET(\n        BULK 'https://omniaacdcdlsprod.dfs.core.windows.net/costreports/monthly/2024/02/omnia_acdc_cost_details_with_sap_response.csv',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW=TRUE\n    ) AS [result]\n    --where WBS = 'C.TDI.IT.00010'\n    where WBS = 'E.RDI.10512'\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}
