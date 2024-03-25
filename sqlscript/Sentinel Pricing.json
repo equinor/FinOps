@@ -1,0 +1,17 @@
+{
+	"name": "Sentinel Pricing",
+	"properties": {
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    MeterName\n    ,UnitPrice\n    ,UnitOfMeasure\n    ,PartNumber\n    ,BasePrice\n    ,MarketPrice\n    ,MeterType\n    ,MeterCategory\n    ,ServiceFamily\n    ,Product\n    ,MeterRegion\n\n    --distinct(ServiceFamily)\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/pricesheet/portal-export/pricesheet-latest/*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where \n    MeterCategory = 'Sentinel'\n    and OfferID = 'MS-AZR-0017P'\n    and MeterRegion = 'EU West'\n    and MeterName not like '%Classic%'\n    order by UnitPrice\n    \n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}
