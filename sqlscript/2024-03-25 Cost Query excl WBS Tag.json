@@ -1,0 +1,17 @@
+{
+	"name": "2024-03-25 Cost Query excl WBS Tag",
+	"properties": {
+		"content": {
+			"query": "\nSELECT\n    --upper(SubscriptionName) as SubscriptionName\n    --,upper(ResourceGroup) as ResourceGroup\n    --,CostInBillingCurrency as Cost\n    --,Tags\n    sum(CostInBillingCurrency)\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAmortizedCost/20240201-20240229/ACMMonthlyAmortizedCost_20240201-20240229.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where \n    upper(Tags) not like N'%\"COSTALLOCATIONTYPE\": \"WBS\"%' AND    \n    upper(SubscriptionName) like 'S913-AURORA-NON-PRODUCTION'\n    and lower(ResourceGroup) = 'mc_dev-aurora-ngrm-00_dev-aurora-ngrm-00_northeurope'\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}
