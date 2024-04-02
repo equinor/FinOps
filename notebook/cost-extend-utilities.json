@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "a26053cd-7525-4b3a-9eea-4ac5656f9ba7"
+				"spark.autotune.trackingId": "fe578e3a-7f09-4139-ac57-e3e577adf424"
 			}
 		},
 		"metadata": {
@@ -72,7 +72,7 @@
 					"import warnings\r\n",
 					"from enum import Enum"
 				],
-				"execution_count": 3
+				"execution_count": 1
 			},
 			{
 				"cell_type": "code",
@@ -90,7 +90,7 @@
 				"source": [
 					"PROD_OFFER_ID = 'MS-AZR-0017P'"
 				],
-				"execution_count": 4
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -116,7 +116,7 @@
 					"    NotEnabled = \"Not Enabled\"\r\n",
 					"    NotSupported = \"Not Supported\""
 				],
-				"execution_count": 5
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -134,7 +134,7 @@
 					"    # Creating a string date for last month\r\n",
 					"    return f\"{previous_year}-{str(previous_month).zfill(2)}-{str(last_day).zfill(2)}\""
 				],
-				"execution_count": 6
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -175,7 +175,7 @@
 					"        cost_df = cost_df.withColumn('ai_' + col, F.coalesce(F.col(f'AdditionalInfo.{col}'), F.lit(None)))\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 7
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -197,7 +197,7 @@
 					"    pricesheet_df = pricesheet_df.withColumn('NormalizedUnitPrice', F.col('UnitPrice') / F.col('NormalizedUnit'))\r\n",
 					"    return pricesheet_df"
 				],
-				"execution_count": 8
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -250,7 +250,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 9
+				"execution_count": 7
 			},
 			{
 				"cell_type": "code",
@@ -290,7 +290,13 @@
 					"        'SingleDB/Elastic Pool Hyperscale - SQL License'\r\n",
 					"    ]\r\n",
 					"\r\n",
-					"    is_not_supported = (F.col('MeterSubCategory').isin(NOT_SUPPORTED_AHB_SUBCATEGORIES))\r\n",
+					"    NOT_SUPPORTED_PRODUCT_NAMES = [\r\n",
+					"        'Azure Arc-enabled SQL Server - Arc-enabled servers - Express edition',\r\n",
+					"        'Azure Arc-enabled SQL Server - Arc-enabled servers - Dev edition',\r\n",
+					"        'Azure Arc-enabled SQL Server - Arc-enabled servers - Web edition'\r\n",
+					"    ]\r\n",
+					"\r\n",
+					"    is_not_supported = (F.col('MeterSubCategory').isin(NOT_SUPPORTED_AHB_SUBCATEGORIES)) | (F.col('ProductName').isin(NOT_SUPPORTED_PRODUCT_NAMES))\r\n",
 					"\r\n",
 					"    is_vm = F.col('ResourceId').like('%Microsoft.Compute/virtualMachines%')\r\n",
 					"    is_vm_ahb = is_vm & (F.col('MeterSubCategory') == 'SQL Server Azure Hybrid Benefit')\r\n",
@@ -370,6 +376,8 @@
 					"        .when(is_sql_hub_eligible & is_sql_vm & is_enterprise_sql_license & (F.col('ai_VCPUs') >= 5), F.concat(F.lit('SQL Server Enterprise - '), F.col('ai_VCPUs'), F.lit(' vCPU VM License')))\r\n",
 					"        .when(is_sql_hub_eligible & is_sql_adf & is_standard_sql_license, F.concat(F.lit('SSIS '), F.split('MeterName', ' ').getItem(0), F.lit(' '), F.split('MeterName', ' ').getItem(1), F.lit(' - Standard')))\r\n",
 					"        .when(is_sql_hub_eligible & is_sql_adf & is_enterprise_sql_license, F.concat(F.lit('SSIS '), F.split('MeterName', ' ').getItem(0), F.lit(' '), F.split('MeterName', ' ').getItem(1), F.lit(' - Enterprise')))\r\n",
+					"        .when(is_sql_hub_eligible & is_sql_arc & is_standard_sql_license, 'Azure Arc-enabled SQL Server - Arc-enabled servers - Std edition - License only')\r\n",
+					"        .when(is_sql_hub_eligible & is_sql_arc & is_enterprise_sql_license, 'Azure Arc-enabled SQL Server - Arc-enabled servers - Ent edition - License only')\r\n",
 					"        .otherwise(None)\r\n",
 					"    )\r\n",
 					"\r\n",
@@ -400,7 +408,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 10
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -428,7 +436,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 11
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -464,7 +472,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 12
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -563,7 +571,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 13
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -651,7 +659,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 14
+				"execution_count": 12
 			},
 			{
 				"cell_type": "code",
@@ -717,7 +725,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 15
+				"execution_count": 13
 			},
 			{
 				"cell_type": "code",
@@ -743,7 +751,7 @@
 					"    \r\n",
 					"    return cost_df"
 				],
-				"execution_count": 16
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -765,7 +773,7 @@
 					"    cost_df = compute_AHB_columns(cost_df, pricesheet_df)\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 17
+				"execution_count": 15
 			},
 			{
 				"cell_type": "code",
@@ -793,7 +801,7 @@
 					"\r\n",
 					"    return cost_df"
 				],
-				"execution_count": 18
+				"execution_count": 16
 			}
 		]
 	}
