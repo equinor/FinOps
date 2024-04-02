@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "6b3d1fdc-3ee4-4e9c-9f70-a7f21e686b55"
+				"spark.autotune.trackingId": "f8837812-87c2-41c3-8bed-fc98d91cbceb"
 			}
 		},
 		"metadata": {
@@ -375,13 +375,16 @@
 					"\r\n",
 					"    # Compute license priceses for ADF SSIS SQL compute\r\n",
 					"    adf_pricesheet = pricesheet_df.where(is_sql_adf)\r\n",
-					"    adf_pricesheet = adf_pricesheet.withColumn('LicenseType', F.split('MeterSubCategory', ' ').getItem(1))\r\n",
-					"    adf_pricesheet = adf_pricesheet.withColumn('ComputeResource', F.concat(F.split('MeterName', ' ').getItem(0), F.lit(' '), F.split('MeterName', ' ').getItem(1)))\r\n",
-					"    adf_pricesheet = adf_pricesheet.withColumn('PricesheetJoinKey', F.concat(F.lit('SSIS '), F.col('ComputeResource'), F.lit(' - '), F.col('LicenseType')))\r\n",
-					"    adf_pricesheet = adf_pricesheet.withColumn('AHB', F.when(F.col('MeterType').like('%AHB%'), 'AHBUnitPrice').otherwise('PayGUnitPrice'))\r\n",
-					"    adf_pricesheet = adf_pricesheet.groupBy('PricesheetJoinKey').pivot('AHB').agg(F.first('NormalizedUnitPrice'))\r\n",
-					"    adf_pricesheet = adf_pricesheet.withColumn('LicensePayGUnitPrice', F.col('PayGUnitPrice') - F.col('AHBUnitPrice'))\r\n",
-					"    adf_pricesheet = adf_pricesheet.select('PricesheetJoinKey', 'LicensePayGUnitPrice')\r\n",
+					"\r\n",
+					"    # Only process if adf related rows exists -> if not the pivoting will fail\r\n",
+					"    if adf_pricesheet.count() > 0:\r\n",
+					"        adf_pricesheet = adf_pricesheet.withColumn('LicenseType', F.split('MeterSubCategory', ' ').getItem(1))\r\n",
+					"        adf_pricesheet = adf_pricesheet.withColumn('ComputeResource', F.concat(F.split('MeterName', ' ').getItem(0), F.lit(' '), F.split('MeterName', ' ').getItem(1)))\r\n",
+					"        adf_pricesheet = adf_pricesheet.withColumn('PricesheetJoinKey', F.concat(F.lit('SSIS '), F.col('ComputeResource'), F.lit(' - '), F.col('LicenseType')))\r\n",
+					"        adf_pricesheet = adf_pricesheet.withColumn('AHB', F.when(F.col('MeterType').like('%AHB%'), 'AHBUnitPrice').otherwise('PayGUnitPrice'))\r\n",
+					"        adf_pricesheet = adf_pricesheet.groupBy('PricesheetJoinKey').pivot('AHB').agg(F.first('NormalizedUnitPrice'))\r\n",
+					"        adf_pricesheet = adf_pricesheet.withColumn('LicensePayGUnitPrice', F.col('PayGUnitPrice') - F.col('AHBUnitPrice'))\r\n",
+					"        adf_pricesheet = adf_pricesheet.select('PricesheetJoinKey', 'LicensePayGUnitPrice')\r\n",
 					"\r\n",
 					"    pricesheet_df = pricesheet_df \\\r\n",
 					"        .select('Product', 'NormalizedUnitPrice') \\\r\n",
