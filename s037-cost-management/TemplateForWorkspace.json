@@ -1076,6 +1076,18 @@
 		"sprkpool33large_sparkVersion": {
 			"type": "string",
 			"defaultValue": "3.3"
+		},
+		"Notebook 1_notebookSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"Notebook 1_notebookSparkPoolIdRef": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"Notebook 1_notebookSparkPoolEndpointRef": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		}
 	},
 	"variables": {
@@ -43093,7 +43105,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "6fe357af-f74e-4c5f-a24c-23c65145f59b"
+						"spark.autotune.trackingId": "a6ff46dc-8fb4-4dcf-bb16-aa861452d1d5"
 					}
 				},
 				"metadata": {
@@ -43146,7 +43158,7 @@
 							"from enum import Enum"
 						],
 						"outputs": [],
-						"execution_count": 3
+						"execution_count": 1
 					},
 					{
 						"cell_type": "code",
@@ -43165,7 +43177,7 @@
 							"PROD_OFFER_ID = 'MS-AZR-0017P'"
 						],
 						"outputs": [],
-						"execution_count": 4
+						"execution_count": 2
 					},
 					{
 						"cell_type": "code",
@@ -43192,7 +43204,7 @@
 							"    NotSupported = \"Not Supported\""
 						],
 						"outputs": [],
-						"execution_count": 5
+						"execution_count": 3
 					},
 					{
 						"cell_type": "code",
@@ -43212,7 +43224,7 @@
 							"    return f\"{previous_year}-{str(previous_month).zfill(2)}-{str(last_day).zfill(2)}\""
 						],
 						"outputs": [],
-						"execution_count": 6
+						"execution_count": 4
 					},
 					{
 						"cell_type": "code",
@@ -43254,7 +43266,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 7
+						"execution_count": 5
 					},
 					{
 						"cell_type": "code",
@@ -43277,7 +43289,7 @@
 							"    return pricesheet_df"
 						],
 						"outputs": [],
-						"execution_count": 8
+						"execution_count": 6
 					},
 					{
 						"cell_type": "code",
@@ -43331,7 +43343,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 9
+						"execution_count": 7
 					},
 					{
 						"cell_type": "code",
@@ -43371,7 +43383,13 @@
 							"        'SingleDB/Elastic Pool Hyperscale - SQL License'\r\n",
 							"    ]\r\n",
 							"\r\n",
-							"    is_not_supported = (F.col('MeterSubCategory').isin(NOT_SUPPORTED_AHB_SUBCATEGORIES))\r\n",
+							"    NOT_SUPPORTED_PRODUCT_NAMES = [\r\n",
+							"        'Azure Arc-enabled SQL Server - Arc-enabled servers - Express edition',\r\n",
+							"        'Azure Arc-enabled SQL Server - Arc-enabled servers - Dev edition',\r\n",
+							"        'Azure Arc-enabled SQL Server - Arc-enabled servers - Web edition'\r\n",
+							"    ]\r\n",
+							"\r\n",
+							"    is_not_supported = (F.col('MeterSubCategory').isin(NOT_SUPPORTED_AHB_SUBCATEGORIES)) | (F.col('ProductName').isin(NOT_SUPPORTED_PRODUCT_NAMES))\r\n",
 							"\r\n",
 							"    is_vm = F.col('ResourceId').like('%Microsoft.Compute/virtualMachines%')\r\n",
 							"    is_vm_ahb = is_vm & (F.col('MeterSubCategory') == 'SQL Server Azure Hybrid Benefit')\r\n",
@@ -43451,6 +43469,8 @@
 							"        .when(is_sql_hub_eligible & is_sql_vm & is_enterprise_sql_license & (F.col('ai_VCPUs') >= 5), F.concat(F.lit('SQL Server Enterprise - '), F.col('ai_VCPUs'), F.lit(' vCPU VM License')))\r\n",
 							"        .when(is_sql_hub_eligible & is_sql_adf & is_standard_sql_license, F.concat(F.lit('SSIS '), F.split('MeterName', ' ').getItem(0), F.lit(' '), F.split('MeterName', ' ').getItem(1), F.lit(' - Standard')))\r\n",
 							"        .when(is_sql_hub_eligible & is_sql_adf & is_enterprise_sql_license, F.concat(F.lit('SSIS '), F.split('MeterName', ' ').getItem(0), F.lit(' '), F.split('MeterName', ' ').getItem(1), F.lit(' - Enterprise')))\r\n",
+							"        .when(is_sql_hub_eligible & is_sql_arc & is_standard_sql_license, 'Azure Arc-enabled SQL Server - Arc-enabled servers - Std edition - License only')\r\n",
+							"        .when(is_sql_hub_eligible & is_sql_arc & is_enterprise_sql_license, 'Azure Arc-enabled SQL Server - Arc-enabled servers - Ent edition - License only')\r\n",
 							"        .otherwise(None)\r\n",
 							"    )\r\n",
 							"\r\n",
@@ -43482,7 +43502,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 10
+						"execution_count": 8
 					},
 					{
 						"cell_type": "code",
@@ -43511,7 +43531,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 11
+						"execution_count": 9
 					},
 					{
 						"cell_type": "code",
@@ -43548,7 +43568,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 12
+						"execution_count": 10
 					},
 					{
 						"cell_type": "code",
@@ -43648,7 +43668,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 13
+						"execution_count": 11
 					},
 					{
 						"cell_type": "code",
@@ -43737,7 +43757,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 14
+						"execution_count": 12
 					},
 					{
 						"cell_type": "code",
@@ -43804,7 +43824,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 15
+						"execution_count": 13
 					},
 					{
 						"cell_type": "code",
@@ -43831,7 +43851,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 16
+						"execution_count": 14
 					},
 					{
 						"cell_type": "code",
@@ -43854,7 +43874,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 17
+						"execution_count": 15
 					},
 					{
 						"cell_type": "code",
@@ -43883,7 +43903,7 @@
 							"    return cost_df"
 						],
 						"outputs": [],
-						"execution_count": 18
+						"execution_count": 16
 					}
 				]
 			},
@@ -46343,7 +46363,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "c1a2d6d4-ff1e-41e8-b361-b5c040ff4df0"
+						"spark.autotune.trackingId": "af6bbf0b-f4a0-4faf-9c13-8481a538bc85"
 					}
 				},
 				"metadata": {
@@ -48675,7 +48695,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "37792f10-899c-47b4-8478-ff2e48b9ab32"
+						"spark.autotune.trackingId": "73d3940e-03d6-472f-bfd7-1a97688cb4b3"
 					}
 				},
 				"metadata": {
@@ -48700,8 +48720,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -48721,7 +48740,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"from datetime import timedelta, datetime\r\n",
 							"from dateutil.relativedelta import relativedelta\r\n",
@@ -49544,6 +49562,233 @@
 			},
 			"dependsOn": [],
 			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Notebook 1')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "NotebookInProduction"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "[parameters('Notebook 1_notebookSparkPoolNameRef')]",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "112g",
+					"driverCores": 16,
+					"executorMemory": "112g",
+					"executorCores": 16,
+					"numExecutors": 1,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "5",
+						"spark.autotune.trackingId": "20cbf894-166b-49cc-9d20-ca79ee1e55e5"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "[parameters('Notebook 1_notebookSparkPoolIdRef')]",
+						"name": "[parameters('Notebook 1_notebookSparkPoolNameRef')]",
+						"type": "Spark",
+						"endpoint": "[parameters('Notebook 1_notebookSparkPoolEndpointRef')]",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 16,
+						"memory": 112,
+						"automaticScaleJobs": true
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"import pyspark.sql.functions as F"
+						],
+						"outputs": [],
+						"execution_count": 1
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": 2
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/20240401-20240430/Extended_v3_ACMMonthlyActualCost_20240401-20240430.parquet'\r\n",
+							"cost_df = spark.read.format('parquet').load(cost_path)"
+						],
+						"outputs": [],
+						"execution_count": 3
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"Std edition - AHB\r\n",
+							"Ent edition - AHB\r\n",
+							"Express edition\r\n",
+							"Dev edition"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"display(cost_df.where((F.col('SQLAHB') != 'Not Supported') & (F.col('MeterCategory') == 'Azure Arc Enabled Databases')))"
+						],
+						"outputs": [],
+						"execution_count": 17
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Load pricesheet\r\n",
+							"pricesheet_source_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/pricesheet/portal-export/pricesheet-latest'\r\n",
+							"pricesheet_df = spark.read.format('parquet').load(pricesheet_source_path)"
+						],
+						"outputs": [],
+						"execution_count": 9
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"PROD_OFFER_ID = 'MS-AZR-0017P'"
+						],
+						"outputs": [],
+						"execution_count": 10
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"pricesheet_df = pricesheet_df.where(\r\n",
+							"    (F.col('OfferID') == PROD_OFFER_ID)\r\n",
+							"    # (F.col('MeterName').endswith('License')) &\r\n",
+							"    # (F.col('MeterSubCategory') == 'Windows Server') &\r\n",
+							"    # (F.col('PriceType') == 'Consumption')\r\n",
+							")"
+						],
+						"outputs": [],
+						"execution_count": 11
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"display(pricesheet_df.where((F.col('MeterCategory') == 'Azure Arc Enabled Databases') & (F.col('MeterSubCategory') == 'SQL Server on Azure Arc-enabled servers')))"
+						],
+						"outputs": [],
+						"execution_count": 13
+					}
+				]
+			},
+			"dependsOn": []
 		}
 	]
 }
