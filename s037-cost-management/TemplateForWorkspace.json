@@ -43093,7 +43093,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "001e9b03-7e64-494d-93c8-af5e7fcf7032"
+						"spark.autotune.trackingId": "6fe357af-f74e-4c5f-a24c-23c65145f59b"
 					}
 				},
 				"metadata": {
@@ -46343,7 +46343,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "c4ef78ce-6c17-42df-8f58-adae6c692a0f"
+						"spark.autotune.trackingId": "c1a2d6d4-ff1e-41e8-b361-b5c040ff4df0"
 					}
 				},
 				"metadata": {
@@ -46368,7 +46368,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -46388,6 +46389,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"from datetime import timedelta, datetime\r\n",
 							"from dateutil.relativedelta import relativedelta\r\n",
@@ -46400,7 +46402,7 @@
 							"from pyspark.sql import Row"
 						],
 						"outputs": [],
-						"execution_count": 138
+						"execution_count": 155
 					},
 					{
 						"cell_type": "code",
@@ -46422,7 +46424,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 139
+						"execution_count": 156
 					},
 					{
 						"cell_type": "code",
@@ -46444,7 +46446,7 @@
 							"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 						],
 						"outputs": [],
-						"execution_count": 140
+						"execution_count": 157
 					},
 					{
 						"cell_type": "markdown",
@@ -46500,7 +46502,7 @@
 							"sql_normalized_licence_cores = (4 * sql_enterprise_licence_cores) + sql_standard_licence_cores"
 						],
 						"outputs": [],
-						"execution_count": 141
+						"execution_count": 158
 					},
 					{
 						"cell_type": "markdown",
@@ -46558,7 +46560,7 @@
 							"]"
 						],
 						"outputs": [],
-						"execution_count": 142
+						"execution_count": 159
 					},
 					{
 						"cell_type": "code",
@@ -46578,7 +46580,7 @@
 							"cost_df = spark.read.format('parquet').load(cost_path)"
 						],
 						"outputs": [],
-						"execution_count": 143
+						"execution_count": 160
 					},
 					{
 						"cell_type": "code",
@@ -46606,7 +46608,7 @@
 							"sql_interval_hours = sql_interval_days * 24"
 						],
 						"outputs": [],
-						"execution_count": 144
+						"execution_count": 162
 					},
 					{
 						"cell_type": "code",
@@ -46653,7 +46655,7 @@
 							"cost_copy_df = cost_df.alias('cost_copy_df')"
 						],
 						"outputs": [],
-						"execution_count": 145
+						"execution_count": 163
 					},
 					{
 						"cell_type": "markdown",
@@ -46717,10 +46719,10 @@
 							"enable_copy_df = sql_enable_df.alias('enable_copy_df')\r\n",
 							"\r\n",
 							"# Remove redundant columns from results\r\n",
-							"sql_enable_df = cost_df.select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup')"
+							"sql_enable_df = sql_enable_df.select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup')"
 						],
 						"outputs": [],
-						"execution_count": 146
+						"execution_count": 164
 					},
 					{
 						"cell_type": "markdown",
@@ -46756,7 +46758,7 @@
 							"sql_disable_df = sql_disable_df.join(sql_enable_df, 'ResourceId', 'left_anti')"
 						],
 						"outputs": [],
-						"execution_count": 147
+						"execution_count": 165
 					},
 					{
 						"cell_type": "markdown",
@@ -48673,7 +48675,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "73d3940e-03d6-472f-bfd7-1a97688cb4b3"
+						"spark.autotune.trackingId": "37792f10-899c-47b4-8478-ff2e48b9ab32"
 					}
 				},
 				"metadata": {
@@ -48698,7 +48700,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -48718,6 +48721,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"from datetime import timedelta, datetime\r\n",
 							"from dateutil.relativedelta import relativedelta\r\n",
