@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "09103777-15cf-44c9-8bb2-aae47b22c66a"
+				"spark.autotune.trackingId": "4126a185-9e9d-4ef7-a62d-4bda86230e6a"
 			}
 		},
 		"metadata": {
@@ -78,7 +78,7 @@
 					"import pyspark.sql.window as W\r\n",
 					"from pyspark.sql import Row"
 				],
-				"execution_count": 155
+				"execution_count": 167
 			},
 			{
 				"cell_type": "code",
@@ -99,7 +99,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 156
+				"execution_count": 168
 			},
 			{
 				"cell_type": "code",
@@ -120,7 +120,7 @@
 					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'\r\n",
 					"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 				],
-				"execution_count": 157
+				"execution_count": 169
 			},
 			{
 				"cell_type": "markdown",
@@ -175,7 +175,7 @@
 					"\r\n",
 					"sql_normalized_licence_cores = (4 * sql_enterprise_licence_cores) + sql_standard_licence_cores"
 				],
-				"execution_count": 158
+				"execution_count": 170
 			},
 			{
 				"cell_type": "markdown",
@@ -232,7 +232,7 @@
 					"    'ai_vCores'\r\n",
 					"]"
 				],
-				"execution_count": 159
+				"execution_count": 172
 			},
 			{
 				"cell_type": "code",
@@ -251,7 +251,7 @@
 					"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 160
+				"execution_count": 175
 			},
 			{
 				"cell_type": "code",
@@ -268,7 +268,7 @@
 				},
 				"source": [
 					"# Only select usage from the period specified in the configuration file\r\n",
-					"sql_start_date = (datetime.now() - timedelta(days=sql_days_back_from+3)).strftime('%Y-%m-%d')\r\n",
+					"sql_start_date = (datetime.now() - timedelta(days=sql_days_back_from)).strftime('%Y-%m-%d')\r\n",
 					"sql_end_date = (datetime.now() - timedelta(days=sql_days_back_to)).strftime('%Y-%m-%d')\r\n",
 					"cost_df = cost_df.where((F.col('Date') >= sql_start_date) & (F.col('Date') <= sql_end_date))\r\n",
 					"\r\n",
@@ -278,7 +278,7 @@
 					"sql_interval_days = (sql_max_date - sql_min_date).days + 1\r\n",
 					"sql_interval_hours = sql_interval_days * 24"
 				],
-				"execution_count": 162
+				"execution_count": 176
 			},
 			{
 				"cell_type": "code",
@@ -324,7 +324,7 @@
 					"cost_df = cost_df.where(F.col('SQLType').isNotNull())\r\n",
 					"cost_copy_df = cost_df.alias('cost_copy_df')"
 				],
-				"execution_count": 163
+				"execution_count": 177
 			},
 			{
 				"cell_type": "markdown",
@@ -390,7 +390,7 @@
 					"# Remove redundant columns from results\r\n",
 					"sql_enable_df = sql_enable_df.select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup')"
 				],
-				"execution_count": 164
+				"execution_count": 178
 			},
 			{
 				"cell_type": "markdown",
@@ -425,7 +425,7 @@
 					"sql_disable_df = sql_disable_df.dropDuplicates([\"ResourceId\"])\r\n",
 					"sql_disable_df = sql_disable_df.join(sql_enable_df, 'ResourceId', 'left_anti')"
 				],
-				"execution_count": 165
+				"execution_count": 179
 			},
 			{
 				"cell_type": "markdown",
@@ -480,7 +480,7 @@
 					"\r\n",
 					"    return activity_df"
 				],
-				"execution_count": 148
+				"execution_count": 180
 			},
 			{
 				"cell_type": "code",
@@ -500,18 +500,23 @@
 					"disable_path = 'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Removal.csv'\r\n",
 					"activity_path = 'abfss://sql-activity-v2@hubautomation.dfs.core.windows.net/activity.csv'\r\n",
 					"\r\n",
+					"print(f\"Should run? {should_run}\")\r\n",
+					"\r\n",
 					"if should_run:\r\n",
 					"    # Store enabled list in storage account\r\n",
+					"    print(\"Writing enabled list to SQL latest path\")\r\n",
 					"    sql_enable_df.toPandas().to_csv(enable_path)\r\n",
 					"\r\n",
+					"    print(\"Writing disabled list to SQL latest path\")\r\n",
 					"    # Store disabled list in storage account\r\n",
 					"    sql_disable_df.toPandas().to_csv(disable_path)\r\n",
 					"\r\n",
 					"    # Compute activity log entry and write back to file\r\n",
+					"    print(\"Updating SQL activity log\")\r\n",
 					"    activity_df = compute_activity_log_entry(activity_path)\r\n",
 					"    activity_df.toPandas().to_csv(activity_path, index=False)"
 				],
-				"execution_count": 149
+				"execution_count": 181
 			},
 			{
 				"cell_type": "code",
@@ -530,7 +535,7 @@
 					"# Output 'should_run' indication when running in pipeline\r\n",
 					"mssparkutils.notebook.exit(should_run)"
 				],
-				"execution_count": 150
+				"execution_count": 183
 			}
 		]
 	}
