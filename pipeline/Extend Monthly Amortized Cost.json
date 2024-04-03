@@ -17,8 +17,50 @@
 						"reportType": "AmortizedCost"
 					}
 				}
+			},
+			{
+				"name": "Compute service cost predictions",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "Extend Monthly Amortized Cost",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "predict-service-cost",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"storageAccount": {
+							"value": {
+								"value": "@variables('storageAccount')",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true
+				}
 			}
 		],
+		"variables": {
+			"storageAccount": {
+				"type": "String",
+				"defaultValue": "s037costmgmt"
+			}
+		},
 		"folder": {
 			"name": "PipelinesInProduction/Cost"
 		},
