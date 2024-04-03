@@ -1,0 +1,195 @@
+{
+	"name": "prepare-latest-hub-deployments",
+	"properties": {
+		"folder": {
+			"name": "NotebookInProduction/HUB"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sprkpool33large",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "112g",
+			"driverCores": 16,
+			"executorMemory": "112g",
+			"executorCores": 16,
+			"numExecutors": 1,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "true",
+				"spark.dynamicAllocation.minExecutors": "1",
+				"spark.dynamicAllocation.maxExecutors": "5",
+				"spark.autotune.trackingId": "e47feba1-8f00-405e-a295-936491ff87cf"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
+				"name": "sprkpool33large",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 16,
+				"memory": 112,
+				"automaticScaleJobs": true
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "code",
+				"source": [
+					"import pyspark.sql.functions as F\r\n",
+					"from enum import Enum"
+				],
+				"execution_count": 19
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"class DeploymentStatus(Enum):\r\n",
+					"    Enabled = \"Enabled\"\r\n",
+					"    Disabled = \"Disabled\"\r\n",
+					"\r\n",
+					"class DeploymentType(Enum):\r\n",
+					"    VM = \"VM\"\r\n",
+					"    SQL = \"SQL\""
+				],
+				"execution_count": 20
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Load AHUB Deployments from source"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"sql_enable_path = 'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Deployment.csv'\r\n",
+					"sql_disable_path = 'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Removal.csv'\r\n",
+					"vm_enable_path = f'abfss://win-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Deployment.csv'\r\n",
+					"vm_disable_path = f'abfss://win-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Removal.csv'\r\n",
+					"\r\n",
+					"csv_options = {\r\n",
+					"    'header' : True,\r\n",
+					"    'delimiter' : ',',\r\n",
+					"    'quote' : '\"',\r\n",
+					"    'escape' : '\"'\r\n",
+					"}\r\n",
+					"\r\n",
+					"sql_enable_df = spark.read.options(**csv_options).csv(sql_enable_path)\r\n",
+					"sql_disable_df = spark.read.options(**csv_options).csv(sql_disable_path)\r\n",
+					"vm_enable_df = spark.read.options(**csv_options).csv(vm_enable_path)\r\n",
+					"vm_disable_df = spark.read.options(**csv_options).csv(vm_disable_path)"
+				],
+				"execution_count": 21
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"sql_enable_df = sql_enable_df \\\r\n",
+					"    .select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'SQLAHB_VCPUs') \\\r\n",
+					"    .withColumnRenamed('SQLAHB_VCPUs', 'NormalizedCores') \\\r\n",
+					"    .withColumn('DeploymentStatus', F.lit(DeploymentStatus.Enabled.value)) \\\r\n",
+					"    .withColumn('DeploymentType', F.lit(DeploymentType.SQL.value))\r\n",
+					"\r\n",
+					"sql_disable_df = sql_disable_df \\\r\n",
+					"    .select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'SQLAHB_VCPUs') \\\r\n",
+					"    .withColumnRenamed('SQLAHB_VCPUs', 'NormalizedCores') \\\r\n",
+					"    .withColumn('DeploymentStatus', F.lit(DeploymentStatus.Disabled.value)) \\\r\n",
+					"    .withColumn('DeploymentType', F.lit(DeploymentType.SQL.value))\r\n",
+					"\r\n",
+					"vm_enable_df = vm_enable_df \\\r\n",
+					"    .select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'WindowsAHB_VCPUs') \\\r\n",
+					"    .withColumnRenamed('WindowsAHB_VCPUs', 'NormalizedCores') \\\r\n",
+					"    .withColumn('DeploymentStatus', F.lit(DeploymentStatus.Enabled.value)) \\\r\n",
+					"    .withColumn('DeploymentType', F.lit(DeploymentType.VM.value))\r\n",
+					"\r\n",
+					"vm_disable_df = vm_disable_df \\\r\n",
+					"    .select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'WindowsAHB_VCPUs') \\\r\n",
+					"    .withColumnRenamed('WindowsAHB_VCPUs', 'NormalizedCores') \\\r\n",
+					"    .withColumn('DeploymentStatus', F.lit(DeploymentStatus.Disabled.value)) \\\r\n",
+					"    .withColumn('DeploymentType', F.lit(DeploymentType.VM.value))\r\n",
+					"\r\n",
+					"ahb_deployments_df = sql_enable_df.union(sql_disable_df).union(vm_enable_df).union(vm_disable_df)"
+				],
+				"execution_count": 22
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"target_path = f\"abfss://usage@s037costmgmt.dfs.core.windows.net/hub/latest-hub-deployments.parquet\"\r\n",
+					"ahb_deployments_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
+				],
+				"execution_count": 24
+			}
+		]
+	}
+}
