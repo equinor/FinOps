@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "8557d6f6-c7a5-4903-af69-794df52768ea"
+				"spark.autotune.trackingId": "11db4b9c-ac05-4b9f-9406-a1dfd37e219d"
 			}
 		},
 		"metadata": {
@@ -600,11 +600,11 @@
 					"if should_run:\r\n",
 					"    # Write enabled list to storage account\r\n",
 					"    print(\"Writing enabled list to VM latest path\")\r\n",
-					"    vm_enable_df.toPandas().to_csv(enable_path)\r\n",
+					"    vm_enable_df.toPandas().to_csv(enable_path, index=False)\r\n",
 					"\r\n",
 					"    # Write disabled list to storage account\r\n",
 					"    print(\"Writing disabled list to VM latest path\")\r\n",
-					"    vm_disable_df.toPandas().to_csv(disable_path)\r\n",
+					"    vm_disable_df.toPandas().to_csv(disable_path, index=False)\r\n",
 					"\r\n",
 					"    print(\"Update VM deployment activity log\")\r\n",
 					"    # Compute updated activity log and write back to file\r\n",
