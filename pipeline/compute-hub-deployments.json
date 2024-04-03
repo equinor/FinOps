@@ -414,6 +414,39 @@
 						}
 					]
 				}
+			},
+			{
+				"name": "Prepare latest ahb deployments in parquet",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "Compute SQL HUB deployments",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Compute VM HUB deployments",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "prepare-latest-hub-deployments",
+						"type": "NotebookReference"
+					},
+					"snapshot": true
+				}
 			}
 		],
 		"parameters": {
