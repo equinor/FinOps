@@ -57,6 +57,10 @@
 			"type": "string",
 			"defaultValue": "s037costmgmt"
 		},
+		"Extend Monthly Amortized Cost_pipelineStorageAccountVariable": {
+			"type": "string",
+			"defaultValue": "s037costmgmt"
+		},
 		"Extend Monthly Cost_pipelineSparkPoolNameRef": {
 			"type": "string",
 			"defaultValue": "sprkpool33large"
@@ -82,14 +86,6 @@
 			"defaultValue": "s037costmgmt"
 		},
 		"build-ri-recommendations_pipelineStorageAccountVariable": {
-			"type": "string",
-			"defaultValue": "s037costmgmt"
-		},
-		"compute-hub-and-ri-savings_pipelineSparkPoolNameRef": {
-			"type": "string",
-			"defaultValue": "sprkpool33large"
-		},
-		"compute-hub-and-ri-savings_pipelineStorageAccountVariable": {
 			"type": "string",
 			"defaultValue": "s037costmgmt"
 		},
@@ -1020,6 +1016,18 @@
 		"sprkpool33large_sparkVersion": {
 			"type": "string",
 			"defaultValue": "3.3"
+		},
+		"prepare-latest-hub-deployments_notebookSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"prepare-latest-hub-deployments_notebookSparkPoolIdRef": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"prepare-latest-hub-deployments_notebookSparkPoolEndpointRef": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		}
 	},
 	"variables": {
@@ -6885,10 +6893,53 @@
 								"reportType": "AmortizedCost"
 							}
 						}
+					},
+					{
+						"name": "Compute service cost predictions",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "Extend Monthly Amortized Cost",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "predict-service-cost",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@variables('storageAccount')",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"conf": {}
+						}
 					}
 				],
 				"policy": {
 					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"storageAccount": {
+						"type": "String",
+						"defaultValue": "[parameters('Extend Monthly Amortized Cost_pipelineStorageAccountVariable')]"
+					}
 				},
 				"folder": {
 					"name": "PipelinesInProduction/Cost"
@@ -6896,7 +6947,8 @@
 				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('workspaceId'), '/pipelines/Extend Monthly Cost')]"
+				"[concat(variables('workspaceId'), '/pipelines/Extend Monthly Cost')]",
+				"[concat(variables('workspaceId'), '/notebooks/predict-service-cost')]"
 			]
 		},
 		{
@@ -17573,7 +17625,7 @@
 					}
 				},
 				"folder": {
-					"name": "PipelinesInProduction/HUB and RI"
+					"name": "PipelinesInProduction/RI"
 				},
 				"annotations": []
 			},
@@ -17581,111 +17633,6 @@
 				"[concat(variables('workspaceId'), '/datasets/AutofitCombometerSource')]",
 				"[concat(variables('workspaceId'), '/datasets/AutofitCombometerSink')]",
 				"[concat(variables('workspaceId'), '/notebooks/combine-recommendations-and-autofitcombometer')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/compute-hub-and-ri-savings')]",
-			"type": "Microsoft.Synapse/workspaces/pipelines",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"activities": [
-					{
-						"name": "HUB Daily File",
-						"type": "SynapseNotebook",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"notebook": {
-								"referenceName": "HUB_Daily_File",
-								"type": "NotebookReference"
-							},
-							"parameters": {
-								"storageAccount": {
-									"value": {
-										"value": "@variables('storageAccount')",
-										"type": "Expression"
-									},
-									"type": "string"
-								}
-							},
-							"snapshot": true,
-							"sparkPool": {
-								"referenceName": "[parameters('compute-hub-and-ri-savings_pipelineSparkPoolNameRef')]",
-								"type": "BigDataPoolReference"
-							},
-							"executorSize": "Medium",
-							"conf": {
-								"spark.dynamicAllocation.enabled": true
-							},
-							"driverSize": "Medium"
-						}
-					},
-					{
-						"name": "Compute HUB and RI Savings",
-						"type": "SynapseNotebook",
-						"dependsOn": [
-							{
-								"activity": "HUB Daily File",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"notebook": {
-								"referenceName": "compute-hub-and-ri-savings",
-								"type": "NotebookReference"
-							},
-							"parameters": {
-								"storageAccount": {
-									"value": "s037costmgmt",
-									"type": "string"
-								}
-							},
-							"snapshot": true,
-							"conf": {
-								"spark.dynamicAllocation.enabled": null,
-								"spark.dynamicAllocation.minExecutors": null,
-								"spark.dynamicAllocation.maxExecutors": null
-							},
-							"numExecutors": null
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"variables": {
-					"storageAccount": {
-						"type": "String",
-						"defaultValue": "[parameters('compute-hub-and-ri-savings_pipelineStorageAccountVariable')]"
-					}
-				},
-				"folder": {
-					"name": "PipelinesInProduction/HUB and RI"
-				},
-				"annotations": [],
-				"lastPublishTime": "2023-08-17T22:03:18Z"
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/notebooks/HUB_Daily_File')]",
-				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('compute-hub-and-ri-savings_pipelineSparkPoolNameRef'))]",
-				"[concat(variables('workspaceId'), '/notebooks/compute-hub-and-ri-savings')]"
 			]
 		},
 		{
@@ -18110,6 +18057,40 @@
 								}
 							]
 						}
+					},
+					{
+						"name": "Prepare latest ahb deployments in parquet",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "Compute SQL HUB deployments",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "Compute VM HUB deployments",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "prepare-latest-hub-deployments",
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"conf": {}
+						}
 					}
 				],
 				"policy": {
@@ -18127,13 +18108,14 @@
 					}
 				},
 				"folder": {
-					"name": "PipelinesInProduction/HUB and RI"
+					"name": "PipelinesInProduction/HUB"
 				},
 				"annotations": []
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/notebooks/vm-hub-deployments')]",
 				"[concat(variables('workspaceId'), '/notebooks/sql-hub-deployments')]",
+				"[concat(variables('workspaceId'), '/notebooks/prepare-latest-hub-deployments')]",
 				"[concat(variables('workspaceId'), '/datasets/VMDeploymentsSource')]",
 				"[concat(variables('workspaceId'), '/datasets/VMDeploymentSink')]",
 				"[concat(variables('workspaceId'), '/datasets/VMDisableSource')]",
@@ -19224,7 +19206,7 @@
 					"elapsedTimeMetric": {}
 				},
 				"folder": {
-					"name": "PipelinesInProduction/HUB and RI"
+					"name": "PipelinesInProduction/RI"
 				},
 				"annotations": []
 			},
@@ -24048,44 +24030,6 @@
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/pipelines/servicenow-applications-daily')]",
 				"[concat(variables('workspaceId'), '/pipelines/servicenow-subscriptions-daily')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/Daily at 4am')]",
-			"type": "Microsoft.Synapse/workspaces/triggers",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Started",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "compute-hub-and-ri-savings",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Day",
-						"interval": 1,
-						"startTime": "2024-02-01T04:00:00",
-						"timeZone": "W. Europe Standard Time",
-						"schedule": {
-							"minutes": [
-								0
-							],
-							"hours": [
-								4
-							]
-						}
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/pipelines/compute-hub-and-ri-savings')]"
 			]
 		},
 		{
@@ -32131,7 +32075,7 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"folder": {
-					"name": "NotebookInProduction/HUB and RI Savings"
+					"name": "NotebookInProduction/Utilities"
 				},
 				"nbformat": 4,
 				"nbformat_minor": 2,
@@ -32150,7 +32094,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "8eaa0d12-895b-4a65-bc7d-5735d32ee980"
+						"spark.autotune.trackingId": "8ee4a212-755b-4bbd-9a9f-900008e98d81"
 					}
 				},
 				"metadata": {
@@ -32175,7 +32119,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -38429,7 +38374,7 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"folder": {
-					"name": "NotebookInProduction/RI Recommendations"
+					"name": "NotebookInProduction/RI"
 				},
 				"nbformat": 4,
 				"nbformat_minor": 2,
@@ -38447,7 +38392,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "a71c40eb-abaf-4c30-93b9-b215f2a4ef56"
+						"spark.autotune.trackingId": "72af7ca0-b67b-41c9-902b-3c5d72309079"
 					}
 				},
 				"metadata": {
@@ -38472,7 +38417,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -39040,7 +38986,7 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"folder": {
-					"name": "NotebookInProduction/HUB and RI Savings"
+					"name": "NotebookInProduction/Utilities"
 				},
 				"nbformat": 4,
 				"nbformat_minor": 2,
@@ -39058,7 +39004,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "8a60cf0e-7ed6-4072-8d83-9c136c39f479"
+						"spark.autotune.trackingId": "67bbd522-4794-4061-a472-a8bd79658a7b"
 					}
 				},
 				"metadata": {
@@ -39083,7 +39029,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -39103,6 +39050,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"from enum import Enum\r\n",
@@ -39828,7 +39776,7 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"folder": {
-					"name": "NotebookInProduction/Pricesheet"
+					"name": "NotebookInProduction/Utilities"
 				},
 				"nbformat": 4,
 				"nbformat_minor": 2,
@@ -39846,7 +39794,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "9067f396-e573-471d-83ae-5ffe8dbe0495"
+						"spark.autotune.trackingId": "087cb71d-71ce-4216-bf18-260045d5f9e1"
 					}
 				},
 				"metadata": {
@@ -39871,13 +39819,15 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F"
 						],
@@ -40460,7 +40410,7 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"folder": {
-					"name": "NotebookInProduction/HUB and RI Savings"
+					"name": "NotebookInProduction/Utilities"
 				},
 				"nbformat": 4,
 				"nbformat_minor": 2,
@@ -40478,7 +40428,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "383dfd75-f023-476f-9335-c1bb2cf23bee"
+						"spark.autotune.trackingId": "220ec1d5-8a61-4962-827e-4955ea60b146"
 					}
 				},
 				"metadata": {
@@ -40503,7 +40453,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -40826,7 +40777,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "fe578e3a-7f09-4139-ac57-e3e577adf424"
+						"spark.autotune.trackingId": "068b25fa-8988-4d7f-bf9e-8275de9ab025"
 					}
 				},
 				"metadata": {
@@ -40851,7 +40802,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -40928,6 +40880,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"def get_last_day_prev_month(to_date):\r\n",
 							"    current_month = int(to_date[4:6])\r\n",
@@ -42642,7 +42595,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "210ce1a4-b237-4a32-9ec6-90f2f0117e06"
+						"spark.autotune.trackingId": "9370c39b-ff4e-4d3c-bf9c-85f3b9b7b84b"
 					}
 				},
 				"metadata": {
@@ -42667,7 +42620,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -44062,7 +44016,7 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"folder": {
-					"name": "NotebookInProduction/HUB and RI Savings"
+					"name": "NotebookInProduction/HUB"
 				},
 				"nbformat": 4,
 				"nbformat_minor": 2,
@@ -44081,7 +44035,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "9461638e-81c0-4a1d-9914-167eb2cf7f47"
+						"spark.autotune.trackingId": "b944fabc-9032-4457-8e17-750a2a85debf"
 					}
 				},
 				"metadata": {
@@ -44140,7 +44094,7 @@
 							"from pyspark.sql import Row"
 						],
 						"outputs": [],
-						"execution_count": 167
+						"execution_count": 1
 					},
 					{
 						"cell_type": "code",
@@ -44162,7 +44116,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 168
+						"execution_count": 2
 					},
 					{
 						"cell_type": "code",
@@ -44184,7 +44138,7 @@
 							"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 						],
 						"outputs": [],
-						"execution_count": 169
+						"execution_count": 3
 					},
 					{
 						"cell_type": "markdown",
@@ -44240,7 +44194,7 @@
 							"sql_normalized_licence_cores = (4 * sql_enterprise_licence_cores) + sql_standard_licence_cores"
 						],
 						"outputs": [],
-						"execution_count": 170
+						"execution_count": 4
 					},
 					{
 						"cell_type": "markdown",
@@ -44298,7 +44252,7 @@
 							"]"
 						],
 						"outputs": [],
-						"execution_count": 172
+						"execution_count": 5
 					},
 					{
 						"cell_type": "code",
@@ -44318,7 +44272,7 @@
 							"cost_df = spark.read.format('parquet').load(cost_path)"
 						],
 						"outputs": [],
-						"execution_count": 175
+						"execution_count": 6
 					},
 					{
 						"cell_type": "code",
@@ -44346,7 +44300,7 @@
 							"sql_interval_hours = sql_interval_days * 24"
 						],
 						"outputs": [],
-						"execution_count": 176
+						"execution_count": 7
 					},
 					{
 						"cell_type": "code",
@@ -44393,7 +44347,7 @@
 							"cost_copy_df = cost_df.alias('cost_copy_df')"
 						],
 						"outputs": [],
-						"execution_count": 177
+						"execution_count": 8
 					},
 					{
 						"cell_type": "markdown",
@@ -44457,10 +44411,10 @@
 							"enable_copy_df = sql_enable_df.alias('enable_copy_df')\r\n",
 							"\r\n",
 							"# Remove redundant columns from results\r\n",
-							"sql_enable_df = sql_enable_df.select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup')"
+							"sql_enable_df = sql_enable_df.select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'SQLAHB_VCPUs')"
 						],
 						"outputs": [],
-						"execution_count": 178
+						"execution_count": 9
 					},
 					{
 						"cell_type": "markdown",
@@ -44491,12 +44445,12 @@
 						"source": [
 							"# Compute list of disabled instances by removing references from the enabled liste\r\n",
 							"sql_disable_df = cost_copy_df.where(F.col('SQLAHB') == 'Enabled')\r\n",
-							"sql_disable_df = sql_disable_df.select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup')\r\n",
+							"sql_disable_df = sql_disable_df.select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'SQLAHB_VCPUs')\r\n",
 							"sql_disable_df = sql_disable_df.dropDuplicates([\"ResourceId\"])\r\n",
 							"sql_disable_df = sql_disable_df.join(sql_enable_df, 'ResourceId', 'left_anti')"
 						],
 						"outputs": [],
-						"execution_count": 179
+						"execution_count": 10
 					},
 					{
 						"cell_type": "markdown",
@@ -44552,7 +44506,7 @@
 							"    return activity_df"
 						],
 						"outputs": [],
-						"execution_count": 180
+						"execution_count": 11
 					},
 					{
 						"cell_type": "code",
@@ -44577,11 +44531,11 @@
 							"if should_run:\r\n",
 							"    # Store enabled list in storage account\r\n",
 							"    print(\"Writing enabled list to SQL latest path\")\r\n",
-							"    sql_enable_df.toPandas().to_csv(enable_path)\r\n",
+							"    sql_enable_df.toPandas().to_csv(enable_path, index=False)\r\n",
 							"\r\n",
 							"    print(\"Writing disabled list to SQL latest path\")\r\n",
 							"    # Store disabled list in storage account\r\n",
-							"    sql_disable_df.toPandas().to_csv(disable_path)\r\n",
+							"    sql_disable_df.toPandas().to_csv(disable_path, index=False)\r\n",
 							"\r\n",
 							"    # Compute activity log entry and write back to file\r\n",
 							"    print(\"Updating SQL activity log\")\r\n",
@@ -44589,7 +44543,7 @@
 							"    activity_df.toPandas().to_csv(activity_path, index=False)"
 						],
 						"outputs": [],
-						"execution_count": 181
+						"execution_count": 14
 					},
 					{
 						"cell_type": "code",
@@ -44609,7 +44563,7 @@
 							"mssparkutils.notebook.exit(should_run)"
 						],
 						"outputs": [],
-						"execution_count": 183
+						"execution_count": 13
 					}
 				]
 			},
@@ -44621,7 +44575,7 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"folder": {
-					"name": "NotebookInProduction/HUB and RI Savings"
+					"name": "NotebookInProduction/Utilities"
 				},
 				"nbformat": 4,
 				"nbformat_minor": 2,
@@ -44639,7 +44593,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "ba52a84c-b785-4f63-a166-d9fb13d4c25d"
+						"spark.autotune.trackingId": "ab8ff751-19c0-490f-9639-4a51e4220324"
 					}
 				},
 				"metadata": {
@@ -44664,7 +44618,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -44732,6 +44687,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"test_path = f'abfss://win-hub-logs@hubautomation.dfs.core.windows.net/{deploy_date}-AHUB-Deployment.csv'\r\n",
 							"csv_options = {'header' : True,\r\n",
@@ -46400,7 +46356,7 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"folder": {
-					"name": "NotebookInProduction/HUB and RI Savings"
+					"name": "NotebookInProduction/HUB"
 				},
 				"nbformat": 4,
 				"nbformat_minor": 2,
@@ -46418,7 +46374,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "c0b262d9-b9c3-4646-81e5-eb0e71a22b7e"
+						"spark.autotune.trackingId": "11db4b9c-ac05-4b9f-9406-a1dfd37e219d"
 					}
 				},
 				"metadata": {
@@ -46443,7 +46399,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -46463,6 +46420,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"from datetime import timedelta, datetime\r\n",
 							"from dateutil.relativedelta import relativedelta\r\n",
@@ -47010,11 +46968,11 @@
 							"if should_run:\r\n",
 							"    # Write enabled list to storage account\r\n",
 							"    print(\"Writing enabled list to VM latest path\")\r\n",
-							"    vm_enable_df.toPandas().to_csv(enable_path)\r\n",
+							"    vm_enable_df.toPandas().to_csv(enable_path, index=False)\r\n",
 							"\r\n",
 							"    # Write disabled list to storage account\r\n",
 							"    print(\"Writing disabled list to VM latest path\")\r\n",
-							"    vm_disable_df.toPandas().to_csv(disable_path)\r\n",
+							"    vm_disable_df.toPandas().to_csv(disable_path, index=False)\r\n",
 							"\r\n",
 							"    print(\"Update VM deployment activity log\")\r\n",
 							"    # Compute updated activity log and write back to file\r\n",
@@ -47290,6 +47248,210 @@
 			},
 			"dependsOn": [],
 			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/prepare-latest-hub-deployments')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "NotebookInProduction/HUB"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "[parameters('prepare-latest-hub-deployments_notebookSparkPoolNameRef')]",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "112g",
+					"driverCores": 16,
+					"executorMemory": "112g",
+					"executorCores": 16,
+					"numExecutors": 1,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "5",
+						"spark.autotune.trackingId": "84a97b73-e27c-43f1-96d9-eeb1ddd6bcf3"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "[parameters('prepare-latest-hub-deployments_notebookSparkPoolIdRef')]",
+						"name": "[parameters('prepare-latest-hub-deployments_notebookSparkPoolNameRef')]",
+						"type": "Spark",
+						"endpoint": "[parameters('prepare-latest-hub-deployments_notebookSparkPoolEndpointRef')]",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 16,
+						"memory": 112,
+						"automaticScaleJobs": true
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"import pyspark.sql.functions as F\r\n",
+							"from enum import Enum"
+						],
+						"outputs": [],
+						"execution_count": 19
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"class DeploymentStatus(Enum):\r\n",
+							"    Enabled = \"Enabled\"\r\n",
+							"    Disabled = \"Disabled\"\r\n",
+							"\r\n",
+							"class DeploymentType(Enum):\r\n",
+							"    VM = \"VM\"\r\n",
+							"    SQL = \"SQL\""
+						],
+						"outputs": [],
+						"execution_count": 20
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Load AHUB Deployments from source"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"sql_enable_path = 'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Deployment.csv'\r\n",
+							"sql_disable_path = 'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Removal.csv'\r\n",
+							"vm_enable_path = f'abfss://win-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Deployment.csv'\r\n",
+							"vm_disable_path = f'abfss://win-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Removal.csv'\r\n",
+							"\r\n",
+							"csv_options = {\r\n",
+							"    'header' : True,\r\n",
+							"    'delimiter' : ',',\r\n",
+							"    'quote' : '\"',\r\n",
+							"    'escape' : '\"'\r\n",
+							"}\r\n",
+							"\r\n",
+							"sql_enable_df = spark.read.options(**csv_options).csv(sql_enable_path)\r\n",
+							"sql_disable_df = spark.read.options(**csv_options).csv(sql_disable_path)\r\n",
+							"vm_enable_df = spark.read.options(**csv_options).csv(vm_enable_path)\r\n",
+							"vm_disable_df = spark.read.options(**csv_options).csv(vm_disable_path)"
+						],
+						"outputs": [],
+						"execution_count": 21
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"sql_enable_df = sql_enable_df \\\r\n",
+							"    .select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'SQLAHB_VCPUs') \\\r\n",
+							"    .withColumnRenamed('SQLAHB_VCPUs', 'NormalizedCores') \\\r\n",
+							"    .withColumn('DeploymentStatus', F.lit(DeploymentStatus.Enabled.value)) \\\r\n",
+							"    .withColumn('DeploymentType', F.lit(DeploymentType.SQL.value))\r\n",
+							"\r\n",
+							"sql_disable_df = sql_disable_df \\\r\n",
+							"    .select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'SQLAHB_VCPUs') \\\r\n",
+							"    .withColumnRenamed('SQLAHB_VCPUs', 'NormalizedCores') \\\r\n",
+							"    .withColumn('DeploymentStatus', F.lit(DeploymentStatus.Disabled.value)) \\\r\n",
+							"    .withColumn('DeploymentType', F.lit(DeploymentType.SQL.value))\r\n",
+							"\r\n",
+							"vm_enable_df = vm_enable_df \\\r\n",
+							"    .select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'WindowsAHB_VCPUs') \\\r\n",
+							"    .withColumnRenamed('WindowsAHB_VCPUs', 'NormalizedCores') \\\r\n",
+							"    .withColumn('DeploymentStatus', F.lit(DeploymentStatus.Enabled.value)) \\\r\n",
+							"    .withColumn('DeploymentType', F.lit(DeploymentType.VM.value))\r\n",
+							"\r\n",
+							"vm_disable_df = vm_disable_df \\\r\n",
+							"    .select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'WindowsAHB_VCPUs') \\\r\n",
+							"    .withColumnRenamed('WindowsAHB_VCPUs', 'NormalizedCores') \\\r\n",
+							"    .withColumn('DeploymentStatus', F.lit(DeploymentStatus.Disabled.value)) \\\r\n",
+							"    .withColumn('DeploymentType', F.lit(DeploymentType.VM.value))\r\n",
+							"\r\n",
+							"ahb_deployments_df = sql_enable_df.union(sql_disable_df).union(vm_enable_df).union(vm_disable_df)"
+						],
+						"outputs": [],
+						"execution_count": 22
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"target_path = f\"abfss://usage@s037costmgmt.dfs.core.windows.net/hub/latest-hub-deployments.parquet\"\r\n",
+							"ahb_deployments_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
+						],
+						"outputs": [],
+						"execution_count": 24
+					}
+				]
+			},
+			"dependsOn": []
 		}
 	]
 }
