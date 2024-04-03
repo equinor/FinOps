@@ -17790,7 +17790,7 @@
 						"typeProperties": {
 							"variableName": "today",
 							"value": {
-								"value": "@concat(formatDateTime(utcnow(),'yyyy-MM-dd'))",
+								"value": "@concat(formatDateTime(convertTimeZone(utcNow(), 'UTC', 'Central European Standard Time'),'yyyy-MM-dd'))",
 								"type": "Expression"
 							}
 						}
@@ -44081,7 +44081,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "4126a185-9e9d-4ef7-a62d-4bda86230e6a"
+						"spark.autotune.trackingId": "9461638e-81c0-4a1d-9914-167eb2cf7f47"
 					}
 				},
 				"metadata": {
@@ -44106,7 +44106,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -44126,6 +44127,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"from datetime import timedelta, datetime\r\n",
 							"from dateutil.relativedelta import relativedelta\r\n",
@@ -46416,7 +46418,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "c5706840-c56b-4c00-9c7e-21fce9a97de3"
+						"spark.autotune.trackingId": "c0b262d9-b9c3-4646-81e5-eb0e71a22b7e"
 					}
 				},
 				"metadata": {
@@ -46441,8 +46443,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -46462,7 +46463,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"from datetime import timedelta, datetime\r\n",
 							"from dateutil.relativedelta import relativedelta\r\n",
