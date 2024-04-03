@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "73d3940e-03d6-472f-bfd7-1a97688cb4b3"
+				"spark.autotune.trackingId": "c0b262d9-b9c3-4646-81e5-eb0e71a22b7e"
 			}
 		},
 		"metadata": {
@@ -594,14 +594,19 @@
 					"enable_path = f'abfss://win-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Deployment.csv'\r\n",
 					"disable_path = f'abfss://win-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Removal.csv'\r\n",
 					"\r\n",
+					"print(f\"Should run? {should_run}\")\r\n",
+					"\r\n",
 					"# Only persist result according to storage account configuration\r\n",
 					"if should_run:\r\n",
 					"    # Write enabled list to storage account\r\n",
+					"    print(\"Writing enabled list to VM latest path\")\r\n",
 					"    vm_enable_df.toPandas().to_csv(enable_path)\r\n",
 					"\r\n",
 					"    # Write disabled list to storage account\r\n",
+					"    print(\"Writing disabled list to VM latest path\")\r\n",
 					"    vm_disable_df.toPandas().to_csv(disable_path)\r\n",
 					"\r\n",
+					"    print(\"Update VM deployment activity log\")\r\n",
 					"    # Compute updated activity log and write back to file\r\n",
 					"    activity_path = 'abfss://win-activity-v2@hubautomation.dfs.core.windows.net/activity.csv'\r\n",
 					"    activity_df = compute_activity_log_entry(activity_path)\r\n",
