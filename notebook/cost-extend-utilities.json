@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "daa8df08-80c8-4f54-92e6-bb6fc1da5eb3"
+				"spark.autotune.trackingId": "1108902a-9086-40a0-82b6-aa9300dc3677"
 			}
 		},
 		"metadata": {
@@ -114,6 +114,7 @@
 					"class SavingsPlanStatus(Enum):\r\n",
 					"    Enabled = \"Enabled\"\r\n",
 					"    NotEnabled = \"Not Enabled\"\r\n",
+					"    NotBeneficial = \"Not Beneficial\"\r\n",
 					"    NotSupported = \"Not Supported\""
 				],
 				"execution_count": 3
@@ -246,7 +247,10 @@
 					"    cost_df = cost_df.join(pricesheet_df, 'PartNumber', 'left')\r\n",
 					"\r\n",
 					"    # When cost is classified as eligible to SP, but does not av a P3Y Unit Price associated with it - it should not be eligible to SP\r\n",
-					"    cost_df = cost_df.withColumn('SPStatus', F.when((F.col('SPStatus') == 'Not Enabled') & F.col('NormalizedP3YSPUnitPrice').isNull(), F.lit(SavingsPlanStatus.NotSupported.value)).otherwise(F.col('SPStatus')))\r\n",
+					"    cost_df = cost_df.withColumn('SPStatus', F.when((F.col('SPStatus') == SavingsPlanStatus.NotEnabled.value) & F.col('NormalizedP3YSPUnitPrice').isNull(), F.lit(SavingsPlanStatus.NotSupported.value)).otherwise(F.col('SPStatus')))\r\n",
+					"\r\n",
+					"    # Some cost may have a more cost efficient unit price associated to it, than the corresponding 3PY SP unit price - these costs should avoid having SP associat with them\r\n",
+					"    cost_df = cost_df.withColumn('SPStatus', F.when((F.col('SPStatus') == SavingsPlanStatus.NotEnabled.value) & (F.col('NormalizedP3YSPUnitPrice') >= F.col('UnitPrice')), F.lit(SavingsPlanStatus.NotBeneficial.value)).otherwise(F.col('SPStatus')))\r\n",
 					"\r\n",
 					"    return cost_df"
 				],
