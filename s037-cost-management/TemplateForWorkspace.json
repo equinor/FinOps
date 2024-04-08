@@ -34502,7 +34502,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "e46e5995-366e-47e7-9764-55f708a5ae73"
+						"spark.autotune.trackingId": "7b436d33-889a-4f07-abfb-3b5cb1d7cb02"
 					}
 				},
 				"metadata": {
@@ -34527,8 +34527,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -38140,7 +38139,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "4a957974-7e1a-498a-9332-25de630b2c80"
+						"spark.autotune.trackingId": "dd7f4084-cf89-4127-95f7-40ce409ea5ae"
 					}
 				},
 				"metadata": {
@@ -38165,13 +38164,15 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"import pyspark.sql.types as T"
@@ -40806,7 +40807,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "04623cea-2f0d-44c2-a987-369419ccc872"
+						"spark.autotune.trackingId": "834a3340-74e1-48b8-8019-347475d4bde5"
 					}
 				},
 				"metadata": {
@@ -40902,6 +40903,7 @@
 							"class SavingsPlanStatus(Enum):\r\n",
 							"    Enabled = \"Enabled\"\r\n",
 							"    NotEnabled = \"Not Enabled\"\r\n",
+							"    NotBeneficial = \"Not Beneficial\"\r\n",
 							"    NotSupported = \"Not Supported\""
 						],
 						"outputs": [],
@@ -41039,7 +41041,10 @@
 							"    cost_df = cost_df.join(pricesheet_df, 'PartNumber', 'left')\r\n",
 							"\r\n",
 							"    # When cost is classified as eligible to SP, but does not av a P3Y Unit Price associated with it - it should not be eligible to SP\r\n",
-							"    cost_df = cost_df.withColumn('SPStatus', F.when((F.col('SPStatus') == 'Not Enabled') & F.col('NormalizedP3YSPUnitPrice').isNull(), F.lit(SavingsPlanStatus.NotSupported.value)).otherwise(F.col('SPStatus')))\r\n",
+							"    cost_df = cost_df.withColumn('SPStatus', F.when((F.col('SPStatus') == SavingsPlanStatus.NotEnabled.value) & F.col('NormalizedP3YSPUnitPrice').isNull(), F.lit(SavingsPlanStatus.NotSupported.value)).otherwise(F.col('SPStatus')))\r\n",
+							"\r\n",
+							"    # Some cost may have a more cost efficient unit price associated to it, than the corresponding 3PY SP unit price - these costs should avoid having SP associat with them\r\n",
+							"    cost_df = cost_df.withColumn('SPStatus', F.when((F.col('SPStatus') == SavingsPlanStatus.NotEnabled.value) & (F.col('NormalizedP3YSPUnitPrice') >= F.col('UnitPrice')), F.lit(SavingsPlanStatus.NotBeneficial.value)).otherwise(F.col('SPStatus')))\r\n",
 							"\r\n",
 							"    return cost_df"
 						],
@@ -41635,7 +41640,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "d69238ba-81e2-4e05-a4a7-38a752fd1358"
+						"spark.autotune.trackingId": "260357bc-bbaf-4bb7-b3a4-bc84ff08c4ba"
 					}
 				},
 				"metadata": {
@@ -41660,7 +41665,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -42201,7 +42207,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "3ee2a5d6-bdcd-4b53-9baf-b6a9d86d3e96"
+						"spark.autotune.trackingId": "be14efc0-3fb0-4ff1-bff1-26c4b9608020"
 					}
 				},
 				"metadata": {
@@ -42226,7 +42232,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
