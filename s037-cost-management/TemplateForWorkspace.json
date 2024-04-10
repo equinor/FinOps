@@ -32216,7 +32216,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "93729ab4-407b-4b28-b751-2a8c3a2191ed"
+						"spark.autotune.trackingId": "6d8674ae-136a-4330-818c-a7c3a2df1a1d"
 					}
 				},
 				"metadata": {
@@ -34592,7 +34592,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "09b8f016-7a84-45b8-b3bd-0639ad5a40bd"
+						"spark.autotune.trackingId": "98951934-8960-4ca3-8db2-6ceb77ac91f2"
 					}
 				},
 				"metadata": {
@@ -43126,7 +43126,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "90a0b9e1-8833-4fb6-b074-40cc54e7b759"
+						"spark.autotune.trackingId": "00b1c0b2-2833-437a-aba9-3fd4722e659d"
 					}
 				},
 				"metadata": {
@@ -43168,7 +43168,7 @@
 							"from dateutil.relativedelta import relativedelta"
 						],
 						"outputs": [],
-						"execution_count": 66
+						"execution_count": 97
 					},
 					{
 						"cell_type": "code",
@@ -43193,7 +43193,7 @@
 							"    SQL = \"SQL\""
 						],
 						"outputs": [],
-						"execution_count": 67
+						"execution_count": 98
 					},
 					{
 						"cell_type": "markdown",
@@ -43240,7 +43240,7 @@
 							"vm_disable_df = spark.read.options(**csv_options).csv(vm_disable_path)"
 						],
 						"outputs": [],
-						"execution_count": 68
+						"execution_count": 99
 					},
 					{
 						"cell_type": "code",
@@ -43287,7 +43287,7 @@
 							"ahb_deployments_df = ahb_deployments_df.withColumn('Date', F.col('Date').cast(T.DateType()))"
 						],
 						"outputs": [],
-						"execution_count": 69
+						"execution_count": 100
 					},
 					{
 						"cell_type": "markdown",
@@ -43323,7 +43323,7 @@
 							"date_range = f'{current_month_start}-{current_month_end}'"
 						],
 						"outputs": [],
-						"execution_count": 70
+						"execution_count": 101
 					},
 					{
 						"cell_type": "code",
@@ -43343,7 +43343,7 @@
 							"usage_df = spark.read.format('parquet').load(usage_path)"
 						],
 						"outputs": [],
-						"execution_count": 71
+						"execution_count": 102
 					},
 					{
 						"cell_type": "markdown",
@@ -43378,11 +43378,11 @@
 							"# Find all usage with AHB enabled\r\n",
 							"usage_df = usage_df.where((F.col('WindowsAHB') == 'Enabled') | (F.col('SQLAHB') == 'Enabled'))\r\n",
 							"usage_df = usage_df.select('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'MeterCategory', 'MeterSubCategory', 'WindowsAHB_VCPUs', 'SQLAHB_VCPUs')\r\n",
-							"usage = usage_df.withColumn('NormalizedCores', F.coalesce('WindowsAHB_VCPUs', 'SQLAHB_VCPUs')).drop('SQLAHB_VCPUs', 'WindowsAHB_VCPUs')\r\n",
+							"usage_df = usage_df.withColumn('NormalizedCores', F.when(F.col('SQLAHB_VCPUs') > 0, F.col('SQLAHB_VCPUs')).otherwise(F.col('WindowsAHB_VCPUs'))).drop('SQLAHB_VCPUs', 'WindowsAHB_VCPUs')\r\n",
 							"usage_df = usage_df.drop_duplicates(['ResourceId'])"
 						],
 						"outputs": [],
-						"execution_count": 72
+						"execution_count": 103
 					},
 					{
 						"cell_type": "code",
@@ -43408,7 +43408,7 @@
 							"usage_df = usage_df.where(~F.col('ResourceGroup').isin(TS_VM_RG))"
 						],
 						"outputs": [],
-						"execution_count": 73
+						"execution_count": 104
 					},
 					{
 						"cell_type": "code",
@@ -43429,7 +43429,7 @@
 							"rouge_resources = usage_df.where(~F.col('ResourceId').isin(assigned_resource_list))"
 						],
 						"outputs": [],
-						"execution_count": 74
+						"execution_count": 105
 					},
 					{
 						"cell_type": "markdown",
@@ -43465,7 +43465,7 @@
 							"rouge_resources.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(rouge_path)"
 						],
 						"outputs": [],
-						"execution_count": 75
+						"execution_count": 106
 					}
 				]
 			},
@@ -43740,7 +43740,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "949fe40e-3593-4f6b-bab8-115c343a7c7b"
+						"spark.autotune.trackingId": "edd07856-b012-45a5-8428-b6dbc8a87c0a"
 					}
 				},
 				"metadata": {
@@ -43765,7 +43765,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -43826,6 +43827,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 							"cost_df = spark.read.format('parquet').load(cost_path)"
@@ -44524,7 +44526,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "27eb3c51-61cb-4bac-9df0-f6a91fba974e"
+						"spark.autotune.trackingId": "ef2d2f79-d3be-4b24-b76a-ed17b30c46ee"
 					}
 				},
 				"metadata": {
@@ -46866,7 +46868,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "aefe25f3-e97d-479f-9df8-a02c3b225ed1"
+						"spark.autotune.trackingId": "da1255ef-2137-4a28-999c-853617ccfe8d"
 					}
 				},
 				"metadata": {
