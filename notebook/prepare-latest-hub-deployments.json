@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "e47feba1-8f00-405e-a295-936491ff87cf"
+				"spark.autotune.trackingId": "eb51d5c7-9ba5-4f53-a3bd-d6c64950a4bb"
 			}
 		},
 		"metadata": {
@@ -57,7 +57,7 @@
 					"import pyspark.sql.functions as F\r\n",
 					"from enum import Enum"
 				],
-				"execution_count": 19
+				"execution_count": 1
 			},
 			{
 				"cell_type": "code",
@@ -81,7 +81,7 @@
 					"    VM = \"VM\"\r\n",
 					"    SQL = \"SQL\""
 				],
-				"execution_count": 20
+				"execution_count": 2
 			},
 			{
 				"cell_type": "markdown",
@@ -127,7 +127,7 @@
 					"vm_enable_df = spark.read.options(**csv_options).csv(vm_enable_path)\r\n",
 					"vm_disable_df = spark.read.options(**csv_options).csv(vm_disable_path)"
 				],
-				"execution_count": 21
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -144,32 +144,32 @@
 				},
 				"source": [
 					"sql_enable_df = sql_enable_df \\\r\n",
-					"    .select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'SQLAHB_VCPUs') \\\r\n",
+					"    .select('Date', 'ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'SQLAHB_VCPUs') \\\r\n",
 					"    .withColumnRenamed('SQLAHB_VCPUs', 'NormalizedCores') \\\r\n",
 					"    .withColumn('DeploymentStatus', F.lit(DeploymentStatus.Enabled.value)) \\\r\n",
 					"    .withColumn('DeploymentType', F.lit(DeploymentType.SQL.value))\r\n",
 					"\r\n",
 					"sql_disable_df = sql_disable_df \\\r\n",
-					"    .select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'SQLAHB_VCPUs') \\\r\n",
+					"    .select('Date', 'ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'SQLAHB_VCPUs') \\\r\n",
 					"    .withColumnRenamed('SQLAHB_VCPUs', 'NormalizedCores') \\\r\n",
 					"    .withColumn('DeploymentStatus', F.lit(DeploymentStatus.Disabled.value)) \\\r\n",
 					"    .withColumn('DeploymentType', F.lit(DeploymentType.SQL.value))\r\n",
 					"\r\n",
 					"vm_enable_df = vm_enable_df \\\r\n",
-					"    .select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'WindowsAHB_VCPUs') \\\r\n",
+					"    .select('Date', 'ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'WindowsAHB_VCPUs') \\\r\n",
 					"    .withColumnRenamed('WindowsAHB_VCPUs', 'NormalizedCores') \\\r\n",
 					"    .withColumn('DeploymentStatus', F.lit(DeploymentStatus.Enabled.value)) \\\r\n",
 					"    .withColumn('DeploymentType', F.lit(DeploymentType.VM.value))\r\n",
 					"\r\n",
 					"vm_disable_df = vm_disable_df \\\r\n",
-					"    .select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'WindowsAHB_VCPUs') \\\r\n",
+					"    .select('Date', 'ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'WindowsAHB_VCPUs') \\\r\n",
 					"    .withColumnRenamed('WindowsAHB_VCPUs', 'NormalizedCores') \\\r\n",
 					"    .withColumn('DeploymentStatus', F.lit(DeploymentStatus.Disabled.value)) \\\r\n",
 					"    .withColumn('DeploymentType', F.lit(DeploymentType.VM.value))\r\n",
 					"\r\n",
 					"ahb_deployments_df = sql_enable_df.union(sql_disable_df).union(vm_enable_df).union(vm_disable_df)"
 				],
-				"execution_count": 22
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -188,7 +188,7 @@
 					"target_path = f\"abfss://usage@s037costmgmt.dfs.core.windows.net/hub/latest-hub-deployments.parquet\"\r\n",
 					"ahb_deployments_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 				],
-				"execution_count": 24
+				"execution_count": 5
 			}
 		]
 	}
