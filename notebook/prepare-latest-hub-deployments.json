@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "eb51d5c7-9ba5-4f53-a3bd-d6c64950a4bb"
+				"spark.autotune.trackingId": "75e32211-4af6-4b0b-97e5-93ef6c5629bb"
 			}
 		},
 		"metadata": {
@@ -55,9 +55,10 @@
 				"cell_type": "code",
 				"source": [
 					"import pyspark.sql.functions as F\r\n",
+					"import pyspark.sql.types as T\r\n",
 					"from enum import Enum"
 				],
-				"execution_count": 1
+				"execution_count": 12
 			},
 			{
 				"cell_type": "code",
@@ -81,7 +82,7 @@
 					"    VM = \"VM\"\r\n",
 					"    SQL = \"SQL\""
 				],
-				"execution_count": 2
+				"execution_count": 13
 			},
 			{
 				"cell_type": "markdown",
@@ -127,7 +128,7 @@
 					"vm_enable_df = spark.read.options(**csv_options).csv(vm_enable_path)\r\n",
 					"vm_disable_df = spark.read.options(**csv_options).csv(vm_disable_path)"
 				],
-				"execution_count": 3
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -167,9 +168,10 @@
 					"    .withColumn('DeploymentStatus', F.lit(DeploymentStatus.Disabled.value)) \\\r\n",
 					"    .withColumn('DeploymentType', F.lit(DeploymentType.VM.value))\r\n",
 					"\r\n",
-					"ahb_deployments_df = sql_enable_df.union(sql_disable_df).union(vm_enable_df).union(vm_disable_df)"
+					"ahb_deployments_df = sql_enable_df.union(sql_disable_df).union(vm_enable_df).union(vm_disable_df)\r\n",
+					"ahb_deployments_df = ahb_deployments_df.withColumn('NormalizedCores', F.col('NormalizedCores').cast(T.IntegerType()))"
 				],
-				"execution_count": 4
+				"execution_count": 15
 			},
 			{
 				"cell_type": "code",
@@ -188,7 +190,7 @@
 					"target_path = f\"abfss://usage@s037costmgmt.dfs.core.windows.net/hub/latest-hub-deployments.parquet\"\r\n",
 					"ahb_deployments_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 				],
-				"execution_count": 5
+				"execution_count": 16
 			}
 		]
 	}
