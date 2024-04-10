@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "b944fabc-9032-4457-8e17-750a2a85debf"
+				"spark.autotune.trackingId": "e7c338bf-d399-4e45-aa95-c92e441ed430"
 			}
 		},
 		"metadata": {
@@ -322,9 +322,14 @@
 					")\r\n",
 					"\r\n",
 					"cost_df = cost_df.where(F.col('SQLType').isNotNull())\r\n",
+					"\r\n",
+					"# Create new date column\r\n",
+					"cost_df = df.withColumn('Date', F.current_date())\r\n",
+					"\r\n",
+					"# Copy df for disabled list computation\r\n",
 					"cost_copy_df = cost_df.alias('cost_copy_df')"
 				],
-				"execution_count": 8
+				"execution_count": 1
 			},
 			{
 				"cell_type": "markdown",
@@ -388,7 +393,7 @@
 					"enable_copy_df = sql_enable_df.alias('enable_copy_df')\r\n",
 					"\r\n",
 					"# Remove redundant columns from results\r\n",
-					"sql_enable_df = sql_enable_df.select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'SQLAHB_VCPUs')"
+					"sql_enable_df = sql_enable_df.select('Date', 'ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'SQLAHB_VCPUs')"
 				],
 				"execution_count": 9
 			},
@@ -421,7 +426,7 @@
 				"source": [
 					"# Compute list of disabled instances by removing references from the enabled liste\r\n",
 					"sql_disable_df = cost_copy_df.where(F.col('SQLAHB') == 'Enabled')\r\n",
-					"sql_disable_df = sql_disable_df.select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'SQLAHB_VCPUs')\r\n",
+					"sql_disable_df = sql_disable_df.select('Date', 'ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'SQLAHB_VCPUs')\r\n",
 					"sql_disable_df = sql_disable_df.dropDuplicates([\"ResourceId\"])\r\n",
 					"sql_disable_df = sql_disable_df.join(sql_enable_df, 'ResourceId', 'left_anti')"
 				],
