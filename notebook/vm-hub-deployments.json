@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "11db4b9c-ac05-4b9f-9406-a1dfd37e219d"
+				"spark.autotune.trackingId": "78084a12-8995-42a1-9617-c6c58739c7e2"
 			}
 		},
 		"metadata": {
@@ -390,6 +390,9 @@
 					"# Removing the VMs who's ResourceName begins with 'CVD-' as these are Windows Client VM's and not relevant for consideration of a Windows Server licence\r\n",
 					"cost_df = cost_df.where(~F.upper(F.col('ResourceName')).startswith('CVD-'))\r\n",
 					"\r\n",
+					"# Create new date column\r\n",
+					"cost_df = df.withColumn('Date', F.current_date())\r\n",
+					"\r\n",
 					"# Persist a df copy for disable list calculation\r\n",
 					"cost_copy_df = cost_df.alias('cost_copy_df')"
 				],
@@ -424,6 +427,7 @@
 				"source": [
 					"# Columns used for aggregated result\r\n",
 					"selected_columns = [\r\n",
+					"    'Date',\r\n",
 					"    'ResourceId',\r\n",
 					"    'SubscriptionId',\r\n",
 					"    'ResourceGroup',\r\n",
