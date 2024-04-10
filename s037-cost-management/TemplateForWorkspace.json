@@ -981,30 +981,6 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
-		"sprkpool33large_delayInMinutes": {
-			"type": "int",
-			"defaultValue": 10
-		},
-		"sprkpool33large_maxNodeCount": {
-			"type": "int",
-			"defaultValue": 12
-		},
-		"sprkpool33large_minNodeCount": {
-			"type": "int",
-			"defaultValue": 3
-		},
-		"sprkpool33large_nodeCount": {
-			"type": "int",
-			"defaultValue": 3
-		},
-		"sprkpool33large_nodeSize": {
-			"type": "string",
-			"defaultValue": "Large"
-		},
-		"sprkpool33large_sparkVersion": {
-			"type": "string",
-			"defaultValue": "3.3"
-		},
 		"sparkpool32_delayInMinutes": {
 			"type": "int",
 			"defaultValue": 15
@@ -1028,6 +1004,30 @@
 		"sparkpool32_sparkVersion": {
 			"type": "string",
 			"defaultValue": "3.2"
+		},
+		"sprkpool33large_delayInMinutes": {
+			"type": "int",
+			"defaultValue": 10
+		},
+		"sprkpool33large_maxNodeCount": {
+			"type": "int",
+			"defaultValue": 12
+		},
+		"sprkpool33large_minNodeCount": {
+			"type": "int",
+			"defaultValue": 3
+		},
+		"sprkpool33large_nodeCount": {
+			"type": "int",
+			"defaultValue": 3
+		},
+		"sprkpool33large_nodeSize": {
+			"type": "string",
+			"defaultValue": "Large"
+		},
+		"sprkpool33large_sparkVersion": {
+			"type": "string",
+			"defaultValue": "3.3"
 		}
 	},
 	"variables": {
@@ -26589,12 +26589,12 @@
 					"name": "OGBG Benchmark 2022/2022"
 				},
 				"content": {
-					"query": "-- This is auto-generated code\nSELECT\n    ServiceInfo2 as [Image Type]\n    ,count(DISTINCT ResourceId) as [Count]\n    ,FORMAT ([Date],'yyyy-MM') as [Date]   \n    --,MeterSubCategory\n    --,Tags\n    --,ResourceId\n    --,SubscriptionId\n    --,SubscriptionName\n    --,*\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/2022*/ACMMonthlyActualCost_*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where MeterCategory = 'Virtual Machines' and Tags not like '%\"Cluster%' and Tags not like '%\"Kubernetes%' --and ServiceInfo2 is NULL --and SubscriptionId = '019958ea-fe2c-4e14-bbd9-0d2db8ed7cfc'\n    --and ResourceId = '/subscriptions/019958ea-fe2c-4e14-bbd9-0d2db8ed7cfc/resourceGroups/MC_AURORA11_AURORA11_NORTHEUROPE/providers/Microsoft.Compute/virtualMachineScaleSets/aks-gpu-36545846-vmss'\n    group by ServiceInfo2, FORMAT ([Date],'yyyy-MM')\n    --group by ResourceId, ServiceInfo2, MeterSubCategory, FORMAT ([Date],'yyyy-MM') --Tags, \n    order by count(DISTINCT ResourceId), FORMAT ([Date],'yyyy-MM') DESC\n    --order by FORMAT ([Date],'yyyy-MM')\n",
+					"query": "-- This is auto-generated code\nSELECT\n    ServiceInfo2 as [Image Type]\n    ,count(DISTINCT ResourceId) as [Count]\n    ,FORMAT ([Date],'yyyy-MM') as [Date]   \n    --,MeterSubCategory\n    --,Tags\n    --,ResourceId\n    --,SubscriptionId\n    --,SubscriptionName\n    --,*\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/2023*/ACMMonthlyActualCost_*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where MeterCategory = 'Virtual Machines' and Tags not like '%\"Cluster%' and Tags not like '%\"Kubernetes%' --and ServiceInfo2 is NULL --and SubscriptionId = '019958ea-fe2c-4e14-bbd9-0d2db8ed7cfc'\n    --and ResourceId = '/subscriptions/019958ea-fe2c-4e14-bbd9-0d2db8ed7cfc/resourceGroups/MC_AURORA11_AURORA11_NORTHEUROPE/providers/Microsoft.Compute/virtualMachineScaleSets/aks-gpu-36545846-vmss'\n    group by ServiceInfo2, FORMAT ([Date],'yyyy-MM')\n    --group by ResourceId, ServiceInfo2, MeterSubCategory, FORMAT ([Date],'yyyy-MM') --Tags, \n    --order by count(DISTINCT ResourceId), FORMAT ([Date],'yyyy-MM') DESC\n    order by FORMAT ([Date],'yyyy-MM'), [Image Type]\n    --order by FORMAT ([Date],'yyyy-MM')\n",
 					"metadata": {
 						"language": "sql"
 					},
 					"currentConnection": {
-						"databaseName": "master",
+						"databaseName": "costmgmt",
 						"poolName": "Built-in"
 					},
 					"resultLimit": -1
@@ -26612,7 +26612,7 @@
 					"name": "OGBG Benchmark 2022/2022"
 				},
 				"content": {
-					"query": "-- This is auto-generated code\nSELECT\n    ServiceInfo2 as [Image Type]\n    --,count(DISTINCT ResourceId) as [Count]\n    ,FORMAT ([Date],'yyyy-MM') as [Date]   \n    ,MeterSubCategory\n    --,Tags\n    ,ResourceId\n    --,SubscriptionId\n    --,SubscriptionName\n    --,*\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/2022*/ACMMonthlyActualCost_*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where MeterCategory = 'Virtual Machines' and Tags not like '%\"Cluster%' and Tags not like '%\"Kubernetes%' and ServiceInfo2 is NULL --and SubscriptionId = '019958ea-fe2c-4e14-bbd9-0d2db8ed7cfc'\n    --and ResourceId = '/subscriptions/019958ea-fe2c-4e14-bbd9-0d2db8ed7cfc/resourceGroups/MC_AURORA11_AURORA11_NORTHEUROPE/providers/Microsoft.Compute/virtualMachineScaleSets/aks-gpu-36545846-vmss'\n    --group by ServiceInfo2, FORMAT ([Date],'yyyy-MM')\n    group by ResourceId, ServiceInfo2, MeterSubCategory, FORMAT ([Date],'yyyy-MM') --Tags, \n    --order by count(DISTINCT ResourceId), FORMAT ([Date],'yyyy-MM') DESC\n    order by FORMAT ([Date],'yyyy-MM')\n",
+					"query": "-- This is auto-generated code\nSELECT\n    ServiceInfo2 as [Image Type]\n    --,count(DISTINCT ResourceId) as [Count]\n    ,FORMAT ([Date],'yyyy-MM') as [Date]   \n    ,MeterSubCategory\n    ,Tags\n    ,ResourceId\n    --,SubscriptionId\n    --,SubscriptionName\n    --,*\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/2023*/ACMMonthlyActualCost_*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where MeterCategory = 'Virtual Machines' and Tags not like '%\"Cluster%' and Tags not like '%\"Kubernetes%' and ServiceInfo2 is NULL --and SubscriptionId = '019958ea-fe2c-4e14-bbd9-0d2db8ed7cfc'\n    --and ResourceId = '/subscriptions/019958ea-fe2c-4e14-bbd9-0d2db8ed7cfc/resourceGroups/MC_AURORA11_AURORA11_NORTHEUROPE/providers/Microsoft.Compute/virtualMachineScaleSets/aks-gpu-36545846-vmss'\n    --group by ServiceInfo2, FORMAT ([Date],'yyyy-MM')\n    group by ResourceId, ServiceInfo2, MeterSubCategory, FORMAT ([Date],'yyyy-MM'), Tags \n    --order by count(DISTINCT ResourceId), FORMAT ([Date],'yyyy-MM') DESC\n    order by FORMAT ([Date],'yyyy-MM')\n",
 					"metadata": {
 						"language": "sql"
 					},
@@ -38139,7 +38139,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "dd7f4084-cf89-4127-95f7-40ce409ea5ae"
+						"spark.autotune.trackingId": "4a957974-7e1a-498a-9332-25de630b2c80"
 					}
 				},
 				"metadata": {
@@ -38164,15 +38164,13 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"import pyspark.sql.types as T"
@@ -40807,7 +40805,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "834a3340-74e1-48b8-8019-347475d4bde5"
+						"spark.autotune.trackingId": "1108902a-9086-40a0-82b6-aa9300dc3677"
 					}
 				},
 				"metadata": {
@@ -40832,8 +40830,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -40911,7 +40908,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"def get_last_day_prev_month(to_date):\r\n",
 							"    current_month = int(to_date[4:6])\r\n",
@@ -41640,7 +41636,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "260357bc-bbaf-4bb7-b3a4-bc84ff08c4ba"
+						"spark.autotune.trackingId": "d69238ba-81e2-4e05-a4a7-38a752fd1358"
 					}
 				},
 				"metadata": {
@@ -41665,8 +41661,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -42207,7 +42202,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "be14efc0-3fb0-4ff1-bff1-26c4b9608020"
+						"spark.autotune.trackingId": "3ee2a5d6-bdcd-4b53-9baf-b6a9d86d3e96"
 					}
 				},
 				"metadata": {
@@ -42232,8 +42227,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -43041,7 +43035,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "e47feba1-8f00-405e-a295-936491ff87cf"
+						"spark.autotune.trackingId": "397094e4-407f-47f8-96f7-389b16a23d15"
 					}
 				},
 				"metadata": {
@@ -43075,10 +43069,11 @@
 						"cell_type": "code",
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
+							"import pyspark.sql.types as T\r\n",
 							"from enum import Enum"
 						],
 						"outputs": [],
-						"execution_count": 19
+						"execution_count": 18
 					},
 					{
 						"cell_type": "code",
@@ -43103,7 +43098,7 @@
 							"    SQL = \"SQL\""
 						],
 						"outputs": [],
-						"execution_count": 20
+						"execution_count": 19
 					},
 					{
 						"cell_type": "markdown",
@@ -43150,7 +43145,7 @@
 							"vm_disable_df = spark.read.options(**csv_options).csv(vm_disable_path)"
 						],
 						"outputs": [],
-						"execution_count": 21
+						"execution_count": 20
 					},
 					{
 						"cell_type": "code",
@@ -43167,33 +43162,35 @@
 						},
 						"source": [
 							"sql_enable_df = sql_enable_df \\\r\n",
-							"    .select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'SQLAHB_VCPUs') \\\r\n",
+							"    .select('Date', 'ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'SQLAHB_VCPUs') \\\r\n",
 							"    .withColumnRenamed('SQLAHB_VCPUs', 'NormalizedCores') \\\r\n",
 							"    .withColumn('DeploymentStatus', F.lit(DeploymentStatus.Enabled.value)) \\\r\n",
 							"    .withColumn('DeploymentType', F.lit(DeploymentType.SQL.value))\r\n",
 							"\r\n",
 							"sql_disable_df = sql_disable_df \\\r\n",
-							"    .select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'SQLAHB_VCPUs') \\\r\n",
+							"    .select('Date', 'ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'SQLAHB_VCPUs') \\\r\n",
 							"    .withColumnRenamed('SQLAHB_VCPUs', 'NormalizedCores') \\\r\n",
 							"    .withColumn('DeploymentStatus', F.lit(DeploymentStatus.Disabled.value)) \\\r\n",
 							"    .withColumn('DeploymentType', F.lit(DeploymentType.SQL.value))\r\n",
 							"\r\n",
 							"vm_enable_df = vm_enable_df \\\r\n",
-							"    .select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'WindowsAHB_VCPUs') \\\r\n",
+							"    .select('Date', 'ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'WindowsAHB_VCPUs') \\\r\n",
 							"    .withColumnRenamed('WindowsAHB_VCPUs', 'NormalizedCores') \\\r\n",
 							"    .withColumn('DeploymentStatus', F.lit(DeploymentStatus.Enabled.value)) \\\r\n",
 							"    .withColumn('DeploymentType', F.lit(DeploymentType.VM.value))\r\n",
 							"\r\n",
 							"vm_disable_df = vm_disable_df \\\r\n",
-							"    .select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'WindowsAHB_VCPUs') \\\r\n",
+							"    .select('Date', 'ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'WindowsAHB_VCPUs') \\\r\n",
 							"    .withColumnRenamed('WindowsAHB_VCPUs', 'NormalizedCores') \\\r\n",
 							"    .withColumn('DeploymentStatus', F.lit(DeploymentStatus.Disabled.value)) \\\r\n",
 							"    .withColumn('DeploymentType', F.lit(DeploymentType.VM.value))\r\n",
 							"\r\n",
-							"ahb_deployments_df = sql_enable_df.union(sql_disable_df).union(vm_enable_df).union(vm_disable_df)"
+							"ahb_deployments_df = sql_enable_df.union(sql_disable_df).union(vm_enable_df).union(vm_disable_df)\r\n",
+							"ahb_deployments_df = ahb_deployments_df.withColumn('NormalizedCores', F.col('NormalizedCores').cast(T.IntegerType()))\r\n",
+							"ahb_deployments_df = ahb_deployments_df.withColumn('Date', F.col('Date').cast(T.DateType()))"
 						],
 						"outputs": [],
-						"execution_count": 22
+						"execution_count": 21
 					},
 					{
 						"cell_type": "code",
@@ -43213,7 +43210,7 @@
 							"ahb_deployments_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 						],
 						"outputs": [],
-						"execution_count": 24
+						"execution_count": 22
 					}
 				]
 			},
@@ -44272,7 +44269,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "b944fabc-9032-4457-8e17-750a2a85debf"
+						"spark.autotune.trackingId": "526af598-9a28-4ecf-b43e-d4f098e1d480"
 					}
 				},
 				"metadata": {
@@ -44329,7 +44326,7 @@
 							"from pyspark.sql import Row"
 						],
 						"outputs": [],
-						"execution_count": 1
+						"execution_count": 3
 					},
 					{
 						"cell_type": "code",
@@ -44351,7 +44348,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 2
+						"execution_count": 4
 					},
 					{
 						"cell_type": "code",
@@ -44373,7 +44370,7 @@
 							"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 						],
 						"outputs": [],
-						"execution_count": 3
+						"execution_count": 5
 					},
 					{
 						"cell_type": "markdown",
@@ -44429,7 +44426,7 @@
 							"sql_normalized_licence_cores = (4 * sql_enterprise_licence_cores) + sql_standard_licence_cores"
 						],
 						"outputs": [],
-						"execution_count": 4
+						"execution_count": 6
 					},
 					{
 						"cell_type": "markdown",
@@ -44487,7 +44484,7 @@
 							"]"
 						],
 						"outputs": [],
-						"execution_count": 5
+						"execution_count": 7
 					},
 					{
 						"cell_type": "code",
@@ -44507,7 +44504,7 @@
 							"cost_df = spark.read.format('parquet').load(cost_path)"
 						],
 						"outputs": [],
-						"execution_count": 6
+						"execution_count": 8
 					},
 					{
 						"cell_type": "code",
@@ -44535,7 +44532,7 @@
 							"sql_interval_hours = sql_interval_days * 24"
 						],
 						"outputs": [],
-						"execution_count": 7
+						"execution_count": 9
 					},
 					{
 						"cell_type": "code",
@@ -44579,10 +44576,15 @@
 							")\r\n",
 							"\r\n",
 							"cost_df = cost_df.where(F.col('SQLType').isNotNull())\r\n",
+							"\r\n",
+							"# Create new date column\r\n",
+							"cost_df = cost_df.withColumn('Date', F.current_date())\r\n",
+							"\r\n",
+							"# Copy df for disabled list computation\r\n",
 							"cost_copy_df = cost_df.alias('cost_copy_df')"
 						],
 						"outputs": [],
-						"execution_count": 8
+						"execution_count": 11
 					},
 					{
 						"cell_type": "markdown",
@@ -44613,8 +44615,8 @@
 						"source": [
 							"# Max aggregation on vCores are used to mitigate duplicate instances, as they can occur if # of vCores are altered on a given day\r\n",
 							"sql_enable_df = cost_df \\\r\n",
-							"    .select('ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'Quantity', 'ai_VCPUs', 'ai_vCores', 'SQLAHB_VCPUs', 'SQLType', 'Priority') \\\r\n",
-							"    .groupBy('ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'ai_VCPUs', 'SQLType', 'Priority') \\\r\n",
+							"    .select('Date', 'ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'Quantity', 'ai_VCPUs', 'ai_vCores', 'SQLAHB_VCPUs', 'SQLType', 'Priority') \\\r\n",
+							"    .groupBy('Date', 'ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'ai_VCPUs', 'SQLType', 'Priority') \\\r\n",
 							"    .agg(F.sum('Quantity').alias('ResourceHours'), F.max('ai_vCores').alias('vCores'), F.max('SQLAHB_VCPUs').alias('SQLAHB_VCPUs')) \r\n",
 							"\r\n",
 							"# SQL VM instances will have a quantity per resource per day at 0-24 hours\r\n",
@@ -44646,10 +44648,10 @@
 							"enable_copy_df = sql_enable_df.alias('enable_copy_df')\r\n",
 							"\r\n",
 							"# Remove redundant columns from results\r\n",
-							"sql_enable_df = sql_enable_df.select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'SQLAHB_VCPUs')"
+							"sql_enable_df = sql_enable_df.select('Date', 'ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'SQLAHB_VCPUs')"
 						],
 						"outputs": [],
-						"execution_count": 9
+						"execution_count": 13
 					},
 					{
 						"cell_type": "markdown",
@@ -44680,12 +44682,12 @@
 						"source": [
 							"# Compute list of disabled instances by removing references from the enabled liste\r\n",
 							"sql_disable_df = cost_copy_df.where(F.col('SQLAHB') == 'Enabled')\r\n",
-							"sql_disable_df = sql_disable_df.select('ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'SQLAHB_VCPUs')\r\n",
+							"sql_disable_df = sql_disable_df.select('Date', 'ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'SQLAHB_VCPUs')\r\n",
 							"sql_disable_df = sql_disable_df.dropDuplicates([\"ResourceId\"])\r\n",
 							"sql_disable_df = sql_disable_df.join(sql_enable_df, 'ResourceId', 'left_anti')"
 						],
 						"outputs": [],
-						"execution_count": 10
+						"execution_count": 14
 					},
 					{
 						"cell_type": "markdown",
@@ -44741,7 +44743,7 @@
 							"    return activity_df"
 						],
 						"outputs": [],
-						"execution_count": 11
+						"execution_count": 15
 					},
 					{
 						"cell_type": "code",
@@ -44778,7 +44780,7 @@
 							"    activity_df.toPandas().to_csv(activity_path, index=False)"
 						],
 						"outputs": [],
-						"execution_count": 14
+						"execution_count": 16
 					},
 					{
 						"cell_type": "code",
@@ -44798,7 +44800,7 @@
 							"mssparkutils.notebook.exit(should_run)"
 						],
 						"outputs": [],
-						"execution_count": 13
+						"execution_count": null
 					}
 				]
 			},
@@ -46607,7 +46609,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "11db4b9c-ac05-4b9f-9406-a1dfd37e219d"
+						"spark.autotune.trackingId": "f5880b41-b490-4ff1-ba41-5905282fd23c"
 					}
 				},
 				"metadata": {
@@ -46664,7 +46666,7 @@
 							"from pyspark.sql import Row"
 						],
 						"outputs": [],
-						"execution_count": 102
+						"execution_count": 1
 					},
 					{
 						"cell_type": "code",
@@ -46686,7 +46688,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 103
+						"execution_count": 2
 					},
 					{
 						"cell_type": "code",
@@ -46711,7 +46713,7 @@
 							"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 						],
 						"outputs": [],
-						"execution_count": 104
+						"execution_count": 3
 					},
 					{
 						"cell_type": "code",
@@ -46736,7 +46738,7 @@
 							"]"
 						],
 						"outputs": [],
-						"execution_count": 105
+						"execution_count": 4
 					},
 					{
 						"cell_type": "markdown",
@@ -46770,7 +46772,7 @@
 							"pricesheet_df = spark.read.format('parquet').load(pricesheet_source_path)"
 						],
 						"outputs": [],
-						"execution_count": 106
+						"execution_count": 5
 					},
 					{
 						"cell_type": "code",
@@ -46817,7 +46819,7 @@
 							"VCPUBASEUNITPRICE = pricesheet_df.where(F.col('MeterName') == '1 vCPU VM License').select('VCPUBaseUnitPrice').collect()[0][0]"
 						],
 						"outputs": [],
-						"execution_count": 90
+						"execution_count": 6
 					},
 					{
 						"cell_type": "markdown",
@@ -46874,7 +46876,7 @@
 							"hourly_vcpu_cost = yearly_license_cost / (license_count * HOURS_PER_YEAR * VCPUS_PER_LICENSE)"
 						],
 						"outputs": [],
-						"execution_count": 93
+						"execution_count": 7
 					},
 					{
 						"cell_type": "markdown",
@@ -46931,7 +46933,7 @@
 							"]"
 						],
 						"outputs": [],
-						"execution_count": 92
+						"execution_count": 8
 					},
 					{
 						"cell_type": "code",
@@ -46951,7 +46953,7 @@
 							"cost_df = spark.read.format('parquet').load(cost_path)"
 						],
 						"outputs": [],
-						"execution_count": 112
+						"execution_count": 9
 					},
 					{
 						"cell_type": "code",
@@ -46985,11 +46987,14 @@
 							"# Removing the VMs who's ResourceName begins with 'CVD-' as these are Windows Client VM's and not relevant for consideration of a Windows Server licence\r\n",
 							"cost_df = cost_df.where(~F.upper(F.col('ResourceName')).startswith('CVD-'))\r\n",
 							"\r\n",
+							"# Create new date column\r\n",
+							"cost_df = cost_df.withColumn('Date', F.current_date())\r\n",
+							"\r\n",
 							"# Persist a df copy for disable list calculation\r\n",
 							"cost_copy_df = cost_df.alias('cost_copy_df')"
 						],
 						"outputs": [],
-						"execution_count": 94
+						"execution_count": 11
 					},
 					{
 						"cell_type": "markdown",
@@ -47020,6 +47025,7 @@
 						"source": [
 							"# Columns used for aggregated result\r\n",
 							"selected_columns = [\r\n",
+							"    'Date',\r\n",
 							"    'ResourceId',\r\n",
 							"    'SubscriptionId',\r\n",
 							"    'ResourceGroup',\r\n",
@@ -47071,7 +47077,7 @@
 							"vm_enable_df = vm_enable_df.select(*selected_columns)"
 						],
 						"outputs": [],
-						"execution_count": 86
+						"execution_count": 12
 					},
 					{
 						"cell_type": "markdown",
@@ -47112,7 +47118,7 @@
 							"vm_disable_df = vm_disable_df.join(vm_enable_df, 'ResourceId', 'left_anti')"
 						],
 						"outputs": [],
-						"execution_count": 24
+						"execution_count": 13
 					},
 					{
 						"cell_type": "markdown",
@@ -47174,7 +47180,7 @@
 							"    return activity_df"
 						],
 						"outputs": [],
-						"execution_count": 25
+						"execution_count": 14
 					},
 					{
 						"cell_type": "code",
@@ -47212,7 +47218,7 @@
 							"    activity_df.toPandas().to_csv(activity_path, index=False)"
 						],
 						"outputs": [],
-						"execution_count": 26
+						"execution_count": 15
 					},
 					{
 						"cell_type": "code",
@@ -47426,31 +47432,6 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
-			"type": "Microsoft.Synapse/workspaces/bigDataPools",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"autoPause": {
-					"enabled": true,
-					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
-				},
-				"autoScale": {
-					"enabled": true,
-					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
-					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
-				},
-				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
-				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
-				"nodeSizeFamily": "MemoryOptimized",
-				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
-				"isComputeIsolationEnabled": false,
-				"sessionLevelPackagesEnabled": true,
-				"annotations": []
-			},
-			"dependsOn": [],
-			"location": "northeurope"
-		},
-		{
 			"name": "[concat(parameters('workspaceName'), '/sparkpool32')]",
 			"type": "Microsoft.Synapse/workspaces/bigDataPools",
 			"apiVersion": "2019-06-01-preview",
@@ -47473,6 +47454,31 @@
 					"filename": "requirements.txt",
 					"time": "2023-01-25T09:06:41.7702231Z"
 				},
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": true,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
+				},
+				"autoScale": {
+					"enabled": true,
+					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
+					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
+				},
+				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
+				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
 				"isComputeIsolationEnabled": false,
 				"sessionLevelPackagesEnabled": true,
 				"annotations": []
