@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "397094e4-407f-47f8-96f7-389b16a23d15"
+				"spark.autotune.trackingId": "dcf369c8-3f5a-429e-a6a8-17c20fc72d32"
 			}
 		},
 		"metadata": {
@@ -56,9 +56,11 @@
 				"source": [
 					"import pyspark.sql.functions as F\r\n",
 					"import pyspark.sql.types as T\r\n",
-					"from enum import Enum"
+					"from enum import Enum\r\n",
+					"from datetime import timedelta, datetime\r\n",
+					"from dateutil.relativedelta import relativedelta"
 				],
-				"execution_count": 18
+				"execution_count": 56
 			},
 			{
 				"cell_type": "code",
@@ -82,7 +84,7 @@
 					"    VM = \"VM\"\r\n",
 					"    SQL = \"SQL\""
 				],
-				"execution_count": 19
+				"execution_count": 57
 			},
 			{
 				"cell_type": "markdown",
@@ -113,8 +115,8 @@
 				"source": [
 					"sql_enable_path = 'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Deployment.csv'\r\n",
 					"sql_disable_path = 'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Removal.csv'\r\n",
-					"vm_enable_path = f'abfss://win-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Deployment.csv'\r\n",
-					"vm_disable_path = f'abfss://win-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Removal.csv'\r\n",
+					"vm_enable_path = 'abfss://win-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Deployment.csv'\r\n",
+					"vm_disable_path = 'abfss://win-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Removal.csv'\r\n",
 					"\r\n",
 					"csv_options = {\r\n",
 					"    'header' : True,\r\n",
@@ -128,7 +130,7 @@
 					"vm_enable_df = spark.read.options(**csv_options).csv(vm_enable_path)\r\n",
 					"vm_disable_df = spark.read.options(**csv_options).csv(vm_disable_path)"
 				],
-				"execution_count": 20
+				"execution_count": 58
 			},
 			{
 				"cell_type": "code",
@@ -168,11 +170,26 @@
 					"    .withColumn('DeploymentStatus', F.lit(DeploymentStatus.Disabled.value)) \\\r\n",
 					"    .withColumn('DeploymentType', F.lit(DeploymentType.VM.value))\r\n",
 					"\r\n",
-					"ahb_deployments_df = sql_enable_df.union(sql_disable_df).union(vm_enable_df).union(vm_disable_df)\r\n",
+					"ahb_assignments = sql_enable_df.union(vm_enable_df)\r\n",
+					"ahb_removals = sql_disable_df.union(vm_disable_df)\r\n",
+					"ahb_deployments_df = ahb_assignments.union(ahb_removals)\r\n",
 					"ahb_deployments_df = ahb_deployments_df.withColumn('NormalizedCores', F.col('NormalizedCores').cast(T.IntegerType()))\r\n",
 					"ahb_deployments_df = ahb_deployments_df.withColumn('Date', F.col('Date').cast(T.DateType()))"
 				],
-				"execution_count": 21
+				"execution_count": 59
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Load usage data"
+				]
 			},
 			{
 				"cell_type": "code",
@@ -188,10 +205,136 @@
 					}
 				},
 				"source": [
-					"target_path = f\"abfss://usage@s037costmgmt.dfs.core.windows.net/hub/latest-hub-deployments.parquet\"\r\n",
-					"ahb_deployments_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
+					"today = datetime.now()\r\n",
+					"next_month_start = (today + relativedelta(months=1)).replace(day=1)\r\n",
+					"current_month_start = today.replace(day=1).strftime('%Y%m%d')\r\n",
+					"current_month_end = (next_month_start - timedelta(days=1)).strftime('%Y%m%d')\r\n",
+					"date_range = f'{current_month_start}-{current_month_end}'"
 				],
-				"execution_count": 22
+				"execution_count": 60
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"usage_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/{date_range}/Extended_v3_ACMMonthlyActualCost_{date_range}.parquet'\r\n",
+					"usage_df = spark.read.format('parquet').load(usage_path)"
+				],
+				"execution_count": 61
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Only look at yesterdays usage (usage from today will not be accessible yet)\r\n",
+					"usage_df = usage_df.where(F.col('Date') == (today - relativedelta(days=1)).strftime('%Y-%m-%d'))\r\n",
+					"\r\n",
+					"# Find all usage with AHB enabled\r\n",
+					"usage_df = usage_df.where((F.col('WindowsAHB') == 'Enabled') | (F.col('SQLAHB') == 'Enabled'))\r\n",
+					"usage_df = usage_df.select('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'MeterCategory', 'MeterSubCategory')\r\n",
+					"usage_df = usage_df.drop_duplicates(['ResourceId'])"
+				],
+				"execution_count": 62
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Exclude TS VMs - as the AHB for these instances are managed by a separate team\r\n",
+					"TS_VM_RG = [\r\n",
+					"    'RG-TERMINAL_SERVERS-NOE',\r\n",
+					"    'RG-TERMINAL_SERVERS-NOW',\r\n",
+					"    'RG-TERMINAL_SERVERS-SCUS'\r\n",
+					"]\r\n",
+					"\r\n",
+					"usage_df = usage_df.where(~F.col('ResourceGroup').isin(TS_VM_RG))"
+				],
+				"execution_count": 63
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Find rouge AHB enabled instances (i.e instances with AHB enabled that are not in the assignment list)\r\n",
+					"assigned_resource_list = ahb_assignments.select(F.collect_list('ResourceId')).first()[0]\r\n",
+					"rouge_resources = usage_df.where(~F.col('ResourceId').isin(assigned_resource_list))"
+				],
+				"execution_count": 64
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Write results back to data lake"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"deployment_path = f\"abfss://usage@s037costmgmt.dfs.core.windows.net/hub/latest-hub-deployments.parquet\"\r\n",
+					"ahb_deployments_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(deployment_path)\r\n",
+					"\r\n",
+					"rouge_path = f\"abfss://usage@s037costmgmt.dfs.core.windows.net/hub/latest-hub-rouge-instances.parquet\"\r\n",
+					"rouge_resources.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(rouge_path)"
+				],
+				"execution_count": 65
 			}
 		]
 	}
