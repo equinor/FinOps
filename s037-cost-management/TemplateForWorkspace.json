@@ -5369,6 +5369,48 @@
 							},
 							"numExecutors": null
 						}
+					},
+					{
+						"name": "Process benefit purchases",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "Run cumulative cost prediction",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "process-benefit-purchases",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@variables('storageAccount')",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"numExecutors": null
+						}
 					}
 				],
 				"policy": {
@@ -5387,7 +5429,8 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/pipelines/Extend Daily Cost')]",
-				"[concat(variables('workspaceId'), '/notebooks/compute-cumulative-cost')]"
+				"[concat(variables('workspaceId'), '/notebooks/compute-cumulative-cost')]",
+				"[concat(variables('workspaceId'), '/notebooks/process-benefit-purchases')]"
 			]
 		},
 		{
@@ -24924,6 +24967,52 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/2023 Image Type Count')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "OGBG Benchmark 2022/2023"
+				},
+				"content": {
+					"query": "-- This is auto-generated code\nSELECT\n    ServiceInfo2 as [Image Type]\n    ,count(DISTINCT ResourceId) as [Count]\n    ,FORMAT ([Date],'yyyy-MM') as [Date]   \n    --,MeterSubCategory\n    --,Tags\n    --,ResourceId\n    --,SubscriptionId\n    --,SubscriptionName\n    --,*\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/2023*/ACMMonthlyActualCost_*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where MeterCategory = 'Virtual Machines' and Tags not like '%\"Cluster%' and Tags not like '%\"Kubernetes%' --and ServiceInfo2 is NULL --and SubscriptionId = '019958ea-fe2c-4e14-bbd9-0d2db8ed7cfc'\n    --and ResourceId = '/subscriptions/019958ea-fe2c-4e14-bbd9-0d2db8ed7cfc/resourceGroups/MC_AURORA11_AURORA11_NORTHEUROPE/providers/Microsoft.Compute/virtualMachineScaleSets/aks-gpu-36545846-vmss'\n    group by ServiceInfo2, FORMAT ([Date],'yyyy-MM')\n    --group by ResourceId, ServiceInfo2, MeterSubCategory, FORMAT ([Date],'yyyy-MM') --Tags, \n    --order by count(DISTINCT ResourceId), FORMAT ([Date],'yyyy-MM') DESC\n    order by FORMAT ([Date],'yyyy-MM'), [Image Type]\n    --order by FORMAT ([Date],'yyyy-MM')\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/2023 Image Type Null Image Details')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "OGBG Benchmark 2022/2023"
+				},
+				"content": {
+					"query": "-- This is auto-generated code\nSELECT\n    ServiceInfo2 as [Image Type]\n    --,count(DISTINCT ResourceId) as [Count]\n    ,FORMAT ([Date],'yyyy-MM') as [Date]   \n    ,MeterSubCategory\n    ,Tags\n    ,ResourceId\n    --,SubscriptionId\n    --,SubscriptionName\n    --,*\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/2023*/ACMMonthlyActualCost_*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where MeterCategory = 'Virtual Machines' and Tags not like '%\"Cluster%' and Tags not like '%\"Kubernetes%' and ServiceInfo2 is NULL --and SubscriptionId = '019958ea-fe2c-4e14-bbd9-0d2db8ed7cfc'\n    --and ResourceId = '/subscriptions/019958ea-fe2c-4e14-bbd9-0d2db8ed7cfc/resourceGroups/MC_AURORA11_AURORA11_NORTHEUROPE/providers/Microsoft.Compute/virtualMachineScaleSets/aks-gpu-36545846-vmss'\n    --group by ServiceInfo2, FORMAT ([Date],'yyyy-MM')\n    group by ResourceId, ServiceInfo2, MeterSubCategory, FORMAT ([Date],'yyyy-MM'), Tags \n    --order by count(DISTINCT ResourceId), FORMAT ([Date],'yyyy-MM') DESC\n    order by FORMAT ([Date],'yyyy-MM')\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/2024-03-25 Cost Query Sub-RG')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
@@ -26589,7 +26678,7 @@
 					"name": "OGBG Benchmark 2022/2022"
 				},
 				"content": {
-					"query": "-- This is auto-generated code\nSELECT\n    ServiceInfo2 as [Image Type]\n    ,count(DISTINCT ResourceId) as [Count]\n    ,FORMAT ([Date],'yyyy-MM') as [Date]   \n    --,MeterSubCategory\n    --,Tags\n    --,ResourceId\n    --,SubscriptionId\n    --,SubscriptionName\n    --,*\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/2023*/ACMMonthlyActualCost_*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where MeterCategory = 'Virtual Machines' and Tags not like '%\"Cluster%' and Tags not like '%\"Kubernetes%' --and ServiceInfo2 is NULL --and SubscriptionId = '019958ea-fe2c-4e14-bbd9-0d2db8ed7cfc'\n    --and ResourceId = '/subscriptions/019958ea-fe2c-4e14-bbd9-0d2db8ed7cfc/resourceGroups/MC_AURORA11_AURORA11_NORTHEUROPE/providers/Microsoft.Compute/virtualMachineScaleSets/aks-gpu-36545846-vmss'\n    group by ServiceInfo2, FORMAT ([Date],'yyyy-MM')\n    --group by ResourceId, ServiceInfo2, MeterSubCategory, FORMAT ([Date],'yyyy-MM') --Tags, \n    --order by count(DISTINCT ResourceId), FORMAT ([Date],'yyyy-MM') DESC\n    order by FORMAT ([Date],'yyyy-MM'), [Image Type]\n    --order by FORMAT ([Date],'yyyy-MM')\n",
+					"query": "-- This is auto-generated code\nSELECT\n    ServiceInfo2 as [Image Type]\n    ,count(DISTINCT ResourceId) as [Count]\n    ,FORMAT ([Date],'yyyy-MM') as [Date]   \n    --,MeterSubCategory\n    --,Tags\n    --,ResourceId\n    --,SubscriptionId\n    --,SubscriptionName\n    --,*\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/2022*/ACMMonthlyActualCost_*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where MeterCategory = 'Virtual Machines' and Tags not like '%\"Cluster%' and Tags not like '%\"Kubernetes%' --and ServiceInfo2 is NULL --and SubscriptionId = '019958ea-fe2c-4e14-bbd9-0d2db8ed7cfc'\n    --and ResourceId = '/subscriptions/019958ea-fe2c-4e14-bbd9-0d2db8ed7cfc/resourceGroups/MC_AURORA11_AURORA11_NORTHEUROPE/providers/Microsoft.Compute/virtualMachineScaleSets/aks-gpu-36545846-vmss'\n    group by ServiceInfo2, FORMAT ([Date],'yyyy-MM')\n    --group by ResourceId, ServiceInfo2, MeterSubCategory, FORMAT ([Date],'yyyy-MM') --Tags, \n    --order by count(DISTINCT ResourceId), FORMAT ([Date],'yyyy-MM') DESC\n    order by FORMAT ([Date],'yyyy-MM'), [Image Type]\n    --order by FORMAT ([Date],'yyyy-MM')\n",
 					"metadata": {
 						"language": "sql"
 					},
@@ -26612,7 +26701,7 @@
 					"name": "OGBG Benchmark 2022/2022"
 				},
 				"content": {
-					"query": "-- This is auto-generated code\nSELECT\n    ServiceInfo2 as [Image Type]\n    --,count(DISTINCT ResourceId) as [Count]\n    ,FORMAT ([Date],'yyyy-MM') as [Date]   \n    ,MeterSubCategory\n    ,Tags\n    ,ResourceId\n    --,SubscriptionId\n    --,SubscriptionName\n    --,*\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/2023*/ACMMonthlyActualCost_*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where MeterCategory = 'Virtual Machines' and Tags not like '%\"Cluster%' and Tags not like '%\"Kubernetes%' and ServiceInfo2 is NULL --and SubscriptionId = '019958ea-fe2c-4e14-bbd9-0d2db8ed7cfc'\n    --and ResourceId = '/subscriptions/019958ea-fe2c-4e14-bbd9-0d2db8ed7cfc/resourceGroups/MC_AURORA11_AURORA11_NORTHEUROPE/providers/Microsoft.Compute/virtualMachineScaleSets/aks-gpu-36545846-vmss'\n    --group by ServiceInfo2, FORMAT ([Date],'yyyy-MM')\n    group by ResourceId, ServiceInfo2, MeterSubCategory, FORMAT ([Date],'yyyy-MM'), Tags \n    --order by count(DISTINCT ResourceId), FORMAT ([Date],'yyyy-MM') DESC\n    order by FORMAT ([Date],'yyyy-MM')\n",
+					"query": "-- This is auto-generated code\nSELECT\n    ServiceInfo2 as [Image Type]\n    --,count(DISTINCT ResourceId) as [Count]\n    ,FORMAT ([Date],'yyyy-MM') as [Date]   \n    ,MeterSubCategory\n    ,Tags\n    ,ResourceId\n    --,SubscriptionId\n    --,SubscriptionName\n    --,*\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/2022*/ACMMonthlyActualCost_*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where MeterCategory = 'Virtual Machines' and Tags not like '%\"Cluster%' and Tags not like '%\"Kubernetes%' and ServiceInfo2 is NULL --and SubscriptionId = '019958ea-fe2c-4e14-bbd9-0d2db8ed7cfc'\n    --and ResourceId = '/subscriptions/019958ea-fe2c-4e14-bbd9-0d2db8ed7cfc/resourceGroups/MC_AURORA11_AURORA11_NORTHEUROPE/providers/Microsoft.Compute/virtualMachineScaleSets/aks-gpu-36545846-vmss'\n    --group by ServiceInfo2, FORMAT ([Date],'yyyy-MM')\n    group by ResourceId, ServiceInfo2, MeterSubCategory, FORMAT ([Date],'yyyy-MM'), Tags \n    --order by count(DISTINCT ResourceId), FORMAT ([Date],'yyyy-MM') DESC\n    order by FORMAT ([Date],'yyyy-MM')\n",
 					"metadata": {
 						"language": "sql"
 					},
@@ -43485,7 +43574,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "32311bee-fecc-4625-b1cd-9370eaff9bd3"
+						"spark.autotune.trackingId": "949fe40e-3593-4f6b-bab8-115c343a7c7b"
 					}
 				},
 				"metadata": {
@@ -43545,7 +43634,7 @@
 							"import pyspark.sql.functions as F"
 						],
 						"outputs": [],
-						"execution_count": 8
+						"execution_count": 1
 					},
 					{
 						"cell_type": "code",
@@ -43567,7 +43656,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 9
+						"execution_count": 2
 					},
 					{
 						"cell_type": "code",
@@ -43576,7 +43665,7 @@
 							"cost_df = spark.read.format('parquet').load(cost_path)"
 						],
 						"outputs": [],
-						"execution_count": 10
+						"execution_count": 3
 					},
 					{
 						"cell_type": "code",
@@ -43595,7 +43684,7 @@
 							"cost_df = cost_df.where((F.col('ChargeType') == 'Purchase') & (F.col('PricingModel') != 'OnDemand'))"
 						],
 						"outputs": [],
-						"execution_count": 11
+						"execution_count": 4
 					},
 					{
 						"cell_type": "code",
@@ -43614,7 +43703,7 @@
 							"cost_df = cost_df.select('Date', 'SubscriptionName', 'ResourceLocation', 'MeterCategory', 'MeterSubCategory', 'Quantity', 'EffectivePrice', 'CostInBillingCurrency', 'UnitPrice', 'PricingModel', 'benefitName')"
 						],
 						"outputs": [],
-						"execution_count": 12
+						"execution_count": 5
 					},
 					{
 						"cell_type": "code",
@@ -43634,7 +43723,7 @@
 							"cost_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 						],
 						"outputs": [],
-						"execution_count": 13
+						"execution_count": 6
 					}
 				]
 			},
