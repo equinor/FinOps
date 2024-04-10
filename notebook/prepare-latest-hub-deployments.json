@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "75e32211-4af6-4b0b-97e5-93ef6c5629bb"
+				"spark.autotune.trackingId": "397094e4-407f-47f8-96f7-389b16a23d15"
 			}
 		},
 		"metadata": {
@@ -58,7 +58,7 @@
 					"import pyspark.sql.types as T\r\n",
 					"from enum import Enum"
 				],
-				"execution_count": 12
+				"execution_count": 18
 			},
 			{
 				"cell_type": "code",
@@ -82,7 +82,7 @@
 					"    VM = \"VM\"\r\n",
 					"    SQL = \"SQL\""
 				],
-				"execution_count": 13
+				"execution_count": 19
 			},
 			{
 				"cell_type": "markdown",
@@ -128,7 +128,7 @@
 					"vm_enable_df = spark.read.options(**csv_options).csv(vm_enable_path)\r\n",
 					"vm_disable_df = spark.read.options(**csv_options).csv(vm_disable_path)"
 				],
-				"execution_count": 14
+				"execution_count": 20
 			},
 			{
 				"cell_type": "code",
@@ -169,9 +169,10 @@
 					"    .withColumn('DeploymentType', F.lit(DeploymentType.VM.value))\r\n",
 					"\r\n",
 					"ahb_deployments_df = sql_enable_df.union(sql_disable_df).union(vm_enable_df).union(vm_disable_df)\r\n",
-					"ahb_deployments_df = ahb_deployments_df.withColumn('NormalizedCores', F.col('NormalizedCores').cast(T.IntegerType()))"
+					"ahb_deployments_df = ahb_deployments_df.withColumn('NormalizedCores', F.col('NormalizedCores').cast(T.IntegerType()))\r\n",
+					"ahb_deployments_df = ahb_deployments_df.withColumn('Date', F.col('Date').cast(T.DateType()))"
 				],
-				"execution_count": 15
+				"execution_count": 21
 			},
 			{
 				"cell_type": "code",
@@ -190,7 +191,7 @@
 					"target_path = f\"abfss://usage@s037costmgmt.dfs.core.windows.net/hub/latest-hub-deployments.parquet\"\r\n",
 					"ahb_deployments_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 				],
-				"execution_count": 16
+				"execution_count": 22
 			}
 		]
 	}
