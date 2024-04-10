@@ -32216,7 +32216,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "8ee4a212-755b-4bbd-9a9f-900008e98d81"
+						"spark.autotune.trackingId": "93729ab4-407b-4b28-b751-2a8c3a2191ed"
 					}
 				},
 				"metadata": {
@@ -32241,7 +32241,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -34591,7 +34592,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "7b436d33-889a-4f07-abfb-3b5cb1d7cb02"
+						"spark.autotune.trackingId": "09b8f016-7a84-45b8-b3bd-0639ad5a40bd"
 					}
 				},
 				"metadata": {
@@ -34616,7 +34617,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -43124,7 +43126,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "397094e4-407f-47f8-96f7-389b16a23d15"
+						"spark.autotune.trackingId": "90a0b9e1-8833-4fb6-b074-40cc54e7b759"
 					}
 				},
 				"metadata": {
@@ -43149,20 +43151,24 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"import pyspark.sql.types as T\r\n",
-							"from enum import Enum"
+							"from enum import Enum\r\n",
+							"from datetime import timedelta, datetime\r\n",
+							"from dateutil.relativedelta import relativedelta"
 						],
 						"outputs": [],
-						"execution_count": 18
+						"execution_count": 66
 					},
 					{
 						"cell_type": "code",
@@ -43187,7 +43193,7 @@
 							"    SQL = \"SQL\""
 						],
 						"outputs": [],
-						"execution_count": 19
+						"execution_count": 67
 					},
 					{
 						"cell_type": "markdown",
@@ -43218,8 +43224,8 @@
 						"source": [
 							"sql_enable_path = 'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Deployment.csv'\r\n",
 							"sql_disable_path = 'abfss://sql-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Removal.csv'\r\n",
-							"vm_enable_path = f'abfss://win-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Deployment.csv'\r\n",
-							"vm_disable_path = f'abfss://win-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Removal.csv'\r\n",
+							"vm_enable_path = 'abfss://win-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Deployment.csv'\r\n",
+							"vm_disable_path = 'abfss://win-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Removal.csv'\r\n",
 							"\r\n",
 							"csv_options = {\r\n",
 							"    'header' : True,\r\n",
@@ -43234,7 +43240,7 @@
 							"vm_disable_df = spark.read.options(**csv_options).csv(vm_disable_path)"
 						],
 						"outputs": [],
-						"execution_count": 20
+						"execution_count": 68
 					},
 					{
 						"cell_type": "code",
@@ -43274,12 +43280,27 @@
 							"    .withColumn('DeploymentStatus', F.lit(DeploymentStatus.Disabled.value)) \\\r\n",
 							"    .withColumn('DeploymentType', F.lit(DeploymentType.VM.value))\r\n",
 							"\r\n",
-							"ahb_deployments_df = sql_enable_df.union(sql_disable_df).union(vm_enable_df).union(vm_disable_df)\r\n",
+							"ahb_assignments = sql_enable_df.union(vm_enable_df)\r\n",
+							"ahb_removals = sql_disable_df.union(vm_disable_df)\r\n",
+							"ahb_deployments_df = ahb_assignments.union(ahb_removals)\r\n",
 							"ahb_deployments_df = ahb_deployments_df.withColumn('NormalizedCores', F.col('NormalizedCores').cast(T.IntegerType()))\r\n",
 							"ahb_deployments_df = ahb_deployments_df.withColumn('Date', F.col('Date').cast(T.DateType()))"
 						],
 						"outputs": [],
-						"execution_count": 21
+						"execution_count": 69
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Load usage data"
+						]
 					},
 					{
 						"cell_type": "code",
@@ -43295,11 +43316,156 @@
 							}
 						},
 						"source": [
-							"target_path = f\"abfss://usage@s037costmgmt.dfs.core.windows.net/hub/latest-hub-deployments.parquet\"\r\n",
-							"ahb_deployments_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
+							"today = datetime.now()\r\n",
+							"next_month_start = (today + relativedelta(months=1)).replace(day=1)\r\n",
+							"current_month_start = today.replace(day=1).strftime('%Y%m%d')\r\n",
+							"current_month_end = (next_month_start - timedelta(days=1)).strftime('%Y%m%d')\r\n",
+							"date_range = f'{current_month_start}-{current_month_end}'"
 						],
 						"outputs": [],
-						"execution_count": 22
+						"execution_count": 70
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"usage_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/{date_range}/Extended_v3_ACMMonthlyActualCost_{date_range}.parquet'\r\n",
+							"usage_df = spark.read.format('parquet').load(usage_path)"
+						],
+						"outputs": [],
+						"execution_count": 71
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Compute Rouge HUB instances"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Only look at yesterdays usage (usage from today will not be accessible yet)\r\n",
+							"usage_df = usage_df.where(F.col('Date') == (today - relativedelta(days=1)).strftime('%Y-%m-%d'))\r\n",
+							"\r\n",
+							"# Find all usage with AHB enabled\r\n",
+							"usage_df = usage_df.where((F.col('WindowsAHB') == 'Enabled') | (F.col('SQLAHB') == 'Enabled'))\r\n",
+							"usage_df = usage_df.select('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'MeterCategory', 'MeterSubCategory', 'WindowsAHB_VCPUs', 'SQLAHB_VCPUs')\r\n",
+							"usage = usage_df.withColumn('NormalizedCores', F.coalesce('WindowsAHB_VCPUs', 'SQLAHB_VCPUs')).drop('SQLAHB_VCPUs', 'WindowsAHB_VCPUs')\r\n",
+							"usage_df = usage_df.drop_duplicates(['ResourceId'])"
+						],
+						"outputs": [],
+						"execution_count": 72
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Exclude TS VMs - as the AHB for these instances are managed by a separate team\r\n",
+							"TS_VM_RG = [\r\n",
+							"    'RG-TERMINAL_SERVERS-NOE',\r\n",
+							"    'RG-TERMINAL_SERVERS-NOW',\r\n",
+							"    'RG-TERMINAL_SERVERS-SCUS'\r\n",
+							"]\r\n",
+							"\r\n",
+							"usage_df = usage_df.where(~F.col('ResourceGroup').isin(TS_VM_RG))"
+						],
+						"outputs": [],
+						"execution_count": 73
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Find rouge AHB enabled instances (i.e instances with AHB enabled that are not in the assignment list)\r\n",
+							"assigned_resource_list = ahb_assignments.select(F.collect_list('ResourceId')).first()[0]\r\n",
+							"rouge_resources = usage_df.where(~F.col('ResourceId').isin(assigned_resource_list))"
+						],
+						"outputs": [],
+						"execution_count": 74
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Write results back to data lake"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"deployment_path = f\"abfss://usage@s037costmgmt.dfs.core.windows.net/hub/latest-hub-deployments.parquet\"\r\n",
+							"ahb_deployments_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(deployment_path)\r\n",
+							"\r\n",
+							"rouge_path = f\"abfss://usage@s037costmgmt.dfs.core.windows.net/hub/latest-hub-rouge-instances.parquet\"\r\n",
+							"rouge_resources.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(rouge_path)"
+						],
+						"outputs": [],
+						"execution_count": 75
 					}
 				]
 			},
@@ -44358,7 +44524,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "526af598-9a28-4ecf-b43e-d4f098e1d480"
+						"spark.autotune.trackingId": "27eb3c51-61cb-4bac-9df0-f6a91fba974e"
 					}
 				},
 				"metadata": {
@@ -44383,7 +44549,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -44403,6 +44570,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"from datetime import timedelta, datetime\r\n",
 							"from dateutil.relativedelta import relativedelta\r\n",
@@ -44589,7 +44757,7 @@
 							}
 						},
 						"source": [
-							"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
+							"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 							"cost_df = spark.read.format('parquet').load(cost_path)"
 						],
 						"outputs": [],
@@ -46698,7 +46866,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "f5880b41-b490-4ff1-ba41-5905282fd23c"
+						"spark.autotune.trackingId": "aefe25f3-e97d-479f-9df8-a02c3b225ed1"
 					}
 				},
 				"metadata": {
@@ -46723,7 +46891,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -46743,6 +46912,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"from datetime import timedelta, datetime\r\n",
 							"from dateutil.relativedelta import relativedelta\r\n",
@@ -47574,6 +47744,29 @@
 			},
 			"dependsOn": [],
 			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/CreateHUBRougeInstancesView')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "PowerBIViews"
+				},
+				"content": {
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW HUBRougeInstances\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/hub/latest-hub-rouge-instances.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
 		}
 	]
 }
