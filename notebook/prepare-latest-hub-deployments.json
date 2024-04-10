@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "78528732-d206-4d64-82bf-f4c71869c73b"
+				"spark.autotune.trackingId": "0e21ff50-f1b9-4989-b37f-d83d2b3af030"
 			}
 		},
 		"metadata": {
@@ -60,7 +60,7 @@
 					"from datetime import timedelta, datetime\r\n",
 					"from dateutil.relativedelta import relativedelta"
 				],
-				"execution_count": 66
+				"execution_count": 76
 			},
 			{
 				"cell_type": "code",
@@ -84,7 +84,7 @@
 					"    VM = \"VM\"\r\n",
 					"    SQL = \"SQL\""
 				],
-				"execution_count": 67
+				"execution_count": 77
 			},
 			{
 				"cell_type": "markdown",
@@ -130,7 +130,7 @@
 					"vm_enable_df = spark.read.options(**csv_options).csv(vm_enable_path)\r\n",
 					"vm_disable_df = spark.read.options(**csv_options).csv(vm_disable_path)"
 				],
-				"execution_count": 68
+				"execution_count": 78
 			},
 			{
 				"cell_type": "code",
@@ -176,7 +176,7 @@
 					"ahb_deployments_df = ahb_deployments_df.withColumn('NormalizedCores', F.col('NormalizedCores').cast(T.IntegerType()))\r\n",
 					"ahb_deployments_df = ahb_deployments_df.withColumn('Date', F.col('Date').cast(T.DateType()))"
 				],
-				"execution_count": 69
+				"execution_count": 79
 			},
 			{
 				"cell_type": "markdown",
@@ -211,7 +211,7 @@
 					"current_month_end = (next_month_start - timedelta(days=1)).strftime('%Y%m%d')\r\n",
 					"date_range = f'{current_month_start}-{current_month_end}'"
 				],
-				"execution_count": 70
+				"execution_count": 80
 			},
 			{
 				"cell_type": "code",
@@ -230,7 +230,7 @@
 					"usage_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/{date_range}/Extended_v3_ACMMonthlyActualCost_{date_range}.parquet'\r\n",
 					"usage_df = spark.read.format('parquet').load(usage_path)"
 				],
-				"execution_count": 71
+				"execution_count": 81
 			},
 			{
 				"cell_type": "markdown",
@@ -265,10 +265,10 @@
 					"# Find all usage with AHB enabled\r\n",
 					"usage_df = usage_df.where((F.col('WindowsAHB') == 'Enabled') | (F.col('SQLAHB') == 'Enabled'))\r\n",
 					"usage_df = usage_df.select('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'MeterCategory', 'MeterSubCategory', 'WindowsAHB_VCPUs', 'SQLAHB_VCPUs')\r\n",
-					"usage = usage_df.withColumn('NormalizedCores', F.coalesce('WindowsAHB_VCPUs', 'SQLAHB_VCPUs')).drop('SQLAHB_VCPUs', 'WindowsAHB_VCPUs')\r\n",
+					"usage_df = usage_df.withColumn('NormalizedCores', F.coalesce('WindowsAHB_VCPUs', 'SQLAHB_VCPUs')).drop('SQLAHB_VCPUs', 'WindowsAHB_VCPUs')\r\n",
 					"usage_df = usage_df.drop_duplicates(['ResourceId'])"
 				],
-				"execution_count": 72
+				"execution_count": 82
 			},
 			{
 				"cell_type": "code",
@@ -293,7 +293,7 @@
 					"\r\n",
 					"usage_df = usage_df.where(~F.col('ResourceGroup').isin(TS_VM_RG))"
 				],
-				"execution_count": 73
+				"execution_count": 83
 			},
 			{
 				"cell_type": "code",
@@ -313,7 +313,7 @@
 					"assigned_resource_list = ahb_assignments.select(F.collect_list('ResourceId')).first()[0]\r\n",
 					"rouge_resources = usage_df.where(~F.col('ResourceId').isin(assigned_resource_list))"
 				],
-				"execution_count": 74
+				"execution_count": 84
 			},
 			{
 				"cell_type": "markdown",
@@ -348,7 +348,7 @@
 					"rouge_path = f\"abfss://usage@s037costmgmt.dfs.core.windows.net/hub/latest-hub-rouge-instances.parquet\"\r\n",
 					"rouge_resources.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(rouge_path)"
 				],
-				"execution_count": 75
+				"execution_count": 85
 			}
 		]
 	}
