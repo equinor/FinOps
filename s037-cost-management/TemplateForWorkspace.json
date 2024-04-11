@@ -981,30 +981,6 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
-		"sparkpool32_delayInMinutes": {
-			"type": "int",
-			"defaultValue": 15
-		},
-		"sparkpool32_maxNodeCount": {
-			"type": "int",
-			"defaultValue": 5
-		},
-		"sparkpool32_minNodeCount": {
-			"type": "int",
-			"defaultValue": 3
-		},
-		"sparkpool32_nodeCount": {
-			"type": "int",
-			"defaultValue": 0
-		},
-		"sparkpool32_nodeSize": {
-			"type": "string",
-			"defaultValue": "Medium"
-		},
-		"sparkpool32_sparkVersion": {
-			"type": "string",
-			"defaultValue": "3.2"
-		},
 		"sprkpool33large_delayInMinutes": {
 			"type": "int",
 			"defaultValue": 10
@@ -1028,6 +1004,30 @@
 		"sprkpool33large_sparkVersion": {
 			"type": "string",
 			"defaultValue": "3.3"
+		},
+		"sparkpool32_delayInMinutes": {
+			"type": "int",
+			"defaultValue": 15
+		},
+		"sparkpool32_maxNodeCount": {
+			"type": "int",
+			"defaultValue": 5
+		},
+		"sparkpool32_minNodeCount": {
+			"type": "int",
+			"defaultValue": 3
+		},
+		"sparkpool32_nodeCount": {
+			"type": "int",
+			"defaultValue": 0
+		},
+		"sparkpool32_nodeSize": {
+			"type": "string",
+			"defaultValue": "Medium"
+		},
+		"sparkpool32_sparkVersion": {
+			"type": "string",
+			"defaultValue": "3.2"
 		}
 	},
 	"variables": {
@@ -5544,7 +5544,7 @@
 						"type": "SynapseNotebook",
 						"dependsOn": [
 							{
-								"activity": "Update 1year cost file",
+								"activity": "Prepare latest ahb deployments in parquet",
 								"dependencyConditions": [
 									"Succeeded"
 								]
@@ -5580,6 +5580,39 @@
 							},
 							"numExecutors": null
 						}
+					},
+					{
+						"name": "Prepare latest ahb deployments in parquet",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "Update 1year cost file",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "prepare-latest-hub-deployments",
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"numExecutors": null
+						}
 					}
 				],
 				"policy": {
@@ -5600,7 +5633,8 @@
 				"[concat(variables('workspaceId'), '/pipelines/Extend Daily Cost')]",
 				"[concat(variables('workspaceId'), '/notebooks/Prod_Extended_Amortized_Cost-Threeyears')]",
 				"[concat(variables('workspaceId'), '/notebooks/Prod_Extended_Amortized_Cost-Oneyear')]",
-				"[concat(variables('workspaceId'), '/notebooks/Anomaly_Detection_v2')]"
+				"[concat(variables('workspaceId'), '/notebooks/Anomaly_Detection_v2')]",
+				"[concat(variables('workspaceId'), '/notebooks/prepare-latest-hub-deployments')]"
 			]
 		},
 		{
@@ -18435,7 +18469,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/persist-latest')]",
+			"name": "[concat(parameters('workspaceName'), '/persist-latest-pricesheet')]",
 			"type": "Microsoft.Synapse/workspaces/pipelines",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -24254,13 +24288,12 @@
 			"type": "Microsoft.Synapse/workspaces/triggers",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
-				"description": "test",
 				"annotations": [],
 				"runtimeState": "Started",
 				"pipelines": [
 					{
 						"pipelineReference": {
-							"referenceName": "persist-latest",
+							"referenceName": "persist-latest-pricesheet",
 							"type": "PipelineReference"
 						},
 						"parameters": {}
@@ -24278,7 +24311,7 @@
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('workspaceId'), '/pipelines/persist-latest')]"
+				"[concat(variables('workspaceId'), '/pipelines/persist-latest-pricesheet')]"
 			]
 		},
 		{
@@ -26040,6 +26073,29 @@
 					},
 					"currentConnection": {
 						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/CreateHUBRougeInstancesView')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "PowerBIViews"
+				},
+				"content": {
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW HUBRougeInstances\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/hub/latest-hub-rouge-instances.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "master",
 						"poolName": "Built-in"
 					},
 					"resultLimit": 5000
@@ -32216,7 +32272,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "6d8674ae-136a-4330-818c-a7c3a2df1a1d"
+						"spark.autotune.trackingId": "8ee4a212-755b-4bbd-9a9f-900008e98d81"
 					}
 				},
 				"metadata": {
@@ -32241,8 +32297,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -34592,7 +34647,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "98951934-8960-4ca3-8db2-6ceb77ac91f2"
+						"spark.autotune.trackingId": "7b436d33-889a-4f07-abfb-3b5cb1d7cb02"
 					}
 				},
 				"metadata": {
@@ -34617,8 +34672,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -43126,7 +43180,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "00b1c0b2-2833-437a-aba9-3fd4722e659d"
+						"spark.autotune.trackingId": "b680484c-9991-47bd-82fa-7f7fbe694a34"
 					}
 				},
 				"metadata": {
@@ -43740,7 +43794,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "edd07856-b012-45a5-8428-b6dbc8a87c0a"
+						"spark.autotune.trackingId": "949fe40e-3593-4f6b-bab8-115c343a7c7b"
 					}
 				},
 				"metadata": {
@@ -43765,8 +43819,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -43827,7 +43880,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 							"cost_df = spark.read.format('parquet').load(cost_path)"
@@ -44526,7 +44578,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "ef2d2f79-d3be-4b24-b76a-ed17b30c46ee"
+						"spark.autotune.trackingId": "5a45e58b-dc04-4f5b-b856-d74fb4afc01d"
 					}
 				},
 				"metadata": {
@@ -44551,8 +44603,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -44572,7 +44623,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"from datetime import timedelta, datetime\r\n",
 							"from dateutil.relativedelta import relativedelta\r\n",
@@ -46868,7 +46918,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "da1255ef-2137-4a28-999c-853617ccfe8d"
+						"spark.autotune.trackingId": "f5880b41-b490-4ff1-ba41-5905282fd23c"
 					}
 				},
 				"metadata": {
@@ -46893,8 +46943,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -46914,7 +46963,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"from datetime import timedelta, datetime\r\n",
 							"from dateutil.relativedelta import relativedelta\r\n",
@@ -47693,6 +47741,31 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
+				},
+				"autoScale": {
+					"enabled": true,
+					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
+					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
+				},
+				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
+				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": true,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "northeurope"
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/sparkpool32')]",
 			"type": "Microsoft.Synapse/workspaces/bigDataPools",
 			"apiVersion": "2019-06-01-preview",
@@ -47721,54 +47794,6 @@
 			},
 			"dependsOn": [],
 			"location": "northeurope"
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
-			"type": "Microsoft.Synapse/workspaces/bigDataPools",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"autoPause": {
-					"enabled": true,
-					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
-				},
-				"autoScale": {
-					"enabled": true,
-					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
-					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
-				},
-				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
-				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
-				"nodeSizeFamily": "MemoryOptimized",
-				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
-				"isComputeIsolationEnabled": false,
-				"sessionLevelPackagesEnabled": true,
-				"annotations": []
-			},
-			"dependsOn": [],
-			"location": "northeurope"
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/CreateHUBRougeInstancesView')]",
-			"type": "Microsoft.Synapse/workspaces/sqlscripts",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"folder": {
-					"name": "PowerBIViews"
-				},
-				"content": {
-					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW HUBRougeInstances\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/hub/latest-hub-rouge-instances.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n",
-					"metadata": {
-						"language": "sql"
-					},
-					"currentConnection": {
-						"databaseName": "costmgmt",
-						"poolName": "Built-in"
-					},
-					"resultLimit": 5000
-				},
-				"type": "SqlQuery"
-			},
-			"dependsOn": []
 		}
 	]
 }
