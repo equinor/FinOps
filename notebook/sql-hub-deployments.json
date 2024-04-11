@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "5a45e58b-dc04-4f5b-b856-d74fb4afc01d"
+				"spark.autotune.trackingId": "9e177762-c332-4e47-a841-794d8a59af57"
 			}
 		},
 		"metadata": {
@@ -78,7 +78,7 @@
 					"import pyspark.sql.window as W\r\n",
 					"from pyspark.sql import Row"
 				],
-				"execution_count": 3
+				"execution_count": 56
 			},
 			{
 				"cell_type": "code",
@@ -99,7 +99,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 4
+				"execution_count": 57
 			},
 			{
 				"cell_type": "code",
@@ -116,11 +116,12 @@
 				},
 				"source": [
 					"# Constants\r\n",
+					"HOURS_PER_YEAR = 8760\r\n",
 					"KEY_VAULT_NAME = 'acm-toolkit-kv'\r\n",
 					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'\r\n",
 					"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 				],
-				"execution_count": 5
+				"execution_count": 58
 			},
 			{
 				"cell_type": "markdown",
@@ -172,10 +173,14 @@
 					"sql_days_back_to = sql_config['daysBackTo']\r\n",
 					"sql_enterprise_licence_cores = sql_config['enterprise_licence_cores']\r\n",
 					"sql_standard_licence_cores = sql_config['enterprise_licence_cores']\r\n",
+					"yearly_license_cost = sql_config['lic_cost_yearly']\r\n",
 					"\r\n",
-					"sql_normalized_licence_cores = (4 * sql_enterprise_licence_cores) + sql_standard_licence_cores"
+					"sql_normalized_licence_cores = (4 * sql_enterprise_licence_cores) + sql_standard_licence_cores\r\n",
+					"\r\n",
+					"# Hourly cost of license per vCPU\r\n",
+					"hourly_vcpu_cost = yearly_license_cost / (HOURS_PER_YEAR * sql_normalized_licence_cores)"
 				],
-				"execution_count": 6
+				"execution_count": 59
 			},
 			{
 				"cell_type": "markdown",
@@ -223,7 +228,8 @@
 					"    'PartNumber',\r\n",
 					"    'ProductName', \r\n",
 					"    'ai_VCPUs',\r\n",
-					"    'ai_AHB'\r\n",
+					"    'ai_AHB',\r\n",
+					"    'LicensePayGUnitPrice'\r\n",
 					"]\r\n",
 					"\r\n",
 					"sql_columns = columns_to_keep + [\r\n",
@@ -232,7 +238,7 @@
 					"    'ai_vCores'\r\n",
 					"]"
 				],
-				"execution_count": 7
+				"execution_count": 60
 			},
 			{
 				"cell_type": "code",
@@ -251,7 +257,7 @@
 					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 8
+				"execution_count": 61
 			},
 			{
 				"cell_type": "code",
@@ -278,7 +284,7 @@
 					"sql_interval_days = (sql_max_date - sql_min_date).days + 1\r\n",
 					"sql_interval_hours = sql_interval_days * 24"
 				],
-				"execution_count": 9
+				"execution_count": 62
 			},
 			{
 				"cell_type": "code",
@@ -329,7 +335,7 @@
 					"# Copy df for disabled list computation\r\n",
 					"cost_copy_df = cost_df.alias('cost_copy_df')"
 				],
-				"execution_count": 11
+				"execution_count": 63
 			},
 			{
 				"cell_type": "markdown",
@@ -360,8 +366,8 @@
 				"source": [
 					"# Max aggregation on vCores are used to mitigate duplicate instances, as they can occur if # of vCores are altered on a given day\r\n",
 					"sql_enable_df = cost_df \\\r\n",
-					"    .select('Date', 'ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'Quantity', 'ai_VCPUs', 'ai_vCores', 'SQLAHB_VCPUs', 'SQLType', 'Priority') \\\r\n",
-					"    .groupBy('Date', 'ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'ai_VCPUs', 'SQLType', 'Priority') \\\r\n",
+					"    .select('Date', 'ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'Quantity', 'ai_VCPUs', 'ai_vCores', 'SQLAHB_VCPUs', 'SQLType', 'Priority', 'LicensePayGUnitPrice') \\\r\n",
+					"    .groupBy('Date', 'ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'ai_VCPUs', 'SQLType', 'Priority', 'LicensePayGUnitPrice') \\\r\n",
 					"    .agg(F.sum('Quantity').alias('ResourceHours'), F.max('ai_vCores').alias('vCores'), F.max('SQLAHB_VCPUs').alias('SQLAHB_VCPUs')) \r\n",
 					"\r\n",
 					"# SQL VM instances will have a quantity per resource per day at 0-24 hours\r\n",
@@ -380,22 +386,57 @@
 					"    .otherwise(0)\r\n",
 					")\r\n",
 					"\r\n",
+					"\r\n",
+					"\r\n",
+					"sql_enable_df = sql_enable_df.withColumn('PAYGLicenseCost', F.col('ResourceHours') * F.col('LicensePayGUnitPrice'))\r\n",
+					"sql_enable_df = sql_enable_df.withColumn('PAYGLicenseCostPerVCPU', F.col('ResourceHours') * F.col('LicensePayGUnitPrice') / F.col('SQLAHB_VCPUs'))\r\n",
+					"\r\n",
+					"# Compute hourly HUB license cost \r\n",
+					"sql_enable_df = sql_enable_df.withColumn('HUBLicenseCost', F.col('ResourceHours') * F.col('SQLAHB_VCPUs') * hourly_vcpu_cost)\r\n",
+					"\r\n",
+					"# Compute savings per VCPU\r\n",
+					"sql_enable_df = sql_enable_df.withColumn('HUBSavingsPerVCPU', (F.col('PAYGLicenseCost') - F.col('HUBLicenseCost')) / F.col('SQLAHB_VCPUs'))\r\n",
+					"\r\n",
+					"\r\n",
+					"\r\n",
+					"\r\n",
+					"\r\n",
 					"# Sort resources according to which we want to enable HUB for first\r\n",
-					"sql_enable_df = sql_enable_df.orderBy(F.desc('Priority'), F.desc('Utilization'))\r\n",
+					"# sql_enable_df = sql_enable_df.orderBy(F.desc('Priority'), F.desc('Utilization'))\r\n",
+					"sql_enable_df = sql_enable_df.orderBy(F.desc('PAYGLicenseCost'))\r\n",
 					"\r\n",
 					"window = W.Window.rowsBetween(W.Window.unboundedPreceding, 0)\r\n",
 					"sql_enable_df = sql_enable_df.withColumn(\"TotalNormalizedCores\", F.sum(\"SQLAHB_VCPUs\").over(window))\r\n",
 					"\r\n",
-					"# Only include instances that doesnt overshoot the number of available license cores\r\n",
-					"sql_enable_df = sql_enable_df.where(F.col('TotalNormalizedCores') <= sql_normalized_licence_cores)\r\n",
+					"# # Only include instances that doesnt overshoot the number of available license cores\r\n",
+					"# sql_enable_df = sql_enable_df.where(F.col('TotalNormalizedCores') <= sql_normalized_licence_cores)\r\n",
 					"\r\n",
-					"# Persist copy for activity log computation\r\n",
-					"enable_copy_df = sql_enable_df.alias('enable_copy_df')\r\n",
+					"# # Persist copy for activity log computation\r\n",
+					"# enable_copy_df = sql_enable_df.alias('enable_copy_df')\r\n",
 					"\r\n",
-					"# Remove redundant columns from results\r\n",
-					"sql_enable_df = sql_enable_df.select('Date', 'ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'SQLAHB_VCPUs')"
+					"# # Remove redundant columns from results\r\n",
+					"# sql_enable_df = sql_enable_df.select('Date', 'ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'SQLAHB_VCPUs')"
 				],
-				"execution_count": 13
+				"execution_count": 64
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(sql_enable_df)"
+				],
+				"execution_count": 65
 			},
 			{
 				"cell_type": "markdown",
