@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "1108902a-9086-40a0-82b6-aa9300dc3677"
+				"spark.autotune.trackingId": "a822ffdf-f87a-4490-9ff0-520b21834f22"
 			}
 		},
 		"metadata": {
@@ -409,6 +409,9 @@
 					"        pricesheet_df = pricesheet_df.union(adf_pricesheet)\r\n",
 					"\r\n",
 					"    cost_df = cost_df.join(pricesheet_df, 'PricesheetJoinKey', 'left').drop('PricesheetJoinKey')\r\n",
+					"\r\n",
+					"    # DB/MI Instances have a PayG Licence unit price per vCore - multiply by vCores to get PayG License cost for entire resource\r\n",
+					"    cost_df = cost_df.withColumn('LicensePayGUnitPrice', F.when(is_sql_db | is_sql_mi, F.col('LicensePayGUnitPrice') * F.col('ai_vCores')).otherwise(F.col('LicensePayGUnitPrice')))\r\n",
 					"\r\n",
 					"    return cost_df"
 				],
