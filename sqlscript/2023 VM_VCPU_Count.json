@@ -1,0 +1,20 @@
+{
+	"name": "2023 VM_VCPU_Count",
+	"properties": {
+		"folder": {
+			"name": "OGBG Benchmark 2022/2023"
+		},
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 \n    substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8) as [Date]\n    --,Quantity\n    --,ai_VCPUs\n    --,Quantity * ai_VCPUs as [CPU Hours]\n    ,sum(ai_VCPUs) as [vCPU count]\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/2023*/Extended_v3_ACMMonthlyActualCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nWHERE MeterCategory = 'Virtual Machines' and ChargeType = 'Usage' --and benefitName is not NULL --and JSON_VALUE(AdditionalInfo, '$.ServiceType') is NULL --or MeterCategory = 'Cloud Services'\ngroup by substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8)\norder by substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8) DESC--, Quantity DESC",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}
