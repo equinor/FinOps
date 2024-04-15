@@ -101,15 +101,15 @@
 			"type": "string",
 			"defaultValue": "s037costmgmt"
 		},
-		"servicenow-applications-daily_pipelineSparkPoolNameRef": {
+		"fetch-servicenow-applications_pipelineSparkPoolNameRef": {
 			"type": "string",
 			"defaultValue": "sprkpool33large"
 		},
-		"servicenow-applications-daily_pipelineStorageAccountVariable": {
+		"fetch-servicenow-applications_pipelineStorageAccountVariable": {
 			"type": "string",
 			"defaultValue": "s037costmgmt"
 		},
-		"servicenow-subscriptions-daily_pipelineStorageAccountParameter": {
+		"fetch-servicenow-subscriptions_pipelineStorageAccountParameter": {
 			"type": "string",
 			"defaultValue": "s037costmgmt"
 		},
@@ -19354,7 +19354,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/servicenow-applications-daily')]",
+			"name": "[concat(parameters('workspaceName'), '/fetch-servicenow-applications')]",
 			"type": "Microsoft.Synapse/workspaces/pipelines",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -19514,24 +19514,80 @@
 									},
 									{
 										"source": {
-											"name": "ProductOwnerNo",
+											"name": "BusinessSolutionOwner",
 											"type": "String",
 											"physicalType": "nvarchar"
 										},
 										"sink": {
-											"name": "ProductOwnerNo",
+											"name": "BusinessSolutionOwner",
 											"type": "String",
 											"physicalType": "String"
 										}
 									},
 									{
 										"source": {
-											"name": "ProductOwnerShortName",
+											"name": "BSO.No",
 											"type": "String",
 											"physicalType": "nvarchar"
 										},
 										"sink": {
-											"name": "ProductOwnerShortName",
+											"name": "BSONo",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "BSO.ShortName",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "BSOShortName",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "TechnologyProductManager",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "TechnologyProductManager",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "TPM.No",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "TPMNo",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "TPM.ShortName",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "TPMShortName",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "ShortDescription",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "ShortDescription",
 											"type": "String",
 											"physicalType": "String"
 										}
@@ -19586,6 +19642,18 @@
 									},
 									{
 										"source": {
+											"name": "OperationUnitManager",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "OperationUnitManager",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
 											"name": "OperationalUnitManagerNo",
 											"type": "String",
 											"physicalType": "nvarchar"
@@ -19610,12 +19678,12 @@
 									},
 									{
 										"source": {
-											"name": "Product",
+											"name": "TechnologyProduct",
 											"type": "String",
 											"physicalType": "nvarchar"
 										},
 										"sink": {
-											"name": "Product",
+											"name": "TechnologyProduct",
 											"type": "String",
 											"physicalType": "String"
 										}
@@ -19702,7 +19770,7 @@
 							},
 							"snapshot": true,
 							"sparkPool": {
-								"referenceName": "[parameters('servicenow-applications-daily_pipelineSparkPoolNameRef')]",
+								"referenceName": "[parameters('fetch-servicenow-applications_pipelineSparkPoolNameRef')]",
 								"type": "BigDataPoolReference"
 							},
 							"executorSize": "Large",
@@ -19722,7 +19790,7 @@
 				"variables": {
 					"storageAccount": {
 						"type": "String",
-						"defaultValue": "[parameters('servicenow-applications-daily_pipelineStorageAccountVariable')]"
+						"defaultValue": "[parameters('fetch-servicenow-applications_pipelineStorageAccountVariable')]"
 					}
 				},
 				"folder": {
@@ -19734,11 +19802,11 @@
 				"[concat(variables('workspaceId'), '/datasets/ServiceNowApplicationsDataset')]",
 				"[concat(variables('workspaceId'), '/datasets/NewServiceNowSinkDataset')]",
 				"[concat(variables('workspaceId'), '/notebooks/servicenow-application-processing')]",
-				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('servicenow-applications-daily_pipelineSparkPoolNameRef'))]"
+				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('fetch-servicenow-applications_pipelineSparkPoolNameRef'))]"
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/servicenow-subscriptions-daily')]",
+			"name": "[concat(parameters('workspaceName'), '/fetch-servicenow-subscriptions')]",
 			"type": "Microsoft.Synapse/workspaces/pipelines",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -19862,25 +19930,45 @@
 									},
 									{
 										"source": {
-											"name": "ProductOwnerEmployeeId",
+											"name": "BSO.EmployeeId",
 											"type": "String",
 											"physicalType": "nvarchar"
 										},
 										"sink": {
-											"name": "ProductOwnerEmployeeId",
-											"type": "String",
+											"name": "BSOEmployeeId",
 											"physicalType": "String"
 										}
 									},
 									{
 										"source": {
-											"name": "ProductOwnerEmail",
+											"name": "BSO.Email",
 											"type": "String",
 											"physicalType": "nvarchar"
 										},
 										"sink": {
-											"name": "ProductOwnerEmail",
+											"name": "BSOEmail",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "TPM.EmployeeId",
 											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "TPMEmployeeId",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "TPM.Email",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "TPMEmail",
 											"physicalType": "String"
 										}
 									},
@@ -20016,7 +20104,7 @@
 				"parameters": {
 					"storageAccount": {
 						"type": "string",
-						"defaultValue": "[parameters('servicenow-subscriptions-daily_pipelineStorageAccountParameter')]"
+						"defaultValue": "[parameters('fetch-servicenow-subscriptions_pipelineStorageAccountParameter')]"
 					}
 				},
 				"folder": {
@@ -20795,7 +20883,7 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
-						"fileName": "NewServiceNowDataset.csv",
+						"fileName": "latest-raw.csv",
 						"folderPath": "applications",
 						"fileSystem": "usage"
 					},
@@ -24083,14 +24171,14 @@
 				"pipelines": [
 					{
 						"pipelineReference": {
-							"referenceName": "servicenow-applications-daily",
+							"referenceName": "fetch-servicenow-applications",
 							"type": "PipelineReference"
 						},
 						"parameters": {}
 					},
 					{
 						"pipelineReference": {
-							"referenceName": "servicenow-subscriptions-daily",
+							"referenceName": "fetch-servicenow-subscriptions",
 							"type": "PipelineReference"
 						},
 						"parameters": {}
@@ -24115,8 +24203,8 @@
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('workspaceId'), '/pipelines/servicenow-applications-daily')]",
-				"[concat(variables('workspaceId'), '/pipelines/servicenow-subscriptions-daily')]"
+				"[concat(variables('workspaceId'), '/pipelines/fetch-servicenow-applications')]",
+				"[concat(variables('workspaceId'), '/pipelines/fetch-servicenow-subscriptions')]"
 			]
 		},
 		{
@@ -25046,6 +25134,29 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/2023 PaaS_Count')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "OGBG Benchmark 2022/2023"
+				},
+				"content": {
+					"query": "-- This is auto-generated code\nSELECT\n    --distinct(ResourceId),\n    substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8) as [Date],\n    count(DISTINCT(ResourceId)) as [ResourceId Count]\n    ,ServiceModel\n    --,count(ServiceModel) as [ServiceModel Count]\n    --,*\n    --,Quantity\n    --,ai_VCPUs\n    --,Quantity * ai_VCPUs as [CPU Hours]\n    --,sum(ai_VCPUs) as [vCPU count]\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/2023*/Extended_v3_ACMMonthlyActualCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where ChargeType = 'Usage' and ServiceModel = 'PaaS'\n--WHERE MeterCategory = 'Virtual Machines' and ChargeType = 'Usage' --and benefitName is not NULL --and JSON_VALUE(AdditionalInfo, '$.ServiceType') is NULL --or MeterCategory = 'Cloud Services'\n--group by substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8)\n--order by substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8) --, Quantity DESC\ngroup by substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8), ServiceModel--, ResourceId\norder by [Date]",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/2023 VM_VCPU_Count')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
@@ -25054,7 +25165,7 @@
 					"name": "OGBG Benchmark 2022/2023"
 				},
 				"content": {
-					"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 \n    substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8) as [Date]\n    --,Quantity\n    --,ai_VCPUs\n    --,Quantity * ai_VCPUs as [CPU Hours]\n    ,sum(ai_VCPUs) as [vCPU count]\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/2023*/Extended_v3_ACMMonthlyActualCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nWHERE MeterCategory = 'Virtual Machines' and ChargeType = 'Usage' --and benefitName is not NULL --and JSON_VALUE(AdditionalInfo, '$.ServiceType') is NULL --or MeterCategory = 'Cloud Services'\ngroup by substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8)\norder by substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8) DESC--, Quantity DESC",
+					"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 \n    substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8) as [Date]\n    --,Quantity\n    --,ai_VCPUs\n    --,Quantity * ai_VCPUs as [CPU Hours]\n    ,sum(ai_VCPUs) as [vCPU count]\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/2023*/Extended_v3_ACMMonthlyActualCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nWHERE MeterCategory = 'Virtual Machines' and ChargeType = 'Usage' --and benefitName is not NULL --and JSON_VALUE(AdditionalInfo, '$.ServiceType') is NULL --or MeterCategory = 'Cloud Services'\ngroup by substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8)\norder by substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8) --, Quantity DESC",
 					"metadata": {
 						"language": "sql"
 					},
@@ -25073,8 +25184,11 @@
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
+				"folder": {
+					"name": "OGBG Benchmark 2022/2023"
+				},
 				"content": {
-					"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 \n    substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8) as ][Date]\n    --,Quantity\n    --,ai_VCPUs\n    --,Quantity * ai_VCPUs as [CPU Hours]\n    ,sum(Quantity * ai_VCPUs) as [CPU Hours]\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/2023*/Extended_v3_ACMMonthlyActualCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nWHERE MeterCategory = 'Virtual Machines' and ChargeType = 'Usage' --and benefitName is not NULL --and JSON_VALUE(AdditionalInfo, '$.ServiceType') is NULL --or MeterCategory = 'Cloud Services'\ngroup by substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8)\norder by substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8) DESC--, Quantity DESC",
+					"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 \n    substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8) as [Date]\n    --,Quantity\n    --,ai_VCPUs\n    --,Quantity * ai_VCPUs as [CPU Hours]\n    ,sum(Quantity * ai_VCPUs) as [CPU Hours]\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/2023*/Extended_v3_ACMMonthlyActualCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nWHERE MeterCategory = 'Virtual Machines' and ChargeType = 'Usage' --and benefitName is not NULL --and JSON_VALUE(AdditionalInfo, '$.ServiceType') is NULL --or MeterCategory = 'Cloud Services'\ngroup by substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8)\norder by substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8) --, Quantity DESC",
 					"metadata": {
 						"language": "sql"
 					},
@@ -34278,7 +34392,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "178a4842-4de1-4880-b84e-9c1d23f3aae9"
+						"spark.autotune.trackingId": "8a815fea-004b-4516-8d48-d5b2d1abb358"
 					}
 				},
 				"metadata": {
@@ -34303,7 +34417,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -34690,7 +34805,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "7b436d33-889a-4f07-abfb-3b5cb1d7cb02"
+						"spark.autotune.trackingId": "b774742b-f6fd-4f52-96cf-47d2bae50692"
 					}
 				},
 				"metadata": {
@@ -34715,7 +34830,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -40993,7 +41109,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "24f8f49a-ac84-4d48-a5d0-a77b0962c024"
+						"spark.autotune.trackingId": "a37ff521-2e6e-48a4-8e1b-868177993e7f"
 					}
 				},
 				"metadata": {
@@ -41829,7 +41945,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "d69238ba-81e2-4e05-a4a7-38a752fd1358"
+						"spark.autotune.trackingId": "c1cb9e98-b7c6-4fba-b7f8-482690b69022"
 					}
 				},
 				"metadata": {
@@ -41854,7 +41970,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -42043,7 +42160,7 @@
 							"subscription_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/subscriptions/servicenow/{previous_month_date}-optimized.parquet'\r\n",
 							"print(f\"Subscription path: {subscription_path}\")\r\n",
 							"\r\n",
-							"application_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\r\n",
+							"application_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/applications/processed.parquet'\r\n",
 							"print(f\"Application path: {application_path}\")\r\n",
 							"\r\n",
 							"# Load pricesheet data\r\n",
@@ -42395,7 +42512,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "3ee2a5d6-bdcd-4b53-9baf-b6a9d86d3e96"
+						"spark.autotune.trackingId": "ee58c6d7-c555-432e-b0cc-4fbaaee4c768"
 					}
 				},
 				"metadata": {
@@ -42420,7 +42537,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -42663,7 +42781,7 @@
 							"service_df = spark.read.options(**service_csv_options).csv(service_path)\n",
 							"\n",
 							"# Load application data\n",
-							"application_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet'\n",
+							"application_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/applications/processed'\n",
 							"application_df = load_and_process_applications(application_path)\n",
 							"\n",
 							"# Process cost data\n",
@@ -43840,7 +43958,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "949fe40e-3593-4f6b-bab8-115c343a7c7b"
+						"spark.autotune.trackingId": "efede44d-9698-43e3-96d1-6c06cdde5cb4"
 					}
 				},
 				"metadata": {
@@ -43865,7 +43983,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -43926,6 +44045,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 							"cost_df = spark.read.format('parquet').load(cost_path)"
@@ -44020,7 +44140,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "d8dccc24-d89f-4902-b9e2-caaa216e469a"
+						"spark.autotune.trackingId": "fb1ccfdd-76d1-47d1-a116-971436d92fd7"
 					}
 				},
 				"metadata": {
@@ -44045,7 +44165,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -44087,6 +44208,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"import pandas as pd \r\n",
 							"from pyspark.sql import SparkSession\r\n",
@@ -44122,7 +44244,7 @@
 							}
 						},
 						"source": [
-							"source_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/applications/NewServiceNowDataset.csv\"\r\n",
+							"source_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/applications/latest-raw.csv\"\r\n",
 							"df = spark.read.csv(source_path, header=True, inferSchema=True)"
 						],
 						"outputs": [],
@@ -44191,7 +44313,7 @@
 							"# Transform string fields into integer format, and if there are empty entries, set them to 0\r\n",
 							"df = df.withColumn('AppID', F.col('AppID').cast(\"int\")).fillna(0, subset=['AppID'])\r\n",
 							"df = df.withColumn('IsOmniaSubscription', F.col('IsOmniaSubscription').cast(\"int\")).fillna(0, subset=['IsOmniaSubscription'])\r\n",
-							"df = df.withColumn('ProductOwnerNo', F.col('ProductOwnerNo').cast(\"int\")).fillna(0, subset=['ProductOwnerNo'])\r\n",
+							"df = df.withColumn('BSONo', F.col('BSONo').cast(\"int\")).fillna(0, subset=['BSONo'])\r\n",
 							"df = df.withColumn('OperationalUnitManagerNo', F.col('OperationalUnitManagerNo').cast(\"int\")).fillna(0, subset=['OperationalUnitManagerNo'])\r\n",
 							"\r\n",
 							"# Transform string fields into date format\r\n",
@@ -44218,9 +44340,9 @@
 						},
 						"source": [
 							"# Mitigate email part from shortname string such that only employee initials remains\r\n",
-							"df = df.withColumn(\"ProductOwnerUserName\", F.split(df[\"ProductOwnerShortName\"], \"@\").getItem(0))\r\n",
+							"df = df.withColumn(\"BSOUserName\", F.split(df[\"BSOShortName\"], \"@\").getItem(0))\r\n",
 							"df = df.withColumn(\"OperationalManagerUserName\", F.split(df[\"OperationalManagerShortName\"], \"@\").getItem(0))\r\n",
-							"df = df.drop('ProductOwnerShortName', 'OperationalManagerShortName')"
+							"df = df.drop('BSOShortName', 'OperationalManagerShortName')"
 						],
 						"outputs": [],
 						"execution_count": 11
@@ -44277,7 +44399,7 @@
 						},
 						"source": [
 							"# Define optimized path to save the data\r\n",
-							"optimized_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/applications/ServiceNow-Application-List-Extended.parquet\"\r\n",
+							"optimized_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/applications/processed\"\r\n",
 							"\r\n",
 							"#Save the data with partitioned by time\r\n",
 							"df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
@@ -44313,7 +44435,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "7e419aa2-26d1-4175-9607-4e215981d359"
+						"spark.autotune.trackingId": "d294d42c-af7f-4e8d-b57f-185fb3da8e66"
 					}
 				},
 				"metadata": {
@@ -44338,7 +44460,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -44358,6 +44481,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"storageAccount = 's037costmgmt'"
 						],
@@ -44472,28 +44596,9 @@
 							}
 						},
 						"source": [
-							"# subscription_df = subscription_df.where(subscription_df.OperationalStatus != 'Ignored')"
-						],
-						"outputs": [],
-						"execution_count": 6
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"subscription_df = subscription_df.withColumn(\"ProductOwnerUserName\", F.split(subscription_df[\"ProductOwnerEmail\"], \"@\").getItem(0))\r\n",
+							"subscription_df = subscription_df.withColumn(\"BSOUserName\", F.split(subscription_df[\"BSOEmail\"], \"@\").getItem(0))\r\n",
 							"subscription_df = subscription_df.withColumn(\"TechnicalOwnerUserName\", F.split(subscription_df[\"TechnicalOwnerEmail\"], \"@\").getItem(0))\r\n",
-							"subscription_df = subscription_df.drop(\"ProductOwnerEmail\", \"TechnicalOwnerEmail\")"
+							"subscription_df = subscription_df.drop(\"BSOEmail\", \"TechnicalOwnerEmail\")"
 						],
 						"outputs": [],
 						"execution_count": 7
@@ -44516,27 +44621,6 @@
 						],
 						"outputs": [],
 						"execution_count": 8
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							},
-							"collapsed": false
-						},
-						"source": [
-							"# Compute duplicates\r\n",
-							"# duplicates = subscription_df.groupBy('SubscriptionId').count().filter(F.col('count') > 1)"
-						],
-						"outputs": [],
-						"execution_count": 9
 					},
 					{
 						"cell_type": "markdown",
