@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "7e419aa2-26d1-4175-9607-4e215981d359"
+				"spark.autotune.trackingId": "d1fa063f-522b-49b3-b4cb-7568a63182af"
 			}
 		},
 		"metadata": {
@@ -176,27 +176,9 @@
 					}
 				},
 				"source": [
-					"# subscription_df = subscription_df.where(subscription_df.OperationalStatus != 'Ignored')"
-				],
-				"execution_count": 6
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"subscription_df = subscription_df.withColumn(\"ProductOwnerUserName\", F.split(subscription_df[\"ProductOwnerEmail\"], \"@\").getItem(0))\r\n",
+					"subscription_df = subscription_df.withColumn(\"BSOUserName\", F.split(subscription_df[\"BSOEmail\"], \"@\").getItem(0))\r\n",
 					"subscription_df = subscription_df.withColumn(\"TechnicalOwnerUserName\", F.split(subscription_df[\"TechnicalOwnerEmail\"], \"@\").getItem(0))\r\n",
-					"subscription_df = subscription_df.drop(\"ProductOwnerEmail\", \"TechnicalOwnerEmail\")"
+					"subscription_df = subscription_df.drop(\"BSOEmail\", \"TechnicalOwnerEmail\")"
 				],
 				"execution_count": 7
 			},
@@ -217,26 +199,6 @@
 					"subscription_df = subscription_df.where(F.col('SubscriptionId').isNotNull())"
 				],
 				"execution_count": 8
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"# Compute duplicates\r\n",
-					"# duplicates = subscription_df.groupBy('SubscriptionId').count().filter(F.col('count') > 1)"
-				],
-				"execution_count": 9
 			},
 			{
 				"cell_type": "markdown",
