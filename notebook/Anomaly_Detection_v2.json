@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "c1168926-5016-4986-bf86-4ada020b7812"
+				"spark.autotune.trackingId": "5dda5fe3-b942-4aab-b8f5-5715d4ea4fec"
 			}
 		},
 		"metadata": {
@@ -298,7 +298,7 @@
 					"subscription_path = \"abfss://usage@\" + storageAccount + \".dfs.core.windows.net/subscriptions/servicenow/latest-optimized.parquet\"\r\n",
 					"sub_df = spark.read.format('parquet').load(subscription_path)\r\n",
 					"\r\n",
-					"sub_df = sub_df.select('Name', 'ProductOwnerUserName', 'TechnicalOwnerUserName')\r\n",
+					"sub_df = sub_df.select('Name', 'BSOUserName', 'TechnicalOwnerUserName')\r\n",
 					"sub_df = sub_df.withColumnRenamed('Name','SNSubscriptionName')"
 				],
 				"execution_count": 63
