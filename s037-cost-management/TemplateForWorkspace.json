@@ -26396,7 +26396,7 @@
 					"name": "PowerBIViews"
 				},
 				"content": {
-					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW tsc_ServiceNowApplication\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/applications/processed',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW tsc_ServiceNowApplication\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/applications/processed.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
 					"metadata": {
 						"language": "sql"
 					},
@@ -41072,7 +41072,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "a822ffdf-f87a-4490-9ff0-520b21834f22"
+						"spark.autotune.trackingId": "af045e52-e064-4675-8056-4a03d96736fa"
 					}
 				},
 				"metadata": {
@@ -41097,7 +41097,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -41175,6 +41176,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"def get_last_day_prev_month(to_date):\r\n",
 							"    current_month = int(to_date[4:6])\r\n",
@@ -41906,7 +41908,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "bd32fbba-6bfe-44e6-8120-ca62245a8176"
+						"spark.autotune.trackingId": "32879fcb-274c-4d70-b11f-f3cfdf141980"
 					}
 				},
 				"metadata": {
@@ -41931,7 +41933,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -42472,7 +42475,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "5dcd38ae-dc95-495f-9c27-28a376d83831"
+						"spark.autotune.trackingId": "e04ad9b2-23be-40d7-8cb5-c640062b2be8"
 					}
 				},
 				"metadata": {
@@ -42497,7 +42500,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -42740,7 +42744,7 @@
 							"service_df = spark.read.options(**service_csv_options).csv(service_path)\n",
 							"\n",
 							"# Load application data\n",
-							"application_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/applications/processed'\n",
+							"application_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/applications/processed.parquet'\n",
 							"application_df = load_and_process_applications(application_path)\n",
 							"\n",
 							"# Process cost data\n",
@@ -44097,7 +44101,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "ecd5eff4-27c5-4a5f-b263-2cffc1865092"
+						"spark.autotune.trackingId": "786c1408-700d-4d69-bafc-e391b75efcb1"
 					}
 				},
 				"metadata": {
@@ -44122,7 +44126,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -44160,17 +44165,18 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 6
+						"execution_count": 1
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"import pandas as pd \r\n",
 							"from pyspark.sql import SparkSession\r\n",
 							"import pyspark.sql.functions as F"
 						],
 						"outputs": [],
-						"execution_count": 7
+						"execution_count": 2
 					},
 					{
 						"cell_type": "markdown",
@@ -44203,7 +44209,7 @@
 							"df = spark.read.csv(source_path, header=True, inferSchema=True)"
 						],
 						"outputs": [],
-						"execution_count": 8
+						"execution_count": 3
 					},
 					{
 						"cell_type": "markdown",
@@ -44236,7 +44242,7 @@
 							"# df = application_df.where(application_df.OperationalStatus != 'Ignored')"
 						],
 						"outputs": [],
-						"execution_count": 9
+						"execution_count": 4
 					},
 					{
 						"cell_type": "markdown",
@@ -44277,7 +44283,7 @@
 							"df = df.withColumn('EndOfLifeDate', F.to_timestamp('EndOfLifeDate'))"
 						],
 						"outputs": [],
-						"execution_count": 10
+						"execution_count": 5
 					},
 					{
 						"cell_type": "code",
@@ -44300,7 +44306,7 @@
 							"df = df.drop('BSOShortName', 'OperationalManagerShortName')"
 						],
 						"outputs": [],
-						"execution_count": 11
+						"execution_count": 6
 					},
 					{
 						"cell_type": "code",
@@ -44324,7 +44330,7 @@
 							"df = df.withColumn(\"OrgUnitLevel2\", F.concat(split_col.getItem(0), F.lit(\" \"), split_col.getItem(1), F.lit(\" \"), split_col.getItem(2)))"
 						],
 						"outputs": [],
-						"execution_count": 12
+						"execution_count": 7
 					},
 					{
 						"cell_type": "markdown",
@@ -44354,13 +44360,13 @@
 						},
 						"source": [
 							"# Define optimized path to save the data\r\n",
-							"optimized_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/applications/processed\"\r\n",
+							"optimized_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/applications/processed.parquet\"\r\n",
 							"\r\n",
 							"#Save the data with partitioned by time\r\n",
 							"df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(optimized_path)"
 						],
 						"outputs": [],
-						"execution_count": 13
+						"execution_count": 8
 					}
 				]
 			},
