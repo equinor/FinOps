@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "db7cd5be-9b66-442a-9e0a-e75ddaf81493"
+				"spark.autotune.trackingId": "15c815f7-3d0e-438e-b5da-b19a99898a66"
 			}
 		},
 		"metadata": {
@@ -78,7 +78,7 @@
 					"import pyspark.sql.window as W\r\n",
 					"from pyspark.sql import Row"
 				],
-				"execution_count": 69
+				"execution_count": 34
 			},
 			{
 				"cell_type": "code",
@@ -99,7 +99,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 70
+				"execution_count": 35
 			},
 			{
 				"cell_type": "code",
@@ -121,7 +121,7 @@
 					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'\r\n",
 					"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 				],
-				"execution_count": 71
+				"execution_count": 36
 			},
 			{
 				"cell_type": "markdown",
@@ -180,7 +180,7 @@
 					"# Hourly cost of license per vCPU\r\n",
 					"hourly_vcpu_cost = yearly_license_cost / (HOURS_PER_YEAR * sql_normalized_licence_cores)"
 				],
-				"execution_count": 72
+				"execution_count": 37
 			},
 			{
 				"cell_type": "markdown",
@@ -238,7 +238,7 @@
 					"    'ai_vCores'\r\n",
 					"]"
 				],
-				"execution_count": 73
+				"execution_count": 38
 			},
 			{
 				"cell_type": "code",
@@ -257,7 +257,7 @@
 					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 74
+				"execution_count": 39
 			},
 			{
 				"cell_type": "code",
@@ -276,15 +276,9 @@
 					"# Only select usage from the period specified in the configuration file\r\n",
 					"sql_start_date = (datetime.now() - timedelta(days=sql_days_back_from)).strftime('%Y-%m-%d')\r\n",
 					"sql_end_date = (datetime.now() - timedelta(days=sql_days_back_to)).strftime('%Y-%m-%d')\r\n",
-					"cost_df = cost_df.where((F.col('Date') >= sql_start_date) & (F.col('Date') <= sql_end_date))\r\n",
-					"\r\n",
-					"# Compute the interval in days and hours of the specified interval\r\n",
-					"sql_max_date = cost_df.agg(F.max('Date')).collect()[0][0]\r\n",
-					"sql_min_date = cost_df.agg(F.min('Date')).collect()[0][0]\r\n",
-					"sql_interval_days = (sql_max_date - sql_min_date).days + 1\r\n",
-					"sql_interval_hours = sql_interval_days * 24"
+					"cost_df = cost_df.where((F.col('Date') >= sql_start_date) & (F.col('Date') <= sql_end_date))"
 				],
-				"execution_count": 75
+				"execution_count": 40
 			},
 			{
 				"cell_type": "code",
@@ -304,38 +298,13 @@
 					"cost_df = cost_df.where(F.col('MeterSubCategory').isin(sql_metersubcategory_array))\r\n",
 					"cost_df = cost_df.where(~F.upper(F.col('ResourceName')).startswith('CVD-'))\r\n",
 					"\r\n",
-					"is_sql_vm = (F.col('MeterCategory') == 'Virtual Machines Licenses') & (F.col('MeterSubCategory').like('SQL Server%'))\r\n",
-					"is_sql_db = (F.col('ResourceId').like('%Microsoft.Sql/servers%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
-					"is_sql_mi = (F.col('ResourceId').like('%Microsoft.Sql/managedInstances%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
-					"\r\n",
-					"# Split SQL usage into different categories\r\n",
-					"cost_df = cost_df.withColumn('SQLType', \r\n",
-					"    F.when(is_sql_vm, 'VM')\r\n",
-					"    .when(is_sql_mi, 'MI')\r\n",
-					"    .when(is_sql_db, 'DB')\r\n",
-					"    .otherwise(None)\r\n",
-					")\r\n",
-					"\r\n",
-					"# Determine priority of SQL instances of getting HUB enabled - higher number indicates higher priority\r\n",
-					"cost_df = cost_df.withColumn('Priority',\r\n",
-					"    F.when(is_sql_mi & (F.col('ProductName').contains('General Purpose')), 6)\r\n",
-					"    .when(is_sql_mi & (F.col('ProductName').contains('Business Critical')), 5)\r\n",
-					"    .when(is_sql_db & (F.col('ProductName').contains('General Purpose')), 4)\r\n",
-					"    .when(is_sql_vm & (F.col('ProductName').startswith('SQL Server Enterprise') | (F.col('ProductName') == 'SQL Server Azure Hybrid Benefit - Enterprise Edition License')), 3)\r\n",
-					"    .when(is_sql_db & (F.col('ProductName').contains('Business Critical')), 2)\r\n",
-					"    .when(is_sql_vm & (F.col('ProductName').startswith('SQL Server Standard') | (F.col('ProductName') == 'SQL Server Azure Hybrid Benefit - Standard Edition License')), 1)\r\n",
-					"    .otherwise(0)\r\n",
-					")\r\n",
-					"\r\n",
-					"cost_df = cost_df.where(F.col('SQLType').isNotNull())\r\n",
-					"\r\n",
 					"# Create new date column\r\n",
 					"cost_df = cost_df.withColumn('Date', F.current_date())\r\n",
 					"\r\n",
 					"# Copy df for disabled list computation\r\n",
 					"cost_copy_df = cost_df.alias('cost_copy_df')"
 				],
-				"execution_count": 76
+				"execution_count": 41
 			},
 			{
 				"cell_type": "markdown",
@@ -366,25 +335,9 @@
 				"source": [
 					"# Max aggregation on vCores are used to mitigate duplicate instances, as they can occur if # of vCores are altered on a given day\r\n",
 					"sql_enable_df = cost_df \\\r\n",
-					"    .select('Date', 'ProductName', 'ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'Quantity', 'ai_VCPUs', 'ai_vCores', 'SQLAHB_VCPUs', 'SQLType', 'Priority', 'LicensePayGUnitPrice') \\\r\n",
-					"    .groupBy('Date', 'ProductName', 'ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'ai_VCPUs', 'SQLType', 'Priority', 'LicensePayGUnitPrice') \\\r\n",
-					"    .agg(F.sum('Quantity').alias('ResourceHours'), F.max('ai_vCores').alias('vCores'), F.max('SQLAHB_VCPUs').alias('SQLAHB_VCPUs')) \r\n",
-					"\r\n",
-					"# SQL VM instances will have a quantity per resource per day at 0-24 hours\r\n",
-					"vm_utilization = F.col('ResourceHours') / sql_interval_hours\r\n",
-					"\r\n",
-					"# SQL MI and DB instances will have a quantity per resource per day at 0-24 hours * vCores\r\n",
-					"resource_hours_per_core = F.col('ResourceHours') / F.col('vCores')\r\n",
-					"\r\n",
-					"mi_utilization = resource_hours_per_core / sql_interval_hours\r\n",
-					"db_utilization = resource_hours_per_core / sql_interval_hours\r\n",
-					"\r\n",
-					"sql_enable_df = sql_enable_df.withColumn('Utilization',\r\n",
-					"    F.when(F.col('SQLType') == 'VM', vm_utilization)\r\n",
-					"    .when(F.col('SQLType') == 'DB', db_utilization)\r\n",
-					"    .when(F.col('SQLType') == 'MI', mi_utilization)\r\n",
-					"    .otherwise(0)\r\n",
-					")\r\n",
+					"    .select('Date', 'ProductName', 'ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'Quantity', 'ai_VCPUs', 'ai_vCores', 'SQLAHB_VCPUs','LicensePayGUnitPrice') \\\r\n",
+					"    .groupBy('Date', 'ProductName', 'ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'ai_VCPUs', 'LicensePayGUnitPrice') \\\r\n",
+					"    .agg(F.sum('Quantity').alias('ResourceHours'), F.max('ai_vCores').alias('vCores'), F.max('SQLAHB_VCPUs').alias('SQLAHB_VCPUs'))\r\n",
 					"\r\n",
 					"sql_enable_df = sql_enable_df.withColumn('PAYGLicenseCost', F.col('ResourceHours') * F.col('LicensePayGUnitPrice'))\r\n",
 					"\r\n",
@@ -409,7 +362,7 @@
 					"# Remove redundant columns from results\r\n",
 					"sql_enable_df = sql_enable_df.select('Date', 'ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'SQLAHB_VCPUs')"
 				],
-				"execution_count": 77
+				"execution_count": 42
 			},
 			{
 				"cell_type": "markdown",
@@ -444,7 +397,7 @@
 					"sql_disable_df = sql_disable_df.dropDuplicates([\"ResourceId\"])\r\n",
 					"sql_disable_df = sql_disable_df.join(sql_enable_df, 'ResourceId', 'left_anti')"
 				],
-				"execution_count": 79
+				"execution_count": 43
 			},
 			{
 				"cell_type": "markdown",
@@ -499,7 +452,7 @@
 					"\r\n",
 					"    return activity_df"
 				],
-				"execution_count": 80
+				"execution_count": 44
 			},
 			{
 				"cell_type": "code",
