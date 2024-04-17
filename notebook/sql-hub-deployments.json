@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "15c815f7-3d0e-438e-b5da-b19a99898a66"
+				"spark.autotune.trackingId": "0b5de908-0ef8-41ba-819e-6017d211ffdd"
 			}
 		},
 		"metadata": {
@@ -78,7 +78,7 @@
 					"import pyspark.sql.window as W\r\n",
 					"from pyspark.sql import Row"
 				],
-				"execution_count": 34
+				"execution_count": 24
 			},
 			{
 				"cell_type": "code",
@@ -99,7 +99,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 35
+				"execution_count": 25
 			},
 			{
 				"cell_type": "code",
@@ -121,7 +121,7 @@
 					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'\r\n",
 					"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 				],
-				"execution_count": 36
+				"execution_count": 26
 			},
 			{
 				"cell_type": "markdown",
@@ -180,7 +180,7 @@
 					"# Hourly cost of license per vCPU\r\n",
 					"hourly_vcpu_cost = yearly_license_cost / (HOURS_PER_YEAR * sql_normalized_licence_cores)"
 				],
-				"execution_count": 37
+				"execution_count": 27
 			},
 			{
 				"cell_type": "markdown",
@@ -238,7 +238,7 @@
 					"    'ai_vCores'\r\n",
 					"]"
 				],
-				"execution_count": 38
+				"execution_count": 28
 			},
 			{
 				"cell_type": "code",
@@ -257,7 +257,7 @@
 					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 39
+				"execution_count": 29
 			},
 			{
 				"cell_type": "code",
@@ -278,7 +278,7 @@
 					"sql_end_date = (datetime.now() - timedelta(days=sql_days_back_to)).strftime('%Y-%m-%d')\r\n",
 					"cost_df = cost_df.where((F.col('Date') >= sql_start_date) & (F.col('Date') <= sql_end_date))"
 				],
-				"execution_count": 40
+				"execution_count": 30
 			},
 			{
 				"cell_type": "code",
@@ -298,13 +298,29 @@
 					"cost_df = cost_df.where(F.col('MeterSubCategory').isin(sql_metersubcategory_array))\r\n",
 					"cost_df = cost_df.where(~F.upper(F.col('ResourceName')).startswith('CVD-'))\r\n",
 					"\r\n",
+					"# Define SQL type\r\n",
+					"is_sql_db = (F.col('ResourceId').like('%Microsoft.Sql/servers%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
+					"is_sql_mi = (F.col('ResourceId').like('%Microsoft.Sql/managedInstances%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
+					"is_sql_vm = (F.col('MeterCategory') == 'Virtual Machines Licenses') & (F.col('MeterSubCategory').like('SQL Server%'))\r\n",
+					"is_sql_arc = (F.col('ResourceId').like('%Microsoft.AzureArcData/sqlServerInstances%')) & (F.col('ai_AHB').isNotNull())\r\n",
+					"is_sql_adf = (F.col('MeterCategory') == 'Azure Data Factory v2') & (F.col('MeterSubCategory').like('SSIS%'))\r\n",
+					"\r\n",
+					"cost_df = cost_df.withColumn('SQLType', \r\n",
+					"    F.when(is_sql_db, 'DB')\r\n",
+					"    .when(is_sql_mi, 'MI')\r\n",
+					"    .when(is_sql_vm, 'VM')\r\n",
+					"    .when(is_sql_arc, 'ARC')\r\n",
+					"    .when(is_sql_adf, 'ADF')\r\n",
+					"    .otherwise(None)\r\n",
+					")\r\n",
+					"\r\n",
 					"# Create new date column\r\n",
 					"cost_df = cost_df.withColumn('Date', F.current_date())\r\n",
 					"\r\n",
 					"# Copy df for disabled list computation\r\n",
 					"cost_copy_df = cost_df.alias('cost_copy_df')"
 				],
-				"execution_count": 41
+				"execution_count": 31
 			},
 			{
 				"cell_type": "markdown",
@@ -335,8 +351,8 @@
 				"source": [
 					"# Max aggregation on vCores are used to mitigate duplicate instances, as they can occur if # of vCores are altered on a given day\r\n",
 					"sql_enable_df = cost_df \\\r\n",
-					"    .select('Date', 'ProductName', 'ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'Quantity', 'ai_VCPUs', 'ai_vCores', 'SQLAHB_VCPUs','LicensePayGUnitPrice') \\\r\n",
-					"    .groupBy('Date', 'ProductName', 'ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'ai_VCPUs', 'LicensePayGUnitPrice') \\\r\n",
+					"    .select('Date', 'SQLType', 'ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'Quantity', 'ai_VCPUs', 'ai_vCores', 'SQLAHB_VCPUs','LicensePayGUnitPrice') \\\r\n",
+					"    .groupBy('Date', 'SQLType', 'ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'ai_VCPUs', 'LicensePayGUnitPrice') \\\r\n",
 					"    .agg(F.sum('Quantity').alias('ResourceHours'), F.max('ai_vCores').alias('vCores'), F.max('SQLAHB_VCPUs').alias('SQLAHB_VCPUs'))\r\n",
 					"\r\n",
 					"sql_enable_df = sql_enable_df.withColumn('PAYGLicenseCost', F.col('ResourceHours') * F.col('LicensePayGUnitPrice'))\r\n",
@@ -362,7 +378,7 @@
 					"# Remove redundant columns from results\r\n",
 					"sql_enable_df = sql_enable_df.select('Date', 'ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'SQLAHB_VCPUs')"
 				],
-				"execution_count": 42
+				"execution_count": 32
 			},
 			{
 				"cell_type": "markdown",
@@ -397,7 +413,49 @@
 					"sql_disable_df = sql_disable_df.dropDuplicates([\"ResourceId\"])\r\n",
 					"sql_disable_df = sql_disable_df.join(sql_enable_df, 'ResourceId', 'left_anti')"
 				],
-				"execution_count": 43
+				"execution_count": 10
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"normalized_cores_by_type = enable_copy_df.select('SQLAHB_VCPUs', 'SQLType').groupBy('SQLType').agg(F.sum('SQLAHB_VCPUs').alias('TotalCores'))"
+				],
+				"execution_count": 35
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"transform_cores = lambda row: 0 if row == None else row[0]\r\n",
+					"\r\n",
+					"db_cores = transform_cores(normalized_cores_by_type.where(F.col('SQLType') == 'DB').select('TotalCores').first())\r\n",
+					"mi_cores = transform_cores(normalized_cores_by_type.where(F.col('SQLType') == 'MI').select('TotalCores').first())\r\n",
+					"vm_cores = transform_cores(normalized_cores_by_type.where(F.col('SQLType') == 'VM').select('TotalCores').first())\r\n",
+					"adf_cores = transform_cores(normalized_cores_by_type.where(F.col('SQLType') == 'ADF').select('TotalCores').first())\r\n",
+					"arc_cores = transform_cores(normalized_cores_by_type.where(F.col('SQLType') == 'ARC').select('TotalCores').first())"
+				],
+				"execution_count": 50
 			},
 			{
 				"cell_type": "markdown",
@@ -436,8 +494,16 @@
 					"    # Compute the number of cores ACTUALLY assigned\r\n",
 					"    sql_assigned_cores = enable_copy_df.agg(F.max('TotalNormalizedCores')).collect()[0][0]\r\n",
 					"\r\n",
-					"    # Aggregate normalized core per priority level \r\n",
-					"    normalized_cores_by_priority = enable_copy_df.select('SQLAHB_VCPUs', 'Priority').groupBy('Priority').agg(F.sum('SQLAHB_VCPUs').alias('TotalCores')).collect()\r\n",
+					"    # Aggregate normalized core per SQL type \r\n",
+					"    normalized_cores_by_type = enable_copy_df.select('SQLAHB_VCPUs', 'SQLType').groupBy('SQLType').agg(F.sum('SQLAHB_VCPUs').alias('TotalCores'))\r\n",
+					"\r\n",
+					"    # Extract aggregate core value per SQL type\r\n",
+					"    transform_cores = lambda row: 0 if row == None else row[0]\r\n",
+					"    db_cores = transform_cores(normalized_cores_by_type.where(F.col('SQLType') == 'DB').select('TotalCores').first())\r\n",
+					"    mi_cores = transform_cores(normalized_cores_by_type.where(F.col('SQLType') == 'MI').select('TotalCores').first())\r\n",
+					"    vm_cores = transform_cores(normalized_cores_by_type.where(F.col('SQLType') == 'VM').select('TotalCores').first())\r\n",
+					"    adf_cores = transform_cores(normalized_cores_by_type.where(F.col('SQLType') == 'ADF').select('TotalCores').first())\r\n",
+					"    arc_cores = transform_cores(normalized_cores_by_type.where(F.col('SQLType') == 'ARC').select('TotalCores').first())\r\n",
 					"\r\n",
 					"    # Loop through aggregations and persist values in array \r\n",
 					"    activity_values = [0, 0, 0, 0, 0, 0]\r\n",
@@ -452,7 +518,7 @@
 					"\r\n",
 					"    return activity_df"
 				],
-				"execution_count": 44
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -488,7 +554,7 @@
 					"    activity_df = compute_activity_log_entry(activity_path)\r\n",
 					"    activity_df.toPandas().to_csv(activity_path, index=False)"
 				],
-				"execution_count": 81
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -507,7 +573,7 @@
 					"# Output 'should_run' indication when running in pipeline\r\n",
 					"mssparkutils.notebook.exit(should_run)"
 				],
-				"execution_count": 82
+				"execution_count": 12
 			}
 		]
 	}
