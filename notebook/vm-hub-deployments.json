@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "2f104826-29b9-4409-b480-88f6a28b57cd"
+				"spark.autotune.trackingId": "a7ded324-b518-42bd-b590-b222d56101c9"
 			}
 		},
 		"metadata": {
@@ -71,13 +71,14 @@
 					"from dateutil.relativedelta import relativedelta\r\n",
 					"import calendar\r\n",
 					"import json\r\n",
+					"import pytz\r\n",
 					"from notebookutils import mssparkutils\r\n",
 					"from azure.storage.blob import BlobServiceClient\r\n",
 					"import pyspark.sql.functions as F\r\n",
 					"import pyspark.sql.window as W\r\n",
 					"from pyspark.sql import Row"
 				],
-				"execution_count": 25
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -98,7 +99,25 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 26
+				"execution_count": 4
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"today = datetime.utcnow().replace(tzinfo=pytz.utc).astimezone(pytz.timezone('Europe/Oslo'))"
+				],
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -121,7 +140,7 @@
 					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'\r\n",
 					"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 				],
-				"execution_count": 27
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -145,7 +164,7 @@
 					"    'RG-TERMINAL_SERVERS-SCUS'\r\n",
 					"]"
 				],
-				"execution_count": 28
+				"execution_count": 7
 			},
 			{
 				"cell_type": "markdown",
@@ -189,7 +208,7 @@
 					"vm_config = json.loads(blob_content)\r\n",
 					"\r\n",
 					"# Compute the variable determining if results should be written to file\r\n",
-					"day_name = datetime.now().strftime(\"%A\")\r\n",
+					"day_name = today.strftime(\"%A\")\r\n",
 					"should_run = vm_config['runDays'][day_name]\r\n",
 					"\r\n",
 					"license_count = vm_config['lic_count']\r\n",
@@ -201,7 +220,7 @@
 					"# Hourly cost of license per vCPU\r\n",
 					"hourly_vcpu_cost = yearly_license_cost / (license_count * HOURS_PER_YEAR * VCPUS_PER_LICENSE)"
 				],
-				"execution_count": 29
+				"execution_count": 8
 			},
 			{
 				"cell_type": "markdown",
@@ -258,7 +277,7 @@
 					"    'ai_VMName'\r\n",
 					"]"
 				],
-				"execution_count": 30
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -277,7 +296,7 @@
 					"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 31
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -294,7 +313,7 @@
 				},
 				"source": [
 					"# Filter usage to timespan defined in configuration file\r\n",
-					"vm_start_date = (datetime.now() - timedelta(days=timespan)).strftime('%Y-%m-%d')\r\n",
+					"vm_start_date = (today - timedelta(days=timespan)).strftime('%Y-%m-%d')\r\n",
 					"cost_df = cost_df.where(F.col('Date') >= vm_start_date)\r\n",
 					"\r\n",
 					"# Use only VM related cost\r\n",
@@ -317,7 +336,7 @@
 					"# Persist a df copy for disable list calculation\r\n",
 					"cost_copy_df = cost_df.alias('cost_copy_df')"
 				],
-				"execution_count": 32
+				"execution_count": 11
 			},
 			{
 				"cell_type": "markdown",
@@ -400,7 +419,7 @@
 					"# # Remove redundant columns\r\n",
 					"vm_enable_df = vm_enable_df.select(*selected_columns)"
 				],
-				"execution_count": 33
+				"execution_count": 12
 			},
 			{
 				"cell_type": "markdown",
@@ -440,7 +459,7 @@
 					"# Exclude VMs that are already in the list of enabled VMs\r\n",
 					"vm_disable_df = vm_disable_df.join(vm_enable_df, 'ResourceId', 'left_anti')"
 				],
-				"execution_count": 20
+				"execution_count": 13
 			},
 			{
 				"cell_type": "markdown",
@@ -477,7 +496,7 @@
 					"                    'escape' : '\"'}\r\n",
 					"    activity_df = spark.read.options(**csv_options).csv(activity_path)\r\n",
 					"\r\n",
-					"    today = (datetime.now().strftime('%Y-%m-%d'))\r\n",
+					"    today = (today.strftime('%Y-%m-%d'))\r\n",
 					"    disabled_vms_count = vm_disable_df.count()\r\n",
 					"    enabled_vms_count = vm_enable_df.count()\r\n",
 					"    normalized_cores_disabled = vm_disable_df.select('WindowsAHB_VCPUs').agg(F.sum('WindowsAHB_VCPUs')).collect()[0][0] or 0\r\n",
@@ -501,7 +520,7 @@
 					"    activity_df = activity_df.union(new_activity_row)\r\n",
 					"    return activity_df"
 				],
-				"execution_count": 21
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -538,7 +557,7 @@
 					"    activity_df = compute_activity_log_entry(activity_path)\r\n",
 					"    activity_df.toPandas().to_csv(activity_path, index=False)"
 				],
-				"execution_count": 22
+				"execution_count": 15
 			},
 			{
 				"cell_type": "code",
@@ -557,7 +576,7 @@
 					"# Output 'should_run' indication when running in pipeline\r\n",
 					"mssparkutils.notebook.exit(should_run)"
 				],
-				"execution_count": 23
+				"execution_count": 16
 			}
 		]
 	}
