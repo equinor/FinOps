@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "0b5de908-0ef8-41ba-819e-6017d211ffdd"
+				"spark.autotune.trackingId": "a5fe1144-3a3b-4f05-8691-9ef28a4a3eae"
 			}
 		},
 		"metadata": {
@@ -69,6 +69,7 @@
 				"cell_type": "code",
 				"source": [
 					"from datetime import timedelta, datetime\r\n",
+					"import pytz\r\n",
 					"from dateutil.relativedelta import relativedelta\r\n",
 					"import calendar\r\n",
 					"import json\r\n",
@@ -78,7 +79,7 @@
 					"import pyspark.sql.window as W\r\n",
 					"from pyspark.sql import Row"
 				],
-				"execution_count": 24
+				"execution_count": 59
 			},
 			{
 				"cell_type": "code",
@@ -99,7 +100,25 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 25
+				"execution_count": 60
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"today = datetime.utcnow().replace(tzinfo=pytz.utc).astimezone(pytz.timezone('Europe/Oslo'))"
+				],
+				"execution_count": 61
 			},
 			{
 				"cell_type": "code",
@@ -121,7 +140,7 @@
 					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'\r\n",
 					"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 				],
-				"execution_count": 26
+				"execution_count": 62
 			},
 			{
 				"cell_type": "markdown",
@@ -165,7 +184,7 @@
 					"sql_config = json.loads(blob_content)\r\n",
 					"\r\n",
 					"# Compute the variable determining if results should be written to file\r\n",
-					"day_name = datetime.now().strftime(\"%A\")\r\n",
+					"day_name = today.strftime(\"%A\")\r\n",
 					"should_run = sql_config['runDays'][day_name]\r\n",
 					"\r\n",
 					"sql_metersubcategory_array = sql_config['MeterSubCategory']\r\n",
@@ -180,7 +199,7 @@
 					"# Hourly cost of license per vCPU\r\n",
 					"hourly_vcpu_cost = yearly_license_cost / (HOURS_PER_YEAR * sql_normalized_licence_cores)"
 				],
-				"execution_count": 27
+				"execution_count": 63
 			},
 			{
 				"cell_type": "markdown",
@@ -238,7 +257,7 @@
 					"    'ai_vCores'\r\n",
 					"]"
 				],
-				"execution_count": 28
+				"execution_count": 64
 			},
 			{
 				"cell_type": "code",
@@ -257,7 +276,7 @@
 					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 29
+				"execution_count": 65
 			},
 			{
 				"cell_type": "code",
@@ -278,7 +297,7 @@
 					"sql_end_date = (datetime.now() - timedelta(days=sql_days_back_to)).strftime('%Y-%m-%d')\r\n",
 					"cost_df = cost_df.where((F.col('Date') >= sql_start_date) & (F.col('Date') <= sql_end_date))"
 				],
-				"execution_count": 30
+				"execution_count": 66
 			},
 			{
 				"cell_type": "code",
@@ -320,7 +339,7 @@
 					"# Copy df for disabled list computation\r\n",
 					"cost_copy_df = cost_df.alias('cost_copy_df')"
 				],
-				"execution_count": 31
+				"execution_count": 67
 			},
 			{
 				"cell_type": "markdown",
@@ -378,7 +397,7 @@
 					"# Remove redundant columns from results\r\n",
 					"sql_enable_df = sql_enable_df.select('Date', 'ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'SQLAHB_VCPUs')"
 				],
-				"execution_count": 32
+				"execution_count": 68
 			},
 			{
 				"cell_type": "markdown",
@@ -413,49 +432,7 @@
 					"sql_disable_df = sql_disable_df.dropDuplicates([\"ResourceId\"])\r\n",
 					"sql_disable_df = sql_disable_df.join(sql_enable_df, 'ResourceId', 'left_anti')"
 				],
-				"execution_count": 10
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"normalized_cores_by_type = enable_copy_df.select('SQLAHB_VCPUs', 'SQLType').groupBy('SQLType').agg(F.sum('SQLAHB_VCPUs').alias('TotalCores'))"
-				],
-				"execution_count": 35
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"transform_cores = lambda row: 0 if row == None else row[0]\r\n",
-					"\r\n",
-					"db_cores = transform_cores(normalized_cores_by_type.where(F.col('SQLType') == 'DB').select('TotalCores').first())\r\n",
-					"mi_cores = transform_cores(normalized_cores_by_type.where(F.col('SQLType') == 'MI').select('TotalCores').first())\r\n",
-					"vm_cores = transform_cores(normalized_cores_by_type.where(F.col('SQLType') == 'VM').select('TotalCores').first())\r\n",
-					"adf_cores = transform_cores(normalized_cores_by_type.where(F.col('SQLType') == 'ADF').select('TotalCores').first())\r\n",
-					"arc_cores = transform_cores(normalized_cores_by_type.where(F.col('SQLType') == 'ARC').select('TotalCores').first())"
-				],
-				"execution_count": 50
+				"execution_count": 69
 			},
 			{
 				"cell_type": "markdown",
@@ -505,20 +482,13 @@
 					"    adf_cores = transform_cores(normalized_cores_by_type.where(F.col('SQLType') == 'ADF').select('TotalCores').first())\r\n",
 					"    arc_cores = transform_cores(normalized_cores_by_type.where(F.col('SQLType') == 'ARC').select('TotalCores').first())\r\n",
 					"\r\n",
-					"    # Loop through aggregations and persist values in array \r\n",
-					"    activity_values = [0, 0, 0, 0, 0, 0]\r\n",
-					"    index = 0\r\n",
-					"    for value in normalized_cores_by_priority:\r\n",
-					"        activity_values[index] = value['TotalCores']\r\n",
-					"        index+=1\r\n",
-					"\r\n",
-					"    today = (datetime.now().strftime('%Y-%m-%d'))\r\n",
-					"    new_activity_row = spark.createDataFrame([(today, *activity_values, sql_normalized_licence_cores, sql_assigned_cores)], activity_df.columns)\r\n",
+					"    today_date = (today.strftime('%Y-%m-%d'))\r\n",
+					"    new_activity_row = spark.createDataFrame([(today, mi_cores, db_cores, vm_cores, adf_cores, arc_cores, sql_normalized_licence_cores, sql_assigned_cores)], activity_df.columns)\r\n",
 					"    activity_df = activity_df.union(new_activity_row)\r\n",
 					"\r\n",
 					"    return activity_df"
 				],
-				"execution_count": 11
+				"execution_count": 70
 			},
 			{
 				"cell_type": "code",
@@ -573,7 +543,7 @@
 					"# Output 'should_run' indication when running in pipeline\r\n",
 					"mssparkutils.notebook.exit(should_run)"
 				],
-				"execution_count": 12
+				"execution_count": 71
 			}
 		]
 	}
