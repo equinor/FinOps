@@ -41072,7 +41072,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "26639527-7612-4ca8-9b08-5f89ddd396b1"
+						"spark.autotune.trackingId": "b1aa6b73-a808-4d85-800f-ddfc776eb8df"
 					}
 				},
 				"metadata": {
@@ -41097,7 +41097,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -41175,6 +41176,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"def get_last_day_prev_month(to_date):\r\n",
 							"    current_month = int(to_date[4:6])\r\n",
@@ -41359,7 +41361,7 @@
 							"        'Azure Arc-enabled SQL Server - Arc-enabled servers - Web edition'\r\n",
 							"    ]\r\n",
 							"\r\n",
-							"    is_not_supported = (F.col('MeterSubCategory').isin(NOT_SUPPORTED_AHB_SUBCATEGORIES)) | (F.col('ProductName').isin(NOT_SUPPORTED_PRODUCT_NAMES))\r\n",
+							"    is_not_supported = (F.col('MeterSubCategory').isin(NOT_SUPPORTED_AHB_SUBCATEGORIES)) | (F.col('ProductName').isin(NOT_SUPPORTED_PRODUCT_NAMES)) | (F.col('ResourceName').startswith('CVD-'))\r\n",
 							"\r\n",
 							"    is_vm = F.col('ResourceId').like('%Microsoft.Compute/virtualMachines%')\r\n",
 							"    is_vm_ahb = is_vm & (F.col('MeterSubCategory') == 'SQL Server Azure Hybrid Benefit')\r\n",
@@ -42473,7 +42475,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "12013fa6-6fcc-4d92-a43f-76534335d164"
+						"spark.autotune.trackingId": "628d7490-bb49-474e-9b8d-1be8b0ca7106"
 					}
 				},
 				"metadata": {
@@ -42498,7 +42500,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
