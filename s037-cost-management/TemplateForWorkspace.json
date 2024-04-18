@@ -30764,7 +30764,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "c1168926-5016-4986-bf86-4ada020b7812"
+						"spark.autotune.trackingId": "5dda5fe3-b942-4aab-b8f5-5715d4ea4fec"
 					}
 				},
 				"metadata": {
@@ -31047,7 +31047,7 @@
 							"subscription_path = \"abfss://usage@\" + storageAccount + \".dfs.core.windows.net/subscriptions/servicenow/latest-optimized.parquet\"\r\n",
 							"sub_df = spark.read.format('parquet').load(subscription_path)\r\n",
 							"\r\n",
-							"sub_df = sub_df.select('Name', 'ProductOwnerUserName', 'TechnicalOwnerUserName')\r\n",
+							"sub_df = sub_df.select('Name', 'BSOUserName', 'TechnicalOwnerUserName')\r\n",
 							"sub_df = sub_df.withColumnRenamed('Name','SNSubscriptionName')"
 						],
 						"outputs": [],
@@ -41072,7 +41072,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "af045e52-e064-4675-8056-4a03d96736fa"
+						"spark.autotune.trackingId": "26639527-7612-4ca8-9b08-5f89ddd396b1"
 					}
 				},
 				"metadata": {
@@ -41097,8 +41097,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -41176,7 +41175,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"def get_last_day_prev_month(to_date):\r\n",
 							"    current_month = int(to_date[4:6])\r\n",
@@ -41351,7 +41349,8 @@
 							"        'SQL Server Express Edition',\r\n",
 							"        'SQL Server Developer Edition',\r\n",
 							"        'SQL Server Web',\r\n",
-							"        'SingleDB/Elastic Pool Hyperscale - SQL License'\r\n",
+							"        'SingleDB/Elastic Pool Hyperscale - SQL License',\r\n",
+							"        'SQL Server Azure Disaster Recovery Benefit'\r\n",
 							"    ]\r\n",
 							"\r\n",
 							"    NOT_SUPPORTED_PRODUCT_NAMES = [\r\n",
@@ -41908,7 +41907,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "32879fcb-274c-4d70-b11f-f3cfdf141980"
+						"spark.autotune.trackingId": "bd32fbba-6bfe-44e6-8120-ca62245a8176"
 					}
 				},
 				"metadata": {
@@ -41933,8 +41932,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -42475,7 +42473,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "e04ad9b2-23be-40d7-8cb5-c640062b2be8"
+						"spark.autotune.trackingId": "12013fa6-6fcc-4d92-a43f-76534335d164"
 					}
 				},
 				"metadata": {
@@ -42500,8 +42498,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -44101,7 +44098,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "786c1408-700d-4d69-bafc-e391b75efcb1"
+						"spark.autotune.trackingId": "4abf4c7c-1150-49bb-90cc-ce9c8fbfd1de"
 					}
 				},
 				"metadata": {
@@ -44126,8 +44123,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -44169,7 +44165,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"import pandas as pd \r\n",
 							"from pyspark.sql import SparkSession\r\n",
@@ -44667,7 +44662,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "db7cd5be-9b66-442a-9e0a-e75ddaf81493"
+						"spark.autotune.trackingId": "efb98a6e-84eb-4a84-ba3c-eb029b0be67f"
 					}
 				},
 				"metadata": {
@@ -44714,6 +44709,7 @@
 						"cell_type": "code",
 						"source": [
 							"from datetime import timedelta, datetime\r\n",
+							"import pytz\r\n",
 							"from dateutil.relativedelta import relativedelta\r\n",
 							"import calendar\r\n",
 							"import json\r\n",
@@ -44724,7 +44720,7 @@
 							"from pyspark.sql import Row"
 						],
 						"outputs": [],
-						"execution_count": 69
+						"execution_count": 74
 					},
 					{
 						"cell_type": "code",
@@ -44746,7 +44742,26 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 70
+						"execution_count": 75
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"today = datetime.utcnow().replace(tzinfo=pytz.utc).astimezone(pytz.timezone('Europe/Oslo'))"
+						],
+						"outputs": [],
+						"execution_count": 76
 					},
 					{
 						"cell_type": "code",
@@ -44769,7 +44784,7 @@
 							"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 						],
 						"outputs": [],
-						"execution_count": 71
+						"execution_count": 77
 					},
 					{
 						"cell_type": "markdown",
@@ -44813,7 +44828,7 @@
 							"sql_config = json.loads(blob_content)\r\n",
 							"\r\n",
 							"# Compute the variable determining if results should be written to file\r\n",
-							"day_name = datetime.now().strftime(\"%A\")\r\n",
+							"day_name = today.strftime(\"%A\")\r\n",
 							"should_run = sql_config['runDays'][day_name]\r\n",
 							"\r\n",
 							"sql_metersubcategory_array = sql_config['MeterSubCategory']\r\n",
@@ -44829,7 +44844,7 @@
 							"hourly_vcpu_cost = yearly_license_cost / (HOURS_PER_YEAR * sql_normalized_licence_cores)"
 						],
 						"outputs": [],
-						"execution_count": 72
+						"execution_count": 78
 					},
 					{
 						"cell_type": "markdown",
@@ -44888,7 +44903,7 @@
 							"]"
 						],
 						"outputs": [],
-						"execution_count": 73
+						"execution_count": 79
 					},
 					{
 						"cell_type": "code",
@@ -44908,7 +44923,7 @@
 							"cost_df = spark.read.format('parquet').load(cost_path)"
 						],
 						"outputs": [],
-						"execution_count": 74
+						"execution_count": 80
 					},
 					{
 						"cell_type": "code",
@@ -44927,16 +44942,10 @@
 							"# Only select usage from the period specified in the configuration file\r\n",
 							"sql_start_date = (datetime.now() - timedelta(days=sql_days_back_from)).strftime('%Y-%m-%d')\r\n",
 							"sql_end_date = (datetime.now() - timedelta(days=sql_days_back_to)).strftime('%Y-%m-%d')\r\n",
-							"cost_df = cost_df.where((F.col('Date') >= sql_start_date) & (F.col('Date') <= sql_end_date))\r\n",
-							"\r\n",
-							"# Compute the interval in days and hours of the specified interval\r\n",
-							"sql_max_date = cost_df.agg(F.max('Date')).collect()[0][0]\r\n",
-							"sql_min_date = cost_df.agg(F.min('Date')).collect()[0][0]\r\n",
-							"sql_interval_days = (sql_max_date - sql_min_date).days + 1\r\n",
-							"sql_interval_hours = sql_interval_days * 24"
+							"cost_df = cost_df.where((F.col('Date') >= sql_start_date) & (F.col('Date') <= sql_end_date))"
 						],
 						"outputs": [],
-						"execution_count": 75
+						"execution_count": 81
 					},
 					{
 						"cell_type": "code",
@@ -44956,27 +44965,22 @@
 							"cost_df = cost_df.where(F.col('MeterSubCategory').isin(sql_metersubcategory_array))\r\n",
 							"cost_df = cost_df.where(~F.upper(F.col('ResourceName')).startswith('CVD-'))\r\n",
 							"\r\n",
-							"is_sql_vm = (F.col('MeterCategory') == 'Virtual Machines Licenses') & (F.col('MeterSubCategory').like('SQL Server%'))\r\n",
+							"# Define SQL type\r\n",
 							"is_sql_db = (F.col('ResourceId').like('%Microsoft.Sql/servers%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
 							"is_sql_mi = (F.col('ResourceId').like('%Microsoft.Sql/managedInstances%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
+							"is_sql_vm = (F.col('MeterCategory') == 'Virtual Machines Licenses') & (F.col('MeterSubCategory').like('SQL Server%'))\r\n",
+							"is_sql_arc = (F.col('ResourceId').like('%Microsoft.AzureArcData/sqlServerInstances%')) & (F.col('ai_AHB').isNotNull())\r\n",
 							"\r\n",
-							"# Split SQL usage into different categories\r\n",
+							"# IMPORTANT: Currently ADF cannot be reconfigured without stopping/starting the integration runtime - avoid classifying these instances \r\n",
+							"# is_sql_adf = (F.col('MeterCategory') == 'Azure Data Factory v2') & (F.col('MeterSubCategory').like('SSIS%'))\r\n",
+							"\r\n",
 							"cost_df = cost_df.withColumn('SQLType', \r\n",
-							"    F.when(is_sql_vm, 'VM')\r\n",
+							"    F.when(is_sql_db, 'DB')\r\n",
 							"    .when(is_sql_mi, 'MI')\r\n",
-							"    .when(is_sql_db, 'DB')\r\n",
+							"    .when(is_sql_vm, 'VM')\r\n",
+							"    .when(is_sql_arc, 'ARC')\r\n",
+							"    # .when(is_sql_adf, 'ADF')\r\n",
 							"    .otherwise(None)\r\n",
-							")\r\n",
-							"\r\n",
-							"# Determine priority of SQL instances of getting HUB enabled - higher number indicates higher priority\r\n",
-							"cost_df = cost_df.withColumn('Priority',\r\n",
-							"    F.when(is_sql_mi & (F.col('ProductName').contains('General Purpose')), 6)\r\n",
-							"    .when(is_sql_mi & (F.col('ProductName').contains('Business Critical')), 5)\r\n",
-							"    .when(is_sql_db & (F.col('ProductName').contains('General Purpose')), 4)\r\n",
-							"    .when(is_sql_vm & (F.col('ProductName').startswith('SQL Server Enterprise') | (F.col('ProductName') == 'SQL Server Azure Hybrid Benefit - Enterprise Edition License')), 3)\r\n",
-							"    .when(is_sql_db & (F.col('ProductName').contains('Business Critical')), 2)\r\n",
-							"    .when(is_sql_vm & (F.col('ProductName').startswith('SQL Server Standard') | (F.col('ProductName') == 'SQL Server Azure Hybrid Benefit - Standard Edition License')), 1)\r\n",
-							"    .otherwise(0)\r\n",
 							")\r\n",
 							"\r\n",
 							"cost_df = cost_df.where(F.col('SQLType').isNotNull())\r\n",
@@ -44988,7 +44992,7 @@
 							"cost_copy_df = cost_df.alias('cost_copy_df')"
 						],
 						"outputs": [],
-						"execution_count": 76
+						"execution_count": 82
 					},
 					{
 						"cell_type": "markdown",
@@ -45019,25 +45023,9 @@
 						"source": [
 							"# Max aggregation on vCores are used to mitigate duplicate instances, as they can occur if # of vCores are altered on a given day\r\n",
 							"sql_enable_df = cost_df \\\r\n",
-							"    .select('Date', 'ProductName', 'ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'Quantity', 'ai_VCPUs', 'ai_vCores', 'SQLAHB_VCPUs', 'SQLType', 'Priority', 'LicensePayGUnitPrice') \\\r\n",
-							"    .groupBy('Date', 'ProductName', 'ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'ai_VCPUs', 'SQLType', 'Priority', 'LicensePayGUnitPrice') \\\r\n",
-							"    .agg(F.sum('Quantity').alias('ResourceHours'), F.max('ai_vCores').alias('vCores'), F.max('SQLAHB_VCPUs').alias('SQLAHB_VCPUs')) \r\n",
-							"\r\n",
-							"# SQL VM instances will have a quantity per resource per day at 0-24 hours\r\n",
-							"vm_utilization = F.col('ResourceHours') / sql_interval_hours\r\n",
-							"\r\n",
-							"# SQL MI and DB instances will have a quantity per resource per day at 0-24 hours * vCores\r\n",
-							"resource_hours_per_core = F.col('ResourceHours') / F.col('vCores')\r\n",
-							"\r\n",
-							"mi_utilization = resource_hours_per_core / sql_interval_hours\r\n",
-							"db_utilization = resource_hours_per_core / sql_interval_hours\r\n",
-							"\r\n",
-							"sql_enable_df = sql_enable_df.withColumn('Utilization',\r\n",
-							"    F.when(F.col('SQLType') == 'VM', vm_utilization)\r\n",
-							"    .when(F.col('SQLType') == 'DB', db_utilization)\r\n",
-							"    .when(F.col('SQLType') == 'MI', mi_utilization)\r\n",
-							"    .otherwise(0)\r\n",
-							")\r\n",
+							"    .select('Date', 'SQLType', 'ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'Quantity', 'ai_VCPUs', 'ai_vCores', 'SQLAHB_VCPUs','LicensePayGUnitPrice') \\\r\n",
+							"    .groupBy('Date', 'SQLType', 'ResourceId', 'SubscriptionId', 'ResourceGroup', 'ResourceName', 'ai_VCPUs', 'LicensePayGUnitPrice') \\\r\n",
+							"    .agg(F.sum('Quantity').alias('ResourceHours'), F.max('ai_vCores').alias('vCores'), F.max('SQLAHB_VCPUs').alias('SQLAHB_VCPUs'))\r\n",
 							"\r\n",
 							"sql_enable_df = sql_enable_df.withColumn('PAYGLicenseCost', F.col('ResourceHours') * F.col('LicensePayGUnitPrice'))\r\n",
 							"\r\n",
@@ -45063,7 +45051,7 @@
 							"sql_enable_df = sql_enable_df.select('Date', 'ResourceId', 'SubscriptionId', 'ResourceName', 'ResourceGroup', 'SQLAHB_VCPUs')"
 						],
 						"outputs": [],
-						"execution_count": 77
+						"execution_count": 83
 					},
 					{
 						"cell_type": "markdown",
@@ -45099,7 +45087,7 @@
 							"sql_disable_df = sql_disable_df.join(sql_enable_df, 'ResourceId', 'left_anti')"
 						],
 						"outputs": [],
-						"execution_count": 79
+						"execution_count": 84
 					},
 					{
 						"cell_type": "markdown",
@@ -45138,24 +45126,25 @@
 							"    # Compute the number of cores ACTUALLY assigned\r\n",
 							"    sql_assigned_cores = enable_copy_df.agg(F.max('TotalNormalizedCores')).collect()[0][0]\r\n",
 							"\r\n",
-							"    # Aggregate normalized core per priority level \r\n",
-							"    normalized_cores_by_priority = enable_copy_df.select('SQLAHB_VCPUs', 'Priority').groupBy('Priority').agg(F.sum('SQLAHB_VCPUs').alias('TotalCores')).collect()\r\n",
+							"    # Aggregate normalized core per SQL type \r\n",
+							"    normalized_cores_by_type = enable_copy_df.select('SQLAHB_VCPUs', 'SQLType').groupBy('SQLType').agg(F.sum('SQLAHB_VCPUs').alias('TotalCores'))\r\n",
 							"\r\n",
-							"    # Loop through aggregations and persist values in array \r\n",
-							"    activity_values = [0, 0, 0, 0, 0, 0]\r\n",
-							"    index = 0\r\n",
-							"    for value in normalized_cores_by_priority:\r\n",
-							"        activity_values[index] = value['TotalCores']\r\n",
-							"        index+=1\r\n",
+							"    # Extract aggregate core value per SQL type\r\n",
+							"    transform_cores = lambda row: 0 if row == None else row[0]\r\n",
+							"    db_cores = transform_cores(normalized_cores_by_type.where(F.col('SQLType') == 'DB').select('TotalCores').first())\r\n",
+							"    mi_cores = transform_cores(normalized_cores_by_type.where(F.col('SQLType') == 'MI').select('TotalCores').first())\r\n",
+							"    vm_cores = transform_cores(normalized_cores_by_type.where(F.col('SQLType') == 'VM').select('TotalCores').first())\r\n",
+							"    adf_cores = transform_cores(normalized_cores_by_type.where(F.col('SQLType') == 'ADF').select('TotalCores').first())\r\n",
+							"    arc_cores = transform_cores(normalized_cores_by_type.where(F.col('SQLType') == 'ARC').select('TotalCores').first())\r\n",
 							"\r\n",
-							"    today = (datetime.now().strftime('%Y-%m-%d'))\r\n",
-							"    new_activity_row = spark.createDataFrame([(today, *activity_values, sql_normalized_licence_cores, sql_assigned_cores)], activity_df.columns)\r\n",
+							"    today_date = (today.strftime('%Y-%m-%d'))\r\n",
+							"    new_activity_row = spark.createDataFrame([(today, mi_cores, db_cores, vm_cores, adf_cores, arc_cores, sql_normalized_licence_cores, sql_assigned_cores)], activity_df.columns)\r\n",
 							"    activity_df = activity_df.union(new_activity_row)\r\n",
 							"\r\n",
 							"    return activity_df"
 						],
 						"outputs": [],
-						"execution_count": 80
+						"execution_count": 85
 					},
 					{
 						"cell_type": "code",
@@ -45192,7 +45181,7 @@
 							"    activity_df.toPandas().to_csv(activity_path, index=False)"
 						],
 						"outputs": [],
-						"execution_count": 81
+						"execution_count": 86
 					},
 					{
 						"cell_type": "code",
@@ -45212,7 +45201,7 @@
 							"mssparkutils.notebook.exit(should_run)"
 						],
 						"outputs": [],
-						"execution_count": 82
+						"execution_count": 87
 					}
 				]
 			},
@@ -47021,7 +47010,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "2f104826-29b9-4409-b480-88f6a28b57cd"
+						"spark.autotune.trackingId": "a7ded324-b518-42bd-b590-b222d56101c9"
 					}
 				},
 				"metadata": {
@@ -47071,6 +47060,7 @@
 							"from dateutil.relativedelta import relativedelta\r\n",
 							"import calendar\r\n",
 							"import json\r\n",
+							"import pytz\r\n",
 							"from notebookutils import mssparkutils\r\n",
 							"from azure.storage.blob import BlobServiceClient\r\n",
 							"import pyspark.sql.functions as F\r\n",
@@ -47078,7 +47068,7 @@
 							"from pyspark.sql import Row"
 						],
 						"outputs": [],
-						"execution_count": 25
+						"execution_count": 3
 					},
 					{
 						"cell_type": "code",
@@ -47100,7 +47090,26 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 26
+						"execution_count": 4
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"today = datetime.utcnow().replace(tzinfo=pytz.utc).astimezone(pytz.timezone('Europe/Oslo'))"
+						],
+						"outputs": [],
+						"execution_count": 5
 					},
 					{
 						"cell_type": "code",
@@ -47124,7 +47133,7 @@
 							"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 						],
 						"outputs": [],
-						"execution_count": 27
+						"execution_count": 6
 					},
 					{
 						"cell_type": "code",
@@ -47149,7 +47158,7 @@
 							"]"
 						],
 						"outputs": [],
-						"execution_count": 28
+						"execution_count": 7
 					},
 					{
 						"cell_type": "markdown",
@@ -47193,7 +47202,7 @@
 							"vm_config = json.loads(blob_content)\r\n",
 							"\r\n",
 							"# Compute the variable determining if results should be written to file\r\n",
-							"day_name = datetime.now().strftime(\"%A\")\r\n",
+							"day_name = today.strftime(\"%A\")\r\n",
 							"should_run = vm_config['runDays'][day_name]\r\n",
 							"\r\n",
 							"license_count = vm_config['lic_count']\r\n",
@@ -47206,7 +47215,7 @@
 							"hourly_vcpu_cost = yearly_license_cost / (license_count * HOURS_PER_YEAR * VCPUS_PER_LICENSE)"
 						],
 						"outputs": [],
-						"execution_count": 29
+						"execution_count": 8
 					},
 					{
 						"cell_type": "markdown",
@@ -47264,7 +47273,7 @@
 							"]"
 						],
 						"outputs": [],
-						"execution_count": 30
+						"execution_count": 9
 					},
 					{
 						"cell_type": "code",
@@ -47284,7 +47293,7 @@
 							"cost_df = spark.read.format('parquet').load(cost_path)"
 						],
 						"outputs": [],
-						"execution_count": 31
+						"execution_count": 10
 					},
 					{
 						"cell_type": "code",
@@ -47301,7 +47310,7 @@
 						},
 						"source": [
 							"# Filter usage to timespan defined in configuration file\r\n",
-							"vm_start_date = (datetime.now() - timedelta(days=timespan)).strftime('%Y-%m-%d')\r\n",
+							"vm_start_date = (today - timedelta(days=timespan)).strftime('%Y-%m-%d')\r\n",
 							"cost_df = cost_df.where(F.col('Date') >= vm_start_date)\r\n",
 							"\r\n",
 							"# Use only VM related cost\r\n",
@@ -47325,7 +47334,7 @@
 							"cost_copy_df = cost_df.alias('cost_copy_df')"
 						],
 						"outputs": [],
-						"execution_count": 32
+						"execution_count": 11
 					},
 					{
 						"cell_type": "markdown",
@@ -47409,7 +47418,7 @@
 							"vm_enable_df = vm_enable_df.select(*selected_columns)"
 						],
 						"outputs": [],
-						"execution_count": 33
+						"execution_count": 12
 					},
 					{
 						"cell_type": "markdown",
@@ -47450,7 +47459,7 @@
 							"vm_disable_df = vm_disable_df.join(vm_enable_df, 'ResourceId', 'left_anti')"
 						],
 						"outputs": [],
-						"execution_count": 20
+						"execution_count": 13
 					},
 					{
 						"cell_type": "markdown",
@@ -47487,7 +47496,7 @@
 							"                    'escape' : '\"'}\r\n",
 							"    activity_df = spark.read.options(**csv_options).csv(activity_path)\r\n",
 							"\r\n",
-							"    today = (datetime.now().strftime('%Y-%m-%d'))\r\n",
+							"    today = (today.strftime('%Y-%m-%d'))\r\n",
 							"    disabled_vms_count = vm_disable_df.count()\r\n",
 							"    enabled_vms_count = vm_enable_df.count()\r\n",
 							"    normalized_cores_disabled = vm_disable_df.select('WindowsAHB_VCPUs').agg(F.sum('WindowsAHB_VCPUs')).collect()[0][0] or 0\r\n",
@@ -47512,7 +47521,7 @@
 							"    return activity_df"
 						],
 						"outputs": [],
-						"execution_count": 21
+						"execution_count": 14
 					},
 					{
 						"cell_type": "code",
@@ -47550,7 +47559,7 @@
 							"    activity_df.toPandas().to_csv(activity_path, index=False)"
 						],
 						"outputs": [],
-						"execution_count": 22
+						"execution_count": 15
 					},
 					{
 						"cell_type": "code",
@@ -47570,7 +47579,7 @@
 							"mssparkutils.notebook.exit(should_run)"
 						],
 						"outputs": [],
-						"execution_count": 23
+						"execution_count": 16
 					}
 				]
 			},
