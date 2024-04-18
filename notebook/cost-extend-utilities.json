@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "26639527-7612-4ca8-9b08-5f89ddd396b1"
+				"spark.autotune.trackingId": "a23645b5-23e4-4651-86a2-7e0efb0503cc"
 			}
 		},
 		"metadata": {
@@ -301,7 +301,7 @@
 					"        'Azure Arc-enabled SQL Server - Arc-enabled servers - Web edition'\r\n",
 					"    ]\r\n",
 					"\r\n",
-					"    is_not_supported = (F.col('MeterSubCategory').isin(NOT_SUPPORTED_AHB_SUBCATEGORIES)) | (F.col('ProductName').isin(NOT_SUPPORTED_PRODUCT_NAMES))\r\n",
+					"    is_not_supported = (F.col('MeterSubCategory').isin(NOT_SUPPORTED_AHB_SUBCATEGORIES)) | (F.col('ProductName').isin(NOT_SUPPORTED_PRODUCT_NAMES)) | (F.col('ResourceName').startswith('CVD-'))\r\n",
 					"\r\n",
 					"    is_vm = F.col('ResourceId').like('%Microsoft.Compute/virtualMachines%')\r\n",
 					"    is_vm_ahb = is_vm & (F.col('MeterSubCategory') == 'SQL Server Azure Hybrid Benefit')\r\n",
