@@ -5,7 +5,7 @@
 			"name": "CoreM Project Queries"
 		},
 		"content": {
-			"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 *\n    format([Date], 'yyyy-MM') as [Date]\n    ,sum(CostInBillingCurrency) as [S909 Cost]\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAmortizedCost/202403*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where SubscriptionName = 'S138-SAP-Solution-Landscape'\n    --where SubscriptionName LIKE 'S138%'\n    group by format([Date], 'yyyy-MM')\n",
+			"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 *\n    format([Date], 'yyyy-MM') as [Date]\n    ,sum(CostInBillingCurrency) as [Plant Cost]\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAmortizedCost/202403*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    --where SubscriptionName = 'S138-SAP-Solution-Landscape'\n    --where SubscriptionName LIKE 'S288%'\n    where SubscriptionName in ('S289-HAO-Solution-NONSOX-PROD', 'S039-IOC-Solutions', 'S288-HAO-Solution-NONSOX-NONPROD')\n    group by format([Date], 'yyyy-MM')\n",
 			"metadata": {
 				"language": "sql"
 			},
