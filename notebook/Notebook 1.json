@@ -1,0 +1,432 @@
+{
+	"name": "Notebook 1",
+	"properties": {
+		"folder": {
+			"name": "NotebookInProduction"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sprkpool33large",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "112g",
+			"driverCores": 16,
+			"executorMemory": "112g",
+			"executorCores": 16,
+			"numExecutors": 1,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "true",
+				"spark.dynamicAllocation.minExecutors": "1",
+				"spark.dynamicAllocation.maxExecutors": "5",
+				"spark.autotune.trackingId": "67304e79-4c83-4817-b5b3-11c06fd50a21"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
+				"name": "sprkpool33large",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 16,
+				"memory": 112,
+				"automaticScaleJobs": true
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Storage Account\r\n",
+					"- Do not consider bandwidth, only storage\r\n",
+					"- To identify storage accounts, look at `ResourceId` values like `Microsoft.Storage/storageAccounts`\r\n",
+					"- Only relevant cost has `UnitOfMeasure` set to `1 GB/Month`"
+				]
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"Azure Cosmos DB\r\n",
+					"microsoft.documentdb/databaseaccounts\r\n",
+					"\r\n",
+					"Azure Database for MySQL\r\n",
+					"microsoft.dbformysql/servers\r\n",
+					"\r\n",
+					"Azure Database for MySQL\r\n",
+					"microsoft.dbformysql/flexibleservers\r\n",
+					"\r\n",
+					"Azure Database for PostgreSQL\r\n",
+					"microsoft.dbforpostgresql/servers\r\n",
+					"\r\n",
+					"Azure Database for PostgreSQL\r\n",
+					"microsoft.dbforpostgresql/flexibleservers\r\n",
+					"\r\n",
+					"Azure Database for PostgreSQL\r\n",
+					"microsoft.dbforpostgresql/servergroupsv2\r\n",
+					"\r\n",
+					"Azure DevOps\r\n",
+					"microsoft.visualstudio/organizations\r\n",
+					"\r\n",
+					"Azure Monitor\r\n",
+					"microsoft.operationalinsights/workspaces\r\n",
+					"\r\n",
+					"Azure NetApp Files\r\n",
+					"microsoft.netapp/netappaccounts\r\n",
+					"\r\n",
+					"Azure Synapse Analytics\r\n",
+					"microsoft.sql/servers\r\n",
+					"\r\n",
+					"Azure Synapse Analytics\r\n",
+					"microsoft.synapse/workspaces\r\n",
+					"\r\n",
+					"Backup\r\n",
+					"microsoft.dataprotection/backupvaults\r\n",
+					"\r\n",
+					"Backup\r\n",
+					"microsoft.recoveryservices/vaults\r\n",
+					"\r\n",
+					"Container Registry\r\n",
+					"microsoft.containerregistry/registries\r\n",
+					"\r\n",
+					"Event Hubs\r\n",
+					"microsoft.eventhub/namespaces\r\n",
+					"\r\n",
+					"Event Hubs\r\n",
+					"microsoft.eventhub/clusters\r\n",
+					"\r\n",
+					"GitHub\r\n",
+					"github/enterpriseaccount\r\n",
+					"\r\n",
+					"Insight and Analytics\r\n",
+					"microsoft.operationalinsights/workspaces\r\n",
+					"\r\n",
+					"Log Analytics\r\n",
+					"microsoft.operationalinsights/workspaces\r\n",
+					"\r\n",
+					"Log Analytics\r\n",
+					"microsoft.insights/components\r\n",
+					"\r\n",
+					"Logic Apps\r\n",
+					"microsoft.logic/workflows\r\n",
+					"\r\n",
+					"Microsoft Fabric\r\n",
+					"microsoft.fabric/capacities\r\n",
+					"\r\n",
+					"SQL Database\r\n",
+					"microsoft.sql/servers\r\n",
+					"\r\n",
+					"SQL Database\r\n",
+					"microsoft.sql/locations\r\n",
+					"\r\n",
+					"SQL Managed Instance\r\n",
+					"microsoft.sql/locations\r\n",
+					"\r\n",
+					"SQL Managed Instance\r\n",
+					"microsoft.sql/managedinstances\r\n",
+					"\r\n",
+					"Storage\r\n",
+					"microsoft.storage/storageaccounts\r\n",
+					"\r\n",
+					"Storage\r\n",
+					"microsoft.compute/snapshots\r\n",
+					"\r\n",
+					"Storage\r\n",
+					"microsoft.compute/galleries\r\n",
+					"\r\n",
+					"Storage\r\n",
+					"microsoft.machinelearningservices/workspaces\r\n",
+					"\r\n",
+					"Storage\r\n",
+					"microsoft.kusto/clusters\r\n",
+					"\r\n",
+					"Storage\r\n",
+					"microsoft.classicstorage/storageaccounts\r\n",
+					"\r\n",
+					"Storage\r\n",
+					"microsoft.compute/images\r\n",
+					"\r\n",
+					"Storage\r\n",
+					"microsoft.compute/restorepointcollections\r\n",
+					"\r\n",
+					"Storage\r\n",
+					"microsoft.storagecache/amlfilesystems\r\n",
+					"\r\n",
+					"Storage\r\n",
+					"microsoft.compute/disks"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"import pyspark.sql.functions as F"
+				],
+				"execution_count": 20
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20240201-20240229/Extended_v3_ACMMonthlyAmortizedCost_20240201-20240229.parquet'\r\n",
+					"cost_df = spark.read.format('parquet').load(cost_path)"
+				],
+				"execution_count": 50
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cost_df = cost_df.withColumn(\"Unit\", F.split(F.col('UnitOfMeasure'), ' ').getItem(1))\r\n",
+					"cost_df = cost_df.withColumn('DaysInMonth', F.dayofmonth(F.last_day(F.col('Date'))))"
+				],
+				"execution_count": 53
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"ALLOWED_UNITS = [\r\n",
+					"    # 'GB',\r\n",
+					"    # 'GiB',\r\n",
+					"    # 'MB',\r\n",
+					"    # 'TB',\r\n",
+					"    'GB/Month',\r\n",
+					"    'GiB/Month',\r\n",
+					"    'GiB/Hour',\r\n",
+					"    'TB/Month'\r\n",
+					"]\r\n",
+					"\r\n",
+					"cost_df = cost_df.where(F.col('Unit').isin(ALLOWED_UNITS))"
+				],
+				"execution_count": 54
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"Azure Cosmos DB\r\n",
+					"Azure Database for MySQL\r\n",
+					"Azure Database for PostgreSQL\r\n",
+					"Azure NetApp Files\r\n",
+					"Azure Monitor\r\n",
+					"Azure Synapse Analytics\r\n",
+					"Backup\r\n",
+					"Container Registry\r\n",
+					"Event Hubs\r\n",
+					"GitHub\r\n",
+					"Insight and Analytics\r\n",
+					"Log Analytics\r\n",
+					"Logic Apps\r\n",
+					"Microsoft Fabric\r\n",
+					"SQL Database\r\n",
+					"SQL Managed Instance\r\n",
+					"Storage"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(cost_df.select('MeterCategory', 'ResourceType').distinct())"
+				],
+				"execution_count": 56
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"sa_df = cost_df.where((F.col('ResourceId').like('%Microsoft.Storage/storageAccounts%')) & (F.col('ResourceName') == 's037costmgmt')).where(F.col('UnitOfMeasure') == '1 GB/Month')\r\n",
+					"sa_df = sa_df.groupBy('Date', 'Quantity').agg(F.sum('Quantity').alias('SumQuantity'))"
+				],
+				"execution_count": 42
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(sa_df.withColumn('DaysInMonth', F.dayofmonth(F.last_day(F.col('Date')))))"
+				],
+				"execution_count": 49
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(sa_df.withColumn('volume', F.col('SumQuantity') * 29))"
+				],
+				"execution_count": 41
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(sa_df.agg(F.sum('SumQuantity')))"
+				],
+				"execution_count": 37
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(cost_df.where((F.col('ResourceId').like('%Microsoft.Storage/storageAccounts%')) & (F.col('Date') == '2024-02-10')).where(F.col('UnitOfMeasure') == '1 GB/Month'))"
+				],
+				"execution_count": 25
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(cost_df.select('MeterCategory').distinct())"
+				],
+				"execution_count": 9
+			}
+		]
+	}
+}
