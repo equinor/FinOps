@@ -5,7 +5,7 @@
 			"name": "CoreM Project Queries"
 		},
 		"content": {
-			"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 *\n    sum(CostInBillingCurrency) as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAmortizedCost/202403*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where SubscriptionName = 'S909-InfrCorpNet'\n",
+			"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 *\n    format([Date], 'yyyy-MM') as [Date]\n    ,sum(CostInBillingCurrency) as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAmortizedCost/202403*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where SubscriptionName = 'S909-InfrCorpNet'\n    group by format([Date], 'yyyy-MM')\n",
 			"metadata": {
 				"language": "sql"
 			},
