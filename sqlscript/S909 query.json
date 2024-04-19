@@ -1,8 +1,11 @@
 {
-	"name": "SQL script 52",
+	"name": "S909 query",
 	"properties": {
+		"folder": {
+			"name": "CoreM Project Queries"
+		},
 		"content": {
-			"query": "-- This is auto-generated code\nSELECT\n    TOP 100 *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAmortizedCost/202403*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n",
+			"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 *\n    sum(CostInBillingCurrency) as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAmortizedCost/202403*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where SubscriptionName = 'S909-InfrCorpNet'\n",
 			"metadata": {
 				"language": "sql"
 			},
