@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "c473bc1e-5783-4353-8dc0-44e052bac486"
+				"spark.autotune.trackingId": "549d0592-8fad-4789-96fd-c680abe80a9c"
 			}
 		},
 		"metadata": {
@@ -299,9 +299,28 @@
 				"source": [
 					"cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20240401-20240430/Extended_v3_ACMMonthlyAmortizedCost_20240401-20240430.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
-					"cost_df = cost_df.where(F.col('Date') == '2024-04-03')"
+					"# cost_df = cost_df.where(F.col('Date') == '2024-04-03')"
 				],
-				"execution_count": 159
+				"execution_count": 231
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(cost_df.where(F.col('ResourceId') == '/subscriptions/1abada37-8f4e-4699-b6ad-a8adc6083f39/resourceGroups/S034-WE-ANF/providers/Microsoft.NetApp/netAppAccounts/zwe-netapp-s034-account01/capacityPools/s034-we-c-prog01').select('Quantity').withColumn('EstimatedVolume', F.col('Quantity') / (24 * 1024)))"
+				],
+				"execution_count": 233
 			},
 			{
 				"cell_type": "code",
@@ -421,9 +440,9 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(netapp_df.where(F.col('UnitOfMeasure') == '1 GiB/Month'))"
+					"display(netapp_df.where(F.col('UnitOfMeasure') == '1 GiB/Hour'))"
 				],
-				"execution_count": 229
+				"execution_count": 230
 			}
 		]
 	}
