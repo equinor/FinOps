@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "102d9be2-9a10-4e41-b977-55e5f5451bea"
+				"spark.autotune.trackingId": "d85c2248-8205-4a54-bcc9-64224ce071bb"
 			}
 		},
 		"metadata": {
@@ -187,6 +187,28 @@
 				]
 			},
 			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## UnitOfMeasure of interest\r\n",
+					"- 1 GB/Month\r\n",
+					"- 1 GiB/Hour \r\n",
+					"- 1 GiB/Month\r\n",
+					"- 1 TB/Month\r\n",
+					"- 1/Hour ?\r\n",
+					"- 1/Day ?\r\n",
+					"- 1/Month\r\n",
+					"\r\n",
+					""
+				]
+			},
+			{
 				"cell_type": "code",
 				"metadata": {
 					"jupyter": {
@@ -240,7 +262,7 @@
 					"app_df = spark.read.format('parquet').load(app_path)\r\n",
 					"app_df = app_df.select('AppID', 'OrgUnitLevel1')"
 				],
-				"execution_count": 105
+				"execution_count": 158
 			},
 			{
 				"cell_type": "code",
@@ -274,50 +296,12 @@
 			},
 			{
 				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(disk_size_df)"
-				],
-				"execution_count": 138
-			},
-			{
-				"cell_type": "code",
 				"source": [
 					"cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20240401-20240430/Extended_v3_ACMMonthlyAmortizedCost_20240401-20240430.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
 					"cost_df = cost_df.where(F.col('Date') == '2024-04-03')"
 				],
-				"execution_count": 76
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(cost_df.where(F.col('ResourceGroup') == 'EQNR-ATLAS-PROD-MAIACMNDBWMNGD-RG-XXG').where(F.col('ResourceId').contains('b8ceec728bdf49008df17f629f4e1aed')))"
-				],
-				"execution_count": 147
+				"execution_count": 159
 			},
 			{
 				"cell_type": "code",
@@ -355,25 +339,6 @@
 						"transient": {
 							"deleting": false
 						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(sa_df.groupBy('OrgUnitLevel1').agg(F.sum('VolumeEstimateGiB')))"
-				],
-				"execution_count": 157
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
 					}
 				},
 				"source": [
@@ -385,63 +350,6 @@
 					"managed_disk_df = managed_disk_df.join(app_df, 'AppID', 'left')"
 				],
 				"execution_count": 153
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(managed_disk_df.groupBy('OrgUnitLevel1').agg(F.sum('NormalizedSize')))"
-				],
-				"execution_count": 155
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(managed_disk_df.where(F.col('ResourceId') == '/subscriptions/ab2e8798-868e-4251-b39f-70a53f943bd0/resourceGroups/DATABRICKS-RG-MATEDATABRICKSPROD-YKCPX3PKP6FKI/providers/Microsoft.Compute/disks/b7589a4075bc4bb0839a5ea3e50bc0e6-osDisk'))"
-				],
-				"execution_count": 152
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(managed_disk_df.where(F.col('ResourceId') == '/subscriptions/5c210a8c-68ca-4ab3-8b90-73c062701394/resourceGroups/EQNR-ATLAS-PROD-MAIACMNDBWMNGD-RG-XXG/providers/Microsoft.Compute/disks/b8ceec728bdf49008df17f629f4e1aed-kSEza-scratchVolume'))"
-				],
-				"execution_count": 135
 			}
 		]
 	}
