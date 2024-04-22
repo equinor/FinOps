@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "3d4a7f5b-a88b-4d6e-bebf-131203766de6"
+				"spark.autotune.trackingId": "42e711a4-cc8b-4199-b1fe-710dcfbbc2b8"
 			}
 		},
 		"metadata": {
@@ -202,7 +202,7 @@
 				"source": [
 					"import pyspark.sql.functions as F"
 				],
-				"execution_count": 20
+				"execution_count": 61
 			},
 			{
 				"cell_type": "code",
@@ -210,7 +210,7 @@
 					"cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20240201-20240229/Extended_v3_ACMMonthlyAmortizedCost_20240201-20240229.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 50
+				"execution_count": 52
 			},
 			{
 				"cell_type": "code",
@@ -245,58 +245,11 @@
 					}
 				},
 				"source": [
-					"ALLOWED_UNITS = [\r\n",
-					"    # 'GB',\r\n",
-					"    # 'GiB',\r\n",
-					"    # 'MB',\r\n",
-					"    # 'TB',\r\n",
-					"    'GB/Month',\r\n",
-					"    'GiB/Month',\r\n",
-					"    'GiB/Hour',\r\n",
-					"    'TB/Month'\r\n",
-					"]\r\n",
-					"\r\n",
-					"cost_df = cost_df.where(F.col('Unit').isin(ALLOWED_UNITS))"
-				],
-				"execution_count": 54
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(cost_df.select('MeterCategory', 'ResourceType').distinct())"
-				],
-				"execution_count": 56
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
 					"sa_df = cost_df.where((F.col('ResourceId').like('%Microsoft.Storage/storageAccounts%')) & (F.col('ResourceName') == 's037costmgmt')).where(F.col('UnitOfMeasure') == '1 GB/Month')\r\n",
-					"sa_df = sa_df.groupBy('Date', 'Quantity').agg(F.sum('Quantity').alias('SumQuantity'))"
+					"sa_df = sa_df.groupBy('Date', 'Quantity').agg(F.sum('Quantity').alias('Quantity'))\r\n",
+					"sa_df = sa_df.withColumn('DaysInMonth', F.dayofmonth(F.last_day(F.col('Date'))))"
 				],
-				"execution_count": 42
+				"execution_count": 59
 			},
 			{
 				"cell_type": "code",
@@ -313,85 +266,47 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(sa_df.withColumn('DaysInMonth', F.dayofmonth(F.last_day(F.col('Date')))))"
+					"display(cost_df.where(F.col('Unit') == 'GiB/Hour').select('MeterCategory', 'ResourceType').distinct())"
+				],
+				"execution_count": 40
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(cost_df.where((F.col('ResourceType') == 'microsoft.compute/disks') & (F.col('UnitOfMeasure') == '1/Month')))"
+				],
+				"execution_count": 58
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(cost_df.where( (F.col('ResourceName') == 'dfloo-PBI-1_OsDisk_1_e2a35d2a396a4eed878a228475a0ffed')).agg(F.sum('Quantity')))"
 				],
 				"execution_count": 49
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(sa_df.withColumn('volume', F.col('SumQuantity') * 29))"
-				],
-				"execution_count": 41
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(sa_df.agg(F.sum('SumQuantity')))"
-				],
-				"execution_count": 37
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(cost_df.where((F.col('ResourceId').like('%Microsoft.Storage/storageAccounts%')) & (F.col('Date') == '2024-02-10')).where(F.col('UnitOfMeasure') == '1 GB/Month'))"
-				],
-				"execution_count": 25
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(cost_df.select('MeterCategory').distinct())"
-				],
-				"execution_count": 9
 			}
 		]
 	}
