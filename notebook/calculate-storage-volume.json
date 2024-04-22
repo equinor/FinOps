@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "42e711a4-cc8b-4199-b1fe-710dcfbbc2b8"
+				"spark.autotune.trackingId": "102d9be2-9a10-4e41-b977-55e5f5451bea"
 			}
 		},
 		"metadata": {
@@ -202,15 +202,7 @@
 				"source": [
 					"import pyspark.sql.functions as F"
 				],
-				"execution_count": 61
-			},
-			{
-				"cell_type": "code",
-				"source": [
-					"cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20240201-20240229/Extended_v3_ACMMonthlyAmortizedCost_20240201-20240229.parquet'\r\n",
-					"cost_df = spark.read.format('parquet').load(cost_path)"
-				],
-				"execution_count": 52
+				"execution_count": 113
 			},
 			{
 				"cell_type": "code",
@@ -226,10 +218,9 @@
 					}
 				},
 				"source": [
-					"cost_df = cost_df.withColumn(\"Unit\", F.split(F.col('UnitOfMeasure'), ' ').getItem(1))\r\n",
-					"cost_df = cost_df.withColumn('DaysInMonth', F.dayofmonth(F.last_day(F.col('Date'))))"
+					"HOURS_PER_MONTH = 730"
 				],
-				"execution_count": 53
+				"execution_count": 114
 			},
 			{
 				"cell_type": "code",
@@ -245,11 +236,41 @@
 					}
 				},
 				"source": [
-					"sa_df = cost_df.where((F.col('ResourceId').like('%Microsoft.Storage/storageAccounts%')) & (F.col('ResourceName') == 's037costmgmt')).where(F.col('UnitOfMeasure') == '1 GB/Month')\r\n",
-					"sa_df = sa_df.groupBy('Date', 'Quantity').agg(F.sum('Quantity').alias('Quantity'))\r\n",
-					"sa_df = sa_df.withColumn('DaysInMonth', F.dayofmonth(F.last_day(F.col('Date'))))"
+					"app_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/applications/processed.parquet\"\r\n",
+					"app_df = spark.read.format('parquet').load(app_path)\r\n",
+					"app_df = app_df.select('AppID', 'OrgUnitLevel1')"
 				],
-				"execution_count": 59
+				"execution_count": 105
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"disk_size_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/services/storage-account-disk-sizes.csv\"\r\n",
+					"csv_options = {'header' : True,\r\n",
+					"                'delimiter' : ';',\r\n",
+					"                'quote' : '\"',\r\n",
+					"                'escape' : '\"'}\r\n",
+					"disk_size_df = spark.read.options(**csv_options).csv(disk_size_path)\r\n",
+					"\r\n",
+					"disk_size_df = disk_size_df.withColumn('Size', F.split(F.col('DiskSize'), ' ').getItem(0))\r\n",
+					"disk_size_df = disk_size_df.withColumn('Unit', F.split(F.col('DiskSize'), ' ').getItem(1))\r\n",
+					"disk_size_df = disk_size_df.withColumn('NormalizedSize', \r\n",
+					"    F.when(F.col('Unit') == 'TiB', F.col('Size') * 1024)\r\n",
+					"    .otherwise(F.col('Size'))\r\n",
+					")"
+				],
+				"execution_count": 137
 			},
 			{
 				"cell_type": "code",
@@ -266,9 +287,18 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(cost_df.where(F.col('Unit') == 'GiB/Hour').select('MeterCategory', 'ResourceType').distinct())"
+					"display(disk_size_df)"
 				],
-				"execution_count": 40
+				"execution_count": 138
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20240401-20240430/Extended_v3_ACMMonthlyAmortizedCost_20240401-20240430.parquet'\r\n",
+					"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
+					"cost_df = cost_df.where(F.col('Date') == '2024-04-03')"
+				],
+				"execution_count": 76
 			},
 			{
 				"cell_type": "code",
@@ -285,9 +315,34 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(cost_df.where((F.col('ResourceType') == 'microsoft.compute/disks') & (F.col('UnitOfMeasure') == '1/Month')))"
+					"display(cost_df.where(F.col('ResourceGroup') == 'EQNR-ATLAS-PROD-MAIACMNDBWMNGD-RG-XXG').where(F.col('ResourceId').contains('b8ceec728bdf49008df17f629f4e1aed')))"
 				],
-				"execution_count": 58
+				"execution_count": 147
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"sa_df = cost_df.where(((F.col('ResourceType') == 'microsoft.storage/storageaccounts') | (F.col('ResourceType') == 'microsoft.classicstorage/storageaccounts')) & (F.col('UnitOfMeasure') == '1 GB/Month'))\r\n",
+					"sa_df = sa_df \\\r\n",
+					"    .select('ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'AppID', 'Quantity') \\\r\n",
+					"    .groupBy('ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'AppID') \\\r\n",
+					"    .agg(F.sum('Quantity').alias('Quantity'))\r\n",
+					"\r\n",
+					"sa_df = sa_df.withColumn('VolumeEstimateGiB', F.col('Quantity') * (HOURS_PER_MONTH / 24) * 0.931322575)\r\n",
+					"sa_df = sa_df.join(app_df, 'AppID', 'left')"
+				],
+				"execution_count": 156
 			},
 			{
 				"cell_type": "code",
@@ -304,9 +359,89 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(cost_df.where( (F.col('ResourceName') == 'dfloo-PBI-1_OsDisk_1_e2a35d2a396a4eed878a228475a0ffed')).agg(F.sum('Quantity')))"
+					"display(sa_df.groupBy('OrgUnitLevel1').agg(F.sum('VolumeEstimateGiB')))"
 				],
-				"execution_count": 49
+				"execution_count": 157
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"managed_disk_df = cost_df.where((F.col('ResourceType') == 'microsoft.compute/disks') & (F.col('UnitOfMeasure') == '1/Month'))\r\n",
+					"managed_disk_df = managed_disk_df.withColumn('DiskType', F.split(F.col('MeterName'), ' ').getItem(0))\r\n",
+					"managed_disk_df = managed_disk_df.dropDuplicates(['ResourceId', 'DiskType'])\r\n",
+					"managed_disk_df = managed_disk_df.join(disk_size_df, \"DiskType\", 'left')\r\n",
+					"managed_disk_df = managed_disk_df.select('ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'AppID', 'DiskType', 'NormalizedSize')\r\n",
+					"managed_disk_df = managed_disk_df.join(app_df, 'AppID', 'left')"
+				],
+				"execution_count": 153
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(managed_disk_df.groupBy('OrgUnitLevel1').agg(F.sum('NormalizedSize')))"
+				],
+				"execution_count": 155
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(managed_disk_df.where(F.col('ResourceId') == '/subscriptions/ab2e8798-868e-4251-b39f-70a53f943bd0/resourceGroups/DATABRICKS-RG-MATEDATABRICKSPROD-YKCPX3PKP6FKI/providers/Microsoft.Compute/disks/b7589a4075bc4bb0839a5ea3e50bc0e6-osDisk'))"
+				],
+				"execution_count": 152
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(managed_disk_df.where(F.col('ResourceId') == '/subscriptions/5c210a8c-68ca-4ab3-8b90-73c062701394/resourceGroups/EQNR-ATLAS-PROD-MAIACMNDBWMNGD-RG-XXG/providers/Microsoft.Compute/disks/b8ceec728bdf49008df17f629f4e1aed-kSEza-scratchVolume'))"
+				],
+				"execution_count": 135
 			}
 		]
 	}
