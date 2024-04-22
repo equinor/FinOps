@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "7989e18f-8d1b-4996-bf7d-3c533faae2ce"
+				"spark.autotune.trackingId": "c473bc1e-5783-4353-8dc0-44e052bac486"
 			}
 		},
 		"metadata": {
@@ -350,6 +350,80 @@
 					"managed_disk_df = managed_disk_df.join(app_df, 'AppID', 'left')"
 				],
 				"execution_count": 153
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"sql_db_df = cost_df.where(F.col('MeterCategory') == 'SQL Server').where(F.col('MeterSubCategory').contains('Storage'))"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"netapp_df = cost_df.where(F.col('ResourceType') == 'microsoft.netapp/netappaccounts')"
+				],
+				"execution_count": 224
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(netapp_df.select('UnitOfMeasure'))"
+				],
+				"execution_count": 226
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(netapp_df.where(F.col('UnitOfMeasure') == '1 GiB/Month'))"
+				],
+				"execution_count": 229
 			}
 		]
 	}
