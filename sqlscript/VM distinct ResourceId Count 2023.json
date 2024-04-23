@@ -2,7 +2,7 @@
 	"name": "VM distinct ResourceId Count 2023",
 	"properties": {
 		"folder": {
-			"name": "OGBG Benchmark 2022/2022"
+			"name": "OGBG Benchmark 2022/2023"
 		},
 		"content": {
 			"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 \n    --MeterCategory\n    --,MeterSubCategory\n    format([Date], 'yyyy-MM') as [Date]\n    ,count(DISTINCT ResourceId) as [Count]\n    --,sum(Quantity) as Quantity\n    --,AdditionalInfo\n    --,sum(CostInBillingCurrency) as Cost\n    --,UnitOfMeasure\n    --,*\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/2022*/ACMMonthlyActualCost_*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where MeterCategory = 'Virtual Machines'\n    group by format([Date], 'yyyy-MM')\n    order by format([Date], 'yyyy-MM')\n",
