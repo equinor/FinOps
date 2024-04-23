@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "8f19d066-b7ba-44fa-9396-bcb9aa736bd4"
+				"spark.autotune.trackingId": "9f6b6d95-fc4c-432e-b350-367e30b3248c"
 			}
 		},
 		"metadata": {
@@ -224,7 +224,7 @@
 				"source": [
 					"import pyspark.sql.functions as F"
 				],
-				"execution_count": 113
+				"execution_count": 36
 			},
 			{
 				"cell_type": "code",
@@ -242,7 +242,21 @@
 				"source": [
 					"HOURS_PER_MONTH = 730"
 				],
-				"execution_count": 114
+				"execution_count": 4
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Load application data\r\n",
+					"##### Used to resolve the organisational unit"
+				]
 			},
 			{
 				"cell_type": "code",
@@ -262,7 +276,21 @@
 					"app_df = spark.read.format('parquet').load(app_path)\r\n",
 					"app_df = app_df.select('AppID', 'OrgUnitLevel1')"
 				],
-				"execution_count": 158
+				"execution_count": 5
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Load disk size mapping\r\n",
+					"##### Mapping used to determine disk size for managed disks"
+				]
 			},
 			{
 				"cell_type": "code",
@@ -292,16 +320,48 @@
 					"    .otherwise(F.col('Size'))\r\n",
 					")"
 				],
-				"execution_count": 137
+				"execution_count": 6
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Load usage data"
+				]
 			},
 			{
 				"cell_type": "code",
 				"source": [
-					"cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20240401-20240430/Extended_v3_ACMMonthlyAmortizedCost_20240401-20240430.parquet'\r\n",
+					"cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20240301-20240331/Extended_v3_ACMMonthlyAmortizedCost_20240301-20240331.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
 					"cost_df = cost_df.where(F.col('Date') == '2024-04-03')"
 				],
-				"execution_count": 231
+				"execution_count": 32
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(cost_df.where(F.col('ResourceId') == '/subscriptions/6f5a1ca2-889c-4f01-b19b-50d4cf045c97/resourceGroups/S268-WE-anf-1/providers/Microsoft.NetApp/netAppAccounts/s268-we-anf-1-account/capacityPools/S268-WE-C-PROJ-v1/volumes/S268-WE-V-PROJ-v1'))"
+				],
+				"execution_count": 35
 			},
 			{
 				"cell_type": "code",
@@ -320,7 +380,7 @@
 				"source": [
 					"display(cost_df.where(F.col('ResourceId') == '/subscriptions/1abada37-8f4e-4699-b6ad-a8adc6083f39/resourceGroups/S034-WE-ANF/providers/Microsoft.NetApp/netAppAccounts/zwe-netapp-s034-account01/capacityPools/s034-we-c-prog01').select('Quantity').withColumn('EstimatedVolume', F.col('Quantity') / (24 * 1024)))"
 				],
-				"execution_count": 233
+				"execution_count": 33
 			},
 			{
 				"cell_type": "code",
@@ -345,7 +405,26 @@
 					"sa_df = sa_df.withColumn('VolumeEstimateGiB', F.col('Quantity') * (HOURS_PER_MONTH / 24) * 0.931322575)\r\n",
 					"sa_df = sa_df.join(app_df, 'AppID', 'left')"
 				],
-				"execution_count": 156
+				"execution_count": 20
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(sa_df.where(F.col('ResourceName') == 's037costmgmt').withColumn('Quantity', F.col('Quantity') * 0.931322575))"
+				],
+				"execution_count": 17
 			},
 			{
 				"cell_type": "code",
@@ -368,7 +447,7 @@
 					"managed_disk_df = managed_disk_df.select('ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'AppID', 'DiskType', 'NormalizedSize')\r\n",
 					"managed_disk_df = managed_disk_df.join(app_df, 'AppID', 'left')"
 				],
-				"execution_count": 153
+				"execution_count": 21
 			},
 			{
 				"cell_type": "code",
@@ -386,7 +465,7 @@
 				"source": [
 					"sql_db_df = cost_df.where(F.col('MeterCategory') == 'SQL Server').where(F.col('MeterSubCategory').contains('Storage'))"
 				],
-				"execution_count": null
+				"execution_count": 22
 			},
 			{
 				"cell_type": "code",
@@ -404,7 +483,26 @@
 				"source": [
 					"netapp_df = cost_df.where(F.col('ResourceType') == 'microsoft.netapp/netappaccounts')"
 				],
-				"execution_count": 224
+				"execution_count": 23
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(netapp_df)"
+				],
+				"execution_count": 25
 			},
 			{
 				"cell_type": "code",
@@ -423,7 +521,7 @@
 				"source": [
 					"display(netapp_df.where(F.col('UnitOfMeasure') == '1 GiB/Month'))"
 				],
-				"execution_count": 234
+				"execution_count": 27
 			}
 		]
 	}
