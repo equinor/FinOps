@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "4295a39e-ee41-4d7c-81f4-154be5c1aff8"
+				"spark.autotune.trackingId": "5ee159e1-fc12-412c-89f9-b7438214d990"
 			}
 		},
 		"metadata": {
@@ -224,7 +224,7 @@
 				"source": [
 					"import pyspark.sql.functions as F"
 				],
-				"execution_count": 80
+				"execution_count": 131
 			},
 			{
 				"cell_type": "code",
@@ -245,7 +245,7 @@
 					"GIB_PER_GB = 0.931322575\r\n",
 					"HOURS_PER_DAY = 24"
 				],
-				"execution_count": 81
+				"execution_count": 132
 			},
 			{
 				"cell_type": "markdown",
@@ -279,7 +279,7 @@
 					"app_df = spark.read.format('parquet').load(app_path)\r\n",
 					"app_df = app_df.select('AppID', 'OrgUnitLevel1')"
 				],
-				"execution_count": 82
+				"execution_count": 133
 			},
 			{
 				"cell_type": "markdown",
@@ -323,7 +323,7 @@
 					"    .otherwise(F.col('Size'))\r\n",
 					")"
 				],
-				"execution_count": 83
+				"execution_count": 134
 			},
 			{
 				"cell_type": "markdown",
@@ -345,7 +345,7 @@
 					"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
 					"cost_df = cost_df.where(F.col('Date') == '2024-04-03')"
 				],
-				"execution_count": 84
+				"execution_count": 135
 			},
 			{
 				"cell_type": "code",
@@ -370,7 +370,7 @@
 					"sa_df = sa_df.withColumn('VolumeEstimateGiB', F.col('Quantity') * (HOURS_PER_MONTH / HOURS_PER_DAY) * GIB_PER_GB)\r\n",
 					"sa_df = sa_df.join(app_df, 'AppID', 'left')"
 				],
-				"execution_count": 85
+				"execution_count": 136
 			},
 			{
 				"cell_type": "code",
@@ -393,7 +393,7 @@
 					"managed_disk_df = managed_disk_df.select('ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'AppID', 'DiskType', 'NormalizedSize')\r\n",
 					"managed_disk_df = managed_disk_df.join(app_df, 'AppID', 'left')"
 				],
-				"execution_count": 86
+				"execution_count": 137
 			},
 			{
 				"cell_type": "code",
@@ -411,25 +411,7 @@
 				"source": [
 					"sql_db_df = cost_df.where(F.col('MeterCategory') == 'SQL Server').where(F.col('MeterSubCategory').contains('Storage'))"
 				],
-				"execution_count": 87
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"netapp_df = cost_df.where(F.col('ResourceType') == 'microsoft.netapp/netappaccounts')"
-				],
-				"execution_count": 65
+				"execution_count": 138
 			},
 			{
 				"cell_type": "code",
@@ -455,30 +437,12 @@
 					"netapp_df = netapp_df.select('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'MeterName', 'AppID', 'Quantity')\r\n",
 					"netapp_df = netapp_df.withColumn('EstimatedVolumeTiB', \r\n",
 					"    F.when(F.col('MeterName').isin(NETAPP_CAPACITIES), F.col('Quantity') / (HOURS_PER_DAY * GIB_PER_TIB)) # These capacities are denoted in GiB/Hour\r\n",
-					"    .when(F.col('MeterName') == 'Backup Capacity', F.col('Quantity') / GIB_PER_TIB) # These capacities are denoted in GiB/Month\r\n",
+					"    .when(F.col('MeterName') == 'Backup Capacity', (F.col('Quantity') * (HOURS_PER_MONTH / HOURS_PER_DAY)) / GIB_PER_TIB) # These capacities are denoted in GiB/Month\r\n",
 					"    .otherwise(None)\r\n",
-					")"
+					")\r\n",
+					"netapp_df = netapp_df.join(app_df, 'AppID', 'left')"
 				],
-				"execution_count": 88
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(netapp_df)"
-				],
-				"execution_count": 89
+				"execution_count": 139
 			}
 		]
 	}
