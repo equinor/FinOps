@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "9f6b6d95-fc4c-432e-b350-367e30b3248c"
+				"spark.autotune.trackingId": "110caa88-3224-42ac-bce4-6a0231864378"
 			}
 		},
 		"metadata": {
@@ -224,7 +224,7 @@
 				"source": [
 					"import pyspark.sql.functions as F"
 				],
-				"execution_count": 36
+				"execution_count": 44
 			},
 			{
 				"cell_type": "code",
@@ -240,9 +240,12 @@
 					}
 				},
 				"source": [
-					"HOURS_PER_MONTH = 730"
+					"HOURS_PER_MONTH = 730\r\n",
+					"GIB_PER_TIB = 1024\r\n",
+					"GIB_PER_GB = 0.931322575\r\n",
+					"HOURS_PER_DAY = 24"
 				],
-				"execution_count": 4
+				"execution_count": 64
 			},
 			{
 				"cell_type": "markdown",
@@ -276,7 +279,7 @@
 					"app_df = spark.read.format('parquet').load(app_path)\r\n",
 					"app_df = app_df.select('AppID', 'OrgUnitLevel1')"
 				],
-				"execution_count": 5
+				"execution_count": 46
 			},
 			{
 				"cell_type": "markdown",
@@ -320,7 +323,7 @@
 					"    .otherwise(F.col('Size'))\r\n",
 					")"
 				],
-				"execution_count": 6
+				"execution_count": 47
 			},
 			{
 				"cell_type": "markdown",
@@ -338,49 +341,11 @@
 			{
 				"cell_type": "code",
 				"source": [
-					"cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20240301-20240331/Extended_v3_ACMMonthlyAmortizedCost_20240301-20240331.parquet'\r\n",
+					"cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20240401-20240430/Extended_v3_ACMMonthlyAmortizedCost_20240401-20240430.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
 					"cost_df = cost_df.where(F.col('Date') == '2024-04-03')"
 				],
-				"execution_count": 32
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(cost_df.where(F.col('ResourceId') == '/subscriptions/6f5a1ca2-889c-4f01-b19b-50d4cf045c97/resourceGroups/S268-WE-anf-1/providers/Microsoft.NetApp/netAppAccounts/s268-we-anf-1-account/capacityPools/S268-WE-C-PROJ-v1/volumes/S268-WE-V-PROJ-v1'))"
-				],
-				"execution_count": 35
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(cost_df.where(F.col('ResourceId') == '/subscriptions/1abada37-8f4e-4699-b6ad-a8adc6083f39/resourceGroups/S034-WE-ANF/providers/Microsoft.NetApp/netAppAccounts/zwe-netapp-s034-account01/capacityPools/s034-we-c-prog01').select('Quantity').withColumn('EstimatedVolume', F.col('Quantity') / (24 * 1024)))"
-				],
-				"execution_count": 33
+				"execution_count": 55
 			},
 			{
 				"cell_type": "code",
@@ -402,29 +367,10 @@
 					"    .groupBy('ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'AppID') \\\r\n",
 					"    .agg(F.sum('Quantity').alias('Quantity'))\r\n",
 					"\r\n",
-					"sa_df = sa_df.withColumn('VolumeEstimateGiB', F.col('Quantity') * (HOURS_PER_MONTH / 24) * 0.931322575)\r\n",
+					"sa_df = sa_df.withColumn('VolumeEstimateGiB', F.col('Quantity') * (HOURS_PER_MONTH / HOURS_PER_DAY) * GIB_PER_GB)\r\n",
 					"sa_df = sa_df.join(app_df, 'AppID', 'left')"
 				],
-				"execution_count": 20
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(sa_df.where(F.col('ResourceName') == 's037costmgmt').withColumn('Quantity', F.col('Quantity') * 0.931322575))"
-				],
-				"execution_count": 17
+				"execution_count": 56
 			},
 			{
 				"cell_type": "code",
@@ -447,7 +393,7 @@
 					"managed_disk_df = managed_disk_df.select('ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'AppID', 'DiskType', 'NormalizedSize')\r\n",
 					"managed_disk_df = managed_disk_df.join(app_df, 'AppID', 'left')"
 				],
-				"execution_count": 21
+				"execution_count": 57
 			},
 			{
 				"cell_type": "code",
@@ -465,7 +411,7 @@
 				"source": [
 					"sql_db_df = cost_df.where(F.col('MeterCategory') == 'SQL Server').where(F.col('MeterSubCategory').contains('Storage'))"
 				],
-				"execution_count": 22
+				"execution_count": 58
 			},
 			{
 				"cell_type": "code",
@@ -483,7 +429,37 @@
 				"source": [
 					"netapp_df = cost_df.where(F.col('ResourceType') == 'microsoft.netapp/netappaccounts')"
 				],
-				"execution_count": 23
+				"execution_count": 65
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"NETAPP_CAPACITIES = [\r\n",
+					"    'Standard Capacity',\r\n",
+					"    'Ultra Capacity',\r\n",
+					"    'Premium Capacity'\r\n",
+					"]\r\n",
+					"\r\n",
+					"netapp_df = cost_df.where((F.col('ResourceType') == 'microsoft.netapp/netappaccounts') & (F.col('MeterName').isin([*NETAPP_CAPACITIES, 'Backup Capacity'])))\r\n",
+					"netapp_df = netapp_df.select('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'MeterName', 'AppID', 'Quantity')\r\n",
+					"netapp_df = netapp_df.withColumn('EstimatedVolumeTiB', \r\n",
+					"    F.when(F.col('MeterName').isin(NETAPP_CAPACITIES), F.col('Quantity') / (HOURS_PER_DAY * GIB_PER_TIB)) # These capacities are denoted in GiB/Hour\r\n",
+					"    .when(F.col('MeterName') == 'Backup Capacity', F.col('Quantity') / GIB_PER_TIB) # These capacities are denoted in GiB/Month\r\n",
+					"    .otherwise(None)\r\n",
+					")"
+				],
+				"execution_count": 78
 			},
 			{
 				"cell_type": "code",
@@ -502,7 +478,26 @@
 				"source": [
 					"display(netapp_df)"
 				],
-				"execution_count": 25
+				"execution_count": 79
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(netapp_df.select('Quantity').withColumn('EstimatedVolume', F.col('Quantity') / (24 * 1024)))"
+				],
+				"execution_count": 60
 			},
 			{
 				"cell_type": "code",
