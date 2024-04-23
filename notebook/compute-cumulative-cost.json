@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "4752a462-ba79-45d6-8b32-e1c4806eeed5"
+				"spark.autotune.trackingId": "bdb7de4b-a779-49c9-a66c-edd166dabc37"
 			}
 		},
 		"metadata": {
@@ -70,7 +70,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 22
+				"execution_count": 42
 			},
 			{
 				"cell_type": "code",
@@ -81,7 +81,7 @@
 					"import pandas as pd\r\n",
 					"import numpy as np"
 				],
-				"execution_count": 23
+				"execution_count": 43
 			},
 			{
 				"cell_type": "code",
@@ -100,7 +100,7 @@
 					"# Define rolling window for accumulation\r\n",
 					"window = W.Window.orderBy(\"Date\").rowsBetween(W.Window.unboundedPreceding, 0)"
 				],
-				"execution_count": 24
+				"execution_count": 44
 			},
 			{
 				"cell_type": "markdown",
@@ -148,7 +148,7 @@
 					"# cost_pdf = cost_df.toPandas()\r\n",
 					"# cost_pdf.set_index(\"Date\", inplace=True)"
 				],
-				"execution_count": 25
+				"execution_count": 29
 			},
 			{
 				"cell_type": "markdown",
@@ -187,17 +187,127 @@
 					"    .withColumn('Cost', F.col('TotalUsage') - F.col('Adjustments') + F.col('AzureMarketplaceServiceCharges')) \\\r\n",
 					"    .withColumn('Date', F.to_date(F.col('BillingPeriod'), 'yyyyMM'))\\\r\n",
 					"    .select('Cost', 'Date') \\\r\n",
-					"    .where(F.col('Date') < '2024-01-01') \\\r\n",
-					"    .orderBy('Date')\r\n",
+					"    .where(F.col('Date') < '2024-04-01') \\\r\n",
+					"    .orderBy('Date')"
+				],
+				"execution_count": 45
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Compute currency adjusted cost"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# 9% cost increase April 2021\r\n",
+					"COST_INCREASE_2021 = 1.09\r\n",
+					"COST_INCREASE_DATE_2021 = '2021-04-01'\r\n",
 					"\r\n",
+					"# 11% cost increase April 2023\r\n",
+					"COST_INCREASE_2023 = 1.11\r\n",
+					"COST_INCREASE_DATE_2023 = '2023-04-01'\r\n",
+					"\r\n",
+					"# 12% cost increase February 2024\r\n",
+					"COST_INCREASE_2024 = 1.12\r\n",
+					"COST_INCREASE_DATE_2024 = '2024-02-01'"
+				],
+				"execution_count": 46
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"adjusted_billing_df = billing_df.withColumn('Cost',\r\n",
+					"    F.when((F.col('Date') >= COST_INCREASE_DATE_2021) & (F.col('Date') < COST_INCREASE_DATE_2023), F.col('Cost') / COST_INCREASE_2021)\r\n",
+					"    .when((F.col('Date') >= COST_INCREASE_DATE_2023) & (F.col('Date') < COST_INCREASE_DATE_2024), F.col('Cost') / (COST_INCREASE_2021 * COST_INCREASE_2023))\r\n",
+					"    .when(F.col('Date') >= COST_INCREASE_DATE_2024, F.col('Cost') / (COST_INCREASE_2021 * COST_INCREASE_2023))\r\n",
+					"    .otherwise(F.col('Cost'))\r\n",
+					")"
+				],
+				"execution_count": 47
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Compute cumulative cost"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
 					"# Compute cumulative cost\r\n",
 					"billing_df = billing_df.withColumn(\"CumulativeCost\", F.sum(\"Cost\").over(window))\r\n",
+					"adjusted_billing_df = adjusted_billing_df.withColumn(\"CumulativeCost\", F.sum(\"Cost\").over(window))\r\n",
 					"\r\n",
 					"# Convert pyspark df to pandas for OLS model\r\n",
 					"billing_pdf = billing_df.toPandas()\r\n",
-					"billing_pdf.set_index(\"Date\", inplace=True)"
+					"billing_pdf.set_index(\"Date\", inplace=True)\r\n",
+					"\r\n",
+					"adjusted_billing_pdf = adjusted_billing_df.toPandas()\r\n",
+					"adjusted_billing_pdf.set_index(\"Date\", inplace=True)"
 				],
-				"execution_count": 26
+				"execution_count": 48
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Predict future cumulative cost"
+				]
 			},
 			{
 				"cell_type": "code",
@@ -239,7 +349,7 @@
 					"    predicted_df = predicted_df.withColumn(f'PredictedCumulativeCost{column_label}',  F.sum(f\"PredictedCost{column_label}\").over(window) + input_df['CumulativeCost'][-1])\r\n",
 					"    return predicted_df"
 				],
-				"execution_count": 27
+				"execution_count": 49
 			},
 			{
 				"cell_type": "code",
@@ -266,7 +376,7 @@
 					"billing_df = billing_df.join(sixteen_month_lookback_df, on='Date', how='outer')\r\n",
 					"billing_df = billing_df.withColumn('Date', F.to_date('Date'))"
 				],
-				"execution_count": 28
+				"execution_count": 50
 			},
 			{
 				"cell_type": "code",
@@ -282,37 +392,18 @@
 					}
 				},
 				"source": [
-					"# Estimate monthly cost of Azure Sentinel once deployed\r\n",
-					"COST_OFFSET = 1600000\r\n",
+					"adjusted_four_month_lookback_df = compute_ols_prediction(adjusted_billing_pdf, lookback=6, prediction_interval=72)\r\n",
+					"adjusted_eight_month_lookback_df = compute_ols_prediction(adjusted_billing_pdf, lookback=12, prediction_interval=72)\r\n",
+					"adjusted_twelve_month_lookback_df = compute_ols_prediction(adjusted_billing_pdf, lookback=24, prediction_interval=72)\r\n",
+					"adjusted_sixteen_month_lookback_df = compute_ols_prediction(adjusted_billing_pdf, lookback=-1, prediction_interval=72)\r\n",
 					"\r\n",
-					"# Get cumulative cost to date\r\n",
-					"cumulative_to_date = billing_df.agg(F.max('CumulativeCost')).collect()[0][0]\r\n",
-					"\r\n",
-					"\r\n",
-					"adjusted_df = billing_df.alias('adjusted_df')\r\n",
-					"\r\n",
-					"# Rename columns\r\n",
-					"for col in adjusted_df.columns:\r\n",
-					"    if col.startswith(\"Predicted\"):\r\n",
-					"        adjusted_df = adjusted_df.withColumnRenamed(col, \"Adjusted_\" + col)\r\n",
-					"\r\n",
-					"# Iterate over predicted cost columns\r\n",
-					"for col in adjusted_df.columns:\r\n",
-					"    if col.startswith(\"Adjusted_PredictedCost\"):\r\n",
-					"        adjusted_df = adjusted_df.withColumn(col, \r\n",
-					"            F.when(F.col(col).isNull(), None)\r\n",
-					"            .when(F.col('Date') <= '2024-04-01', F.col(col))\r\n",
-					"            .otherwise(F.col(col) + COST_OFFSET)\r\n",
-					"        )\r\n",
-					"\r\n",
-					"# Iterate over predicted cumulative cost columns\r\n",
-					"for col in adjusted_df.columns:\r\n",
-					"    if col.startswith(\"Adjusted_PredictedCumulative\"):\r\n",
-					"        predicted_cost_col = col.replace('Cumulative', '')\r\n",
-					"        adjusted_df = adjusted_df.withColumn(col, F.sum(predicted_cost_col).over(window) + cumulative_to_date)\r\n",
-					""
+					"adjusted_billing_df = adjusted_billing_df.join(adjusted_four_month_lookback_df, on='Date', how='outer')\r\n",
+					"adjusted_billing_df = adjusted_billing_df.join(adjusted_eight_month_lookback_df, on='Date', how='outer')\r\n",
+					"adjusted_billing_df = adjusted_billing_df.join(adjusted_twelve_month_lookback_df, on='Date', how='outer')\r\n",
+					"adjusted_billing_df = adjusted_billing_df.join(adjusted_sixteen_month_lookback_df, on='Date', how='outer')\r\n",
+					"adjusted_billing_df = adjusted_billing_df.withColumn('Date', F.to_date('Date'))"
 				],
-				"execution_count": 29
+				"execution_count": 51
 			},
 			{
 				"cell_type": "code",
@@ -331,7 +422,7 @@
 					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/cumulative-cost-prediction.parquet\"\r\n",
 					"billing_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 				],
-				"execution_count": 30
+				"execution_count": 52
 			},
 			{
 				"cell_type": "code",
@@ -348,9 +439,9 @@
 				},
 				"source": [
 					"adjusted_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/adjusted-cumulative-cost-prediction.parquet\"\r\n",
-					"adjusted_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(adjusted_path)"
+					"adjusted_billing_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(adjusted_path)"
 				],
-				"execution_count": 31
+				"execution_count": 54
 			},
 			{
 				"cell_type": "markdown",
