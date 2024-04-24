@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "bdb7de4b-a779-49c9-a66c-edd166dabc37"
+				"spark.autotune.trackingId": "2547855e-aea5-423c-a5df-36f926a6d37a"
 			}
 		},
 		"metadata": {
@@ -70,7 +70,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 42
+				"execution_count": 15
 			},
 			{
 				"cell_type": "code",
@@ -81,7 +81,7 @@
 					"import pandas as pd\r\n",
 					"import numpy as np"
 				],
-				"execution_count": 43
+				"execution_count": 16
 			},
 			{
 				"cell_type": "code",
@@ -100,7 +100,7 @@
 					"# Define rolling window for accumulation\r\n",
 					"window = W.Window.orderBy(\"Date\").rowsBetween(W.Window.unboundedPreceding, 0)"
 				],
-				"execution_count": 44
+				"execution_count": 17
 			},
 			{
 				"cell_type": "markdown",
@@ -148,7 +148,7 @@
 					"# cost_pdf = cost_df.toPandas()\r\n",
 					"# cost_pdf.set_index(\"Date\", inplace=True)"
 				],
-				"execution_count": 29
+				"execution_count": 4
 			},
 			{
 				"cell_type": "markdown",
@@ -190,7 +190,7 @@
 					"    .where(F.col('Date') < '2024-04-01') \\\r\n",
 					"    .orderBy('Date')"
 				],
-				"execution_count": 45
+				"execution_count": 5
 			},
 			{
 				"cell_type": "markdown",
@@ -231,7 +231,7 @@
 					"COST_INCREASE_2024 = 1.12\r\n",
 					"COST_INCREASE_DATE_2024 = '2024-02-01'"
 				],
-				"execution_count": 46
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -254,7 +254,7 @@
 					"    .otherwise(F.col('Cost'))\r\n",
 					")"
 				],
-				"execution_count": 47
+				"execution_count": 7
 			},
 			{
 				"cell_type": "markdown",
@@ -294,7 +294,7 @@
 					"adjusted_billing_pdf = adjusted_billing_df.toPandas()\r\n",
 					"adjusted_billing_pdf.set_index(\"Date\", inplace=True)"
 				],
-				"execution_count": 48
+				"execution_count": 8
 			},
 			{
 				"cell_type": "markdown",
@@ -349,7 +349,7 @@
 					"    predicted_df = predicted_df.withColumn(f'PredictedCumulativeCost{column_label}',  F.sum(f\"PredictedCost{column_label}\").over(window) + input_df['CumulativeCost'][-1])\r\n",
 					"    return predicted_df"
 				],
-				"execution_count": 49
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -365,10 +365,10 @@
 					}
 				},
 				"source": [
-					"four_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=6, prediction_interval=72)\r\n",
-					"eight_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=12, prediction_interval=72)\r\n",
-					"twelve_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=24, prediction_interval=72)\r\n",
-					"sixteen_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=-1, prediction_interval=72)\r\n",
+					"four_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=6, prediction_interval=84)\r\n",
+					"eight_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=12, prediction_interval=84)\r\n",
+					"twelve_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=24, prediction_interval=84)\r\n",
+					"sixteen_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=-1, prediction_interval=84)\r\n",
 					"\r\n",
 					"billing_df = billing_df.join(four_month_lookback_df, on='Date', how='outer')\r\n",
 					"billing_df = billing_df.join(eight_month_lookback_df, on='Date', how='outer')\r\n",
@@ -376,7 +376,7 @@
 					"billing_df = billing_df.join(sixteen_month_lookback_df, on='Date', how='outer')\r\n",
 					"billing_df = billing_df.withColumn('Date', F.to_date('Date'))"
 				],
-				"execution_count": 50
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -392,10 +392,10 @@
 					}
 				},
 				"source": [
-					"adjusted_four_month_lookback_df = compute_ols_prediction(adjusted_billing_pdf, lookback=6, prediction_interval=72)\r\n",
-					"adjusted_eight_month_lookback_df = compute_ols_prediction(adjusted_billing_pdf, lookback=12, prediction_interval=72)\r\n",
-					"adjusted_twelve_month_lookback_df = compute_ols_prediction(adjusted_billing_pdf, lookback=24, prediction_interval=72)\r\n",
-					"adjusted_sixteen_month_lookback_df = compute_ols_prediction(adjusted_billing_pdf, lookback=-1, prediction_interval=72)\r\n",
+					"adjusted_four_month_lookback_df = compute_ols_prediction(adjusted_billing_pdf, lookback=6, prediction_interval=84)\r\n",
+					"adjusted_eight_month_lookback_df = compute_ols_prediction(adjusted_billing_pdf, lookback=12, prediction_interval=84)\r\n",
+					"adjusted_twelve_month_lookback_df = compute_ols_prediction(adjusted_billing_pdf, lookback=24, prediction_interval=84)\r\n",
+					"adjusted_sixteen_month_lookback_df = compute_ols_prediction(adjusted_billing_pdf, lookback=-1, prediction_interval=84)\r\n",
 					"\r\n",
 					"adjusted_billing_df = adjusted_billing_df.join(adjusted_four_month_lookback_df, on='Date', how='outer')\r\n",
 					"adjusted_billing_df = adjusted_billing_df.join(adjusted_eight_month_lookback_df, on='Date', how='outer')\r\n",
@@ -403,7 +403,7 @@
 					"adjusted_billing_df = adjusted_billing_df.join(adjusted_sixteen_month_lookback_df, on='Date', how='outer')\r\n",
 					"adjusted_billing_df = adjusted_billing_df.withColumn('Date', F.to_date('Date'))"
 				],
-				"execution_count": 51
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -422,7 +422,7 @@
 					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/cumulative-cost-prediction.parquet\"\r\n",
 					"billing_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
 				],
-				"execution_count": 52
+				"execution_count": 12
 			},
 			{
 				"cell_type": "code",
@@ -441,7 +441,7 @@
 					"adjusted_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/adjusted-cumulative-cost-prediction.parquet\"\r\n",
 					"adjusted_billing_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(adjusted_path)"
 				],
-				"execution_count": 54
+				"execution_count": 13
 			},
 			{
 				"cell_type": "markdown",
@@ -478,7 +478,7 @@
 					"#     predicted_df = spark.createDataFrame(predicted_df)\r\n",
 					"#     return predicted_df"
 				],
-				"execution_count": 32
+				"execution_count": 14
 			}
 		]
 	}
