@@ -1,0 +1,598 @@
+{
+	"name": "vm-hub-deployments_1bbb02b8-b143-4048-b0e4-d8d98caf5cbc",
+	"properties": {
+		"folder": {
+			"name": "NotebookInProduction/HUB"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sprkpool33large",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "112g",
+			"driverCores": 16,
+			"executorMemory": "112g",
+			"executorCores": 16,
+			"numExecutors": 1,
+			"runAsWorkspaceSystemIdentity": false,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "true",
+				"spark.dynamicAllocation.minExecutors": "1",
+				"spark.dynamicAllocation.maxExecutors": "5",
+				"spark.autotune.trackingId": "a1e4b47e-8184-4351-8431-90821f6b035a"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
+				"name": "sprkpool33large",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 16,
+				"memory": 112,
+				"automaticScaleJobs": true
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Initialize script"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"from datetime import timedelta, datetime\r\n",
+					"from dateutil.relativedelta import relativedelta\r\n",
+					"import calendar\r\n",
+					"import json\r\n",
+					"import pytz\r\n",
+					"from notebookutils import mssparkutils\r\n",
+					"from azure.storage.blob import BlobServiceClient\r\n",
+					"import pyspark.sql.functions as F\r\n",
+					"import pyspark.sql.window as W\r\n",
+					"from pyspark.sql import Row"
+				],
+				"execution_count": 30
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"storageAccount = 's037costmgmt'"
+				],
+				"execution_count": 31
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"tags": [
+						"parameters_overwritten"
+					]
+				},
+				"source": [
+					"# This cell is generated from runtime parameters. Learn more: https://go.microsoft.com/fwlink/?linkid=2161015\n",
+					"storageAccount = \"s037costmgmt\"\n",
+					""
+				],
+				"execution_count": 32
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"today = datetime.utcnow().replace(tzinfo=pytz.utc).astimezone(pytz.timezone('Europe/Oslo'))"
+				],
+				"execution_count": 33
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Constants\r\n",
+					"HOURS_PER_YEAR = 8760\r\n",
+					"VCPUS_PER_LICENSE = 16\r\n",
+					"KEY_VAULT_NAME = 'acm-toolkit-kv'\r\n",
+					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'\r\n",
+					"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
+				],
+				"execution_count": 34
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Name of resource groups containing terminal server (TS) virtual machines\r\n",
+					"# The TS VMs have a pre-allocated set of HUB licenses, and should be excluded from the calculation in this script\r\n",
+					"TS_VM_RG = [\r\n",
+					"    'RG-TERMINAL_SERVERS-NOE',\r\n",
+					"    'RG-TERMINAL_SERVERS-NOW',\r\n",
+					"    'RG-TERMINAL_SERVERS-SCUS'\r\n",
+					"]"
+				],
+				"execution_count": 35
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Lookup HUB Windows configuration"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"blob_service_client = BlobServiceClient.from_connection_string(hubAutomationConnectionString)\r\n",
+					"\r\n",
+					"# Get a reference to the blob container and file of the VM HUB configuration\r\n",
+					"container_name = 'win-config'\r\n",
+					"blob_name = 'config.json'\r\n",
+					"container_client = blob_service_client.get_container_client(container_name)\r\n",
+					"blob_client = container_client.get_blob_client(blob_name)\r\n",
+					"\r\n",
+					"# Download the blob content as a string\r\n",
+					"blob_content = blob_client.download_blob().content_as_text()\r\n",
+					"\r\n",
+					"# Parse downloaded blob as json\r\n",
+					"vm_config = json.loads(blob_content)\r\n",
+					"\r\n",
+					"# Compute the variable determining if results should be written to file\r\n",
+					"day_name = today.strftime(\"%A\")\r\n",
+					"should_run = vm_config['runDays'][day_name]\r\n",
+					"\r\n",
+					"license_count = vm_config['lic_count']\r\n",
+					"ts_vms = vm_config['ts_vms']\r\n",
+					"timespan = vm_config['timespan']\r\n",
+					"yearly_license_cost = vm_config['lic_cost_yearly']\r\n",
+					"available_licenses = license_count - ts_vms\r\n",
+					"\r\n",
+					"# Hourly cost of license per vCPU\r\n",
+					"hourly_vcpu_cost = yearly_license_cost / (license_count * HOURS_PER_YEAR * VCPUS_PER_LICENSE)"
+				],
+				"execution_count": 36
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Load and filter usage "
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"columns_to_keep = [\r\n",
+					"    'SubscriptionId',\r\n",
+					"    'SubscriptionName',\r\n",
+					"    'Date',\r\n",
+					"    'ResourceGroup', \r\n",
+					"    'ResourceName', \r\n",
+					"    'ResourceId', \r\n",
+					"    'MeterCategory', \r\n",
+					"    'MeterSubCategory', \r\n",
+					"    'MeterName',\r\n",
+					"    'UnitOfMeasure',\r\n",
+					"    'Quantity',\r\n",
+					"    'UnitPrice',\r\n",
+					"    'EffectivePrice',\r\n",
+					"    'CostInBillingCurrency', \r\n",
+					"    'ServiceInfo2',\r\n",
+					"    'PartNumber',\r\n",
+					"    'ProductName', \r\n",
+					"    'ai_VCPUs',\r\n",
+					"    'LicensePayGUnitPrice'\r\n",
+					"]\r\n",
+					"\r\n",
+					"vm_columns = columns_to_keep + [\r\n",
+					"    'WindowsAHB',\r\n",
+					"    'WindowsAHB_VCPUs',\r\n",
+					"    'ai_VMName'\r\n",
+					"]"
+				],
+				"execution_count": 37
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
+					"cost_df = spark.read.format('parquet').load(cost_path)"
+				],
+				"execution_count": 38
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Filter usage to timespan defined in configuration file\r\n",
+					"vm_start_date = (today - timedelta(days=timespan)).strftime('%Y-%m-%d')\r\n",
+					"cost_df = cost_df.where(F.col('Date') >= vm_start_date)\r\n",
+					"\r\n",
+					"# Use only VM related cost\r\n",
+					"is_vm_cost = ((F.col('ResourceId').contains('/virtualMachines/')) | (F.col('ResourceId').contains('/virtualMachineScaleSets/'))) \\\r\n",
+					"    & ((F.col('MeterSubCategory').contains('Windows')) | (F.col('ServiceInfo2').contains('Windows Server BYOL'))) \\\r\n",
+					"    & ((F.col('MeterCategory') == 'Virtual Machines') | (F.col('MeterCategory') == 'Virtual Machines Licenses')) \\\r\n",
+					"    & (F.col('ai_VCPUs').isNotNull())\r\n",
+					"\r\n",
+					"cost_df = cost_df.where(is_vm_cost).select(*vm_columns)\r\n",
+					"\r\n",
+					"# Exclude terminal server VMs (as their HUB assignment are managed separately)\r\n",
+					"cost_df = cost_df.where(~F.col('ResourceGroup').isin(TS_VM_RG))\r\n",
+					"\r\n",
+					"# Removing the VMs who's ResourceName begins with 'CVD-' as these are Windows Client VM's and not relevant for consideration of a Windows Server licence\r\n",
+					"cost_df = cost_df.where(~F.upper(F.col('ResourceName')).startswith('CVD-'))\r\n",
+					"\r\n",
+					"# Create new date column\r\n",
+					"cost_df = cost_df.withColumn('Date', F.current_date())\r\n",
+					"\r\n",
+					"# Persist a df copy for disable list calculation\r\n",
+					"cost_copy_df = cost_df.alias('cost_copy_df')"
+				],
+				"execution_count": 39
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Compute set VMs getting HUB Enabled"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Columns used for aggregated result\r\n",
+					"selected_columns = [\r\n",
+					"    'Date',\r\n",
+					"    'ResourceId',\r\n",
+					"    'SubscriptionId',\r\n",
+					"    'ResourceGroup',\r\n",
+					"    'ResourceName',\r\n",
+					"    'WindowsAHB_VCPUs',\r\n",
+					"    'ai_VCPUs',\r\n",
+					"    'LicensePayGUnitPrice'\r\n",
+					"]\r\n",
+					"\r\n",
+					"# Scalesets and virtual machines is different in how the licence cost is calculated\r\n",
+					"# In order to retain the correct number of vCPUs when later grouping by ResourceId the Quantity needs to be divided by the \r\n",
+					"# number of nodes in the scaleset before multiplying by vCPUs and price per hour\r\n",
+					"cost_df = cost_df.withColumn('NodeCount',\r\n",
+					"    F.when(F.col('ResourceId').contains('/virtualMachineScaleSets/'), 1)\r\n",
+					"    .otherwise(0)\r\n",
+					")\r\n",
+					"\r\n",
+					"# Aggregate quantities and node counts in order to make HUB savings calculation simpler\r\n",
+					"cost_df = cost_df \\\r\n",
+					"    .select(*selected_columns, 'NodeCount', 'Quantity') \\\r\n",
+					"    .groupBy(*selected_columns)\\\r\n",
+					"    .agg(F.sum('Quantity').alias('Quantity'), F.sum('NodeCount').alias('NodeCount'))\r\n",
+					"\r\n",
+					"# Compute hourly PAYG license cost\r\n",
+					"cost_df = cost_df.withColumn('PAYGLicenseCost', F.col('Quantity') * F.col('LicensePayGUnitPrice'))\r\n",
+					"\r\n",
+					"# If cost is related to scaleset, the license cost must be divided by the number of nodes\r\n",
+					"cost_df = cost_df.withColumn('PAYGLicenseCost', F.when(F.col('NodeCount') > 0, F.col('PAYGLicenseCost') / F.col('NodeCount')).otherwise(F.col('PAYGLicenseCost')))\r\n",
+					"\r\n",
+					"# Compute hourly HUB license cost \r\n",
+					"cost_df = cost_df.withColumn('HUBLicenseCost', F.col('Quantity') * F.col('WindowsAHB_VCPUs') * hourly_vcpu_cost)\r\n",
+					"\r\n",
+					"# If cost is related to scaleset, the license cost must be divided by the number of nodes\r\n",
+					"cost_df = cost_df.withColumn('HUBLicenseCost', F.when(F.col('NodeCount') > 0, F.col('HUBLicenseCost') / F.col('NodeCount')).otherwise(F.col('HUBLicenseCost')))\r\n",
+					"\r\n",
+					"# Compute savings per VCPU\r\n",
+					"cost_df = cost_df.withColumn('HUBSavingsPerVCPU', (F.col('PAYGLicenseCost') - F.col('HUBLicenseCost')) / F.col('WindowsAHB_VCPUs'))\r\n",
+					"\r\n",
+					"cost_df = cost_df.drop('NodeCount')\r\n",
+					"cost_df = cost_df.orderBy(F.desc('HUBSavingsPerVCPU'))\r\n",
+					"\r\n",
+					"# Compute the cumulative number of normalized VCPUs\r\n",
+					"window = W.Window.rowsBetween(W.Window.unboundedPreceding, 0)\r\n",
+					"cost_df = cost_df.withColumn(\"TotalNormalizedCores\", F.sum(\"WindowsAHB_VCPUs\").over(window))\r\n",
+					"\r\n",
+					"# Only include the highest yielding resources up until the cumulative normalized cores equals the equivalent amount of available licenses\r\n",
+					"vm_enable_df = cost_df.where(F.col('TotalNormalizedCores') / VCPUS_PER_LICENSE <= available_licenses)\r\n",
+					"\r\n",
+					"# # Remove redundant columns\r\n",
+					"vm_enable_df = vm_enable_df.select(*selected_columns)"
+				],
+				"execution_count": 40
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Compute set of VMs getting HUB disabled"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Only VMs with HUB enabled are eligible to being disabled\r\n",
+					"vm_disable_df = cost_copy_df.where(F.col('WindowsAHB') == 'Enabled')\r\n",
+					"\r\n",
+					"vm_disable_df = vm_disable_df \\\r\n",
+					"    .select(*selected_columns) \\\r\n",
+					"    .groupBy(selected_columns) \\\r\n",
+					"    .count().drop('count')\r\n",
+					"\r\n",
+					"# Exclude VMs that are already in the list of enabled VMs\r\n",
+					"vm_disable_df = vm_disable_df.join(vm_enable_df, 'ResourceId', 'left_anti')"
+				],
+				"execution_count": 41
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Store HUB deployment results and update activity log"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def compute_activity_log_entry(activity_path):\r\n",
+					"    # Load existing log\r\n",
+					"    csv_options = {'header' : True,\r\n",
+					"                    'delimiter' : ',',\r\n",
+					"                    'quote' : '\"',\r\n",
+					"                    'escape' : '\"'}\r\n",
+					"    activity_df = spark.read.options(**csv_options).csv(activity_path)\r\n",
+					"\r\n",
+					"    today_formatted = (today.strftime('%Y-%m-%d'))\r\n",
+					"    disabled_vms_count = vm_disable_df.count()\r\n",
+					"    enabled_vms_count = vm_enable_df.count()\r\n",
+					"    normalized_cores_disabled = vm_disable_df.select('WindowsAHB_VCPUs').agg(F.sum('WindowsAHB_VCPUs')).collect()[0][0] or 0\r\n",
+					"    normalized_cores_enabled = vm_enable_df.select('WindowsAHB_VCPUs').agg(F.sum('WindowsAHB_VCPUs')).collect()[0][0] or 0\r\n",
+					"    licenses_removed = normalized_cores_disabled / VCPUS_PER_LICENSE\r\n",
+					"    licenses_applied = normalized_cores_enabled / VCPUS_PER_LICENSE\r\n",
+					"\r\n",
+					"    row_values = [ \r\n",
+					"        disabled_vms_count, \r\n",
+					"        enabled_vms_count, \r\n",
+					"        normalized_cores_disabled, \r\n",
+					"        normalized_cores_enabled, \r\n",
+					"        licenses_removed, \r\n",
+					"        licenses_applied,\r\n",
+					"        license_count,\r\n",
+					"        ts_vms,\r\n",
+					"        available_licenses\r\n",
+					"    ]\r\n",
+					"\r\n",
+					"    new_activity_row = spark.createDataFrame([(today_formatted, *row_values)], activity_df.columns)\r\n",
+					"    activity_df = activity_df.union(new_activity_row)\r\n",
+					"    return activity_df"
+				],
+				"execution_count": 42
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"enable_path = f'abfss://win-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Deployment.csv'\r\n",
+					"disable_path = f'abfss://win-hub-logs-v2@hubautomation.dfs.core.windows.net/LATEST-AHUB-Removal.csv'\r\n",
+					"\r\n",
+					"print(f\"Should run? {should_run}\")\r\n",
+					"\r\n",
+					"# Only persist result according to storage account configuration\r\n",
+					"if should_run:\r\n",
+					"    # Write enabled list to storage account\r\n",
+					"    print(\"Writing enabled list to VM latest path\")\r\n",
+					"    vm_enable_df.toPandas().to_csv(enable_path, index=False)\r\n",
+					"\r\n",
+					"    # Write disabled list to storage account\r\n",
+					"    print(\"Writing disabled list to VM latest path\")\r\n",
+					"    vm_disable_df.toPandas().to_csv(disable_path, index=False)\r\n",
+					"\r\n",
+					"    print(\"Update VM deployment activity log\")\r\n",
+					"    # Compute updated activity log and write back to file\r\n",
+					"    activity_path = 'abfss://win-activity-v2@hubautomation.dfs.core.windows.net/activity.csv'\r\n",
+					"    activity_df = compute_activity_log_entry(activity_path)\r\n",
+					"    activity_df.toPandas().to_csv(activity_path, index=False)"
+				],
+				"execution_count": 43
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Output 'should_run' indication when running in pipeline\r\n",
+					"mssparkutils.notebook.exit(should_run)"
+				],
+				"execution_count": 44
+			}
+		]
+	}
+}
