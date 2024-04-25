@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "a61d4151-28ee-4de5-bb19-809a9458b71f"
+				"spark.autotune.trackingId": "b6184208-cacd-4fd1-8e16-8d612fff9814"
 			}
 		},
 		"metadata": {
@@ -224,7 +224,7 @@
 				"source": [
 					"import pyspark.sql.functions as F"
 				],
-				"execution_count": 63
+				"execution_count": 153
 			},
 			{
 				"cell_type": "code",
@@ -245,7 +245,7 @@
 					"GIB_PER_GB = 0.931322575\r\n",
 					"HOURS_PER_DAY = 24"
 				],
-				"execution_count": 64
+				"execution_count": 154
 			},
 			{
 				"cell_type": "markdown",
@@ -279,7 +279,7 @@
 					"app_df = spark.read.format('parquet').load(app_path)\r\n",
 					"app_df = app_df.select('AppID', 'OrgUnitLevel0', 'OrgUnitLevel1', 'OrgUnitLevel2')"
 				],
-				"execution_count": 65
+				"execution_count": 155
 			},
 			{
 				"cell_type": "markdown",
@@ -323,7 +323,7 @@
 					"    .otherwise(F.col('Size'))\r\n",
 					")"
 				],
-				"execution_count": 73
+				"execution_count": 156
 			},
 			{
 				"cell_type": "markdown",
@@ -345,7 +345,7 @@
 					"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
 					"cost_df = cost_df.where(F.col('Date') == '2024-04-03')"
 				],
-				"execution_count": 125
+				"execution_count": 157
 			},
 			{
 				"cell_type": "markdown",
@@ -374,7 +374,7 @@
 					}
 				},
 				"source": [
-					"sa_df = cost_df.where(((F.col('ResourceType') == 'microsoft.storage/storageaccounts') | (F.col('ResourceType') == 'microsoft.classicstorage/storageaccounts')) & (F.col('UnitOfMeasure') == '1 GB/Month'))\r\n",
+					"sa_df = cost_df.where((F.col('MeterCategory') == 'Storage') & ((F.col('ResourceType') == 'microsoft.storage/storageaccounts') | (F.col('ResourceType') == 'microsoft.classicstorage/storageaccounts')) & (F.col('UnitOfMeasure') == '1 GB/Month'))\r\n",
 					"sa_df = sa_df \\\r\n",
 					"    .select('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'AppID', 'Quantity') \\\r\n",
 					"    .groupBy('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'AppID') \\\r\n",
@@ -385,25 +385,6 @@
 					"sa_df = sa_df.join(app_df, 'AppID', 'left')"
 				],
 				"execution_count": 127
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(sa_df.groupBy('OrgUnitLevel1').agg(F.sum('EstimatedVolumeTiB')))"
-				],
-				"execution_count": 128
 			},
 			{
 				"cell_type": "markdown",
@@ -429,10 +410,48 @@
 						"transient": {
 							"deleting": false
 						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(cost_df.where((F.col('MeterCategory') == 'Storage') & (F.col('ResourceType') == 'microsoft.compute/disks')).where(F.col('UnitOfMeasure') == '1 GiB/Hour'))"
+				],
+				"execution_count": 175
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(cost_df.where((F.col('MeterCategory') == 'Storage') & (F.col('ResourceType') == 'microsoft.compute/disks')).select('MeterSubCategory', 'UnitOfMeasure').distinct())"
+				],
+				"execution_count": 176
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
 					}
 				},
 				"source": [
-					"managed_disk_df = cost_df.where((F.col('ResourceType') == 'microsoft.compute/disks') & (F.col('UnitOfMeasure') == '1/Month'))\r\n",
+					"managed_disk_df = cost_df.where((F.col('MeterCategory') == 'Storage') & (F.col('ResourceType') == 'microsoft.compute/disks') & (F.col('MeterName').contains('Disk')) & (F.col('UnitOfMeasure') == '1/Month'))\r\n",
 					"managed_disk_df = managed_disk_df.withColumn('DiskType', F.split(F.col('MeterName'), ' ').getItem(0))\r\n",
 					"managed_disk_df = managed_disk_df.dropDuplicates(['Date', 'ResourceId', 'DiskType'])\r\n",
 					"managed_disk_df = managed_disk_df.join(disk_size_df, \"DiskType\", 'left')\r\n",
@@ -453,13 +472,42 @@
 						"transient": {
 							"deleting": false
 						}
+					}
+				},
+				"source": [
+					"disk_capacity_df = cost_df.where((F.col('MeterCategory') == 'Storage') & (F.col('ResourceType') == 'microsoft.compute/disks') & ((F.col('UnitOfMeasure') == '1 GB/Month') | (F.col('UnitOfMeasure') == '1 GiB/Hour')))\r\n",
+					"disk_capacity_df = disk_capacity_df \\\r\n",
+					"    .select('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'UnitOfMeasure', 'AppID', 'Quantity') \\\r\n",
+					"    .groupBy('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'UnitOfMeasure', 'AppID') \\\r\n",
+					"    .agg(F.sum('Quantity').alias('Quantity'))\r\n",
+					"\r\n",
+					"disk_capacity_df = disk_capacity_df.withColumn('EstimatedVolumeTiB', \r\n",
+					"    F.when(F.col('UnitOfMeasure') == '1 GiB/Hour', F.col('Quantity') / (HOURS_PER_DAY * GIB_PER_TIB)) # These capacities are denoted in GiB/Hour\r\n",
+					"    .when(F.col('UnitOfMeasure') == '1 GB/Month', (F.col('Quantity') * GIB_PER_GB * (HOURS_PER_MONTH / HOURS_PER_DAY)) / GIB_PER_TIB) # These capacities are denoted in GiB/Month\r\n",
+					"    .otherwise(None)\r\n",
+					")\r\n",
+					"disk_capacity_df = disk_capacity_df.join(app_df, 'AppID', 'left')"
+				],
+				"execution_count": 178
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
 					},
 					"collapsed": false
 				},
 				"source": [
-					"display(managed_disk_df.groupBy('OrgUnitLevel1').agg(F.sum('EstimatedVolumeTiB')))"
+					"display(disk_capacity_df.groupBy('OrgUnitLevel1').agg(F.sum('EstimatedVolumeTiB')))"
 				],
-				"execution_count": 131
+				"execution_count": 179
 			},
 			{
 				"cell_type": "markdown",
