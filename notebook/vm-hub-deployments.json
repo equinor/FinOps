@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "a7ded324-b518-42bd-b590-b222d56101c9"
+				"spark.autotune.trackingId": "a08d01d7-6a47-42a8-bf3a-456faeeb5759"
 			}
 		},
 		"metadata": {
@@ -496,7 +496,7 @@
 					"                    'escape' : '\"'}\r\n",
 					"    activity_df = spark.read.options(**csv_options).csv(activity_path)\r\n",
 					"\r\n",
-					"    today = (today.strftime('%Y-%m-%d'))\r\n",
+					"    today_formatted = (today.strftime('%Y-%m-%d'))\r\n",
 					"    disabled_vms_count = vm_disable_df.count()\r\n",
 					"    enabled_vms_count = vm_enable_df.count()\r\n",
 					"    normalized_cores_disabled = vm_disable_df.select('WindowsAHB_VCPUs').agg(F.sum('WindowsAHB_VCPUs')).collect()[0][0] or 0\r\n",
@@ -516,7 +516,7 @@
 					"        available_licenses\r\n",
 					"    ]\r\n",
 					"\r\n",
-					"    new_activity_row = spark.createDataFrame([(today, *row_values)], activity_df.columns)\r\n",
+					"    new_activity_row = spark.createDataFrame([(today_formatted, *row_values)], activity_df.columns)\r\n",
 					"    activity_df = activity_df.union(new_activity_row)\r\n",
 					"    return activity_df"
 				],
