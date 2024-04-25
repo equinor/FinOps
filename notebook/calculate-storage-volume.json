@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "20021f51-947b-404e-bd8b-30d45106140d"
+				"spark.autotune.trackingId": "203866bb-51ce-4dc8-bd0d-453f57c74a26"
 			}
 		},
 		"metadata": {
@@ -358,25 +358,6 @@
 				"source": [
 					"## Storage Account volume"
 				]
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(cost_df.where((F.col('MeterCategory') == 'Storage') & ((F.col('ResourceType') == 'microsoft.storage/storageaccounts') | (F.col('ResourceType') == 'microsoft.classicstorage/storageaccounts')) & (F.col('UnitOfMeasure') == '1 GB/Month')).select('MeterName', 'UnitOfMeasure').distinct())"
-				],
-				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
