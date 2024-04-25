@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "efb98a6e-84eb-4a84-ba3c-eb029b0be67f"
+				"spark.autotune.trackingId": "ed77ed6e-6491-4d55-96c0-04eea1834db1"
 			}
 		},
 		"metadata": {
@@ -486,8 +486,8 @@
 					"    adf_cores = transform_cores(normalized_cores_by_type.where(F.col('SQLType') == 'ADF').select('TotalCores').first())\r\n",
 					"    arc_cores = transform_cores(normalized_cores_by_type.where(F.col('SQLType') == 'ARC').select('TotalCores').first())\r\n",
 					"\r\n",
-					"    today_date = (today.strftime('%Y-%m-%d'))\r\n",
-					"    new_activity_row = spark.createDataFrame([(today, mi_cores, db_cores, vm_cores, adf_cores, arc_cores, sql_normalized_licence_cores, sql_assigned_cores)], activity_df.columns)\r\n",
+					"    today_formatted = (today.strftime('%Y-%m-%d'))\r\n",
+					"    new_activity_row = spark.createDataFrame([(today_formatted, mi_cores, db_cores, vm_cores, adf_cores, arc_cores, sql_normalized_licence_cores, sql_assigned_cores)], activity_df.columns)\r\n",
 					"    activity_df = activity_df.union(new_activity_row)\r\n",
 					"\r\n",
 					"    return activity_df"
