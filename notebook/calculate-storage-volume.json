@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "70cc0149-0112-4618-b7ef-b5d25a32a68d"
+				"spark.autotune.trackingId": "c1f538a5-b45f-45b1-895b-d41a3c51a7d1"
 			}
 		},
 		"metadata": {
@@ -225,7 +225,7 @@
 					"import pyspark.sql.functions as F\r\n",
 					"from enum import Enum"
 				],
-				"execution_count": 26
+				"execution_count": 30
 			},
 			{
 				"cell_type": "code",
@@ -252,7 +252,7 @@
 					"    MySQLDatabase = \"MySQL Database\"\r\n",
 					"    PostgreSQLDatabase = \"PostgreSQL Database\""
 				],
-				"execution_count": 9
+				"execution_count": 31
 			},
 			{
 				"cell_type": "code",
@@ -273,7 +273,7 @@
 					"GIB_PER_GB = 0.931322575\r\n",
 					"HOURS_PER_DAY = 24"
 				],
-				"execution_count": 10
+				"execution_count": 32
 			},
 			{
 				"cell_type": "markdown",
@@ -307,7 +307,7 @@
 					"app_df = spark.read.format('parquet').load(app_path)\r\n",
 					"app_df = app_df.select('AppID', 'OrgUnitLevel0', 'OrgUnitLevel1', 'OrgUnitLevel2')"
 				],
-				"execution_count": 11
+				"execution_count": 33
 			},
 			{
 				"cell_type": "markdown",
@@ -351,7 +351,7 @@
 					"    .otherwise(F.col('Size'))\r\n",
 					")"
 				],
-				"execution_count": 28
+				"execution_count": 34
 			},
 			{
 				"cell_type": "markdown",
@@ -372,7 +372,7 @@
 					"cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20240401-20240430/Extended_v3_ACMMonthlyAmortizedCost_20240401-20240430.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 13
+				"execution_count": 35
 			},
 			{
 				"cell_type": "code",
@@ -417,7 +417,7 @@
 					"is_mysql = (F.col('MeterCategory') == 'Azure Database for MySQL') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
 					"is_postgres = (F.col('MeterCategory') == 'Azure Database for PostgreSQL') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))"
 				],
-				"execution_count": 22
+				"execution_count": 37
 			},
 			{
 				"cell_type": "code",
@@ -449,7 +449,7 @@
 					"\r\n",
 					"storage_df = storage_df.where(F.col('StorageType').isNotNull())"
 				],
-				"execution_count": 29
+				"execution_count": 38
 			},
 			{
 				"cell_type": "code",
@@ -470,7 +470,7 @@
 					"    .groupBy('Date', 'StorageType', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'UnitOfMeasure', 'MeterName', 'AppID') \\\r\n",
 					"    .agg(F.sum('Quantity').alias('Quantity'))"
 				],
-				"execution_count": null
+				"execution_count": 39
 			},
 			{
 				"cell_type": "code",
@@ -494,7 +494,7 @@
 					"\r\n",
 					"storage_df = storage_df.join(disk_size_df.select('DiskType', 'DiskSizeGiB'), 'DiskType', 'left')"
 				],
-				"execution_count": null
+				"execution_count": 40
 			},
 			{
 				"cell_type": "code",
@@ -510,9 +510,36 @@
 					}
 				},
 				"source": [
-					""
+					"storage_df = storage_df.withColumn('EstimatedVolumeGiB',\r\n",
+					"    F.when(F.col('UnitOfMeasure') == '1 GiB/Hour', F.col('Quantity') / HOURS_PER_DAY)\r\n",
+					"    .when(F.col('UnitOfMeasure') == '1 GiB/Month', F.col('Quantity') * (HOURS_PER_MONTH / HOURS_PER_DAY))\r\n",
+					"    .when(F.col('UnitOfMeasure') == '1 GB/Month', F.col('Quantity') * (HOURS_PER_MONTH / HOURS_PER_DAY) * GIB_PER_GB)\r\n",
+					"    .when(is_pre_allocated_disk, F.col('DiskSizeGiB'))\r\n",
+					"    .otherwise(None)\r\n",
+					")\r\n",
+					"\r\n",
+					"storage_df = storage_df.withColumn('EstimatedVolumeTiB', F.col('EstimatedVolumeGiB') / GIB_PER_TIB)"
 				],
-				"execution_count": null
+				"execution_count": 42
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(storage_df)"
+				],
+				"execution_count": 43
 			},
 			{
 				"cell_type": "markdown",
