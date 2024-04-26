@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "ddf3c806-a23a-4802-9715-78653e72aef9"
+				"spark.autotune.trackingId": "70cc0149-0112-4618-b7ef-b5d25a32a68d"
 			}
 		},
 		"metadata": {
@@ -225,7 +225,7 @@
 					"import pyspark.sql.functions as F\r\n",
 					"from enum import Enum"
 				],
-				"execution_count": 68
+				"execution_count": 26
 			},
 			{
 				"cell_type": "code",
@@ -243,7 +243,7 @@
 				"source": [
 					"class StorageType(Enum):\r\n",
 					"    StorageAccount = \"Storage Account\"\r\n",
-					"    ManagedDisk = \"Managed Disk\"\r\n",
+					"    ManagedDisk = \"Managed Disk\"    \r\n",
 					"    NetAppFiles = \"NetApp Files\"\r\n",
 					"    Backup = \"Backup\"\r\n",
 					"    SQLDatabase = \"SQL Database\"\r\n",
@@ -252,7 +252,7 @@
 					"    MySQLDatabase = \"MySQL Database\"\r\n",
 					"    PostgreSQLDatabase = \"PostgreSQL Database\""
 				],
-				"execution_count": 69
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -273,7 +273,7 @@
 					"GIB_PER_GB = 0.931322575\r\n",
 					"HOURS_PER_DAY = 24"
 				],
-				"execution_count": 64
+				"execution_count": 10
 			},
 			{
 				"cell_type": "markdown",
@@ -307,7 +307,7 @@
 					"app_df = spark.read.format('parquet').load(app_path)\r\n",
 					"app_df = app_df.select('AppID', 'OrgUnitLevel0', 'OrgUnitLevel1', 'OrgUnitLevel2')"
 				],
-				"execution_count": 65
+				"execution_count": 11
 			},
 			{
 				"cell_type": "markdown",
@@ -346,12 +346,12 @@
 					"\r\n",
 					"disk_size_df = disk_size_df.withColumn('Size', F.split(F.col('DiskSize'), ' ').getItem(0))\r\n",
 					"disk_size_df = disk_size_df.withColumn('Unit', F.split(F.col('DiskSize'), ' ').getItem(1))\r\n",
-					"disk_size_df = disk_size_df.withColumn('SizeGiB', \r\n",
+					"disk_size_df = disk_size_df.withColumn('DiskSizeGiB', \r\n",
 					"    F.when(F.col('Unit') == 'TiB', F.col('Size') * 1024)\r\n",
 					"    .otherwise(F.col('Size'))\r\n",
 					")"
 				],
-				"execution_count": 66
+				"execution_count": 28
 			},
 			{
 				"cell_type": "markdown",
@@ -372,7 +372,129 @@
 					"cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20240401-20240430/Extended_v3_ACMMonthlyAmortizedCost_20240401-20240430.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 67
+				"execution_count": 13
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"UNIT_OF_MEASURES = [\r\n",
+					"    '1 GB/Month',\r\n",
+					"    '1 GiB/Hour',\r\n",
+					"    '1 GiB/Month',\r\n",
+					"]\r\n",
+					"\r\n",
+					"STORAGE_ACCOUNT_RESOURCE_IDS = [\r\n",
+					"    'microsoft.storage/storageaccounts',\r\n",
+					"    'microsoft.classicstorage/storageaccounts'\r\n",
+					"]\r\n",
+					"\r\n",
+					"NETAPP_CAPACITIES = [\r\n",
+					"    'Standard Capacity',\r\n",
+					"    'Ultra Capacity',\r\n",
+					"    'Premium Capacity',\r\n",
+					"    'Backup Capacity'\r\n",
+					"]\r\n",
+					"\r\n",
+					"is_storage_account = (F.col('MeterCategory') == 'Storage') & (F.col('ResourceType').isin(STORAGE_ACCOUNT_RESOURCE_IDS)) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+					"is_managed_disk = (F.col('MeterCategory') == 'Storage') & (F.col('ResourceType') == 'microsoft.compute/disks') & (F.col('MeterName').contains('Disk')) & (F.col('UnitOfMeasure') == '1/Month')\r\n",
+					"is_managed_disk_redundancy = (F.col('MeterCategory') == 'Storage') & (F.col('ResourceType') == 'microsoft.compute/disks') & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+					"is_sql_db = (F.col('MeterCategory') == 'SQL Database') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+					"is_sql_mi = (F.col('MeterCategory') == 'SQL Managed Instance') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+					"is_netapp_files = (F.col('MeterCategory') == 'Azure NetApp Files') & (F.col('ResourceType') == 'microsoft.netapp/netappaccounts') & (F.col('MeterName').isin(NETAPP_CAPACITIES)) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+					"is_backup = (F.col('MeterCategory') == 'Backup') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+					"is_cosmos_db = (F.col('MeterCategory') == 'Azure Cosmos DB') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+					"is_mysql = (F.col('MeterCategory') == 'Azure Database for MySQL') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+					"is_postgres = (F.col('MeterCategory') == 'Azure Database for PostgreSQL') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))"
+				],
+				"execution_count": 22
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"storage_df = cost_df.withColumn('StorageType',\r\n",
+					"    F.when(is_storage_account, StorageType.StorageAccount.value)\r\n",
+					"    .when(is_managed_disk, StorageType.ManagedDisk.value)\r\n",
+					"    .when(is_managed_disk_redundancy, StorageType.ManagedDisk.value)\r\n",
+					"    .when(is_sql_db, StorageType.SQLDatabase.value)\r\n",
+					"    .when(is_sql_mi, StorageType.SQLManagedInstance.value)\r\n",
+					"    .when(is_netapp_files, StorageType.NetAppFiles.value)\r\n",
+					"    .when(is_backup, StorageType.Backup.value)\r\n",
+					"    .when(is_cosmos_db, StorageType.CosmosDB.value)\r\n",
+					"    .when(is_mysql, StorageType.MySQLDatabase.value)\r\n",
+					"    .when(is_postgres, StorageType.PostgreSQLDatabase.value)\r\n",
+					"    .otherwise(None)\r\n",
+					")\r\n",
+					"\r\n",
+					"storage_df = storage_df.where(F.col('StorageType').isNotNull())"
+				],
+				"execution_count": 29
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"storage_df = storage_df \\\r\n",
+					"    .select('Date', 'StorageType', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'UnitOfMeasure', 'MeterName', 'AppID', 'Quantity') \\\r\n",
+					"    .groupBy('Date', 'StorageType', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'UnitOfMeasure', 'MeterName', 'AppID') \\\r\n",
+					"    .agg(F.sum('Quantity').alias('Quantity'))"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"is_pre_allocated_disk = (F.col('StorageType') == StorageType.ManagedDisk.value) & (F.col('UnitOfMeasure') == '1/Month')\r\n",
+					"\r\n",
+					"storage_df = storage_df.withColumn('DiskType',\r\n",
+					"    F.when(is_pre_allocated_disk, F.split(F.col('MeterName'), ' ').getItem(0)).otherwise(None)\r\n",
+					")\r\n",
+					"\r\n",
+					"storage_df = storage_df.join(disk_size_df.select('DiskType', 'DiskSizeGiB'), 'DiskType', 'left')"
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
