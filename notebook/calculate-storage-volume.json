@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "c1f538a5-b45f-45b1-895b-d41a3c51a7d1"
+				"spark.autotune.trackingId": "92f600ee-c180-4bbf-8346-f566f2d61c44"
 			}
 		},
 		"metadata": {
@@ -225,7 +225,7 @@
 					"import pyspark.sql.functions as F\r\n",
 					"from enum import Enum"
 				],
-				"execution_count": 30
+				"execution_count": 31
 			},
 			{
 				"cell_type": "code",
@@ -252,7 +252,7 @@
 					"    MySQLDatabase = \"MySQL Database\"\r\n",
 					"    PostgreSQLDatabase = \"PostgreSQL Database\""
 				],
-				"execution_count": 31
+				"execution_count": 32
 			},
 			{
 				"cell_type": "code",
@@ -270,10 +270,45 @@
 				"source": [
 					"HOURS_PER_MONTH = 730\r\n",
 					"GIB_PER_TIB = 1024\r\n",
+					"TIB_PER_PIB = 1024\r\n",
 					"GIB_PER_GB = 0.931322575\r\n",
 					"HOURS_PER_DAY = 24"
 				],
-				"execution_count": 32
+				"execution_count": 33
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"UNIT_OF_MEASURES = [\r\n",
+					"    '1 GB/Month',\r\n",
+					"    '1 GiB/Hour',\r\n",
+					"    '1 GiB/Month',\r\n",
+					"]\r\n",
+					"\r\n",
+					"STORAGE_ACCOUNT_RESOURCE_IDS = [\r\n",
+					"    'microsoft.storage/storageaccounts',\r\n",
+					"    'microsoft.classicstorage/storageaccounts'\r\n",
+					"]\r\n",
+					"\r\n",
+					"NETAPP_CAPACITIES = [\r\n",
+					"    'Standard Capacity',\r\n",
+					"    'Ultra Capacity',\r\n",
+					"    'Premium Capacity',\r\n",
+					"    'Backup Capacity'\r\n",
+					"]"
+				],
+				"execution_count": 34
 			},
 			{
 				"cell_type": "markdown",
@@ -307,7 +342,7 @@
 					"app_df = spark.read.format('parquet').load(app_path)\r\n",
 					"app_df = app_df.select('AppID', 'OrgUnitLevel0', 'OrgUnitLevel1', 'OrgUnitLevel2')"
 				],
-				"execution_count": 33
+				"execution_count": 35
 			},
 			{
 				"cell_type": "markdown",
@@ -351,7 +386,7 @@
 					"    .otherwise(F.col('Size'))\r\n",
 					")"
 				],
-				"execution_count": 34
+				"execution_count": 36
 			},
 			{
 				"cell_type": "markdown",
@@ -372,7 +407,20 @@
 					"cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/20240401-20240430/Extended_v3_ACMMonthlyAmortizedCost_20240401-20240430.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 35
+				"execution_count": 37
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Estimate storage volumes per service"
+				]
 			},
 			{
 				"cell_type": "code",
@@ -388,24 +436,7 @@
 					}
 				},
 				"source": [
-					"UNIT_OF_MEASURES = [\r\n",
-					"    '1 GB/Month',\r\n",
-					"    '1 GiB/Hour',\r\n",
-					"    '1 GiB/Month',\r\n",
-					"]\r\n",
-					"\r\n",
-					"STORAGE_ACCOUNT_RESOURCE_IDS = [\r\n",
-					"    'microsoft.storage/storageaccounts',\r\n",
-					"    'microsoft.classicstorage/storageaccounts'\r\n",
-					"]\r\n",
-					"\r\n",
-					"NETAPP_CAPACITIES = [\r\n",
-					"    'Standard Capacity',\r\n",
-					"    'Ultra Capacity',\r\n",
-					"    'Premium Capacity',\r\n",
-					"    'Backup Capacity'\r\n",
-					"]\r\n",
-					"\r\n",
+					"# Define service masks\r\n",
 					"is_storage_account = (F.col('MeterCategory') == 'Storage') & (F.col('ResourceType').isin(STORAGE_ACCOUNT_RESOURCE_IDS)) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
 					"is_managed_disk = (F.col('MeterCategory') == 'Storage') & (F.col('ResourceType') == 'microsoft.compute/disks') & (F.col('MeterName').contains('Disk')) & (F.col('UnitOfMeasure') == '1/Month')\r\n",
 					"is_managed_disk_redundancy = (F.col('MeterCategory') == 'Storage') & (F.col('ResourceType') == 'microsoft.compute/disks') & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
@@ -415,24 +446,9 @@
 					"is_backup = (F.col('MeterCategory') == 'Backup') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
 					"is_cosmos_db = (F.col('MeterCategory') == 'Azure Cosmos DB') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
 					"is_mysql = (F.col('MeterCategory') == 'Azure Database for MySQL') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
-					"is_postgres = (F.col('MeterCategory') == 'Azure Database for PostgreSQL') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))"
-				],
-				"execution_count": 37
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
+					"is_postgres = (F.col('MeterCategory') == 'Azure Database for PostgreSQL') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+					"\r\n",
+					"# Define storage type for each relevant service\r\n",
 					"storage_df = cost_df.withColumn('StorageType',\r\n",
 					"    F.when(is_storage_account, StorageType.StorageAccount.value)\r\n",
 					"    .when(is_managed_disk, StorageType.ManagedDisk.value)\r\n",
@@ -465,10 +481,18 @@
 					}
 				},
 				"source": [
+					"# Aggregate quantities per day - used to derive the storage volume\r\n",
 					"storage_df = storage_df \\\r\n",
 					"    .select('Date', 'StorageType', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'UnitOfMeasure', 'MeterName', 'AppID', 'Quantity') \\\r\n",
 					"    .groupBy('Date', 'StorageType', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'UnitOfMeasure', 'MeterName', 'AppID') \\\r\n",
-					"    .agg(F.sum('Quantity').alias('Quantity'))"
+					"    .agg(F.sum('Quantity').alias('Quantity'))\r\n",
+					"\r\n",
+					"# Lookup disk storage volumes from separate table\r\n",
+					"is_pre_allocated_disk = (F.col('StorageType') == StorageType.ManagedDisk.value) & (F.col('UnitOfMeasure') == '1/Month')\r\n",
+					"storage_df = storage_df.withColumn('DiskType',\r\n",
+					"    F.when(is_pre_allocated_disk, F.split(F.col('MeterName'), ' ').getItem(0)).otherwise(None)\r\n",
+					")\r\n",
+					"storage_df = storage_df.join(disk_size_df.select('DiskType', 'DiskSizeGiB'), 'DiskType', 'left')"
 				],
 				"execution_count": 39
 			},
@@ -486,30 +510,7 @@
 					}
 				},
 				"source": [
-					"is_pre_allocated_disk = (F.col('StorageType') == StorageType.ManagedDisk.value) & (F.col('UnitOfMeasure') == '1/Month')\r\n",
-					"\r\n",
-					"storage_df = storage_df.withColumn('DiskType',\r\n",
-					"    F.when(is_pre_allocated_disk, F.split(F.col('MeterName'), ' ').getItem(0)).otherwise(None)\r\n",
-					")\r\n",
-					"\r\n",
-					"storage_df = storage_df.join(disk_size_df.select('DiskType', 'DiskSizeGiB'), 'DiskType', 'left')"
-				],
-				"execution_count": 40
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
+					"# Compute storage volume estimates from quantity\r\n",
 					"storage_df = storage_df.withColumn('EstimatedVolumeGiB',\r\n",
 					"    F.when(F.col('UnitOfMeasure') == '1 GiB/Hour', F.col('Quantity') / HOURS_PER_DAY)\r\n",
 					"    .when(F.col('UnitOfMeasure') == '1 GiB/Month', F.col('Quantity') * (HOURS_PER_MONTH / HOURS_PER_DAY))\r\n",
@@ -518,102 +519,8 @@
 					"    .otherwise(None)\r\n",
 					")\r\n",
 					"\r\n",
-					"storage_df = storage_df.withColumn('EstimatedVolumeTiB', F.col('EstimatedVolumeGiB') / GIB_PER_TIB)"
-				],
-				"execution_count": 42
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(storage_df)"
-				],
-				"execution_count": 43
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"## Storage Account volume"
-				]
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"sa_df = cost_df.where((F.col('MeterCategory') == 'Storage') & ((F.col('ResourceType') == 'microsoft.storage/storageaccounts') | (F.col('ResourceType') == 'microsoft.classicstorage/storageaccounts')) & (F.col('UnitOfMeasure') == '1 GB/Month'))\r\n",
-					"sa_df = sa_df \\\r\n",
-					"    .select('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'AppID', 'Quantity') \\\r\n",
-					"    .groupBy('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'AppID') \\\r\n",
-					"    .agg(F.sum('Quantity').alias('Quantity'))\r\n",
-					"\r\n",
-					"sa_df = sa_df.withColumn('EstimatedVolumeGiB', F.col('Quantity') * (HOURS_PER_MONTH / HOURS_PER_DAY) * GIB_PER_GB)\r\n",
-					"sa_df = sa_df.withColumn('EstimatedVolumeTiB', F.col('EstimatedVolumeGiB') / GIB_PER_TIB)\r\n",
-					"sa_df = sa_df.join(app_df, 'AppID', 'left')"
-				],
-				"execution_count": 39
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"## Managed Disk volume"
-				]
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"managed_disk_df = cost_df.where((F.col('MeterCategory') == 'Storage') & (F.col('ResourceType') == 'microsoft.compute/disks') & (F.col('MeterName').contains('Disk')) & (F.col('UnitOfMeasure') == '1/Month'))\r\n",
-					"managed_disk_df = managed_disk_df.withColumn('DiskType', F.split(F.col('MeterName'), ' ').getItem(0))\r\n",
-					"managed_disk_df = managed_disk_df.dropDuplicates(['Date', 'ResourceId', 'DiskType'])\r\n",
-					"managed_disk_df = managed_disk_df.join(disk_size_df, \"DiskType\", 'left')\r\n",
-					"managed_disk_df = managed_disk_df.select('Date' ,'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'AppID', 'DiskType', 'SizeGiB').withColumnRenamed('SizeGiB', 'EstimatedVolumeGiB')\r\n",
-					"managed_disk_df = managed_disk_df.withColumn('EstimatedVolumeTiB', F.col('EstimatedVolumeGiB') / GIB_PER_TIB)\r\n",
-					"managed_disk_df = managed_disk_df.join(app_df, 'AppID', 'left')"
+					"storage_df = storage_df.withColumn('EstimatedVolumeTiB', F.col('EstimatedVolumeGiB') / GIB_PER_TIB)\r\n",
+					"storage_df = storage_df.withColumn('EstimatedVolumePiB', F.col('EstimatedVolumeTiB') / TIB_PER_PIB)"
 				],
 				"execution_count": 40
 			},
@@ -631,468 +538,10 @@
 					}
 				},
 				"source": [
-					"disk_capacity_df = cost_df.where((F.col('MeterCategory') == 'Storage') & (F.col('ResourceType') == 'microsoft.compute/disks') & ((F.col('UnitOfMeasure') == '1 GB/Month') | (F.col('UnitOfMeasure') == '1 GiB/Hour')))\r\n",
-					"disk_capacity_df = disk_capacity_df \\\r\n",
-					"    .select('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'UnitOfMeasure', 'AppID', 'Quantity') \\\r\n",
-					"    .groupBy('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'UnitOfMeasure', 'AppID') \\\r\n",
-					"    .agg(F.sum('Quantity').alias('Quantity'))\r\n",
-					"\r\n",
-					"disk_capacity_df = disk_capacity_df.withColumn('EstimatedVolumeTiB', \r\n",
-					"    F.when(F.col('UnitOfMeasure') == '1 GiB/Hour', F.col('Quantity') / (HOURS_PER_DAY * GIB_PER_TIB)) # These capacities are denoted in GiB/Hour\r\n",
-					"    .when(F.col('UnitOfMeasure') == '1 GB/Month', (F.col('Quantity') * GIB_PER_GB * (HOURS_PER_MONTH / HOURS_PER_DAY)) / GIB_PER_TIB) # These capacities are denoted in GiB/Month\r\n",
-					"    .otherwise(None)\r\n",
-					")\r\n",
-					"disk_capacity_df = disk_capacity_df.join(app_df, 'AppID', 'left')"
+					"# Enrich orgianisational data from Service Now based on application metadata\r\n",
+					"storage_df = storage_df.join(app_df, 'AppID', 'left')"
 				],
 				"execution_count": 41
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(disk_capacity_df.groupBy('OrgUnitLevel1').agg(F.sum('EstimatedVolumeTiB')))"
-				],
-				"execution_count": 179
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"## SQL Database volume\r\n",
-					"- 1 GB / Month"
-				]
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"sql_db_df = cost_df.where(F.col('MeterCategory') == 'SQL Database').where(F.col('MeterName').contains('Data Stored'))\r\n",
-					"sql_db_df = sql_db_df \\\r\n",
-					"    .select('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'AppID', 'Quantity') \\\r\n",
-					"    .groupBy('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'AppID') \\\r\n",
-					"    .agg(F.sum('Quantity').alias('Quantity'))\r\n",
-					"sql_db_df = sql_db_df.withColumn('EstimatedVolumeGiB', F.col('Quantity') * (HOURS_PER_MONTH / HOURS_PER_DAY) * GIB_PER_GB)\r\n",
-					"sql_db_df = sql_db_df.withColumn('EstimatedVolumeTiB', F.col('EstimatedVolumeGiB') / GIB_PER_TIB)\r\n",
-					"sql_db_df = sql_db_df.join(app_df, 'AppID', 'left')"
-				],
-				"execution_count": 134
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(sql_db_df.groupBy('OrgUnitLevel1').agg(F.sum('EstimatedVolumeTiB')))"
-				],
-				"execution_count": 135
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"## SQL Managed Instance volume\r\n",
-					"- 1 GB/Month"
-				]
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"sql_mi_df = cost_df.where((F.col('MeterCategory') == 'SQL Managed Instance') & (F.col('MeterName').contains('Data Stored')))\r\n",
-					"sql_mi_df = sql_mi_df \\\r\n",
-					"    .select('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'AppID', 'Quantity') \\\r\n",
-					"    .groupBy('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'AppID') \\\r\n",
-					"    .agg(F.sum('Quantity').alias('Quantity'))\r\n",
-					"sql_mi_df = sql_mi_df.withColumn('EstimatedVolumeGiB', F.col('Quantity') * (HOURS_PER_MONTH / HOURS_PER_DAY) * GIB_PER_GB)\r\n",
-					"sql_mi_df = sql_mi_df.withColumn('EstimatedVolumeTiB', F.col('EstimatedVolumeGiB') / GIB_PER_TIB)\r\n",
-					"sql_mi_df = sql_mi_df.join(app_df, 'AppID', 'left')"
-				],
-				"execution_count": 137
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(sql_mi_df.groupBy('OrgUnitLevel1').agg(F.sum('EstimatedVolumeTiB')))"
-				],
-				"execution_count": 138
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"## NetApp Files volume"
-				]
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"NETAPP_CAPACITIES = [\r\n",
-					"    'Standard Capacity',\r\n",
-					"    'Ultra Capacity',\r\n",
-					"    'Premium Capacity',\r\n",
-					"    'Backup Capacity'\r\n",
-					"]\r\n",
-					"\r\n",
-					"netapp_df = cost_df.where((F.col('MeterCategory') == 'Azure NetApp Files') & (F.col('ResourceType') == 'microsoft.netapp/netappaccounts') & (F.col('MeterName').isin(NETAPP_CAPACITIES)))\r\n",
-					"netapp_df = netapp_df.select('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'MeterName', 'AppID', 'Quantity')\r\n",
-					"netapp_df = netapp_df.withColumn('EstimatedVolumeTiB', \r\n",
-					"    F.when(F.col('UnitOfMeasure') == '1 GiB/Hour', F.col('Quantity') / (HOURS_PER_DAY * GIB_PER_TIB))\r\n",
-					"    .when(F.col('UnitOfMeasure') == '1 GiB/Month', (F.col('Quantity') * (HOURS_PER_MONTH / HOURS_PER_DAY)) / GIB_PER_TIB)\r\n",
-					"    .otherwise(None)\r\n",
-					")\r\n",
-					"netapp_df = netapp_df.join(app_df, 'AppID', 'left')"
-				],
-				"execution_count": 139
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(netapp_df.groupBy('OrgUnitLevel1').agg(F.sum('EstimatedVolumeTiB')))"
-				],
-				"execution_count": 140
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"## Backup volume"
-				]
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"backup_df = cost_df.where((F.col('MeterCategory') == 'Backup') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure') == '1 GB/Month'))\r\n",
-					"backup_df = backup_df \\\r\n",
-					"    .select('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'AppID', 'Quantity') \\\r\n",
-					"    .groupBy('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'AppID') \\\r\n",
-					"    .agg(F.sum('Quantity').alias('Quantity'))\r\n",
-					"backup_df = backup_df.withColumn('EstimatedVolumeGiB', F.col('Quantity') * (HOURS_PER_MONTH / HOURS_PER_DAY) * GIB_PER_GB)\r\n",
-					"backup_df = backup_df.withColumn('EstimatedVolumeTiB', F.col('EstimatedVolumeGiB') / GIB_PER_TIB)\r\n",
-					"backup_df = backup_df.join(app_df, 'AppID', 'left')"
-				],
-				"execution_count": 141
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(backup_df.groupBy('OrgUnitLevel1').agg(F.sum('EstimatedVolumeTiB')))"
-				],
-				"execution_count": 142
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"## "
-				]
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"## Cosmos DB volume"
-				]
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"cosmos_df = cost_df.where((F.col('MeterCategory') == 'Azure Cosmos DB') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure') == '1 GB/Month'))\r\n",
-					"cosmos_df = cosmos_df \\\r\n",
-					"    .select('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'AppID', 'Quantity') \\\r\n",
-					"    .groupBy('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'AppID') \\\r\n",
-					"    .agg(F.sum('Quantity').alias('Quantity'))\r\n",
-					"cosmos_df = cosmos_df.withColumn('EstimatedVolumeGiB', F.col('Quantity') * (HOURS_PER_MONTH / HOURS_PER_DAY) * GIB_PER_GB)\r\n",
-					"cosmos_df = cosmos_df.withColumn('EstimatedVolumeTiB', F.col('EstimatedVolumeGiB') / GIB_PER_TIB)\r\n",
-					"cosmos_df = cosmos_df.join(app_df, 'AppID', 'left')"
-				],
-				"execution_count": 143
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(cosmos_df.groupBy('OrgUnitLevel1').agg(F.sum('EstimatedVolumeTiB')))"
-				],
-				"execution_count": 144
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"## MySQL Database volume"
-				]
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"mysql_df = cost_df.where((F.col('MeterCategory') == 'Azure Database for MySQL') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure') == '1 GB/Month'))\r\n",
-					"mysql_df = mysql_df \\\r\n",
-					"    .select('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'AppID', 'Quantity') \\\r\n",
-					"    .groupBy('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'AppID') \\\r\n",
-					"    .agg(F.sum('Quantity').alias('Quantity'))\r\n",
-					"mysql_df = mysql_df.withColumn('EstimatedVolumeGiB', F.col('Quantity') * (HOURS_PER_MONTH / HOURS_PER_DAY) * GIB_PER_GB)\r\n",
-					"mysql_df = mysql_df.withColumn('EstimatedVolumeTiB', F.col('EstimatedVolumeGiB') / GIB_PER_TIB)\r\n",
-					"mysql_df = mysql_df.join(app_df, 'AppID', 'left')"
-				],
-				"execution_count": 145
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(mysql_df.groupBy('OrgUnitLevel1').agg(F.sum('EstimatedVolumeTiB')))"
-				],
-				"execution_count": 146
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"## PostgreSQL Database volume\r\n",
-					"- 1 GB/Month\r\n",
-					"- 1 GiB/Month"
-				]
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"postgres_df = cost_df.where((F.col('MeterCategory') == 'Azure Database for PostgreSQL') & (F.col('MeterName').contains('Data Stored')))\r\n",
-					"postgres_df = postgres_df.withColumn('GiBQuantity', \r\n",
-					"    F.when(F.col('UnitOfMeasure') == '1 GiB/Month', F.col('Quantity'))\r\n",
-					"    .when(F.col('UnitOfMeasure') == '1 GB/Month', F.col('Quantity') * GIB_PER_GB)\r\n",
-					"    .otherwise(None)\r\n",
-					")\r\n",
-					"postgres_df = postgres_df \\\r\n",
-					"    .select('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'AppID', 'GiBQuantity') \\\r\n",
-					"    .groupBy('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'AppID') \\\r\n",
-					"    .agg(F.sum('GiBQuantity').alias('GiBQuantity'))\r\n",
-					"\r\n",
-					"postgres_df = postgres_df.withColumn('EstimatedVolumeGiB', F.col('GiBQuantity') * (HOURS_PER_MONTH / HOURS_PER_DAY))\r\n",
-					"postgres_df = postgres_df.withColumn('EstimatedVolumeTiB', F.col('EstimatedVolumeGiB') / GIB_PER_TIB)\r\n",
-					"postgres_df = postgres_df.join(app_df, 'AppID', 'left')"
-				],
-				"execution_count": 148
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(postgres_df.groupBy('OrgUnitLevel1').agg(F.sum('EstimatedVolumeTiB')))"
-				],
-				"execution_count": 149
 			}
 		]
 	}
