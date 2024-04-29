@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "47f0855d-22ce-46e0-a5b1-d991c765e538"
+				"spark.autotune.trackingId": "7b1cc248-40eb-4a36-856c-eb5638acd7bb"
 			}
 		},
 		"metadata": {
@@ -226,7 +226,7 @@
 					"from enum import Enum\r\n",
 					"from datetime import datetime, timedelta"
 				],
-				"execution_count": 46
+				"execution_count": 58
 			},
 			{
 				"cell_type": "code",
@@ -253,7 +253,7 @@
 					"    MySQLDatabase = \"MySQL Database\"\r\n",
 					"    PostgreSQLDatabase = \"PostgreSQL Database\""
 				],
-				"execution_count": 47
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -275,7 +275,7 @@
 					"GIB_PER_GB = 0.931322575\r\n",
 					"HOURS_PER_DAY = 24"
 				],
-				"execution_count": 48
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -309,7 +309,7 @@
 					"    'Backup Capacity'\r\n",
 					"]"
 				],
-				"execution_count": 49
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",
@@ -343,7 +343,7 @@
 					"app_df = spark.read.format('parquet').load(app_path)\r\n",
 					"app_df = app_df.select('AppID', 'OrgUnitLevel0', 'OrgUnitLevel1', 'OrgUnitLevel2')"
 				],
-				"execution_count": 50
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",
@@ -561,7 +561,7 @@
 					}
 				},
 				"source": [
-					"target_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/storage/monthly/aggregate/parquet/storage-volume-estimates-1-year.parquet\"\r\n",
+					"target_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/storage/storage-volume-estimates-1-year.parquet\"\r\n",
 					"storage_df.write.format('parquet').mode('overwrite').save(target_path)"
 				],
 				"execution_count": 57
