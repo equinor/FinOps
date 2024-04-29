@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "7b1cc248-40eb-4a36-856c-eb5638acd7bb"
+				"spark.autotune.trackingId": "6893cf2d-489e-407a-8d59-8d20e937cf5e"
 			}
 		},
 		"metadata": {
@@ -226,7 +226,7 @@
 					"from enum import Enum\r\n",
 					"from datetime import datetime, timedelta"
 				],
-				"execution_count": 58
+				"execution_count": 61
 			},
 			{
 				"cell_type": "code",
@@ -253,7 +253,7 @@
 					"    MySQLDatabase = \"MySQL Database\"\r\n",
 					"    PostgreSQLDatabase = \"PostgreSQL Database\""
 				],
-				"execution_count": null
+				"execution_count": 62
 			},
 			{
 				"cell_type": "code",
@@ -275,7 +275,7 @@
 					"GIB_PER_GB = 0.931322575\r\n",
 					"HOURS_PER_DAY = 24"
 				],
-				"execution_count": null
+				"execution_count": 63
 			},
 			{
 				"cell_type": "code",
@@ -309,7 +309,7 @@
 					"    'Backup Capacity'\r\n",
 					"]"
 				],
-				"execution_count": null
+				"execution_count": 64
 			},
 			{
 				"cell_type": "markdown",
@@ -343,7 +343,7 @@
 					"app_df = spark.read.format('parquet').load(app_path)\r\n",
 					"app_df = app_df.select('AppID', 'OrgUnitLevel0', 'OrgUnitLevel1', 'OrgUnitLevel2')"
 				],
-				"execution_count": null
+				"execution_count": 65
 			},
 			{
 				"cell_type": "markdown",
@@ -387,7 +387,7 @@
 					"    .otherwise(F.col('Size'))\r\n",
 					")"
 				],
-				"execution_count": 51
+				"execution_count": 66
 			},
 			{
 				"cell_type": "markdown",
@@ -411,7 +411,7 @@
 					"one_year_back = datetime.now().date()-timedelta(days=365)\r\n",
 					"cost_df = cost_df.where(F.col('Date') >= one_year_back)"
 				],
-				"execution_count": 52
+				"execution_count": 67
 			},
 			{
 				"cell_type": "markdown",
@@ -469,7 +469,7 @@
 					"\r\n",
 					"storage_df = storage_df.where(F.col('StorageType').isNotNull())"
 				],
-				"execution_count": 53
+				"execution_count": 68
 			},
 			{
 				"cell_type": "code",
@@ -498,7 +498,7 @@
 					")\r\n",
 					"storage_df = storage_df.join(disk_size_df.select('DiskType', 'DiskSizeGiB'), 'DiskType', 'left')"
 				],
-				"execution_count": 54
+				"execution_count": 69
 			},
 			{
 				"cell_type": "code",
@@ -526,7 +526,7 @@
 					"storage_df = storage_df.withColumn('EstimatedVolumeTiB', F.col('EstimatedVolumeGiB') / GIB_PER_TIB)\r\n",
 					"storage_df = storage_df.withColumn('EstimatedVolumePiB', F.col('EstimatedVolumeTiB') / TIB_PER_PIB)"
 				],
-				"execution_count": 55
+				"execution_count": 70
 			},
 			{
 				"cell_type": "code",
@@ -545,7 +545,7 @@
 					"# Enrich orgianisational data from Service Now based on application metadata\r\n",
 					"storage_df = storage_df.join(app_df, 'AppID', 'left')"
 				],
-				"execution_count": 56
+				"execution_count": 71
 			},
 			{
 				"cell_type": "code",
@@ -564,7 +564,7 @@
 					"target_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/storage/storage-volume-estimates-1-year.parquet\"\r\n",
 					"storage_df.write.format('parquet').mode('overwrite').save(target_path)"
 				],
-				"execution_count": 57
+				"execution_count": 72
 			}
 		]
 	}
