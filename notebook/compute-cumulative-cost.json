@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "2547855e-aea5-423c-a5df-36f926a6d37a"
+				"spark.autotune.trackingId": "2719ace3-188d-45ba-9fe4-9a343ba25f86"
 			}
 		},
 		"metadata": {
@@ -70,7 +70,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 15
+				"execution_count": 1
 			},
 			{
 				"cell_type": "code",
@@ -81,7 +81,7 @@
 					"import pandas as pd\r\n",
 					"import numpy as np"
 				],
-				"execution_count": 16
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -100,7 +100,7 @@
 					"# Define rolling window for accumulation\r\n",
 					"window = W.Window.orderBy(\"Date\").rowsBetween(W.Window.unboundedPreceding, 0)"
 				],
-				"execution_count": 17
+				"execution_count": 3
 			},
 			{
 				"cell_type": "markdown",
@@ -365,10 +365,10 @@
 					}
 				},
 				"source": [
-					"four_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=6, prediction_interval=84)\r\n",
-					"eight_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=12, prediction_interval=84)\r\n",
-					"twelve_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=24, prediction_interval=84)\r\n",
-					"sixteen_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=-1, prediction_interval=84)\r\n",
+					"four_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=6, prediction_interval=90)\r\n",
+					"eight_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=12, prediction_interval=90)\r\n",
+					"twelve_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=24, prediction_interval=90)\r\n",
+					"sixteen_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=-1, prediction_interval=90)\r\n",
 					"\r\n",
 					"billing_df = billing_df.join(four_month_lookback_df, on='Date', how='outer')\r\n",
 					"billing_df = billing_df.join(eight_month_lookback_df, on='Date', how='outer')\r\n",
@@ -392,10 +392,10 @@
 					}
 				},
 				"source": [
-					"adjusted_four_month_lookback_df = compute_ols_prediction(adjusted_billing_pdf, lookback=6, prediction_interval=84)\r\n",
-					"adjusted_eight_month_lookback_df = compute_ols_prediction(adjusted_billing_pdf, lookback=12, prediction_interval=84)\r\n",
-					"adjusted_twelve_month_lookback_df = compute_ols_prediction(adjusted_billing_pdf, lookback=24, prediction_interval=84)\r\n",
-					"adjusted_sixteen_month_lookback_df = compute_ols_prediction(adjusted_billing_pdf, lookback=-1, prediction_interval=84)\r\n",
+					"adjusted_four_month_lookback_df = compute_ols_prediction(adjusted_billing_pdf, lookback=6, prediction_interval=90)\r\n",
+					"adjusted_eight_month_lookback_df = compute_ols_prediction(adjusted_billing_pdf, lookback=12, prediction_interval=90)\r\n",
+					"adjusted_twelve_month_lookback_df = compute_ols_prediction(adjusted_billing_pdf, lookback=24, prediction_interval=90)\r\n",
+					"adjusted_sixteen_month_lookback_df = compute_ols_prediction(adjusted_billing_pdf, lookback=-1, prediction_interval=90)\r\n",
 					"\r\n",
 					"adjusted_billing_df = adjusted_billing_df.join(adjusted_four_month_lookback_df, on='Date', how='outer')\r\n",
 					"adjusted_billing_df = adjusted_billing_df.join(adjusted_eight_month_lookback_df, on='Date', how='outer')\r\n",
