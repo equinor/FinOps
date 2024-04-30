@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "d65c6e8d-4aae-433a-9b14-91613a9016f5"
+				"spark.autotune.trackingId": "6b860c1f-ff4c-4410-bffb-a2f80a100aaa"
 			}
 		},
 		"metadata": {
@@ -56,7 +56,7 @@
 				"source": [
 					"import pyspark.sql.functions as F"
 				],
-				"execution_count": 8
+				"execution_count": 79
 			},
 			{
 				"cell_type": "code",
@@ -73,9 +73,10 @@
 				},
 				"source": [
 					"cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet'\r\n",
+					"# cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 13
+				"execution_count": 80
 			},
 			{
 				"cell_type": "code",
@@ -92,9 +93,9 @@
 				},
 				"source": [
 					"start_date = '202401'\r\n",
-					"end_date = '202402'"
+					"end_date = '202403'"
 				],
-				"execution_count": 14
+				"execution_count": 81
 			},
 			{
 				"cell_type": "code",
@@ -113,7 +114,25 @@
 					"cost_df = cost_df.withColumn('ShortDate', F.date_format(F.col('Date'), 'yyyyMM'))\r\n",
 					"cost_df = cost_df.where(F.col('ShortDate').isin([start_date, end_date]))"
 				],
-				"execution_count": 15
+				"execution_count": 82
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cost_df = cost_df.where(F.col('MeterCategory') == 'Storage')"
+				],
+				"execution_count": 83
 			},
 			{
 				"cell_type": "code",
@@ -130,11 +149,11 @@
 				},
 				"source": [
 					"cost_df = cost_df \\\r\n",
-					"    .select('ShortDate', 'MeterCategory', 'MeterSubCategory', 'CostInBillingCurrency') \\\r\n",
-					"    .groupBy('ShortDate', 'MeterCategory', 'MeterSubCategory') \\\r\n",
+					"    .select('ShortDate', 'MeterCategory', 'SubscriptionName', 'CostInBillingCurrency') \\\r\n",
+					"    .groupBy('ShortDate', 'MeterCategory', 'SubscriptionName') \\\r\n",
 					"    .agg(F.sum('CostInBillingCurrency').alias('Cost'))"
 				],
-				"execution_count": 16
+				"execution_count": 84
 			},
 			{
 				"cell_type": "code",
@@ -150,9 +169,13 @@
 					}
 				},
 				"source": [
-					"pivot = cost_df.groupBy('MeterCategory').pivot('ShortDate').agg(F.first('Cost'))"
+					"pivot = cost_df.groupBy('MeterCategory', 'SubscriptionName').pivot('ShortDate').agg(F.first('Cost'))\r\n",
+					"pivot = pivot.withColumn(start_date, F.when(F.col(start_date).isNull(), 0).otherwise(F.col(start_date)))\r\n",
+					"pivot = pivot.withColumn(end_date, F.when(F.col(end_date).isNull(), 0).otherwise(F.col(end_date)))\r\n",
+					"pivot = pivot.withColumn(\"IncreaseInPercentage\", ((F.col(end_date) / F.col(start_date)) - 1) * 100)\r\n",
+					"pivot = pivot.withColumn(\"CostIncrease\", F.col(end_date) - F.col(start_date))"
 				],
-				"execution_count": null
+				"execution_count": 85
 			},
 			{
 				"cell_type": "code",
@@ -168,27 +191,14 @@
 					}
 				},
 				"source": [
-					""
+					"pivot = pivot.withColumn('CostStatus', \r\n",
+					"    F.when((F.col(start_date) == 0) & (F.col(end_date) == 0), 'Ignore')\r\n",
+					"    .when((F.col(start_date) == 0) & (F.col(end_date) > 0), 'New Service')\r\n",
+					"    .when((F.col(start_date) > 0) & (F.col(end_date) == 0), 'Removed Service')\r\n",
+					"    .otherwise('Continuous Service')\r\n",
+					")"
 				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"adf_pricesheet = adf_pricesheet.groupBy('PricesheetJoinKey').pivot('AHB').agg(F.first('NormalizedUnitPrice'))"
-				],
-				"execution_count": null
+				"execution_count": 86
 			}
 		]
 	}
