@@ -38218,7 +38218,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "71b68efe-677d-490b-9a70-aea1ebb80d03"
+						"spark.autotune.trackingId": "bcedafcb-3790-4658-9c1e-98df6586bba2"
 					}
 				},
 				"metadata": {
@@ -38243,8 +38243,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -38609,7 +38608,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet'\r\n",
 							"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
@@ -42292,7 +42290,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "a23645b5-23e4-4651-86a2-7e0efb0503cc"
+						"spark.autotune.trackingId": "eef46604-ec37-4734-a153-faf440465f41"
 					}
 				},
 				"metadata": {
@@ -42317,7 +42315,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -42395,6 +42394,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"def get_last_day_prev_month(to_date):\r\n",
 							"    current_month = int(to_date[4:6])\r\n",
@@ -42552,9 +42552,12 @@
 							"    ## DETERMINE IF WINDOWS/SQL SERVER IS HUB ENABLED/ELIGIBLE\r\n",
 							"\r\n",
 							"    # Compute if Windows Server has Azure Hybrid Benefit enabled\r\n",
-							"    cost_df = cost_df.withColumn('WindowsAHB', F.when(F.col('ServiceInfo2') == 'Windows Server BYOL', AHBStatus.Enabled.value)\\\r\n",
-							"                                                            .when(F.col('MeterSubCategory').contains('Windows'), AHBStatus.NotEnabled.value)\\\r\n",
-							"                                                            .otherwise(AHBStatus.NotSupported.value))\r\n",
+							"    cost_df = cost_df.withColumn('WindowsAHB', \r\n",
+							"        F.when(F.col('ResourceName').startswith('CVD-'), AHBStatus.NotSupported.value)\r\n",
+							"        .when(F.col('ServiceInfo2') == 'Windows Server BYOL', AHBStatus.Enabled.value)\r\n",
+							"        .when(F.col('MeterSubCategory').contains('Windows'), AHBStatus.NotEnabled.value)\r\n",
+							"        .otherwise(AHBStatus.NotSupported.value)\r\n",
+							"    )\r\n",
 							"\r\n",
 							"    # Compute if SQL Server has Azure Hybrid Benefit enabled\r\n",
 							"    is_sql_db = (F.col('ResourceId').like('%Microsoft.Sql/servers%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
@@ -44539,7 +44542,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "83debda8-7d2e-4af8-8160-3a15069b1ce4"
+						"spark.autotune.trackingId": "f30e18f0-9f9d-43dc-9a99-e3fa046ad835"
 					}
 				},
 				"metadata": {
@@ -44564,13 +44567,15 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"import pyspark.sql.types as T\r\n",
@@ -45895,7 +45900,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "ed77ed6e-6491-4d55-96c0-04eea1834db1"
+						"spark.autotune.trackingId": "41f57c0b-327d-4eb2-ba06-07131c344dd4"
 					}
 				},
 				"metadata": {
@@ -45920,7 +45925,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -45940,6 +45946,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"from datetime import timedelta, datetime\r\n",
 							"import pytz\r\n",
@@ -48243,7 +48250,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "a08d01d7-6a47-42a8-bf3a-456faeeb5759"
+						"spark.autotune.trackingId": "79753de2-8154-41bf-aa76-aed23b06bf0e"
 					}
 				},
 				"metadata": {
@@ -48268,7 +48275,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -48288,6 +48296,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"from datetime import timedelta, datetime\r\n",
 							"from dateutil.relativedelta import relativedelta\r\n",
