@@ -6,6 +6,9 @@
 				"name": "Extend Amortized COst",
 				"type": "ExecutePipeline",
 				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
 				"userProperties": [],
 				"typeProperties": {
 					"pipeline": {
@@ -107,7 +110,7 @@
 				"type": "SynapseNotebook",
 				"dependsOn": [
 					{
-						"activity": "Prepare latest ahb deployments in parquet",
+						"activity": "Estimate Storage Volume",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -175,6 +178,33 @@
 						"spark.dynamicAllocation.maxExecutors": null
 					},
 					"numExecutors": null
+				}
+			},
+			{
+				"name": "Estimate Storage Volume",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "Prepare latest ahb deployments in parquet",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "calculate-storage-volume",
+						"type": "NotebookReference"
+					},
+					"snapshot": true
 				}
 			}
 		],
