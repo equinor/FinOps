@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "a23645b5-23e4-4651-86a2-7e0efb0503cc"
+				"spark.autotune.trackingId": "f7d79649-3eb1-4852-beed-3af232b47eff"
 			}
 		},
 		"metadata": {
@@ -274,9 +274,12 @@
 					"    ## DETERMINE IF WINDOWS/SQL SERVER IS HUB ENABLED/ELIGIBLE\r\n",
 					"\r\n",
 					"    # Compute if Windows Server has Azure Hybrid Benefit enabled\r\n",
-					"    cost_df = cost_df.withColumn('WindowsAHB', F.when(F.col('ServiceInfo2') == 'Windows Server BYOL', AHBStatus.Enabled.value)\\\r\n",
-					"                                                            .when(F.col('MeterSubCategory').contains('Windows'), AHBStatus.NotEnabled.value)\\\r\n",
-					"                                                            .otherwise(AHBStatus.NotSupported.value))\r\n",
+					"    cost_df = cost_df.withColumn('WindowsAHB', \r\n",
+					"        F.when(F.col('ResourceName').startswith('CVD-'), AHBStatus.NotSupported.value)\r\n",
+					"        .when(F.col('ServiceInfo2') == 'Windows Server BYOL', AHBStatus.Enabled.value)\r\n",
+					"        .when(F.col('MeterSubCategory').contains('Windows'), AHBStatus.NotEnabled.value)\r\n",
+					"        .otherwise(AHBStatus.NotSupported.value)\r\n",
+					"    )\r\n",
 					"\r\n",
 					"    # Compute if SQL Server has Azure Hybrid Benefit enabled\r\n",
 					"    is_sql_db = (F.col('ResourceId').like('%Microsoft.Sql/servers%')) & (F.col('MeterCategory').like('SQL%'))\r\n",
