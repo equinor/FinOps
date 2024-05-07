@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "bcedafcb-3790-4658-9c1e-98df6586bba2"
+				"spark.autotune.trackingId": "24eff800-ebbb-46a2-ae86-61fe17bcc2bc"
 			}
 		},
 		"metadata": {
@@ -77,54 +77,6 @@
 					}
 				},
 				"source": [
-					"Azure Cosmos DB\r\n",
-					"microsoft.documentdb/databaseaccounts\r\n",
-					"\r\n",
-					"Azure Database for MySQL\r\n",
-					"microsoft.dbformysql/servers\r\n",
-					"\r\n",
-					"Azure Database for MySQL\r\n",
-					"microsoft.dbformysql/flexibleservers\r\n",
-					"\r\n",
-					"Azure Database for PostgreSQL\r\n",
-					"microsoft.dbforpostgresql/servers\r\n",
-					"\r\n",
-					"Azure Database for PostgreSQL\r\n",
-					"microsoft.dbforpostgresql/flexibleservers\r\n",
-					"\r\n",
-					"Azure Database for PostgreSQL\r\n",
-					"microsoft.dbforpostgresql/servergroupsv2\r\n",
-					"\r\n",
-					"Azure DevOps\r\n",
-					"microsoft.visualstudio/organizations\r\n",
-					"\r\n",
-					"Azure Monitor\r\n",
-					"microsoft.operationalinsights/workspaces\r\n",
-					"\r\n",
-					"Azure NetApp Files\r\n",
-					"microsoft.netapp/netappaccounts\r\n",
-					"\r\n",
-					"Azure Synapse Analytics\r\n",
-					"microsoft.sql/servers\r\n",
-					"\r\n",
-					"Azure Synapse Analytics\r\n",
-					"microsoft.synapse/workspaces\r\n",
-					"\r\n",
-					"Backup\r\n",
-					"microsoft.dataprotection/backupvaults\r\n",
-					"\r\n",
-					"Backup\r\n",
-					"microsoft.recoveryservices/vaults\r\n",
-					"\r\n",
-					"Container Registry\r\n",
-					"microsoft.containerregistry/registries\r\n",
-					"\r\n",
-					"Event Hubs\r\n",
-					"microsoft.eventhub/namespaces\r\n",
-					"\r\n",
-					"Event Hubs\r\n",
-					"microsoft.eventhub/clusters\r\n",
-					"\r\n",
 					"GitHub\r\n",
 					"github/enterpriseaccount\r\n",
 					"\r\n",
@@ -143,21 +95,6 @@
 					"Microsoft Fabric\r\n",
 					"microsoft.fabric/capacities\r\n",
 					"\r\n",
-					"SQL Database\r\n",
-					"microsoft.sql/servers\r\n",
-					"\r\n",
-					"SQL Database\r\n",
-					"microsoft.sql/locations\r\n",
-					"\r\n",
-					"SQL Managed Instance\r\n",
-					"microsoft.sql/locations\r\n",
-					"\r\n",
-					"SQL Managed Instance\r\n",
-					"microsoft.sql/managedinstances\r\n",
-					"\r\n",
-					"Storage\r\n",
-					"microsoft.storage/storageaccounts\r\n",
-					"\r\n",
 					"Storage\r\n",
 					"microsoft.compute/snapshots\r\n",
 					"\r\n",
@@ -171,20 +108,70 @@
 					"microsoft.kusto/clusters\r\n",
 					"\r\n",
 					"Storage\r\n",
-					"microsoft.classicstorage/storageaccounts\r\n",
-					"\r\n",
-					"Storage\r\n",
 					"microsoft.compute/images\r\n",
 					"\r\n",
 					"Storage\r\n",
 					"microsoft.compute/restorepointcollections\r\n",
 					"\r\n",
 					"Storage\r\n",
-					"microsoft.storagecache/amlfilesystems\r\n",
-					"\r\n",
-					"Storage\r\n",
-					"microsoft.compute/disks"
+					"microsoft.storagecache/amlfilesystems"
 				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(cost_df.where((F.col('MeterCategory') == 'Container Registry')).select('MeterName', 'UnitOfMeasure').distinct())"
+				],
+				"execution_count": 37
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"test = cost_df.where((F.col('MeterCategory') == 'Container Registry') & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES)))\r\n",
+					"test = test \\\r\n",
+					"    .select('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'UnitOfMeasure', 'MeterName', 'AppID', 'Quantity') \\\r\n",
+					"    .groupBy('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'UnitOfMeasure', 'MeterName', 'AppID') \\\r\n",
+					"    .agg(F.sum('Quantity').alias('Quantity'))\r\n",
+					"\r\n",
+					"# Compute storage volume estimates from quantity\r\n",
+					"test = test.withColumn('EstimatedVolumeGiB',\r\n",
+					"    F.when(F.col('UnitOfMeasure') == '1 GiB/Hour', F.col('Quantity') / HOURS_PER_DAY)\r\n",
+					"    .when(F.col('UnitOfMeasure') == '1 GiB/Month', F.col('Quantity') * (HOURS_PER_MONTH / HOURS_PER_DAY))\r\n",
+					"    .when(F.col('UnitOfMeasure') == '1 GB/Month', F.col('Quantity') * (HOURS_PER_MONTH / HOURS_PER_DAY) * GIB_PER_GB)\r\n",
+					"    .when(F.col('UnitOfMeasure') == '1 TB/Month', F.col('Quantity') * (HOURS_PER_MONTH / HOURS_PER_DAY) * GIB_PER_GB * GB_PER_TB)\r\n",
+					"    .otherwise(None)\r\n",
+					")\r\n",
+					"test = test.withColumn('EstimatedVolumeGiB', F.col('EstimatedVolumeGiB').cast(T.DoubleType()))\r\n",
+					"\r\n",
+					"test = test.withColumn('EstimatedVolumeTiB', F.col('EstimatedVolumeGiB') / GIB_PER_TIB)\r\n",
+					"test = test.withColumn('EstimatedVolumePiB', F.col('EstimatedVolumeTiB') / TIB_PER_PIB)\r\n",
+					"display(test.agg(F.sum('EstimatedVolumeTiB')))"
+				],
+				"execution_count": 38
 			},
 			{
 				"cell_type": "markdown",
@@ -227,7 +214,7 @@
 					"from enum import Enum\r\n",
 					"from datetime import datetime, timedelta"
 				],
-				"execution_count": 26
+				"execution_count": 22
 			},
 			{
 				"cell_type": "code",
@@ -252,9 +239,14 @@
 					"    SQLManagedInstance = \"SQL Managed Instance\"\r\n",
 					"    CosmosDB = \"Cosmos DB\"\r\n",
 					"    MySQLDatabase = \"MySQL Database\"\r\n",
-					"    PostgreSQLDatabase = \"PostgreSQL Database\""
+					"    PostgreSQLDatabase = \"PostgreSQL Database\"\r\n",
+					"    EventHubs = \"Event Hubs\"\r\n",
+					"    AzureDevOps = \"Azure DevOps\"\r\n",
+					"    AzureMonitor = \"Azure Monitor\"\r\n",
+					"    SynapseAnalytics = \"Synapse Analytics\"\r\n",
+					"    ContainerRegistry = \"Container Registry\""
 				],
-				"execution_count": 27
+				"execution_count": 23
 			},
 			{
 				"cell_type": "code",
@@ -274,9 +266,10 @@
 					"GIB_PER_TIB = 1024\r\n",
 					"TIB_PER_PIB = 1024\r\n",
 					"GIB_PER_GB = 0.931322575\r\n",
+					"GB_PER_TB = 1000\r\n",
 					"HOURS_PER_DAY = 24"
 				],
-				"execution_count": 28
+				"execution_count": 35
 			},
 			{
 				"cell_type": "code",
@@ -310,7 +303,7 @@
 					"    'Backup Capacity'\r\n",
 					"]"
 				],
-				"execution_count": 29
+				"execution_count": 25
 			},
 			{
 				"cell_type": "markdown",
@@ -344,7 +337,7 @@
 					"app_df = spark.read.format('parquet').load(app_path)\r\n",
 					"app_df = app_df.select('AppID', 'OrgUnitLevel0', 'OrgUnitLevel1', 'OrgUnitLevel2')"
 				],
-				"execution_count": 30
+				"execution_count": 26
 			},
 			{
 				"cell_type": "markdown",
@@ -388,7 +381,7 @@
 					"    .otherwise(F.col('Size'))\r\n",
 					")"
 				],
-				"execution_count": 31
+				"execution_count": 27
 			},
 			{
 				"cell_type": "markdown",
@@ -412,7 +405,7 @@
 					"one_year_back = datetime.now().date()-timedelta(days=365)\r\n",
 					"cost_df = cost_df.where(F.col('Date') >= one_year_back)"
 				],
-				"execution_count": 32
+				"execution_count": 28
 			},
 			{
 				"cell_type": "markdown",
@@ -452,6 +445,11 @@
 					"is_cosmos_db = (F.col('MeterCategory') == 'Azure Cosmos DB') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
 					"is_mysql = (F.col('MeterCategory') == 'Azure Database for MySQL') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
 					"is_postgres = (F.col('MeterCategory') == 'Azure Database for PostgreSQL') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+					"is_eventhub = (F.col('MeterCategory') == 'Event Hubs') & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+					"is_devops = (F.col('MeterCategory') == 'Azure DevOps') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+					"is_azure_monitor = (F.col('MeterCategory') == 'Azure Monitor') & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+					"is_synapse = (F.col('MeterCategory') == 'Azure Synapse Analytics') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+					"is_container_registry = (F.col('MeterCategory') == 'Container Registry') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
 					"\r\n",
 					"# Define storage type for each relevant service\r\n",
 					"storage_df = cost_df.withColumn('StorageType',\r\n",
@@ -465,12 +463,17 @@
 					"    .when(is_cosmos_db, StorageType.CosmosDB.value)\r\n",
 					"    .when(is_mysql, StorageType.MySQLDatabase.value)\r\n",
 					"    .when(is_postgres, StorageType.PostgreSQLDatabase.value)\r\n",
+					"    .when(is_eventhub, StorageType.EventHubs.value)\r\n",
+					"    .when(is_devops, StorageType.AzureDevOps.value)\r\n",
+					"    .when(is_azure_monitor, StorageType.AzureMonitor.value)\r\n",
+					"    .when(is_synapse, StorageType.SynapseAnalytics.value)\r\n",
+					"    .when(is_container_registry, StorageType.ContainerRegistry.value)\r\n",
 					"    .otherwise(None)\r\n",
 					")\r\n",
 					"\r\n",
 					"storage_df = storage_df.where(F.col('StorageType').isNotNull())"
 				],
-				"execution_count": 33
+				"execution_count": 30
 			},
 			{
 				"cell_type": "code",
@@ -499,7 +502,7 @@
 					")\r\n",
 					"storage_df = storage_df.join(disk_size_df.select('DiskType', 'DiskSizeGiB'), 'DiskType', 'left')"
 				],
-				"execution_count": 34
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -520,6 +523,7 @@
 					"    F.when(F.col('UnitOfMeasure') == '1 GiB/Hour', F.col('Quantity') / HOURS_PER_DAY)\r\n",
 					"    .when(F.col('UnitOfMeasure') == '1 GiB/Month', F.col('Quantity') * (HOURS_PER_MONTH / HOURS_PER_DAY))\r\n",
 					"    .when(F.col('UnitOfMeasure') == '1 GB/Month', F.col('Quantity') * (HOURS_PER_MONTH / HOURS_PER_DAY) * GIB_PER_GB)\r\n",
+					"    .when(F.col('UnitOfMeasure') == '1 TB/Month', F.col('Quantity') * (HOURS_PER_MONTH / HOURS_PER_DAY) * GIB_PER_GB * GB_PER_TB)\r\n",
 					"    .when(is_pre_allocated_disk, F.col('DiskSizeGiB'))\r\n",
 					"    .otherwise(None)\r\n",
 					")\r\n",
@@ -528,25 +532,7 @@
 					"storage_df = storage_df.withColumn('EstimatedVolumeTiB', F.col('EstimatedVolumeGiB') / GIB_PER_TIB)\r\n",
 					"storage_df = storage_df.withColumn('EstimatedVolumePiB', F.col('EstimatedVolumeTiB') / TIB_PER_PIB)"
 				],
-				"execution_count": 35
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"print(storage_df.schema)"
-				],
-				"execution_count": 36
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -565,7 +551,7 @@
 					"# Enrich orgianisational data from Service Now based on application metadata\r\n",
 					"storage_df = storage_df.join(app_df, 'AppID', 'left')"
 				],
-				"execution_count": 37
+				"execution_count": 12
 			},
 			{
 				"cell_type": "code",
@@ -584,7 +570,7 @@
 					"target_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/storage/storage-volume-estimates-1-year.parquet\"\r\n",
 					"storage_df.write.format('parquet').mode('overwrite').save(target_path)"
 				],
-				"execution_count": 38
+				"execution_count": 13
 			}
 		]
 	}
