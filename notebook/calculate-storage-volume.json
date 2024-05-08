@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "24eff800-ebbb-46a2-ae86-61fe17bcc2bc"
+				"spark.autotune.trackingId": "fe84adaf-a1c0-4f0f-8ecd-1afbeabbe07b"
 			}
 		},
 		"metadata": {
@@ -52,150 +52,6 @@
 		},
 		"cells": [
 			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"## Storage Account\r\n",
-					"- Do not consider bandwidth, only storage\r\n",
-					"- To identify storage accounts, look at `ResourceId` values like `Microsoft.Storage/storageAccounts`\r\n",
-					"- Only relevant cost has `UnitOfMeasure` set to `1 GB/Month`"
-				]
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"GitHub\r\n",
-					"github/enterpriseaccount\r\n",
-					"\r\n",
-					"Insight and Analytics\r\n",
-					"microsoft.operationalinsights/workspaces\r\n",
-					"\r\n",
-					"Log Analytics\r\n",
-					"microsoft.operationalinsights/workspaces\r\n",
-					"\r\n",
-					"Log Analytics\r\n",
-					"microsoft.insights/components\r\n",
-					"\r\n",
-					"Logic Apps\r\n",
-					"microsoft.logic/workflows\r\n",
-					"\r\n",
-					"Microsoft Fabric\r\n",
-					"microsoft.fabric/capacities\r\n",
-					"\r\n",
-					"Storage\r\n",
-					"microsoft.compute/snapshots\r\n",
-					"\r\n",
-					"Storage\r\n",
-					"microsoft.compute/galleries\r\n",
-					"\r\n",
-					"Storage\r\n",
-					"microsoft.machinelearningservices/workspaces\r\n",
-					"\r\n",
-					"Storage\r\n",
-					"microsoft.kusto/clusters\r\n",
-					"\r\n",
-					"Storage\r\n",
-					"microsoft.compute/images\r\n",
-					"\r\n",
-					"Storage\r\n",
-					"microsoft.compute/restorepointcollections\r\n",
-					"\r\n",
-					"Storage\r\n",
-					"microsoft.storagecache/amlfilesystems"
-				]
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(cost_df.where((F.col('MeterCategory') == 'Container Registry')).select('MeterName', 'UnitOfMeasure').distinct())"
-				],
-				"execution_count": 37
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"test = cost_df.where((F.col('MeterCategory') == 'Container Registry') & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES)))\r\n",
-					"test = test \\\r\n",
-					"    .select('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'UnitOfMeasure', 'MeterName', 'AppID', 'Quantity') \\\r\n",
-					"    .groupBy('Date', 'ResourceId', 'ResourceName', 'ResourceGroup', 'SubscriptionName', 'UnitOfMeasure', 'MeterName', 'AppID') \\\r\n",
-					"    .agg(F.sum('Quantity').alias('Quantity'))\r\n",
-					"\r\n",
-					"# Compute storage volume estimates from quantity\r\n",
-					"test = test.withColumn('EstimatedVolumeGiB',\r\n",
-					"    F.when(F.col('UnitOfMeasure') == '1 GiB/Hour', F.col('Quantity') / HOURS_PER_DAY)\r\n",
-					"    .when(F.col('UnitOfMeasure') == '1 GiB/Month', F.col('Quantity') * (HOURS_PER_MONTH / HOURS_PER_DAY))\r\n",
-					"    .when(F.col('UnitOfMeasure') == '1 GB/Month', F.col('Quantity') * (HOURS_PER_MONTH / HOURS_PER_DAY) * GIB_PER_GB)\r\n",
-					"    .when(F.col('UnitOfMeasure') == '1 TB/Month', F.col('Quantity') * (HOURS_PER_MONTH / HOURS_PER_DAY) * GIB_PER_GB * GB_PER_TB)\r\n",
-					"    .otherwise(None)\r\n",
-					")\r\n",
-					"test = test.withColumn('EstimatedVolumeGiB', F.col('EstimatedVolumeGiB').cast(T.DoubleType()))\r\n",
-					"\r\n",
-					"test = test.withColumn('EstimatedVolumeTiB', F.col('EstimatedVolumeGiB') / GIB_PER_TIB)\r\n",
-					"test = test.withColumn('EstimatedVolumePiB', F.col('EstimatedVolumeTiB') / TIB_PER_PIB)\r\n",
-					"display(test.agg(F.sum('EstimatedVolumeTiB')))"
-				],
-				"execution_count": 38
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"## UnitOfMeasure of interest\r\n",
-					"- 1 GB/Month\r\n",
-					"- 1 GiB/Hour \r\n",
-					"- 1 GiB/Month\r\n",
-					"- 1 TB/Month\r\n",
-					"- 1/Hour ?\r\n",
-					"- 1/Day ?\r\n",
-					"- 1/Month\r\n",
-					"\r\n",
-					""
-				]
-			},
-			{
 				"cell_type": "code",
 				"metadata": {
 					"jupyter": {
@@ -214,7 +70,7 @@
 					"from enum import Enum\r\n",
 					"from datetime import datetime, timedelta"
 				],
-				"execution_count": 22
+				"execution_count": 33
 			},
 			{
 				"cell_type": "code",
@@ -244,9 +100,17 @@
 					"    AzureDevOps = \"Azure DevOps\"\r\n",
 					"    AzureMonitor = \"Azure Monitor\"\r\n",
 					"    SynapseAnalytics = \"Synapse Analytics\"\r\n",
-					"    ContainerRegistry = \"Container Registry\""
+					"    ContainerRegistry = \"Container Registry\"\r\n",
+					"    GitHub = \"GitHub\"\r\n",
+					"    InsightsAndAnalytics = \"Insight and Analytics\"\r\n",
+					"    LogAnalytics = \"Log Analytics\"\r\n",
+					"    LogicApps = \"Logic Apps\"\r\n",
+					"    Fabric = \"Fabric\"\r\n",
+					"    Snapshots = \"Snapshots\"\r\n",
+					"    KustoClusters = \"Kusto Clusters\"\r\n",
+					"    AmlFileSystems = \"Aml Files Systems\""
 				],
-				"execution_count": 23
+				"execution_count": 34
 			},
 			{
 				"cell_type": "code",
@@ -291,9 +155,16 @@
 					"    '1 GiB/Month',\r\n",
 					"]\r\n",
 					"\r\n",
-					"STORAGE_ACCOUNT_RESOURCE_IDS = [\r\n",
+					"STORAGE_ACCOUNT_RESOURCE_TYPES = [\r\n",
 					"    'microsoft.storage/storageaccounts',\r\n",
 					"    'microsoft.classicstorage/storageaccounts'\r\n",
+					"]\r\n",
+					"\r\n",
+					"SNAPSHOT_RESOURCE_TYPES = [\r\n",
+					"    'microsoft.compute/snapshots',\r\n",
+					"    'microsoft.compute/galleries',\r\n",
+					"    'microsoft.compute/images',\r\n",
+					"    'microsoft.compute/restorepointcollections'\r\n",
 					"]\r\n",
 					"\r\n",
 					"NETAPP_CAPACITIES = [\r\n",
@@ -303,7 +174,7 @@
 					"    'Backup Capacity'\r\n",
 					"]"
 				],
-				"execution_count": 25
+				"execution_count": 36
 			},
 			{
 				"cell_type": "markdown",
@@ -337,7 +208,7 @@
 					"app_df = spark.read.format('parquet').load(app_path)\r\n",
 					"app_df = app_df.select('AppID', 'OrgUnitLevel0', 'OrgUnitLevel1', 'OrgUnitLevel2')"
 				],
-				"execution_count": 26
+				"execution_count": 37
 			},
 			{
 				"cell_type": "markdown",
@@ -381,7 +252,7 @@
 					"    .otherwise(F.col('Size'))\r\n",
 					")"
 				],
-				"execution_count": 27
+				"execution_count": 38
 			},
 			{
 				"cell_type": "markdown",
@@ -405,7 +276,7 @@
 					"one_year_back = datetime.now().date()-timedelta(days=365)\r\n",
 					"cost_df = cost_df.where(F.col('Date') >= one_year_back)"
 				],
-				"execution_count": 28
+				"execution_count": 39
 			},
 			{
 				"cell_type": "markdown",
@@ -435,7 +306,7 @@
 				},
 				"source": [
 					"# Define service masks\r\n",
-					"is_storage_account = (F.col('MeterCategory') == 'Storage') & (F.col('ResourceType').isin(STORAGE_ACCOUNT_RESOURCE_IDS)) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+					"is_storage_account = (F.col('MeterCategory') == 'Storage') & (F.col('ResourceType').isin(STORAGE_ACCOUNT_RESOURCE_TYPES)) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
 					"is_managed_disk = (F.col('MeterCategory') == 'Storage') & (F.col('ResourceType') == 'microsoft.compute/disks') & (F.col('MeterName').contains('Disk')) & (F.col('UnitOfMeasure') == '1/Month')\r\n",
 					"is_managed_disk_redundancy = (F.col('MeterCategory') == 'Storage') & (F.col('ResourceType') == 'microsoft.compute/disks') & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
 					"is_sql_db = (F.col('MeterCategory') == 'SQL Database') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
@@ -450,6 +321,14 @@
 					"is_azure_monitor = (F.col('MeterCategory') == 'Azure Monitor') & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
 					"is_synapse = (F.col('MeterCategory') == 'Azure Synapse Analytics') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
 					"is_container_registry = (F.col('MeterCategory') == 'Container Registry') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+					"is_github = (F.col('MeterCategory') == 'GitHub') & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+					"is_insights_and_analytics = (F.col('MeterCategory') == 'Insight and Analytics') & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+					"is_log_analytics = (F.col('MeterCategory') == 'Log Analytics') & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+					"is_logic_apps = (F.col('MeterCategory') == 'Logic Apps') & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+					"is_fabric = (F.col('MeterCategory') == 'Microsoft Fabric') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+					"is_snapshots = (F.col('MeterCategory') == 'Storage') & (F.col('ResourceType').isin(SNAPSHOT_RESOURCE_TYPES)) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+					"is_kusto_cluster = (F.col('MeterCategory') == 'Storage') & (F.col('ResourceType') == 'microsoft.kusto/clusters') & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+					"is_aml_file_system = (F.col('MeterCategory') == 'Storage') & (F.col('ResourceType') == 'microsoft.storagecache/amlfilesystems') & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
 					"\r\n",
 					"# Define storage type for each relevant service\r\n",
 					"storage_df = cost_df.withColumn('StorageType',\r\n",
@@ -468,12 +347,18 @@
 					"    .when(is_azure_monitor, StorageType.AzureMonitor.value)\r\n",
 					"    .when(is_synapse, StorageType.SynapseAnalytics.value)\r\n",
 					"    .when(is_container_registry, StorageType.ContainerRegistry.value)\r\n",
+					"    .when(is_github, StorageType.GitHub.value)\r\n",
+					"    .when(is_insights_and_analytics, StorageType.InsightsAndAnalytics.value)\r\n",
+					"    .when(is_logic_apps, StorageType.LogicApps.value)\r\n",
+					"    .when(is_fabric, StorageType.Fabric.value)\r\n",
+					"    .when(is_snapshots, StorageType.Snapshots.value)\r\n",
+					"    .when(is_kusto_cluster, StorageType.KustoClusters.value)\r\n",
 					"    .otherwise(None)\r\n",
 					")\r\n",
 					"\r\n",
 					"storage_df = storage_df.where(F.col('StorageType').isNotNull())"
 				],
-				"execution_count": 30
+				"execution_count": 40
 			},
 			{
 				"cell_type": "code",
@@ -502,7 +387,7 @@
 					")\r\n",
 					"storage_df = storage_df.join(disk_size_df.select('DiskType', 'DiskSizeGiB'), 'DiskType', 'left')"
 				],
-				"execution_count": 9
+				"execution_count": 41
 			},
 			{
 				"cell_type": "code",
@@ -532,7 +417,7 @@
 					"storage_df = storage_df.withColumn('EstimatedVolumeTiB', F.col('EstimatedVolumeGiB') / GIB_PER_TIB)\r\n",
 					"storage_df = storage_df.withColumn('EstimatedVolumePiB', F.col('EstimatedVolumeTiB') / TIB_PER_PIB)"
 				],
-				"execution_count": 10
+				"execution_count": 42
 			},
 			{
 				"cell_type": "code",
@@ -551,7 +436,7 @@
 					"# Enrich orgianisational data from Service Now based on application metadata\r\n",
 					"storage_df = storage_df.join(app_df, 'AppID', 'left')"
 				],
-				"execution_count": 12
+				"execution_count": 43
 			},
 			{
 				"cell_type": "code",
@@ -570,7 +455,7 @@
 					"target_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/storage/storage-volume-estimates-1-year.parquet\"\r\n",
 					"storage_df.write.format('parquet').mode('overwrite').save(target_path)"
 				],
-				"execution_count": 13
+				"execution_count": 44
 			}
 		]
 	}
