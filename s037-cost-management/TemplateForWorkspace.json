@@ -1005,30 +1005,6 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
-		"sprkpool33large_delayInMinutes": {
-			"type": "int",
-			"defaultValue": 10
-		},
-		"sprkpool33large_maxNodeCount": {
-			"type": "int",
-			"defaultValue": 12
-		},
-		"sprkpool33large_minNodeCount": {
-			"type": "int",
-			"defaultValue": 3
-		},
-		"sprkpool33large_nodeCount": {
-			"type": "int",
-			"defaultValue": 3
-		},
-		"sprkpool33large_nodeSize": {
-			"type": "string",
-			"defaultValue": "Large"
-		},
-		"sprkpool33large_sparkVersion": {
-			"type": "string",
-			"defaultValue": "3.3"
-		},
 		"sparkpool32_delayInMinutes": {
 			"type": "int",
 			"defaultValue": 15
@@ -1052,6 +1028,30 @@
 		"sparkpool32_sparkVersion": {
 			"type": "string",
 			"defaultValue": "3.2"
+		},
+		"sprkpool33large_delayInMinutes": {
+			"type": "int",
+			"defaultValue": 10
+		},
+		"sprkpool33large_maxNodeCount": {
+			"type": "int",
+			"defaultValue": 12
+		},
+		"sprkpool33large_minNodeCount": {
+			"type": "int",
+			"defaultValue": 3
+		},
+		"sprkpool33large_nodeCount": {
+			"type": "int",
+			"defaultValue": 3
+		},
+		"sprkpool33large_nodeSize": {
+			"type": "string",
+			"defaultValue": "Large"
+		},
+		"sprkpool33large_sparkVersion": {
+			"type": "string",
+			"defaultValue": "3.3"
 		}
 	},
 	"variables": {
@@ -5669,7 +5669,12 @@
 								"type": "NotebookReference"
 							},
 							"snapshot": true,
-							"conf": {}
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"numExecutors": null
 						}
 					}
 				],
@@ -38218,7 +38223,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "bcedafcb-3790-4658-9c1e-98df6586bba2"
+						"spark.autotune.trackingId": "0ab7c998-609a-4f4e-866f-319ecb59c4f5"
 					}
 				},
 				"metadata": {
@@ -38243,168 +38248,12 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
-					{
-						"cell_type": "markdown",
-						"metadata": {
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"## Storage Account\r\n",
-							"- Do not consider bandwidth, only storage\r\n",
-							"- To identify storage accounts, look at `ResourceId` values like `Microsoft.Storage/storageAccounts`\r\n",
-							"- Only relevant cost has `UnitOfMeasure` set to `1 GB/Month`"
-						]
-					},
-					{
-						"cell_type": "markdown",
-						"metadata": {
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"Azure Cosmos DB\r\n",
-							"microsoft.documentdb/databaseaccounts\r\n",
-							"\r\n",
-							"Azure Database for MySQL\r\n",
-							"microsoft.dbformysql/servers\r\n",
-							"\r\n",
-							"Azure Database for MySQL\r\n",
-							"microsoft.dbformysql/flexibleservers\r\n",
-							"\r\n",
-							"Azure Database for PostgreSQL\r\n",
-							"microsoft.dbforpostgresql/servers\r\n",
-							"\r\n",
-							"Azure Database for PostgreSQL\r\n",
-							"microsoft.dbforpostgresql/flexibleservers\r\n",
-							"\r\n",
-							"Azure Database for PostgreSQL\r\n",
-							"microsoft.dbforpostgresql/servergroupsv2\r\n",
-							"\r\n",
-							"Azure DevOps\r\n",
-							"microsoft.visualstudio/organizations\r\n",
-							"\r\n",
-							"Azure Monitor\r\n",
-							"microsoft.operationalinsights/workspaces\r\n",
-							"\r\n",
-							"Azure NetApp Files\r\n",
-							"microsoft.netapp/netappaccounts\r\n",
-							"\r\n",
-							"Azure Synapse Analytics\r\n",
-							"microsoft.sql/servers\r\n",
-							"\r\n",
-							"Azure Synapse Analytics\r\n",
-							"microsoft.synapse/workspaces\r\n",
-							"\r\n",
-							"Backup\r\n",
-							"microsoft.dataprotection/backupvaults\r\n",
-							"\r\n",
-							"Backup\r\n",
-							"microsoft.recoveryservices/vaults\r\n",
-							"\r\n",
-							"Container Registry\r\n",
-							"microsoft.containerregistry/registries\r\n",
-							"\r\n",
-							"Event Hubs\r\n",
-							"microsoft.eventhub/namespaces\r\n",
-							"\r\n",
-							"Event Hubs\r\n",
-							"microsoft.eventhub/clusters\r\n",
-							"\r\n",
-							"GitHub\r\n",
-							"github/enterpriseaccount\r\n",
-							"\r\n",
-							"Insight and Analytics\r\n",
-							"microsoft.operationalinsights/workspaces\r\n",
-							"\r\n",
-							"Log Analytics\r\n",
-							"microsoft.operationalinsights/workspaces\r\n",
-							"\r\n",
-							"Log Analytics\r\n",
-							"microsoft.insights/components\r\n",
-							"\r\n",
-							"Logic Apps\r\n",
-							"microsoft.logic/workflows\r\n",
-							"\r\n",
-							"Microsoft Fabric\r\n",
-							"microsoft.fabric/capacities\r\n",
-							"\r\n",
-							"SQL Database\r\n",
-							"microsoft.sql/servers\r\n",
-							"\r\n",
-							"SQL Database\r\n",
-							"microsoft.sql/locations\r\n",
-							"\r\n",
-							"SQL Managed Instance\r\n",
-							"microsoft.sql/locations\r\n",
-							"\r\n",
-							"SQL Managed Instance\r\n",
-							"microsoft.sql/managedinstances\r\n",
-							"\r\n",
-							"Storage\r\n",
-							"microsoft.storage/storageaccounts\r\n",
-							"\r\n",
-							"Storage\r\n",
-							"microsoft.compute/snapshots\r\n",
-							"\r\n",
-							"Storage\r\n",
-							"microsoft.compute/galleries\r\n",
-							"\r\n",
-							"Storage\r\n",
-							"microsoft.machinelearningservices/workspaces\r\n",
-							"\r\n",
-							"Storage\r\n",
-							"microsoft.kusto/clusters\r\n",
-							"\r\n",
-							"Storage\r\n",
-							"microsoft.classicstorage/storageaccounts\r\n",
-							"\r\n",
-							"Storage\r\n",
-							"microsoft.compute/images\r\n",
-							"\r\n",
-							"Storage\r\n",
-							"microsoft.compute/restorepointcollections\r\n",
-							"\r\n",
-							"Storage\r\n",
-							"microsoft.storagecache/amlfilesystems\r\n",
-							"\r\n",
-							"Storage\r\n",
-							"microsoft.compute/disks"
-						]
-					},
-					{
-						"cell_type": "markdown",
-						"metadata": {
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"## UnitOfMeasure of interest\r\n",
-							"- 1 GB/Month\r\n",
-							"- 1 GiB/Hour \r\n",
-							"- 1 GiB/Month\r\n",
-							"- 1 TB/Month\r\n",
-							"- 1/Hour ?\r\n",
-							"- 1/Day ?\r\n",
-							"- 1/Month\r\n",
-							"\r\n",
-							""
-						]
-					},
 					{
 						"cell_type": "code",
 						"metadata": {
@@ -38425,7 +38274,7 @@
 							"from datetime import datetime, timedelta"
 						],
 						"outputs": [],
-						"execution_count": 26
+						"execution_count": 47
 					},
 					{
 						"cell_type": "code",
@@ -38450,10 +38299,23 @@
 							"    SQLManagedInstance = \"SQL Managed Instance\"\r\n",
 							"    CosmosDB = \"Cosmos DB\"\r\n",
 							"    MySQLDatabase = \"MySQL Database\"\r\n",
-							"    PostgreSQLDatabase = \"PostgreSQL Database\""
+							"    PostgreSQLDatabase = \"PostgreSQL Database\"\r\n",
+							"    EventHubs = \"Event Hubs\"\r\n",
+							"    AzureDevOps = \"Azure DevOps\"\r\n",
+							"    AzureMonitor = \"Azure Monitor\"\r\n",
+							"    SynapseAnalytics = \"Synapse Analytics\"\r\n",
+							"    ContainerRegistry = \"Container Registry\"\r\n",
+							"    GitHub = \"GitHub\"\r\n",
+							"    InsightsAndAnalytics = \"Insight and Analytics\"\r\n",
+							"    LogAnalytics = \"Log Analytics\"\r\n",
+							"    LogicApps = \"Logic Apps\"\r\n",
+							"    Fabric = \"Fabric\"\r\n",
+							"    Snapshots = \"Snapshots\"\r\n",
+							"    KustoClusters = \"Kusto Clusters\"\r\n",
+							"    AmlFileSystems = \"Aml Files Systems\""
 						],
 						"outputs": [],
-						"execution_count": 27
+						"execution_count": 48
 					},
 					{
 						"cell_type": "code",
@@ -38473,10 +38335,11 @@
 							"GIB_PER_TIB = 1024\r\n",
 							"TIB_PER_PIB = 1024\r\n",
 							"GIB_PER_GB = 0.931322575\r\n",
+							"GB_PER_TB = 1000\r\n",
 							"HOURS_PER_DAY = 24"
 						],
 						"outputs": [],
-						"execution_count": 28
+						"execution_count": 49
 					},
 					{
 						"cell_type": "code",
@@ -38496,11 +38359,19 @@
 							"    '1 GB/Month',\r\n",
 							"    '1 GiB/Hour',\r\n",
 							"    '1 GiB/Month',\r\n",
+							"    '1 TB/Month'\r\n",
 							"]\r\n",
 							"\r\n",
-							"STORAGE_ACCOUNT_RESOURCE_IDS = [\r\n",
+							"STORAGE_ACCOUNT_RESOURCE_TYPES = [\r\n",
 							"    'microsoft.storage/storageaccounts',\r\n",
 							"    'microsoft.classicstorage/storageaccounts'\r\n",
+							"]\r\n",
+							"\r\n",
+							"SNAPSHOT_RESOURCE_TYPES = [\r\n",
+							"    'microsoft.compute/snapshots',\r\n",
+							"    'microsoft.compute/galleries',\r\n",
+							"    'microsoft.compute/images',\r\n",
+							"    'microsoft.compute/restorepointcollections'\r\n",
 							"]\r\n",
 							"\r\n",
 							"NETAPP_CAPACITIES = [\r\n",
@@ -38511,7 +38382,7 @@
 							"]"
 						],
 						"outputs": [],
-						"execution_count": 29
+						"execution_count": 50
 					},
 					{
 						"cell_type": "markdown",
@@ -38546,7 +38417,7 @@
 							"app_df = app_df.select('AppID', 'OrgUnitLevel0', 'OrgUnitLevel1', 'OrgUnitLevel2')"
 						],
 						"outputs": [],
-						"execution_count": 30
+						"execution_count": 51
 					},
 					{
 						"cell_type": "markdown",
@@ -38591,7 +38462,7 @@
 							")"
 						],
 						"outputs": [],
-						"execution_count": 31
+						"execution_count": 52
 					},
 					{
 						"cell_type": "markdown",
@@ -38608,6 +38479,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet'\r\n",
 							"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
@@ -38616,7 +38488,7 @@
 							"cost_df = cost_df.where(F.col('Date') >= one_year_back)"
 						],
 						"outputs": [],
-						"execution_count": 32
+						"execution_count": 53
 					},
 					{
 						"cell_type": "markdown",
@@ -38646,7 +38518,7 @@
 						},
 						"source": [
 							"# Define service masks\r\n",
-							"is_storage_account = (F.col('MeterCategory') == 'Storage') & (F.col('ResourceType').isin(STORAGE_ACCOUNT_RESOURCE_IDS)) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+							"is_storage_account = (F.col('MeterCategory') == 'Storage') & (F.col('ResourceType').isin(STORAGE_ACCOUNT_RESOURCE_TYPES)) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
 							"is_managed_disk = (F.col('MeterCategory') == 'Storage') & (F.col('ResourceType') == 'microsoft.compute/disks') & (F.col('MeterName').contains('Disk')) & (F.col('UnitOfMeasure') == '1/Month')\r\n",
 							"is_managed_disk_redundancy = (F.col('MeterCategory') == 'Storage') & (F.col('ResourceType') == 'microsoft.compute/disks') & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
 							"is_sql_db = (F.col('MeterCategory') == 'SQL Database') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
@@ -38656,6 +38528,19 @@
 							"is_cosmos_db = (F.col('MeterCategory') == 'Azure Cosmos DB') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
 							"is_mysql = (F.col('MeterCategory') == 'Azure Database for MySQL') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
 							"is_postgres = (F.col('MeterCategory') == 'Azure Database for PostgreSQL') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+							"is_eventhub = (F.col('MeterCategory') == 'Event Hubs') & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+							"is_devops = (F.col('MeterCategory') == 'Azure DevOps') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+							"is_azure_monitor = (F.col('MeterCategory') == 'Azure Monitor') & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+							"is_synapse = (F.col('MeterCategory') == 'Azure Synapse Analytics') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+							"is_container_registry = (F.col('MeterCategory') == 'Container Registry') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+							"is_github = (F.col('MeterCategory') == 'GitHub') & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+							"is_insights_and_analytics = (F.col('MeterCategory') == 'Insight and Analytics') & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+							"is_log_analytics = (F.col('MeterCategory') == 'Log Analytics') & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+							"is_logic_apps = (F.col('MeterCategory') == 'Logic Apps') & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+							"is_fabric = (F.col('MeterCategory') == 'Microsoft Fabric') & (F.col('MeterName').contains('Data Stored')) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+							"is_snapshots = (F.col('MeterCategory') == 'Storage') & (F.col('ResourceType').isin(SNAPSHOT_RESOURCE_TYPES)) & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+							"is_kusto_cluster = (F.col('MeterCategory') == 'Storage') & (F.col('ResourceType') == 'microsoft.kusto/clusters') & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
+							"is_aml_file_system = (F.col('MeterCategory') == 'Storage') & (F.col('ResourceType') == 'microsoft.storagecache/amlfilesystems') & (F.col('UnitOfMeasure').isin(UNIT_OF_MEASURES))\r\n",
 							"\r\n",
 							"# Define storage type for each relevant service\r\n",
 							"storage_df = cost_df.withColumn('StorageType',\r\n",
@@ -38669,13 +38554,26 @@
 							"    .when(is_cosmos_db, StorageType.CosmosDB.value)\r\n",
 							"    .when(is_mysql, StorageType.MySQLDatabase.value)\r\n",
 							"    .when(is_postgres, StorageType.PostgreSQLDatabase.value)\r\n",
+							"    .when(is_eventhub, StorageType.EventHubs.value)\r\n",
+							"    .when(is_devops, StorageType.AzureDevOps.value)\r\n",
+							"    .when(is_azure_monitor, StorageType.AzureMonitor.value)\r\n",
+							"    .when(is_synapse, StorageType.SynapseAnalytics.value)\r\n",
+							"    .when(is_container_registry, StorageType.ContainerRegistry.value)\r\n",
+							"    .when(is_github, StorageType.GitHub.value)\r\n",
+							"    .when(is_insights_and_analytics, StorageType.InsightsAndAnalytics.value)\r\n",
+							"    .when(is_log_analytics, StorageType.LogAnalytics.value)\r\n",
+							"    .when(is_logic_apps, StorageType.LogicApps.value)\r\n",
+							"    .when(is_fabric, StorageType.Fabric.value)\r\n",
+							"    .when(is_snapshots, StorageType.Snapshots.value)\r\n",
+							"    .when(is_kusto_cluster, StorageType.KustoClusters.value)\r\n",
+							"    .when(is_aml_file_system, StorageType.AmlFileSystems.value)\r\n",
 							"    .otherwise(None)\r\n",
 							")\r\n",
 							"\r\n",
 							"storage_df = storage_df.where(F.col('StorageType').isNotNull())"
 						],
 						"outputs": [],
-						"execution_count": 33
+						"execution_count": 54
 					},
 					{
 						"cell_type": "code",
@@ -38705,7 +38603,7 @@
 							"storage_df = storage_df.join(disk_size_df.select('DiskType', 'DiskSizeGiB'), 'DiskType', 'left')"
 						],
 						"outputs": [],
-						"execution_count": 34
+						"execution_count": 55
 					},
 					{
 						"cell_type": "code",
@@ -38726,6 +38624,7 @@
 							"    F.when(F.col('UnitOfMeasure') == '1 GiB/Hour', F.col('Quantity') / HOURS_PER_DAY)\r\n",
 							"    .when(F.col('UnitOfMeasure') == '1 GiB/Month', F.col('Quantity') * (HOURS_PER_MONTH / HOURS_PER_DAY))\r\n",
 							"    .when(F.col('UnitOfMeasure') == '1 GB/Month', F.col('Quantity') * (HOURS_PER_MONTH / HOURS_PER_DAY) * GIB_PER_GB)\r\n",
+							"    .when(F.col('UnitOfMeasure') == '1 TB/Month', F.col('Quantity') * (HOURS_PER_MONTH / HOURS_PER_DAY) * GIB_PER_GB * GB_PER_TB)\r\n",
 							"    .when(is_pre_allocated_disk, F.col('DiskSizeGiB'))\r\n",
 							"    .otherwise(None)\r\n",
 							")\r\n",
@@ -38735,26 +38634,7 @@
 							"storage_df = storage_df.withColumn('EstimatedVolumePiB', F.col('EstimatedVolumeTiB') / TIB_PER_PIB)"
 						],
 						"outputs": [],
-						"execution_count": 35
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"print(storage_df.schema)"
-						],
-						"outputs": [],
-						"execution_count": 36
+						"execution_count": 56
 					},
 					{
 						"cell_type": "code",
@@ -38774,7 +38654,7 @@
 							"storage_df = storage_df.join(app_df, 'AppID', 'left')"
 						],
 						"outputs": [],
-						"execution_count": 37
+						"execution_count": 57
 					},
 					{
 						"cell_type": "code",
@@ -38794,7 +38674,7 @@
 							"storage_df.write.format('parquet').mode('overwrite').save(target_path)"
 						],
 						"outputs": [],
-						"execution_count": 38
+						"execution_count": 58
 					}
 				]
 			},
@@ -42290,7 +42170,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "eef46604-ec37-4734-a153-faf440465f41"
+						"spark.autotune.trackingId": "f7d79649-3eb1-4852-beed-3af232b47eff"
 					}
 				},
 				"metadata": {
@@ -42315,8 +42195,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -42394,7 +42273,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"def get_last_day_prev_month(to_date):\r\n",
 							"    current_month = int(to_date[4:6])\r\n",
@@ -44542,7 +44420,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "f30e18f0-9f9d-43dc-9a99-e3fa046ad835"
+						"spark.autotune.trackingId": "83debda8-7d2e-4af8-8160-3a15069b1ce4"
 					}
 				},
 				"metadata": {
@@ -44567,15 +44445,13 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"import pyspark.sql.types as T\r\n",
@@ -45900,7 +45776,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "41f57c0b-327d-4eb2-ba06-07131c344dd4"
+						"spark.autotune.trackingId": "ed77ed6e-6491-4d55-96c0-04eea1834db1"
 					}
 				},
 				"metadata": {
@@ -45925,8 +45801,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -45946,7 +45821,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"from datetime import timedelta, datetime\r\n",
 							"import pytz\r\n",
@@ -48250,7 +48124,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "79753de2-8154-41bf-aa76-aed23b06bf0e"
+						"spark.autotune.trackingId": "a08d01d7-6a47-42a8-bf3a-456faeeb5759"
 					}
 				},
 				"metadata": {
@@ -48275,8 +48149,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -48296,7 +48169,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"from datetime import timedelta, datetime\r\n",
 							"from dateutil.relativedelta import relativedelta\r\n",
@@ -49015,31 +48887,6 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
-			"type": "Microsoft.Synapse/workspaces/bigDataPools",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"autoPause": {
-					"enabled": true,
-					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
-				},
-				"autoScale": {
-					"enabled": true,
-					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
-					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
-				},
-				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
-				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
-				"nodeSizeFamily": "MemoryOptimized",
-				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
-				"isComputeIsolationEnabled": false,
-				"sessionLevelPackagesEnabled": true,
-				"annotations": []
-			},
-			"dependsOn": [],
-			"location": "northeurope"
-		},
-		{
 			"name": "[concat(parameters('workspaceName'), '/sparkpool32')]",
 			"type": "Microsoft.Synapse/workspaces/bigDataPools",
 			"apiVersion": "2019-06-01-preview",
@@ -49062,6 +48909,31 @@
 					"filename": "requirements.txt",
 					"time": "2023-01-25T09:06:41.7702231Z"
 				},
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": true,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
+				},
+				"autoScale": {
+					"enabled": true,
+					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
+					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
+				},
+				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
+				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
 				"isComputeIsolationEnabled": false,
 				"sessionLevelPackagesEnabled": true,
 				"annotations": []
