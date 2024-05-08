@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "fe84adaf-a1c0-4f0f-8ecd-1afbeabbe07b"
+				"spark.autotune.trackingId": "e44596cc-9fa6-452a-9816-f5a33bbb6b49"
 			}
 		},
 		"metadata": {
@@ -70,7 +70,7 @@
 					"from enum import Enum\r\n",
 					"from datetime import datetime, timedelta"
 				],
-				"execution_count": 33
+				"execution_count": 47
 			},
 			{
 				"cell_type": "code",
@@ -110,7 +110,7 @@
 					"    KustoClusters = \"Kusto Clusters\"\r\n",
 					"    AmlFileSystems = \"Aml Files Systems\""
 				],
-				"execution_count": 34
+				"execution_count": 48
 			},
 			{
 				"cell_type": "code",
@@ -133,7 +133,7 @@
 					"GB_PER_TB = 1000\r\n",
 					"HOURS_PER_DAY = 24"
 				],
-				"execution_count": 35
+				"execution_count": 49
 			},
 			{
 				"cell_type": "code",
@@ -153,6 +153,7 @@
 					"    '1 GB/Month',\r\n",
 					"    '1 GiB/Hour',\r\n",
 					"    '1 GiB/Month',\r\n",
+					"    '1 TB/Month'\r\n",
 					"]\r\n",
 					"\r\n",
 					"STORAGE_ACCOUNT_RESOURCE_TYPES = [\r\n",
@@ -174,7 +175,7 @@
 					"    'Backup Capacity'\r\n",
 					"]"
 				],
-				"execution_count": 36
+				"execution_count": 50
 			},
 			{
 				"cell_type": "markdown",
@@ -208,7 +209,7 @@
 					"app_df = spark.read.format('parquet').load(app_path)\r\n",
 					"app_df = app_df.select('AppID', 'OrgUnitLevel0', 'OrgUnitLevel1', 'OrgUnitLevel2')"
 				],
-				"execution_count": 37
+				"execution_count": 51
 			},
 			{
 				"cell_type": "markdown",
@@ -252,7 +253,7 @@
 					"    .otherwise(F.col('Size'))\r\n",
 					")"
 				],
-				"execution_count": 38
+				"execution_count": 52
 			},
 			{
 				"cell_type": "markdown",
@@ -276,7 +277,7 @@
 					"one_year_back = datetime.now().date()-timedelta(days=365)\r\n",
 					"cost_df = cost_df.where(F.col('Date') >= one_year_back)"
 				],
-				"execution_count": 39
+				"execution_count": 53
 			},
 			{
 				"cell_type": "markdown",
@@ -349,16 +350,18 @@
 					"    .when(is_container_registry, StorageType.ContainerRegistry.value)\r\n",
 					"    .when(is_github, StorageType.GitHub.value)\r\n",
 					"    .when(is_insights_and_analytics, StorageType.InsightsAndAnalytics.value)\r\n",
+					"    .when(is_log_analytics, StorageType.LogAnalytics.value)\r\n",
 					"    .when(is_logic_apps, StorageType.LogicApps.value)\r\n",
 					"    .when(is_fabric, StorageType.Fabric.value)\r\n",
 					"    .when(is_snapshots, StorageType.Snapshots.value)\r\n",
 					"    .when(is_kusto_cluster, StorageType.KustoClusters.value)\r\n",
+					"    .when(is_aml_file_system, StorageType.AmlFileSystems.value)\r\n",
 					"    .otherwise(None)\r\n",
 					")\r\n",
 					"\r\n",
 					"storage_df = storage_df.where(F.col('StorageType').isNotNull())"
 				],
-				"execution_count": 40
+				"execution_count": 54
 			},
 			{
 				"cell_type": "code",
@@ -387,7 +390,7 @@
 					")\r\n",
 					"storage_df = storage_df.join(disk_size_df.select('DiskType', 'DiskSizeGiB'), 'DiskType', 'left')"
 				],
-				"execution_count": 41
+				"execution_count": 55
 			},
 			{
 				"cell_type": "code",
@@ -417,7 +420,7 @@
 					"storage_df = storage_df.withColumn('EstimatedVolumeTiB', F.col('EstimatedVolumeGiB') / GIB_PER_TIB)\r\n",
 					"storage_df = storage_df.withColumn('EstimatedVolumePiB', F.col('EstimatedVolumeTiB') / TIB_PER_PIB)"
 				],
-				"execution_count": 42
+				"execution_count": 56
 			},
 			{
 				"cell_type": "code",
@@ -436,7 +439,7 @@
 					"# Enrich orgianisational data from Service Now based on application metadata\r\n",
 					"storage_df = storage_df.join(app_df, 'AppID', 'left')"
 				],
-				"execution_count": 43
+				"execution_count": 57
 			},
 			{
 				"cell_type": "code",
@@ -455,7 +458,7 @@
 					"target_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/storage/storage-volume-estimates-1-year.parquet\"\r\n",
 					"storage_df.write.format('parquet').mode('overwrite').save(target_path)"
 				],
-				"execution_count": 44
+				"execution_count": 58
 			}
 		]
 	}
