@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "2719ace3-188d-45ba-9fe4-9a343ba25f86"
+				"spark.autotune.trackingId": "b229dc88-5c73-405d-9ef7-329a6260bff3"
 			}
 		},
 		"metadata": {
@@ -129,24 +129,18 @@
 					}
 				},
 				"source": [
-					"# # Load usage source\r\n",
-					"# cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
-					"# cost_df = spark.read.format('parquet').load(cost_path)\r\n",
+					"# Load usage source\r\n",
+					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
+					"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
 					"\r\n",
-					"# # Select appropriate columns\r\n",
-					"# cost_df = cost_df.select('Date', 'CostInBillingCurrency')\r\n",
-					"# cost_df = cost_df.withColumn('Date', F.date_trunc('month', 'Date'))\r\n",
-					"# cost_df = cost_df.groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('Cost')).orderBy('Date')\r\n",
+					"# Select appropriate columns\r\n",
+					"cost_df = cost_df.select('Date', 'CostInBillingCurrency', 'PayGPrice', 'Quantity')\r\n",
+					"cost_df = cost_df.withColumn('Date', F.date_trunc('month', 'Date'))\r\n",
+					"cost_df = cost_df.withColumn('RetailCost', F.col('PayGPrice') * F.col('Quantity')).drop('Quantity', 'PayGPrice')\r\n",
+					"cost_df = cost_df.groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('Cost'), F.sum('RetailCost').alias('RetailCost')).orderBy('Date')\r\n",
 					"\r\n",
-					"# # Filter away latest month - as we predict cost per month, it will mess up future predictions\r\n",
-					"# cost_df = cost_df.filter(F.col('Date') < F.concat(F.date_format(F.current_date(), 'yyyy'), F.lit('-'), F.date_format(F.current_date(), 'MM'), F.lit('-'), F.lit('01')))\r\n",
-					"\r\n",
-					"# # Compute cumulative cost\r\n",
-					"# cost_df = cost_df.withColumn(\"CumulativeCost\", F.sum(\"Cost\").over(window))\r\n",
-					"\r\n",
-					"# # Convert pyspark df to pandas for OLS model\r\n",
-					"# cost_pdf = cost_df.toPandas()\r\n",
-					"# cost_pdf.set_index(\"Date\", inplace=True)"
+					"# Filter away latest month - as we predict cost per month, it will mess up future predictions\r\n",
+					"cost_df = cost_df.filter(F.col('Date') < F.concat(F.date_format(F.current_date(), 'yyyy'), F.lit('-'), F.date_format(F.current_date(), 'MM'), F.lit('-'), F.lit('01')))"
 				],
 				"execution_count": 4
 			},
