@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "77528e4a-892c-4ed6-ac26-c5b8e3a8e181"
+				"spark.autotune.trackingId": "3b82a5dd-40a4-4a1e-9635-3efc7c522446"
 			}
 		},
 		"metadata": {
@@ -70,7 +70,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 49
+				"execution_count": 118
 			},
 			{
 				"cell_type": "code",
@@ -81,7 +81,7 @@
 					"import pandas as pd\r\n",
 					"import numpy as np"
 				],
-				"execution_count": 50
+				"execution_count": 119
 			},
 			{
 				"cell_type": "code",
@@ -100,7 +100,7 @@
 					"# Define rolling window for accumulation\r\n",
 					"window = W.Window.orderBy(\"Date\").rowsBetween(W.Window.unboundedPreceding, 0)"
 				],
-				"execution_count": 51
+				"execution_count": 120
 			},
 			{
 				"cell_type": "markdown",
@@ -146,7 +146,7 @@
 					"discount_df = cost_df.alias('discount_df').drop('RetailCost')\r\n",
 					"retail_df = cost_df.alias('retail_df').drop('Cost').withColumnRenamed('RetailCost', 'Cost')"
 				],
-				"execution_count": 52
+				"execution_count": 121
 			},
 			{
 				"cell_type": "markdown",
@@ -188,7 +188,7 @@
 					"    .where(F.col('Date') < '2024-04-01') \\\r\n",
 					"    .orderBy('Date')"
 				],
-				"execution_count": 53
+				"execution_count": 137
 			},
 			{
 				"cell_type": "markdown",
@@ -229,7 +229,7 @@
 					"COST_INCREASE_2024 = 1.12\r\n",
 					"COST_INCREASE_DATE_2024 = '2024-02-01'"
 				],
-				"execution_count": 54
+				"execution_count": 123
 			},
 			{
 				"cell_type": "code",
@@ -252,44 +252,7 @@
 					"    .otherwise(F.col('Cost'))\r\n",
 					")"
 				],
-				"execution_count": 55
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"test = billing_df.alias('test')\r\n",
-					"cumu_test  = compute_cumulative_cost(test)"
-				],
-				"execution_count": 56
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"print(cumu_test.info)"
-				],
-				"execution_count": 57
+				"execution_count": 124
 			},
 			{
 				"cell_type": "markdown",
@@ -357,7 +320,7 @@
 					"    predicted_df = predicted_df.withColumn(f'PredictedCumulativeCost{column_label}',  F.sum(f\"PredictedCost{column_label}\").over(window) + input_df['CumulativeCost'][-1])\r\n",
 					"    return predicted_df"
 				],
-				"execution_count": null
+				"execution_count": 125
 			},
 			{
 				"cell_type": "code",
@@ -373,28 +336,28 @@
 					}
 				},
 				"source": [
-					"def produce_ols_results(input_df, prediction_interval=90):\r\n",
+					"def produce_ols_results(input_df, interval=90):\r\n",
 					"    # Compute cumulative cost and prepare for prediction\r\n",
 					"    input_df = input_df.withColumn(\"CumulativeCost\", F.sum(\"Cost\").over(window))\r\n",
 					"    pdf = input_df.toPandas()\r\n",
 					"    pdf.set_index(\"Date\", inplace=True)\r\n",
 					"    \r\n",
 					"    # Predict cost based on different lookback periods\r\n",
-					"    four_month_lookback_df = compute_ols_prediction(pdf, lookback=6, prediction_interval=prediction_interval)\r\n",
-					"    eight_month_lookback_df = compute_ols_prediction(pdf, lookback=12, prediction_interval=prediction_interval)\r\n",
-					"    twelve_month_lookback_df = compute_ols_prediction(pdf, lookback=24, prediction_interval=prediction_interval)\r\n",
-					"    sixteen_month_lookback_df = compute_ols_prediction(pdf, lookback=-1, prediction_interval=prediction_interval)\r\n",
+					"    four_month_lookback_df = compute_ols_prediction(pdf, lookback=6, prediction_interval=90)\r\n",
+					"    eight_month_lookback_df = compute_ols_prediction(pdf, lookback=12, prediction_interval=90)\r\n",
+					"    twelve_month_lookback_df = compute_ols_prediction(pdf, lookback=24, prediction_interval=90)\r\n",
+					"    sixteen_month_lookback_df = compute_ols_prediction(pdf, lookback=-1, prediction_interval=90)\r\n",
 					"\r\n",
 					"    # Combine prediction results into a single dataframe\r\n",
-					"    result = input_df.join(four_month_lookback_df, on='Date', how='outer')\r\n",
-					"    result = result.join(eight_month_lookback_df, on='Date', how='outer')\r\n",
-					"    result = result.join(twelve_month_lookback_df, on='Date', how='outer')\r\n",
-					"    result = result.join(sixteen_month_lookback_df, on='Date', how='outer')\r\n",
-					"    result = result.withColumn('Date', F.to_date('Date'))\r\n",
+					"    input_df = input_df.join(four_month_lookback_df, on='Date', how='outer')\r\n",
+					"    input_df = input_df.join(eight_month_lookback_df, on='Date', how='outer')\r\n",
+					"    input_df = input_df.join(twelve_month_lookback_df, on='Date', how='outer')\r\n",
+					"    input_df = input_df.join(sixteen_month_lookback_df, on='Date', how='outer')\r\n",
+					"    input_df = input_df.withColumn('Date', F.to_date('Date'))\r\n",
 					"\r\n",
-					"    return result"
+					"    return input_df"
 				],
-				"execution_count": null
+				"execution_count": 126
 			},
 			{
 				"cell_type": "code",
@@ -410,12 +373,45 @@
 					}
 				},
 				"source": [
-					"billing_df = produce_ols_results(billing_df)\r\n",
-					"adjusted_billing_df = produce_ols_results(adjusted_billing_df)\r\n",
-					"discount_df = produce_ols_results(discount_df)\r\n",
-					"retail_df = produce_ols_results(retail_df)"
+					"billing_df = billing_df.withColumn(\"CumulativeCost\", F.sum(\"Cost\").over(window))\r\n",
+					"pdf = billing_df.toPandas()\r\n",
+					"pdf.set_index(\"Date\", inplace=True)\r\n",
+					"\r\n",
+					"# Predict cost based on different lookback periods\r\n",
+					"four_month_lookback_df = compute_ols_prediction(pdf, lookback=6, prediction_interval=90)\r\n",
+					"eight_month_lookback_df = compute_ols_prediction(pdf, lookback=12, prediction_interval=90)\r\n",
+					"twelve_month_lookback_df = compute_ols_prediction(pdf, lookback=24, prediction_interval=90)\r\n",
+					"sixteen_month_lookback_df = compute_ols_prediction(pdf, lookback=-1, prediction_interval=90)\r\n",
+					"\r\n",
+					"# Combine prediction results into a single dataframe\r\n",
+					"billing_df = billing_df.join(four_month_lookback_df, on='Date', how='outer')\r\n",
+					"billing_df = billing_df.join(eight_month_lookback_df, on='Date', how='outer')\r\n",
+					"billing_df = billing_df.join(twelve_month_lookback_df, on='Date', how='outer')\r\n",
+					"billing_df = billing_df.join(sixteen_month_lookback_df, on='Date', how='outer')\r\n",
+					"billing_df = billing_df.withColumn('Date', F.to_date('Date'))"
 				],
-				"execution_count": null
+				"execution_count": 138
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"billing_df = produce_ols_results(billing_df, interval=90)\r\n",
+					"adjusted_billing_df = produce_ols_results(adjusted_billing_df, interval=90)\r\n",
+					"discount_df = produce_ols_results(discount_df, interval=90)\r\n",
+					"retail_df = produce_ols_results(retail_df, interval=90)"
+				],
+				"execution_count": 127
 			},
 			{
 				"cell_type": "code",
@@ -432,9 +428,9 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(adjusted_billing_df)"
+					"display(billing_df)"
 				],
-				"execution_count": null
+				"execution_count": 139
 			},
 			{
 				"cell_type": "markdown",
@@ -466,7 +462,7 @@
 					"billing_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/cumulative-cost-prediction.parquet\"\r\n",
 					"billing_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(billing_path)"
 				],
-				"execution_count": null
+				"execution_count": 129
 			},
 			{
 				"cell_type": "code",
@@ -485,7 +481,7 @@
 					"adjusted_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/adjusted-cumulative-cost-prediction.parquet\"\r\n",
 					"adjusted_billing_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(adjusted_path)"
 				],
-				"execution_count": null
+				"execution_count": 130
 			},
 			{
 				"cell_type": "code",
@@ -504,7 +500,7 @@
 					"discount_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/discounted-cost-prediction.parquet\"\r\n",
 					"discount_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(discount_path)"
 				],
-				"execution_count": null
+				"execution_count": 131
 			},
 			{
 				"cell_type": "code",
@@ -523,7 +519,7 @@
 					"retail_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/retail-cost-prediction.parquet\"\r\n",
 					"retail_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(retail_path)"
 				],
-				"execution_count": null
+				"execution_count": 132
 			},
 			{
 				"cell_type": "markdown",
@@ -560,7 +556,7 @@
 					"#     predicted_df = spark.createDataFrame(predicted_df)\r\n",
 					"#     return predicted_df"
 				],
-				"execution_count": null
+				"execution_count": 133
 			}
 		]
 	}
