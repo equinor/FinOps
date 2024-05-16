@@ -1,0 +1,17 @@
+{
+	"name": "MSS WBS query",
+	"properties": {
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 *\n    format([Date], 'yyyy-MM') as [Date]\n    ,ActiveWBS\n    ,SubscriptionName\n    ,ResourceGroup\n    ,MeterCategory\n    ,sum(CostInBillingCurrency) as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nWHERE\n    --ActiveWBS = 'C.BAX.40.076'\n    ActiveWBS in ('C.BAX.40.003', 'C.BAX.40.006', 'C.BAX.40.015', 'C.BAX.40.020', 'C.BAX.40.022', 'C.BAX.40.041', 'C.BAX.40.054', \n    'C.BAX.40.060', 'C.BAX.40.068', 'C.BAX.40.072', 'C.BAX.40.073', 'C.BAX.40.076', 'C.BAX.40.083', 'C.BAX.40.085', 'C.BAX.40.090', \n    'C.BAX.40.094', 'C.BAX.40.095', 'C.BAX.40.096', 'C.BAX.40.098', 'C.BAX.40.099', 'C.BAX.40.100', 'C.BAX.40.102', 'C.BAX.40.103', \n    'C.BAX.40.105', 'C.BAX.40.106', 'C.BAX.40.107', 'C.BAX.41.003', 'C.BAX.41.004', 'C.BAX.41.008', 'C.BAX.41.009', 'C.BAX.41.012', \n    'C.BAX.41.022', 'C.BAX.41.025', 'C.BAX.41.047', 'C.GBX.AD.MS332', 'C.GBX.AD.MS336', 'C.GBX.AD.MS337', 'C.ITD.07.006', 'C.ITD.07.008', \n    'C.ITD.07.016', 'C.ITD.07.017', 'C.ITD.07.021', 'C.ITD.07.024', 'C.ITX.10.049', 'C.TDI.IT.00015', 'C.TDI.IT.00143', 'C.TDI.MM.084', \n    'E.B00.01935.A1', 'E.TDI.00012.05.02', 'E.TDI.00053.03')\n    group by format([Date], 'yyyy-MM'), ActiveWBS, SubscriptionName, ResourceGroup, MeterCategory\n    order by [Date], ActiveWBS, Cost Desc",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}
