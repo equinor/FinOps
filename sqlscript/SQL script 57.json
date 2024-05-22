@@ -1,0 +1,17 @@
+{
+	"name": "SQL script 57",
+	"properties": {
+		"content": {
+			"query": "USE DATABASE\n\nSELECT\n-- count(*)\n    MeterCategory, sum(CostInKroner) as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_Threeyears.parquet/*/*/*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n        where Report_Date = '2024-04-01'\n        and ResourceGroup = 'Synapse'\n        group by MeterCategory\n        order by Cost desc\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}
