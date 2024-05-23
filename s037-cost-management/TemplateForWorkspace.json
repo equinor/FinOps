@@ -1005,30 +1005,6 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
-		"sparkpool32_delayInMinutes": {
-			"type": "int",
-			"defaultValue": 15
-		},
-		"sparkpool32_maxNodeCount": {
-			"type": "int",
-			"defaultValue": 5
-		},
-		"sparkpool32_minNodeCount": {
-			"type": "int",
-			"defaultValue": 3
-		},
-		"sparkpool32_nodeCount": {
-			"type": "int",
-			"defaultValue": 0
-		},
-		"sparkpool32_nodeSize": {
-			"type": "string",
-			"defaultValue": "Medium"
-		},
-		"sparkpool32_sparkVersion": {
-			"type": "string",
-			"defaultValue": "3.2"
-		},
 		"sprkpool33large_delayInMinutes": {
 			"type": "int",
 			"defaultValue": 10
@@ -1052,6 +1028,30 @@
 		"sprkpool33large_sparkVersion": {
 			"type": "string",
 			"defaultValue": "3.3"
+		},
+		"sparkpool32_delayInMinutes": {
+			"type": "int",
+			"defaultValue": 15
+		},
+		"sparkpool32_maxNodeCount": {
+			"type": "int",
+			"defaultValue": 5
+		},
+		"sparkpool32_minNodeCount": {
+			"type": "int",
+			"defaultValue": 3
+		},
+		"sparkpool32_nodeCount": {
+			"type": "int",
+			"defaultValue": 0
+		},
+		"sparkpool32_nodeSize": {
+			"type": "string",
+			"defaultValue": "Medium"
+		},
+		"sparkpool32_sparkVersion": {
+			"type": "string",
+			"defaultValue": "3.2"
 		}
 	},
 	"variables": {
@@ -26315,6 +26315,52 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/CreateCumulativeDiscountCostView')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "PowerBIViews"
+				},
+				"content": {
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW DiscountedCumulativeCost\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/discounted-cost-prediction.parquet/',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/CreateCumulativeRetailCost')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "PowerBIViews"
+				},
+				"content": {
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW RetailCumulativeCost\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/retail-cost-prediction.parquet/',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/CreateHUBDeploymentsView')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
@@ -27152,6 +27198,26 @@
 				},
 				"content": {
 					"query": "-- This is auto-generated code\nSELECT\n    --top 100 *\n    --format([Date], 'yyyy-MM') as [Date]\n    upper(ConsumedService) as ConsumedService\n    ,upper(MeterCategory) as [MeterCategory]\n    ,FORMAT(sum(CostInBillingCurrency), 'N', 'en-us') as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAmortizedCost/2023*/ACMMonthlyAmortizedCost_2023*.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where ConsumedService is not null --and MeterCategory like '%SQL%'\n    group BY upper(ConsumedService), upper(MeterCategory)\n    order by upper(ConsumedService), upper(MeterCategory)\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/MSS WBS query')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 *\n    format([Date], 'yyyy-MM') as [Date]\n    ,ActiveWBS\n    ,SubscriptionName\n    ,ResourceGroup\n    ,MeterCategory\n    ,sum(CostInBillingCurrency) as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nWHERE\n    --ActiveWBS = 'C.BAX.40.076'\n    ActiveWBS in ('C.BAX.40.003', 'C.BAX.40.006', 'C.BAX.40.015', 'C.BAX.40.020', 'C.BAX.40.022', 'C.BAX.40.041', 'C.BAX.40.054', \n    'C.BAX.40.060', 'C.BAX.40.068', 'C.BAX.40.072', 'C.BAX.40.073', 'C.BAX.40.076', 'C.BAX.40.083', 'C.BAX.40.085', 'C.BAX.40.090', \n    'C.BAX.40.094', 'C.BAX.40.095', 'C.BAX.40.096', 'C.BAX.40.098', 'C.BAX.40.099', 'C.BAX.40.100', 'C.BAX.40.102', 'C.BAX.40.103', \n    'C.BAX.40.105', 'C.BAX.40.106', 'C.BAX.40.107', 'C.BAX.41.003', 'C.BAX.41.004', 'C.BAX.41.008', 'C.BAX.41.009', 'C.BAX.41.012', \n    'C.BAX.41.022', 'C.BAX.41.025', 'C.BAX.41.047', 'C.GBX.AD.MS332', 'C.GBX.AD.MS336', 'C.GBX.AD.MS337', 'C.ITD.07.006', 'C.ITD.07.008', \n    'C.ITD.07.016', 'C.ITD.07.017', 'C.ITD.07.021', 'C.ITD.07.024', 'C.ITX.10.049', 'C.TDI.IT.00015', 'C.TDI.IT.00143', 'C.TDI.MM.084', \n    'E.B00.01935.A1', 'E.TDI.00012.05.02', 'E.TDI.00053.03')\n    group by format([Date], 'yyyy-MM'), ActiveWBS, SubscriptionName, ResourceGroup, MeterCategory\n    order by [Date], ActiveWBS, Cost Desc",
 					"metadata": {
 						"language": "sql"
 					},
@@ -28559,26 +28625,6 @@
 						"poolName": "Built-in"
 					},
 					"resultLimit": 5000
-				},
-				"type": "SqlQuery"
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/SQL script 52')]",
-			"type": "Microsoft.Synapse/workspaces/sqlscripts",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"content": {
-					"query": "-- This is auto-generated code\nSELECT\n    TOP 100 *\n    --format([Date], 'yyyy-MM') as [Date]\n    --,sum(CostInBillingCurrency) as [Plant Cost]\n    --,SubscriptionName\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAmortizedCost/202403*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
-					"metadata": {
-						"language": "sql"
-					},
-					"currentConnection": {
-						"databaseName": "costmgmt",
-						"poolName": "Built-in"
-					},
-					"resultLimit": -1
 				},
 				"type": "SqlQuery"
 			},
@@ -39899,7 +39945,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "2719ace3-188d-45ba-9fe4-9a343ba25f86"
+						"spark.autotune.trackingId": "92ea3984-6be4-4ea1-9189-14132ef1e870"
 					}
 				},
 				"metadata": {
@@ -39949,7 +39995,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 1
+						"execution_count": 162
 					},
 					{
 						"cell_type": "code",
@@ -39961,7 +40007,7 @@
 							"import numpy as np"
 						],
 						"outputs": [],
-						"execution_count": 2
+						"execution_count": 163
 					},
 					{
 						"cell_type": "code",
@@ -39981,7 +40027,7 @@
 							"window = W.Window.orderBy(\"Date\").rowsBetween(W.Window.unboundedPreceding, 0)"
 						],
 						"outputs": [],
-						"execution_count": 3
+						"execution_count": 164
 					},
 					{
 						"cell_type": "markdown",
@@ -40010,27 +40056,25 @@
 							}
 						},
 						"source": [
-							"# # Load usage source\r\n",
-							"# cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
-							"# cost_df = spark.read.format('parquet').load(cost_path)\r\n",
+							"# Load usage source\r\n",
+							"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
+							"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
 							"\r\n",
-							"# # Select appropriate columns\r\n",
-							"# cost_df = cost_df.select('Date', 'CostInBillingCurrency')\r\n",
-							"# cost_df = cost_df.withColumn('Date', F.date_trunc('month', 'Date'))\r\n",
-							"# cost_df = cost_df.groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('Cost')).orderBy('Date')\r\n",
+							"# Select appropriate columns\r\n",
+							"cost_df = cost_df.select('Date', 'CostInBillingCurrency', 'PayGPrice', 'Quantity')\r\n",
+							"cost_df = cost_df.withColumn('Date', F.date_trunc('month', 'Date'))\r\n",
+							"cost_df = cost_df.withColumn('RetailCost', F.col('PayGPrice') * F.col('Quantity')).drop('Quantity', 'PayGPrice')\r\n",
+							"cost_df = cost_df.groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('Cost'), F.sum('RetailCost').alias('RetailCost')).orderBy('Date')\r\n",
 							"\r\n",
-							"# # Filter away latest month - as we predict cost per month, it will mess up future predictions\r\n",
-							"# cost_df = cost_df.filter(F.col('Date') < F.concat(F.date_format(F.current_date(), 'yyyy'), F.lit('-'), F.date_format(F.current_date(), 'MM'), F.lit('-'), F.lit('01')))\r\n",
+							"# Filter away latest month - as we predict cost per month, it will mess up future predictions\r\n",
+							"cost_df = cost_df.filter(F.col('Date') < F.concat(F.date_format(F.current_date(), 'yyyy'), F.lit('-'), F.date_format(F.current_date(), 'MM'), F.lit('-'), F.lit('01')))\r\n",
 							"\r\n",
-							"# # Compute cumulative cost\r\n",
-							"# cost_df = cost_df.withColumn(\"CumulativeCost\", F.sum(\"Cost\").over(window))\r\n",
-							"\r\n",
-							"# # Convert pyspark df to pandas for OLS model\r\n",
-							"# cost_pdf = cost_df.toPandas()\r\n",
-							"# cost_pdf.set_index(\"Date\", inplace=True)"
+							"# Split dataframe into discounted and retail cost\r\n",
+							"discount_df = cost_df.alias('discount_df').drop('RetailCost')\r\n",
+							"retail_df = cost_df.alias('retail_df').drop('Cost').withColumnRenamed('RetailCost', 'Cost')"
 						],
 						"outputs": [],
-						"execution_count": 4
+						"execution_count": 165
 					},
 					{
 						"cell_type": "markdown",
@@ -40073,7 +40117,7 @@
 							"    .orderBy('Date')"
 						],
 						"outputs": [],
-						"execution_count": 5
+						"execution_count": 166
 					},
 					{
 						"cell_type": "markdown",
@@ -40115,7 +40159,7 @@
 							"COST_INCREASE_DATE_2024 = '2024-02-01'"
 						],
 						"outputs": [],
-						"execution_count": 6
+						"execution_count": 167
 					},
 					{
 						"cell_type": "code",
@@ -40139,48 +40183,7 @@
 							")"
 						],
 						"outputs": [],
-						"execution_count": 7
-					},
-					{
-						"cell_type": "markdown",
-						"metadata": {
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"## Compute cumulative cost"
-						]
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"# Compute cumulative cost\r\n",
-							"billing_df = billing_df.withColumn(\"CumulativeCost\", F.sum(\"Cost\").over(window))\r\n",
-							"adjusted_billing_df = adjusted_billing_df.withColumn(\"CumulativeCost\", F.sum(\"Cost\").over(window))\r\n",
-							"\r\n",
-							"# Convert pyspark df to pandas for OLS model\r\n",
-							"billing_pdf = billing_df.toPandas()\r\n",
-							"billing_pdf.set_index(\"Date\", inplace=True)\r\n",
-							"\r\n",
-							"adjusted_billing_pdf = adjusted_billing_df.toPandas()\r\n",
-							"adjusted_billing_pdf.set_index(\"Date\", inplace=True)"
-						],
-						"outputs": [],
-						"execution_count": 8
+						"execution_count": 168
 					},
 					{
 						"cell_type": "markdown",
@@ -40236,7 +40239,7 @@
 							"    return predicted_df"
 						],
 						"outputs": [],
-						"execution_count": 9
+						"execution_count": 169
 					},
 					{
 						"cell_type": "code",
@@ -40252,47 +40255,29 @@
 							}
 						},
 						"source": [
-							"four_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=6, prediction_interval=90)\r\n",
-							"eight_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=12, prediction_interval=90)\r\n",
-							"twelve_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=24, prediction_interval=90)\r\n",
-							"sixteen_month_lookback_df = compute_ols_prediction(billing_pdf, lookback=-1, prediction_interval=90)\r\n",
+							"def produce_ols_results(input_df, interval):\r\n",
+							"    # Compute cumulative cost and prepare for prediction\r\n",
+							"    input_df = input_df.withColumn(\"CumulativeCost\", F.sum(\"Cost\").over(window))\r\n",
+							"    pdf = input_df.toPandas()\r\n",
+							"    pdf.set_index(\"Date\", inplace=True)\r\n",
+							"    \r\n",
+							"    # Predict cost based on different lookback periods\r\n",
+							"    four_month_lookback_df = compute_ols_prediction(pdf, lookback=6, prediction_interval=90)\r\n",
+							"    eight_month_lookback_df = compute_ols_prediction(pdf, lookback=12, prediction_interval=90)\r\n",
+							"    twelve_month_lookback_df = compute_ols_prediction(pdf, lookback=24, prediction_interval=90)\r\n",
+							"    sixteen_month_lookback_df = compute_ols_prediction(pdf, lookback=-1, prediction_interval=90)\r\n",
 							"\r\n",
-							"billing_df = billing_df.join(four_month_lookback_df, on='Date', how='outer')\r\n",
-							"billing_df = billing_df.join(eight_month_lookback_df, on='Date', how='outer')\r\n",
-							"billing_df = billing_df.join(twelve_month_lookback_df, on='Date', how='outer')\r\n",
-							"billing_df = billing_df.join(sixteen_month_lookback_df, on='Date', how='outer')\r\n",
-							"billing_df = billing_df.withColumn('Date', F.to_date('Date'))"
-						],
-						"outputs": [],
-						"execution_count": 10
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"adjusted_four_month_lookback_df = compute_ols_prediction(adjusted_billing_pdf, lookback=6, prediction_interval=90)\r\n",
-							"adjusted_eight_month_lookback_df = compute_ols_prediction(adjusted_billing_pdf, lookback=12, prediction_interval=90)\r\n",
-							"adjusted_twelve_month_lookback_df = compute_ols_prediction(adjusted_billing_pdf, lookback=24, prediction_interval=90)\r\n",
-							"adjusted_sixteen_month_lookback_df = compute_ols_prediction(adjusted_billing_pdf, lookback=-1, prediction_interval=90)\r\n",
+							"    # Combine prediction results into a single dataframe\r\n",
+							"    input_df = input_df.join(four_month_lookback_df, on='Date', how='outer')\r\n",
+							"    input_df = input_df.join(eight_month_lookback_df, on='Date', how='outer')\r\n",
+							"    input_df = input_df.join(twelve_month_lookback_df, on='Date', how='outer')\r\n",
+							"    input_df = input_df.join(sixteen_month_lookback_df, on='Date', how='outer')\r\n",
+							"    input_df = input_df.withColumn('Date', F.to_date('Date'))\r\n",
 							"\r\n",
-							"adjusted_billing_df = adjusted_billing_df.join(adjusted_four_month_lookback_df, on='Date', how='outer')\r\n",
-							"adjusted_billing_df = adjusted_billing_df.join(adjusted_eight_month_lookback_df, on='Date', how='outer')\r\n",
-							"adjusted_billing_df = adjusted_billing_df.join(adjusted_twelve_month_lookback_df, on='Date', how='outer')\r\n",
-							"adjusted_billing_df = adjusted_billing_df.join(adjusted_sixteen_month_lookback_df, on='Date', how='outer')\r\n",
-							"adjusted_billing_df = adjusted_billing_df.withColumn('Date', F.to_date('Date'))"
+							"    return input_df"
 						],
 						"outputs": [],
-						"execution_count": 11
+						"execution_count": 170
 					},
 					{
 						"cell_type": "code",
@@ -40308,11 +40293,46 @@
 							}
 						},
 						"source": [
-							"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/cumulative-cost-prediction.parquet\"\r\n",
-							"billing_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(target_path)"
+							"billing_df = produce_ols_results(billing_df, interval=90)\r\n",
+							"adjusted_billing_df = produce_ols_results(adjusted_billing_df, interval=90)\r\n",
+							"discount_df = produce_ols_results(discount_df, interval=90)\r\n",
+							"retail_df = produce_ols_results(retail_df, interval=90)"
 						],
 						"outputs": [],
-						"execution_count": 12
+						"execution_count": 171
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Write to file"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"billing_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/cumulative-cost-prediction.parquet\"\r\n",
+							"billing_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(billing_path)"
+						],
+						"outputs": [],
+						"execution_count": 173
 					},
 					{
 						"cell_type": "code",
@@ -40332,7 +40352,47 @@
 							"adjusted_billing_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(adjusted_path)"
 						],
 						"outputs": [],
-						"execution_count": 13
+						"execution_count": 174
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"discount_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/discounted-cost-prediction.parquet\"\r\n",
+							"discount_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(discount_path)"
+						],
+						"outputs": [],
+						"execution_count": 175
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"retail_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/retail-cost-prediction.parquet\"\r\n",
+							"retail_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(retail_path)"
+						],
+						"outputs": [],
+						"execution_count": 176
 					},
 					{
 						"cell_type": "markdown",
@@ -40370,7 +40430,7 @@
 							"#     return predicted_df"
 						],
 						"outputs": [],
-						"execution_count": 14
+						"execution_count": 133
 					}
 				]
 			},
@@ -48122,7 +48182,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "6e3c018c-363c-44cd-bce8-967dda54836c"
+						"spark.autotune.trackingId": "852e38a6-3ca3-4746-a6f0-2488c1ec872c"
 					}
 				},
 				"metadata": {
@@ -48182,7 +48242,7 @@
 							"from pyspark.sql import Row"
 						],
 						"outputs": [],
-						"execution_count": 80
+						"execution_count": 39
 					},
 					{
 						"cell_type": "code",
@@ -48204,7 +48264,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 81
+						"execution_count": 40
 					},
 					{
 						"cell_type": "code",
@@ -48223,7 +48283,7 @@
 							"today = datetime.utcnow().replace(tzinfo=pytz.utc).astimezone(pytz.timezone('Europe/Oslo'))"
 						],
 						"outputs": [],
-						"execution_count": 82
+						"execution_count": 41
 					},
 					{
 						"cell_type": "code",
@@ -48247,7 +48307,7 @@
 							"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 						],
 						"outputs": [],
-						"execution_count": 83
+						"execution_count": 42
 					},
 					{
 						"cell_type": "code",
@@ -48272,7 +48332,7 @@
 							"]"
 						],
 						"outputs": [],
-						"execution_count": 84
+						"execution_count": 43
 					},
 					{
 						"cell_type": "markdown",
@@ -48329,7 +48389,7 @@
 							"hourly_vcpu_cost = yearly_license_cost / (license_count * HOURS_PER_YEAR * VCPUS_PER_LICENSE)"
 						],
 						"outputs": [],
-						"execution_count": 85
+						"execution_count": 44
 					},
 					{
 						"cell_type": "markdown",
@@ -48387,7 +48447,7 @@
 							"]"
 						],
 						"outputs": [],
-						"execution_count": 86
+						"execution_count": 45
 					},
 					{
 						"cell_type": "code",
@@ -48407,7 +48467,7 @@
 							"cost_df = spark.read.format('parquet').load(cost_path)"
 						],
 						"outputs": [],
-						"execution_count": 87
+						"execution_count": 46
 					},
 					{
 						"cell_type": "code",
@@ -48445,7 +48505,7 @@
 							"cost_copy_df = cost_df.alias('cost_copy_df')"
 						],
 						"outputs": [],
-						"execution_count": 88
+						"execution_count": 47
 					},
 					{
 						"cell_type": "markdown",
@@ -48535,7 +48595,7 @@
 							"vm_enable_df = vm_enable_df.select(*selected_columns)"
 						],
 						"outputs": [],
-						"execution_count": 89
+						"execution_count": 48
 					},
 					{
 						"cell_type": "markdown",
@@ -48581,13 +48641,14 @@
 							"    .count().drop('count')\r\n",
 							"\r\n",
 							"# Exclude VMs that are already in the list of enabled VMs\r\n",
-							"vm_disable_df = vm_disable_df.join(vm_enable_df, 'ResourceId', 'left_anti')\r\n",
+							"vm_disable_df = vm_disable_df.join(vm_enable_df, 'ResourceId', 'left_anti') \\\r\n",
+							"    .select(*selected_columns) # TODO: REMOVE ONCE 2 VCPU TS VMs HAVE BEEN DISABLED\r\n",
 							"\r\n",
 							"# TODO: REMOVE ONCE 2 VCPU TS VMs HAVE BEEN DISABLED\r\n",
 							"vm_disable_df = vm_disable_df.union(ts_df)"
 						],
 						"outputs": [],
-						"execution_count": 90
+						"execution_count": 49
 					},
 					{
 						"cell_type": "markdown",
@@ -48901,6 +48962,31 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
+				},
+				"autoScale": {
+					"enabled": true,
+					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
+					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
+				},
+				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
+				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": true,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "northeurope"
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/sparkpool32')]",
 			"type": "Microsoft.Synapse/workspaces/bigDataPools",
 			"apiVersion": "2019-06-01-preview",
@@ -48923,31 +49009,6 @@
 					"filename": "requirements.txt",
 					"time": "2023-01-25T09:06:41.7702231Z"
 				},
-				"isComputeIsolationEnabled": false,
-				"sessionLevelPackagesEnabled": true,
-				"annotations": []
-			},
-			"dependsOn": [],
-			"location": "northeurope"
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
-			"type": "Microsoft.Synapse/workspaces/bigDataPools",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"autoPause": {
-					"enabled": true,
-					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
-				},
-				"autoScale": {
-					"enabled": true,
-					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
-					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
-				},
-				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
-				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
-				"nodeSizeFamily": "MemoryOptimized",
-				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
 				"isComputeIsolationEnabled": false,
 				"sessionLevelPackagesEnabled": true,
 				"annotations": []
