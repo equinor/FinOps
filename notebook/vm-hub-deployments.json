@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "51360b0c-1250-4ba8-94aa-b47ba5f353a1"
+				"spark.autotune.trackingId": "ad7615a3-b117-42a4-89e9-d3df7a353227"
 			}
 		},
 		"metadata": {
@@ -78,7 +78,7 @@
 					"import pyspark.sql.window as W\r\n",
 					"from pyspark.sql import Row"
 				],
-				"execution_count": 80
+				"execution_count": 39
 			},
 			{
 				"cell_type": "code",
@@ -99,7 +99,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 81
+				"execution_count": 40
 			},
 			{
 				"cell_type": "code",
@@ -117,7 +117,7 @@
 				"source": [
 					"today = datetime.utcnow().replace(tzinfo=pytz.utc).astimezone(pytz.timezone('Europe/Oslo'))"
 				],
-				"execution_count": 82
+				"execution_count": 41
 			},
 			{
 				"cell_type": "code",
@@ -140,7 +140,7 @@
 					"LINKED_SERVICE_NAME = 'ACM_Toolkit_kv'\r\n",
 					"hubAutomationConnectionString = mssparkutils.credentials.getSecret(KEY_VAULT_NAME , 'hubautomation-sa-connectionstring', LINKED_SERVICE_NAME)"
 				],
-				"execution_count": 83
+				"execution_count": 42
 			},
 			{
 				"cell_type": "code",
@@ -164,7 +164,7 @@
 					"    'RG-TERMINAL_SERVERS-SCUS'\r\n",
 					"]"
 				],
-				"execution_count": 84
+				"execution_count": 43
 			},
 			{
 				"cell_type": "markdown",
@@ -220,7 +220,7 @@
 					"# Hourly cost of license per vCPU\r\n",
 					"hourly_vcpu_cost = yearly_license_cost / (license_count * HOURS_PER_YEAR * VCPUS_PER_LICENSE)"
 				],
-				"execution_count": 85
+				"execution_count": 44
 			},
 			{
 				"cell_type": "markdown",
@@ -277,7 +277,7 @@
 					"    'ai_VMName'\r\n",
 					"]"
 				],
-				"execution_count": 86
+				"execution_count": 45
 			},
 			{
 				"cell_type": "code",
@@ -296,7 +296,7 @@
 					"cost_path = monthly_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 87
+				"execution_count": 46
 			},
 			{
 				"cell_type": "code",
@@ -333,7 +333,7 @@
 					"# Persist a df copy for disable list calculation\r\n",
 					"cost_copy_df = cost_df.alias('cost_copy_df')"
 				],
-				"execution_count": 88
+				"execution_count": 47
 			},
 			{
 				"cell_type": "markdown",
@@ -422,7 +422,7 @@
 					"# # Remove redundant columns\r\n",
 					"vm_enable_df = vm_enable_df.select(*selected_columns)"
 				],
-				"execution_count": 89
+				"execution_count": 48
 			},
 			{
 				"cell_type": "markdown",
@@ -468,12 +468,13 @@
 					"    .count().drop('count')\r\n",
 					"\r\n",
 					"# Exclude VMs that are already in the list of enabled VMs\r\n",
-					"vm_disable_df = vm_disable_df.join(vm_enable_df, 'ResourceId', 'left_anti')\r\n",
+					"vm_disable_df = vm_disable_df.join(vm_enable_df, 'ResourceId', 'left_anti') \\\r\n",
+					"    .select(*selected_columns) # TODO: REMOVE ONCE 2 VCPU TS VMs HAVE BEEN DISABLED\r\n",
 					"\r\n",
 					"# TODO: REMOVE ONCE 2 VCPU TS VMs HAVE BEEN DISABLED\r\n",
 					"vm_disable_df = vm_disable_df.union(ts_df)"
 				],
-				"execution_count": 90
+				"execution_count": 49
 			},
 			{
 				"cell_type": "markdown",
