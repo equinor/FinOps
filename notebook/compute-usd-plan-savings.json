@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "ee518dc1-2bbb-4c45-829b-7cb24f296ea4"
+				"spark.autotune.trackingId": "b2551a19-21e5-43f1-92e3-8c9d37894ba1"
 			}
 		},
 		"metadata": {
@@ -56,7 +56,49 @@
 					"from enum import Enum\r\n",
 					"from datetime import datetime, timedelta"
 				],
-				"execution_count": 13
+				"execution_count": 78
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"April 2021\r\n",
+					"- 1 USD = 8,53 NOK\r\n",
+					"\r\n",
+					"April 2023 (up 11%)\r\n",
+					"- 1 USD = 10,50 NOK\r\n",
+					"- Exchange up 23% from april 2021 \r\n",
+					"\r\n",
+					"Februar 2024 (up 12%)\r\n",
+					"- 1 USD = 10,54 NOK\r\n",
+					"- "
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"AZURE_INTERNAL_USD_TO_NOK = 10.958\r\n",
+					"ACTUAL_APRIL_2024_USD_TO_NOK = 10.9093\r\n",
+					"EXCHANGE_MARKUP_RATE = AZURE_INTERNAL_USD_TO_NOK / ACTUAL_APRIL_2024_USD_TO_NOK"
+				],
+				"execution_count": 79
 			},
 			{
 				"cell_type": "code",
@@ -80,7 +122,7 @@
 					"\r\n",
 					"cost_df = cost_df.where((F.col('Date') >= '2024-04-01') & (F.col('Date') <= '2024-04-30'))"
 				],
-				"execution_count": 14
+				"execution_count": 65
 			},
 			{
 				"cell_type": "code",
@@ -96,9 +138,9 @@
 					}
 				},
 				"source": [
-					"cost_df = cost_df.select('Date', 'ChargeType', 'MeterCategory', 'MeterSubCategory', 'ProductName', 'MeterName', 'ai_vCPUs','MeterRegion', 'WindowsAHB', 'CostInBillingCurrency', 'Quantity', 'UnitOfMeasure', 'UnitPrice', 'EffectivePrice', 'PayGPrice')"
+					"cost_df = cost_df.select('Date', 'ReservationName','ChargeType', 'PricingModel', 'MeterCategory', 'MeterSubCategory', 'ProductName', 'MeterName', 'ai_vCPUs','MeterRegion', 'WindowsAHB', 'CostInBillingCurrency', 'Quantity', 'UnitOfMeasure', 'UnitPrice', 'EffectivePrice', 'PayGPrice')"
 				],
-				"execution_count": 15
+				"execution_count": 66
 			},
 			{
 				"cell_type": "code",
@@ -114,13 +156,17 @@
 					}
 				},
 				"source": [
-					"cost_df = cost_df.withColumn('RetailPrice', F.col('PayGPrice') * F.col('Quantity'))"
+					"cost_df = cost_df.where((F.col('PricingModel') == 'OnDemand') & (F.col('ChargeType') == 'Usage'))"
 				],
-				"execution_count": 16
+				"execution_count": 67
 			},
 			{
-				"cell_type": "markdown",
+				"cell_type": "code",
 				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
 					"nteract": {
 						"transient": {
 							"deleting": false
@@ -128,19 +174,10 @@
 					}
 				},
 				"source": [
-					"## Retail price USD vs NOK\r\n",
-					"\r\n",
-					"- Norway east - Windows - Dasv5-series - 4 vCPUs - 1 hour --> 2.6958 NOK <-> 0.43 USD --> 6.27\r\n",
-					"- EU North - windows - Dv2/DSv2 D3 - 4 vCPUs - 1 hour --> 2.882 NOK <-> 0.465 USD --> 6.198\r\n",
-					"- 4.2081 NOK <-> 0.752 USD --> 5.600\r\n",
-					"- 7.0134 NOK <-> 1.008 - 6.958\r\n",
-					"- 8.12 NOK <-> 0.972USD --> 8.354\r\n",
-					"- 9.918 NOK <-> 1.632 USD --> 6.077\r\n",
-					"- 1.2602 NOK <-> 0.115 USD --> 10.958\r\n",
-					"- 10.838 NOK <-> 0.989 USD --> 10.958\r\n",
-					"- 2.6958 NOK <-> 0.295 USD --> \r\n",
-					"- 4.1752 NOK <-> 0.381 USD --> 10.958"
-				]
+					"cost_df = cost_df.withColumn('RetailPrice', F.col('PayGPrice') * F.col('Quantity'))\r\n",
+					"# cost_df = cost_df.withColumn('')"
+				],
+				"execution_count": 69
 			},
 			{
 				"cell_type": "code",
@@ -157,9 +194,33 @@
 					"collapsed": false
 				},
 				"source": [
-					"display(cost_df.where(F.col('MeterCategory') == 'Virtual Machines'))"
+					"display(cost_df)"
 				],
-				"execution_count": 17
+				"execution_count": 70
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Retail price USD vs NOK\r\n",
+					"\r\n",
+					"- Norway east  - Dasv5-series - 4 vCPUs - 1 hour --> 2.6958 NOK <-> 0.43 USD --> 6.27\r\n",
+					"- EU North - Dv2/DSv2 D3 - 4 vCPUs - 1 hour --> 2.882 NOK <-> 0.465 USD --> 6.198\r\n",
+					"- 4.2081 NOK <-> 0.752 USD --> 5.600\r\n",
+					"- 7.0134 NOK <-> 1.008 - 6.958\r\n",
+					"- 8.12 NOK <-> 0.972USD --> 8.354\r\n",
+					"- 9.918 NOK <-> 1.632 USD --> 6.077\r\n",
+					"- 1.2602 NOK <-> 0.115 USD --> 10.958\r\n",
+					"- 10.838 NOK <-> 0.989 USD --> 10.958\r\n",
+					"- 2.6958 NOK <-> 0.295 USD --> \r\n",
+					"- 4.1752 NOK <-> 0.381 USD --> 10.958"
+				]
 			}
 		]
 	}
