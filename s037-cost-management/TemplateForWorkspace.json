@@ -337,6 +337,10 @@
 			"type": "string",
 			"defaultValue": "https://management.azure.com/"
 		},
+		"AzurePriceApi_linkedServiceUrl": {
+			"type": "string",
+			"defaultValue": "https://prices.azure.com/"
+		},
 		"FinOpsHubsTest_linkedServiceUrl": {
 			"type": "string",
 			"defaultValue": "https://myfinopshub5f2xqvwwmha5y.dfs.core.windows.net/"
@@ -786,6 +790,18 @@
 			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
 		},
 		"compute-savings-plan-savings_notebookSparkPoolEndpointRef": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"compute-usd-plan-savings_notebookSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"compute-usd-plan-savings_notebookSparkPoolIdRef": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"compute-usd-plan-savings_notebookSparkPoolEndpointRef": {
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
@@ -23666,6 +23682,27 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/AzurePriceApi')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "RestService",
+				"typeProperties": {
+					"url": "[parameters('AzurePriceApi_linkedServiceUrl')]",
+					"enableServerCertificateValidation": false,
+					"authenticationType": "Anonymous"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/CCM Storage')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
@@ -27836,6 +27873,26 @@
 				},
 				"content": {
 					"query": "SELECT\n[ResourceGroup]\n--,substring([Date],0,8) as [Date]\n--,sum([Cost]) as Cost\n,SUM(ConsumedQuantity) as Quantity\n,JSON_VALUE(AdditionalInfo, '$.ServiceType') as ServiceType\n,JSON_VALUE(AdditionalInfo, '$.ReservationId') as ReservationId\n,[MeterCategory]\n,[MeterSubCategory]\n,[SubscriptionName]\nFROM\n    OPENROWSET(\n        --BULK 'https://s037costmgmt.dfs.core.windows.net/usage/daily/*-cleaned.parquet',\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/monthly/2022/08/*-cleaned.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nwhere SubscriptionName = 'S138-SAP-Solution-Landscape' AND\n    UPPER(ResourceGroup) IN ('S138-WESB-RG-S02', 'S138-WEDV-RG-D02', 'S138-WEQA-RG-SOX-Q02', 'S138-WEPR-RG-SOX-P02', \n                            'S138-WESB-RG-S63', 'S138-WESB-RG-SB3', 'S138-WESB-RG-S83', 'S138-WESB-RG-S12')\n    --and (substring([Date],0,8) >= '2022-01' and substring([Date],0,8) <= '2022-06')\n    and MeterCategory = 'Virtual Machines' and MeterSubCategory = 'Reservation-Base VM'\nGROUP BY [MeterCategory], ResourceGroup, JSON_VALUE(AdditionalInfo, '$.ServiceType'), [SubscriptionName],[MeterSubCategory]--, UnitOfMeasure --,substring([Date],0,8)\nORDER BY sum(ConsumedQuantity) DESC --, substring([Date],0,8)\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/RG Tag Query')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 *\n    sum(CostInBillingCurrency) as Cost\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAmortizedCost/202404*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where \n    --SubscriptionName like '%-AIS-%'\n    SubscriptionName like 'S909%'\n    and CostAllocationType = 'SubscriptionWBS'\n    and ResourceGroup = 'rg-terminal_servers-now'",
 					"metadata": {
 						"language": "sql"
 					},
@@ -42205,6 +42262,181 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/compute-usd-plan-savings')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "[parameters('compute-usd-plan-savings_notebookSparkPoolNameRef')]",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "112g",
+					"driverCores": 16,
+					"executorMemory": "112g",
+					"executorCores": 16,
+					"numExecutors": 1,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "5",
+						"spark.autotune.trackingId": "21e0d2ed-9cd8-4592-9912-3f03d52ec5b7"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "[parameters('compute-usd-plan-savings_notebookSparkPoolIdRef')]",
+						"name": "[parameters('compute-usd-plan-savings_notebookSparkPoolNameRef')]",
+						"type": "Spark",
+						"endpoint": "[parameters('compute-usd-plan-savings_notebookSparkPoolEndpointRef')]",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 16,
+						"memory": 112,
+						"automaticScaleJobs": true
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"import pyspark.sql.functions as F\r\n",
+							"import pyspark.sql.types as T\r\n",
+							"from enum import Enum\r\n",
+							"from datetime import datetime, timedelta"
+						],
+						"outputs": [],
+						"execution_count": 13
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet'\r\n",
+							"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
+							"\r\n",
+							"# one_year_back = datetime.now().date()-timedelta(days=365)\r\n",
+							"# cost_df = cost_df.where(F.col('Date') >= one_year_back)\r\n",
+							"\r\n",
+							"cost_df = cost_df.where((F.col('Date') >= '2024-04-01') & (F.col('Date') <= '2024-04-30'))"
+						],
+						"outputs": [],
+						"execution_count": 14
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"cost_df = cost_df.select('Date', 'ChargeType', 'MeterCategory', 'MeterSubCategory', 'ProductName', 'MeterName', 'ai_vCPUs','MeterRegion', 'WindowsAHB', 'CostInBillingCurrency', 'Quantity', 'UnitOfMeasure', 'UnitPrice', 'EffectivePrice', 'PayGPrice')"
+						],
+						"outputs": [],
+						"execution_count": 15
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"cost_df = cost_df.withColumn('RetailPrice', F.col('PayGPrice') * F.col('Quantity'))"
+						],
+						"outputs": [],
+						"execution_count": 16
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Retail price USD vs NOK\r\n",
+							"\r\n",
+							"- Norway east - Windows - Dasv5-series - 4 vCPUs - 1 hour --> 2.6958 NOK <-> 0.43 USD --> 6.27\r\n",
+							"- EU North - windows - Dv2/DSv2 D3 - 4 vCPUs - 1 hour --> 2.882 NOK <-> 0.465 USD --> 6.198\r\n",
+							"- 4.2081 NOK <-> 0.752 USD --> 5.600\r\n",
+							"- 7.0134 NOK <-> 1.008 - 6.958\r\n",
+							"- 8.12 NOK <-> 0.972USD --> 8.354\r\n",
+							"- 9.918 NOK <-> 1.632 USD --> 6.077\r\n",
+							"- 1.2602 NOK <-> 0.115 USD --> 10.958\r\n",
+							"- 10.838 NOK <-> 0.989 USD --> 10.958\r\n",
+							"- 2.6958 NOK <-> 0.295 USD --> \r\n",
+							"- 4.1752 NOK <-> 0.381 USD --> 10.958"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": false
+						},
+						"source": [
+							"display(cost_df.where(F.col('MeterCategory') == 'Virtual Machines'))"
+						],
+						"outputs": [],
+						"execution_count": 17
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/cost-extend-utilities')]",
 			"type": "Microsoft.Synapse/workspaces/notebooks",
 			"apiVersion": "2019-06-01-preview",
@@ -48182,7 +48414,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "852e38a6-3ca3-4746-a6f0-2488c1ec872c"
+						"spark.autotune.trackingId": "ad7615a3-b117-42a4-89e9-d3df7a353227"
 					}
 				},
 				"metadata": {
@@ -48207,8 +48439,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -48228,7 +48459,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"from datetime import timedelta, datetime\r\n",
 							"from dateutil.relativedelta import relativedelta\r\n",
@@ -49015,6 +49245,45 @@
 			},
 			"dependsOn": [],
 			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/temporary-refresh-trigger')]",
+			"type": "Microsoft.Synapse/workspaces/triggers",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "full-pbi-refresh-all",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2024-05-27T08:20:00",
+						"endTime": "2024-05-28T08:20:00",
+						"timeZone": "W. Europe Standard Time",
+						"schedule": {
+							"minutes": [
+								0
+							],
+							"hours": [
+								18
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/full-pbi-refresh-all')]"
+			]
 		}
 	]
 }
