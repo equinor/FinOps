@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "7bf72aab-6b1a-46bc-895c-3360b406b975"
+				"spark.autotune.trackingId": "9485df02-ffca-4003-9c7e-7f0ec0f35ec4"
 			}
 		},
 		"metadata": {
@@ -198,7 +198,7 @@
 					"cost_df = cost_df.withColumn('RetailCost', F.col('PayGPrice') * F.col('Quantity'))\r\n",
 					"agg_df = cost_df.select('Date', 'CostInBillingCurrency', 'RetailCost').groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('CurrentCost'), F.sum('RetailCost').alias('RetailCost'))\r\n",
 					"for discount in discounts:\r\n",
-					"    agg_df = agg_df.withColumn(f'DiscountedCost_{discount}', F.col('RetailCost') * ((100 - discount) / 100))"
+					"    agg_df = agg_df.withColumn(f'DiscountedCost_{discount}', F.col('RetailCost') * (1 - (discount / 100)))"
 				],
 				"execution_count": 220
 			},
