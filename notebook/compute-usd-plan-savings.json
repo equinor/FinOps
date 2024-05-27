@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "b2551a19-21e5-43f1-92e3-8c9d37894ba1"
+				"spark.autotune.trackingId": "7bf72aab-6b1a-46bc-895c-3360b406b975"
 			}
 		},
 		"metadata": {
@@ -54,9 +54,10 @@
 					"import pyspark.sql.functions as F\r\n",
 					"import pyspark.sql.types as T\r\n",
 					"from enum import Enum\r\n",
-					"from datetime import datetime, timedelta"
+					"from datetime import datetime, timedelta\r\n",
+					"import numpy as np"
 				],
-				"execution_count": 78
+				"execution_count": 214
 			},
 			{
 				"cell_type": "markdown",
@@ -98,7 +99,7 @@
 					"ACTUAL_APRIL_2024_USD_TO_NOK = 10.9093\r\n",
 					"EXCHANGE_MARKUP_RATE = AZURE_INTERNAL_USD_TO_NOK / ACTUAL_APRIL_2024_USD_TO_NOK"
 				],
-				"execution_count": 79
+				"execution_count": 215
 			},
 			{
 				"cell_type": "code",
@@ -115,6 +116,7 @@
 				},
 				"source": [
 					"cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet'\r\n",
+					"# cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
 					"\r\n",
 					"# one_year_back = datetime.now().date()-timedelta(days=365)\r\n",
@@ -122,7 +124,7 @@
 					"\r\n",
 					"cost_df = cost_df.where((F.col('Date') >= '2024-04-01') & (F.col('Date') <= '2024-04-30'))"
 				],
-				"execution_count": 65
+				"execution_count": 216
 			},
 			{
 				"cell_type": "code",
@@ -138,9 +140,9 @@
 					}
 				},
 				"source": [
-					"cost_df = cost_df.select('Date', 'ReservationName','ChargeType', 'PricingModel', 'MeterCategory', 'MeterSubCategory', 'ProductName', 'MeterName', 'ai_vCPUs','MeterRegion', 'WindowsAHB', 'CostInBillingCurrency', 'Quantity', 'UnitOfMeasure', 'UnitPrice', 'EffectivePrice', 'PayGPrice')"
+					"cost_df = cost_df.select('Date', 'ReservationName','ChargeType', 'PricingModel', 'CostInBillingCurrency', 'Quantity', 'PayGPrice')"
 				],
-				"execution_count": 66
+				"execution_count": 217
 			},
 			{
 				"cell_type": "code",
@@ -158,7 +160,7 @@
 				"source": [
 					"cost_df = cost_df.where((F.col('PricingModel') == 'OnDemand') & (F.col('ChargeType') == 'Usage'))"
 				],
-				"execution_count": 67
+				"execution_count": 218
 			},
 			{
 				"cell_type": "code",
@@ -174,10 +176,151 @@
 					}
 				},
 				"source": [
-					"cost_df = cost_df.withColumn('RetailPrice', F.col('PayGPrice') * F.col('Quantity'))\r\n",
+					"discounts = np.arange(10, 41, 5)\r\n",
+					"print(discounts)"
+				],
+				"execution_count": 219
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cost_df = cost_df.withColumn('RetailCost', F.col('PayGPrice') * F.col('Quantity'))\r\n",
+					"agg_df = cost_df.select('Date', 'CostInBillingCurrency', 'RetailCost').groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('CurrentCost'), F.sum('RetailCost').alias('RetailCost'))\r\n",
+					"for discount in discounts:\r\n",
+					"    agg_df = agg_df.withColumn(f'DiscountedCost_{discount}', F.col('RetailCost') * ((100 - discount) / 100))"
+				],
+				"execution_count": 220
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(agg_df)"
+				],
+				"execution_count": 221
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cost_df = cost_df.withColumn('RetailCost', F.col('PayGPrice') * F.col('Quantity'))\r\n",
+					"cost_df = cost_df.withColumn('DiscountedCost', F.col('RetailCost') * 0.7)\r\n",
+					"cost_df = cost_df.withColumn('ExchangeAdjustedCost', F.col('DiscountedCost') / EXCHANGE_MARKUP_RATE)\r\n",
 					"# cost_df = cost_df.withColumn('')"
 				],
-				"execution_count": 69
+				"execution_count": 189
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"total_cost = cost_df.agg(F.sum('CostInBillingCurrency')).collect()[0][0]\r\n",
+					"retail_cost = cost_df.agg(F.sum('RetailCost')).collect()[0][0]\r\n",
+					"discounted_cost = cost_df.agg(F.sum('ExchangeAdjustedCost')).collect()[0][0]\r\n",
+					"current_discount = (1 - (total_cost / retail_cost)) * 100\r\n",
+					"usd_plan_discount = (1 - (discounted_cost / retail_cost)) * 100"
+				],
+				"execution_count": 190
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"print(f\"Current discount: {current_discount} %\")\r\n",
+					"print(f\"USD plan discount (given 30% base discount): {usd_plan_discount} %\")"
+				],
+				"execution_count": 191
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"print(total_cost)\r\n",
+					"print(retail_cost)\r\n",
+					"print(effective_discount)"
+				],
+				"execution_count": 192
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -196,7 +339,25 @@
 				"source": [
 					"display(cost_df)"
 				],
-				"execution_count": 70
+				"execution_count": 193
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"print(retail_cost / total_cost)"
+				],
+				"execution_count": 194
 			},
 			{
 				"cell_type": "markdown",
