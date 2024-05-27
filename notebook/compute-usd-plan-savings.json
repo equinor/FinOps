@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "ff75c43b-e8e1-4f79-8c9e-9de325ac1e59"
+				"spark.autotune.trackingId": "ee518dc1-2bbb-4c45-829b-7cb24f296ea4"
 			}
 		},
 		"metadata": {
@@ -56,7 +56,7 @@
 					"from enum import Enum\r\n",
 					"from datetime import datetime, timedelta"
 				],
-				"execution_count": 3
+				"execution_count": 13
 			},
 			{
 				"cell_type": "code",
@@ -75,10 +75,12 @@
 					"cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
 					"\r\n",
-					"one_year_back = datetime.now().date()-timedelta(days=365)\r\n",
-					"cost_df = cost_df.where(F.col('Date') >= one_year_back)"
+					"# one_year_back = datetime.now().date()-timedelta(days=365)\r\n",
+					"# cost_df = cost_df.where(F.col('Date') >= one_year_back)\r\n",
+					"\r\n",
+					"cost_df = cost_df.where((F.col('Date') >= '2024-04-01') & (F.col('Date') <= '2024-04-30'))"
 				],
-				"execution_count": null
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -94,9 +96,70 @@
 					}
 				},
 				"source": [
-					"cost_df = cost_df.withColumn"
+					"cost_df = cost_df.select('Date', 'ChargeType', 'MeterCategory', 'MeterSubCategory', 'ProductName', 'MeterName', 'ai_vCPUs','MeterRegion', 'WindowsAHB', 'CostInBillingCurrency', 'Quantity', 'UnitOfMeasure', 'UnitPrice', 'EffectivePrice', 'PayGPrice')"
 				],
-				"execution_count": null
+				"execution_count": 15
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cost_df = cost_df.withColumn('RetailPrice', F.col('PayGPrice') * F.col('Quantity'))"
+				],
+				"execution_count": 16
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Retail price USD vs NOK\r\n",
+					"\r\n",
+					"- Norway east - Windows - Dasv5-series - 4 vCPUs - 1 hour --> 2.6958 NOK <-> 0.43 USD --> 6.27\r\n",
+					"- EU North - windows - Dv2/DSv2 D3 - 4 vCPUs - 1 hour --> 2.882 NOK <-> 0.465 USD --> 6.198\r\n",
+					"- 4.2081 NOK <-> 0.752 USD --> 5.600\r\n",
+					"- 7.0134 NOK <-> 1.008 - 6.958\r\n",
+					"- 8.12 NOK <-> 0.972USD --> 8.354\r\n",
+					"- 9.918 NOK <-> 1.632 USD --> 6.077\r\n",
+					"- 1.2602 NOK <-> 0.115 USD --> 10.958\r\n",
+					"- 10.838 NOK <-> 0.989 USD --> 10.958\r\n",
+					"- 2.6958 NOK <-> 0.295 USD --> \r\n",
+					"- 4.1752 NOK <-> 0.381 USD --> 10.958"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(cost_df.where(F.col('MeterCategory') == 'Virtual Machines'))"
+				],
+				"execution_count": 17
 			}
 		]
 	}
