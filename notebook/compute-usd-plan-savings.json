@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "d89818bf-2c7a-4a03-be1c-b5107c852088"
+				"spark.autotune.trackingId": "93df1e8b-f196-4b6e-991e-a462d922aeb0"
 			}
 		},
 		"metadata": {
@@ -52,34 +52,31 @@
 				"cell_type": "code",
 				"source": [
 					"import pyspark.sql.functions as F\r\n",
-					"import pyspark.sql.types as T\r\n",
-					"from enum import Enum\r\n",
-					"from datetime import datetime, timedelta\r\n",
-					"import numpy as np"
+					"import numpy as np\r\n",
+					"import pyspark.sql.window as W"
 				],
-				"execution_count": 214
+				"execution_count": 121
 			},
 			{
-				"cell_type": "markdown",
+				"cell_type": "code",
 				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
 					"nteract": {
 						"transient": {
 							"deleting": false
 						}
-					}
+					},
+					"tags": [
+						"parameters"
+					]
 				},
 				"source": [
-					"April 2021\r\n",
-					"- 1 USD = 8,53 NOK\r\n",
-					"\r\n",
-					"April 2023 (up 11%)\r\n",
-					"- 1 USD = 10,50 NOK\r\n",
-					"- Exchange up 23% from april 2021 \r\n",
-					"\r\n",
-					"Februar 2024 (up 12%)\r\n",
-					"- 1 USD = 10,54 NOK\r\n",
-					"- "
-				]
+					"storageAccount = 's037costmgmt'"
+				],
+				"execution_count": 122
 			},
 			{
 				"cell_type": "code",
@@ -96,10 +93,53 @@
 				},
 				"source": [
 					"AZURE_INTERNAL_USD_TO_NOK = 10.958\r\n",
-					"ACTUAL_APRIL_2024_USD_TO_NOK = 10.9093\r\n",
-					"EXCHANGE_MARKUP_RATE = AZURE_INTERNAL_USD_TO_NOK / ACTUAL_APRIL_2024_USD_TO_NOK"
+					"START_DATE = '2024-03-01'\r\n",
+					"START_DISCOUNT = 10\r\n",
+					"END_DISCOUNT = 40\r\n",
+					"DISCOUNT_INCREMENT = 5"
 				],
-				"execution_count": 215
+				"execution_count": 123
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"exchange_rate_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exchange-rates/usd-to-nok.parquet'\r\n",
+					"exchange_rate_df = spark.read.format('parquet').load(exchange_rate_path)"
+				],
+				"execution_count": 124
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"exchange_rate_df = exchange_rate_df \\\r\n",
+					"    .select('TIME_PERIOD', 'OBS_VALUE') \\\r\n",
+					"    .withColumnRenamed('OBS_VALUE', 'USD2NOK') \\\r\n",
+					"    .withColumn('DateKey', F.date_format('TIME_PERIOD', 'yyyy-MM-dd')) \\\r\n",
+					"    .drop('TIME_PERIOD')"
+				],
+				"execution_count": 125
 			},
 			{
 				"cell_type": "code",
@@ -116,15 +156,40 @@
 				},
 				"source": [
 					"cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet'\r\n",
-					"# cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
+					"cost_df = cost_df.where(F.col('Date') >= START_DATE)"
+				],
+				"execution_count": 126
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"window_spec = W.Window.orderBy(\"Date\")\r\n",
 					"\r\n",
-					"# one_year_back = datetime.now().date()-timedelta(days=365)\r\n",
-					"# cost_df = cost_df.where(F.col('Date') >= one_year_back)\r\n",
-					"\r\n",
-					"cost_df = cost_df.where((F.col('Date') >= '2024-04-01') & (F.col('Date') <= '2024-04-30'))"
+					"cost_df = cost_df \\\r\n",
+					"    .select('Date','ChargeType', 'PricingModel', 'CostInBillingCurrency', 'Quantity', 'PayGPrice') \\\r\n",
+					"    .where((F.col('PricingModel') == 'OnDemand') & (F.col('ChargeType') == 'Usage')) \\\r\n",
+					"    .withColumn('RetailCost', F.col('PayGPrice') * F.col('Quantity')) \\\r\n",
+					"    .withColumn('DateKey', F.date_format('Date', 'yyyy-MM-dd')) \\\r\n",
+					"    .groupBy('Date', 'DateKey') \\\r\n",
+					"    .agg(F.sum('CostInBillingCurrency').alias('CurrentCost'), F.sum('RetailCost').alias('RetailCost')) \\\r\n",
+					"    .join(exchange_rate_df, 'DateKey', 'left') \\\r\n",
+					"    .withColumn(\"USD2NOK_lag\", F.lag(\"USD2NOK\").over(window_spec)) \\\r\n",
+					"    .withColumn(\"USD2NOK\", F.when(F.col(\"USD2NOK\").isNull(), F.last(F.col(\"USD2NOK_lag\"), True).over(window_spec)).otherwise(F.col(\"USD2NOK\"))) \\\r\n",
+					"    .drop('DateKey', 'USD2NOK_lag')"
 				],
-				"execution_count": 216
+				"execution_count": 127
 			},
 			{
 				"cell_type": "code",
@@ -140,9 +205,11 @@
 					}
 				},
 				"source": [
-					"cost_df = cost_df.select('Date', 'ReservationName','ChargeType', 'PricingModel', 'CostInBillingCurrency', 'Quantity', 'PayGPrice')"
+					"cost_df = cost_df.withColumn('InternalRate', F.lit(AZURE_INTERNAL_USD_TO_NOK))\r\n",
+					"cost_df = cost_df.withColumn('MarkupRate', F.col('InternalRate') / F.col('USD2NOK'))\r\n",
+					"cost_df = cost_df.withColumn('AdjustedRetailCost', F.col('RetailCost') * F.col('MarkupRate'))"
 				],
-				"execution_count": 217
+				"execution_count": 128
 			},
 			{
 				"cell_type": "code",
@@ -158,67 +225,11 @@
 					}
 				},
 				"source": [
-					"cost_df = cost_df.where((F.col('PricingModel') == 'OnDemand') & (F.col('ChargeType') == 'Usage'))"
-				],
-				"execution_count": 218
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"discounts = np.arange(10, 41, 5)"
-				],
-				"execution_count": 219
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"cost_df = cost_df.withColumn('RetailCost', F.col('PayGPrice') * F.col('Quantity'))\r\n",
-					"agg_df = cost_df.select('Date', 'CostInBillingCurrency', 'RetailCost').groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('CurrentCost'), F.sum('RetailCost').alias('RetailCost'))\r\n",
+					"discounts = np.arange(START_DISCOUNT, END_DISCOUNT + 1, DISCOUNT_INCREMENT)\r\n",
 					"for discount in discounts:\r\n",
-					"    agg_df = agg_df.withColumn(f'DiscountedCost_{discount}', F.col('RetailCost') * (1 - (discount / 100)))"
+					"    cost_df = cost_df.withColumn(f'DiscountedCost_{discount}', F.col('AdjustedRetailCost') * (1 - (discount / 100)))"
 				],
-				"execution_count": 220
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(agg_df)"
-				],
-				"execution_count": 221
+				"execution_count": 129
 			},
 			{
 				"cell_type": "code",
@@ -234,153 +245,10 @@
 					}
 				},
 				"source": [
-					"cost_df = cost_df.withColumn('RetailCost', F.col('PayGPrice') * F.col('Quantity'))\r\n",
-					"cost_df = cost_df.withColumn('DiscountedCost', F.col('RetailCost') * 0.7)\r\n",
-					"cost_df = cost_df.withColumn('ExchangeAdjustedCost', F.col('DiscountedCost') / EXCHANGE_MARKUP_RATE)\r\n",
-					"# cost_df = cost_df.withColumn('')"
+					"usd_plan_cost_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exchange-rates/usd-plan-cost.parquet\"\r\n",
+					"cost_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(usd_plan_cost_path)"
 				],
-				"execution_count": 189
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"total_cost = cost_df.agg(F.sum('CostInBillingCurrency')).collect()[0][0]\r\n",
-					"retail_cost = cost_df.agg(F.sum('RetailCost')).collect()[0][0]\r\n",
-					"discounted_cost = cost_df.agg(F.sum('ExchangeAdjustedCost')).collect()[0][0]\r\n",
-					"current_discount = (1 - (total_cost / retail_cost)) * 100\r\n",
-					"usd_plan_discount = (1 - (discounted_cost / retail_cost)) * 100"
-				],
-				"execution_count": 190
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"print(f\"Current discount: {current_discount} %\")\r\n",
-					"print(f\"USD plan discount (given 30% base discount): {usd_plan_discount} %\")"
-				],
-				"execution_count": 191
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"print(total_cost)\r\n",
-					"print(retail_cost)\r\n",
-					"print(effective_discount)"
-				],
-				"execution_count": 192
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					""
-				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(cost_df)"
-				],
-				"execution_count": 193
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"print(retail_cost / total_cost)"
-				],
-				"execution_count": 194
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"## Retail price USD vs NOK\r\n",
-					"\r\n",
-					"- Norway east  - Dasv5-series - 4 vCPUs - 1 hour --> 2.6958 NOK <-> 0.43 USD --> 6.27\r\n",
-					"- EU North - Dv2/DSv2 D3 - 4 vCPUs - 1 hour --> 2.882 NOK <-> 0.465 USD --> 6.198\r\n",
-					"- 4.2081 NOK <-> 0.752 USD --> 5.600\r\n",
-					"- 7.0134 NOK <-> 1.008 - 6.958\r\n",
-					"- 8.12 NOK <-> 0.972USD --> 8.354\r\n",
-					"- 9.918 NOK <-> 1.632 USD --> 6.077\r\n",
-					"- 1.2602 NOK <-> 0.115 USD --> 10.958\r\n",
-					"- 10.838 NOK <-> 0.989 USD --> 10.958\r\n",
-					"- 2.6958 NOK <-> 0.295 USD --> \r\n",
-					"- 4.1752 NOK <-> 0.381 USD --> 10.958"
-				]
+				"execution_count": 130
 			}
 		]
 	}
