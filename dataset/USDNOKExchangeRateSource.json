@@ -1,0 +1,33 @@
+{
+	"name": "USDNOKExchangeRateSource",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "NorgesBankRestApi",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"fromDate": {
+				"type": "string"
+			},
+			"toDate": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "HttpServerLocation",
+				"relativeUrl": {
+					"value": "@concat('api/data/EXR/B.USD.NOK.SP?format=csv&startPeriod=',dataset().fromDate, '&endPeriod=', dataset().toDate, '&locale=en')",
+					"type": "Expression"
+				}
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": []
+	}
+}
