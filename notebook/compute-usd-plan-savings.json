@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "93df1e8b-f196-4b6e-991e-a462d922aeb0"
+				"spark.autotune.trackingId": "cc0d7037-1773-450c-8ede-8cbeda948078"
 			}
 		},
 		"metadata": {
@@ -55,7 +55,7 @@
 					"import numpy as np\r\n",
 					"import pyspark.sql.window as W"
 				],
-				"execution_count": 121
+				"execution_count": 132
 			},
 			{
 				"cell_type": "code",
@@ -207,7 +207,7 @@
 				"source": [
 					"cost_df = cost_df.withColumn('InternalRate', F.lit(AZURE_INTERNAL_USD_TO_NOK))\r\n",
 					"cost_df = cost_df.withColumn('MarkupRate', F.col('InternalRate') / F.col('USD2NOK'))\r\n",
-					"cost_df = cost_df.withColumn('AdjustedRetailCost', F.col('RetailCost') * F.col('MarkupRate'))"
+					"cost_df = cost_df.withColumn('AdjustedRetailCost', F.col('RetailCost') / F.col('MarkupRate'))"
 				],
 				"execution_count": 128
 			},
