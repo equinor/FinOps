@@ -222,8 +222,49 @@
 						"type": "Expression"
 					}
 				}
+			},
+			{
+				"name": "Compute USD plan discounts",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "Fetch USD-NOK exchange rate",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "compute-usd-plan-discounts",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"storageAccount": {
+							"value": {
+								"value": "@pipeline().parameters.storageAccount",
+								"type": "Expression"
+							}
+						}
+					},
+					"snapshot": true
+				}
 			}
 		],
+		"parameters": {
+			"storageAccount": {
+				"type": "string",
+				"defaultValue": "s037costmgmt"
+			}
+		},
 		"variables": {
 			"today": {
 				"type": "String"
