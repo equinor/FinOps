@@ -1,0 +1,290 @@
+{
+	"name": "fetch-exchange-rates",
+	"properties": {
+		"activities": [
+			{
+				"name": "Fetch USD-NOK exchange rate",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "HttpReadSettings",
+							"requestMethod": "GET"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings",
+							"copyBehavior": "MergeFiles"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "FREQ",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "FREQ",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "Frequency",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "Frequency",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "BASE_CUR",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "BASE_CUR",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "Base Currency",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "Base Currency",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "QUOTE_CUR",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "QUOTE_CUR",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "Quote Currency",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "Quote Currency",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "TENOR",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "TENOR",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "TENOR",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "Tenor",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "DECIMALS",
+									"type": "Int16",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "DECIMALS",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "CALCULATED",
+									"type": "Boolean",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "CALCULATED",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "UNIT_MULT",
+									"type": "Int16",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "UNIT_MULT",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "Unit Multiplier",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "Unit Multiplier",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "COLLECTION",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "COLLECTION",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "Collection Indicator",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "Collection Indicator",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "TIME_PERIOD",
+									"type": "DateTime",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "TIME_PERIOD",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "OBS_VALUE",
+									"type": "Double",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "OBS_VALUE",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "USDNOKExchangeRateSource",
+						"type": "DatasetReference",
+						"parameters": {
+							"fromDate": "2024-03-01",
+							"toDate": {
+								"value": "@variables('today')",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "USDNOKExchangeRateSink",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Set todays date",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "today",
+					"value": {
+						"value": "@formatDateTime(utcNow(), 'yyyy-MM-dd')",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"variables": {
+			"today": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "PipelinesInProduction"
+		},
+		"annotations": []
+	}
+}
