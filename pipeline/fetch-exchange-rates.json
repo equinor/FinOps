@@ -5,7 +5,14 @@
 			{
 				"name": "Fetch USD-NOK exchange rate",
 				"type": "Copy",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "Set todays date",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -119,18 +126,6 @@
 								},
 								"sink": {
 									"name": "TENOR",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "TENOR",
-									"type": "String",
-									"physicalType": "String"
-								},
-								"sink": {
-									"name": "Tenor",
 									"type": "String",
 									"physicalType": "UTF8"
 								}
