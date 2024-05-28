@@ -793,15 +793,15 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
-		"compute-usd-plan-savings_notebookSparkPoolNameRef": {
+		"compute-usd-plan-discounts_notebookSparkPoolNameRef": {
 			"type": "string",
 			"defaultValue": "sprkpool33large"
 		},
-		"compute-usd-plan-savings_notebookSparkPoolIdRef": {
+		"compute-usd-plan-discounts_notebookSparkPoolIdRef": {
 			"type": "string",
 			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
 		},
-		"compute-usd-plan-savings_notebookSparkPoolEndpointRef": {
+		"compute-usd-plan-discounts_notebookSparkPoolEndpointRef": {
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
@@ -1068,6 +1068,22 @@
 		"sparkpool32_sparkVersion": {
 			"type": "string",
 			"defaultValue": "3.2"
+		},
+		"fetch-exchange-rates_pipelineStorageAccountParameter": {
+			"type": "string",
+			"defaultValue": "s037costmgmt"
+		},
+		"NorgesBankRestApi_linkedServiceUrl": {
+			"type": "string",
+			"defaultValue": "https://data.norges-bank.no/"
+		},
+		"USDNOKExchangeRateSource_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "NorgesBankRestApi"
+		},
+		"USDNOKExchangeRateSink_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
 		}
 	},
 	"variables": {
@@ -24579,6 +24595,45 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/temporary-refresh-trigger')]",
+			"type": "Microsoft.Synapse/workspaces/triggers",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "full-pbi-refresh-all",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2024-05-27T08:20:00",
+						"endTime": "2024-05-28T08:20:00",
+						"timeZone": "W. Europe Standard Time",
+						"schedule": {
+							"minutes": [
+								0
+							],
+							"hours": [
+								18
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/full-pbi-refresh-all')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/AutoResolveIntegrationRuntime')]",
 			"type": "Microsoft.Synapse/workspaces/integrationRuntimes",
 			"apiVersion": "2019-06-01-preview",
@@ -42262,14 +42317,14 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/compute-usd-plan-savings')]",
+			"name": "[concat(parameters('workspaceName'), '/compute-usd-plan-discounts')]",
 			"type": "Microsoft.Synapse/workspaces/notebooks",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"nbformat": 4,
 				"nbformat_minor": 2,
 				"bigDataPool": {
-					"referenceName": "[parameters('compute-usd-plan-savings_notebookSparkPoolNameRef')]",
+					"referenceName": "[parameters('compute-usd-plan-discounts_notebookSparkPoolNameRef')]",
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
@@ -42282,7 +42337,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "21e0d2ed-9cd8-4592-9912-3f03d52ec5b7"
+						"spark.autotune.trackingId": "a6d8074d-baa1-435e-99ee-1ff351b5588e"
 					}
 				},
 				"metadata": {
@@ -42296,10 +42351,10 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "[parameters('compute-usd-plan-savings_notebookSparkPoolIdRef')]",
-						"name": "[parameters('compute-usd-plan-savings_notebookSparkPoolNameRef')]",
+						"id": "[parameters('compute-usd-plan-discounts_notebookSparkPoolIdRef')]",
+						"name": "[parameters('compute-usd-plan-discounts_notebookSparkPoolNameRef')]",
 						"type": "Spark",
-						"endpoint": "[parameters('compute-usd-plan-savings_notebookSparkPoolEndpointRef')]",
+						"endpoint": "[parameters('compute-usd-plan-discounts_notebookSparkPoolEndpointRef')]",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net"
@@ -42318,12 +42373,99 @@
 						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
-							"import pyspark.sql.types as T\r\n",
-							"from enum import Enum\r\n",
-							"from datetime import datetime, timedelta"
+							"import numpy as np\r\n",
+							"import pyspark.sql.window as W"
 						],
 						"outputs": [],
-						"execution_count": 13
+						"execution_count": 133
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"storageAccount = 's037costmgmt'"
+						],
+						"outputs": [],
+						"execution_count": 134
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"AZURE_INTERNAL_USD_TO_NOK = 10.958\r\n",
+							"START_DATE = '2024-03-01'\r\n",
+							"START_DISCOUNT = 10\r\n",
+							"END_DISCOUNT = 40\r\n",
+							"DISCOUNT_INCREMENT = 5"
+						],
+						"outputs": [],
+						"execution_count": 135
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"exchange_rate_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exchange-rates/usd-to-nok.parquet'\r\n",
+							"exchange_rate_df = spark.read.format('parquet').load(exchange_rate_path)"
+						],
+						"outputs": [],
+						"execution_count": 136
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"exchange_rate_df = exchange_rate_df \\\r\n",
+							"    .select('TIME_PERIOD', 'OBS_VALUE') \\\r\n",
+							"    .withColumnRenamed('OBS_VALUE', 'USD2NOK') \\\r\n",
+							"    .withColumn('DateKey', F.date_format('TIME_PERIOD', 'yyyy-MM-dd')) \\\r\n",
+							"    .drop('TIME_PERIOD')"
+						],
+						"outputs": [],
+						"execution_count": 137
 					},
 					{
 						"cell_type": "code",
@@ -42341,14 +42483,10 @@
 						"source": [
 							"cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet'\r\n",
 							"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
-							"\r\n",
-							"# one_year_back = datetime.now().date()-timedelta(days=365)\r\n",
-							"# cost_df = cost_df.where(F.col('Date') >= one_year_back)\r\n",
-							"\r\n",
-							"cost_df = cost_df.where((F.col('Date') >= '2024-04-01') & (F.col('Date') <= '2024-04-30'))"
+							"cost_df = cost_df.where(F.col('Date') >= START_DATE)"
 						],
 						"outputs": [],
-						"execution_count": 14
+						"execution_count": 138
 					},
 					{
 						"cell_type": "code",
@@ -42364,53 +42502,22 @@
 							}
 						},
 						"source": [
-							"cost_df = cost_df.select('Date', 'ChargeType', 'MeterCategory', 'MeterSubCategory', 'ProductName', 'MeterName', 'ai_vCPUs','MeterRegion', 'WindowsAHB', 'CostInBillingCurrency', 'Quantity', 'UnitOfMeasure', 'UnitPrice', 'EffectivePrice', 'PayGPrice')"
-						],
-						"outputs": [],
-						"execution_count": 15
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"cost_df = cost_df.withColumn('RetailPrice', F.col('PayGPrice') * F.col('Quantity'))"
-						],
-						"outputs": [],
-						"execution_count": 16
-					},
-					{
-						"cell_type": "markdown",
-						"metadata": {
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"## Retail price USD vs NOK\r\n",
+							"window_spec = W.Window.orderBy(\"Date\")\r\n",
 							"\r\n",
-							"- Norway east - Windows - Dasv5-series - 4 vCPUs - 1 hour --> 2.6958 NOK <-> 0.43 USD --> 6.27\r\n",
-							"- EU North - windows - Dv2/DSv2 D3 - 4 vCPUs - 1 hour --> 2.882 NOK <-> 0.465 USD --> 6.198\r\n",
-							"- 4.2081 NOK <-> 0.752 USD --> 5.600\r\n",
-							"- 7.0134 NOK <-> 1.008 - 6.958\r\n",
-							"- 8.12 NOK <-> 0.972USD --> 8.354\r\n",
-							"- 9.918 NOK <-> 1.632 USD --> 6.077\r\n",
-							"- 1.2602 NOK <-> 0.115 USD --> 10.958\r\n",
-							"- 10.838 NOK <-> 0.989 USD --> 10.958\r\n",
-							"- 2.6958 NOK <-> 0.295 USD --> \r\n",
-							"- 4.1752 NOK <-> 0.381 USD --> 10.958"
-						]
+							"cost_df = cost_df \\\r\n",
+							"    .select('Date','ChargeType', 'PricingModel', 'CostInBillingCurrency', 'Quantity', 'PayGPrice') \\\r\n",
+							"    .where((F.col('PricingModel') == 'OnDemand') & (F.col('ChargeType') == 'Usage')) \\\r\n",
+							"    .withColumn('RetailCost', F.col('PayGPrice') * F.col('Quantity')) \\\r\n",
+							"    .withColumn('DateKey', F.date_format('Date', 'yyyy-MM-dd')) \\\r\n",
+							"    .groupBy('Date', 'DateKey') \\\r\n",
+							"    .agg(F.sum('CostInBillingCurrency').alias('CurrentCost'), F.sum('RetailCost').alias('RetailCost')) \\\r\n",
+							"    .join(exchange_rate_df, 'DateKey', 'left') \\\r\n",
+							"    .withColumn(\"USD2NOK_lag\", F.lag(\"USD2NOK\").over(window_spec)) \\\r\n",
+							"    .withColumn(\"USD2NOK\", F.when(F.col(\"USD2NOK\").isNull(), F.last(F.col(\"USD2NOK_lag\"), True).over(window_spec)).otherwise(F.col(\"USD2NOK\"))) \\\r\n",
+							"    .drop('DateKey', 'USD2NOK_lag')"
+						],
+						"outputs": [],
+						"execution_count": 139
 					},
 					{
 						"cell_type": "code",
@@ -42423,14 +42530,56 @@
 								"transient": {
 									"deleting": false
 								}
-							},
-							"collapsed": false
+							}
 						},
 						"source": [
-							"display(cost_df.where(F.col('MeterCategory') == 'Virtual Machines'))"
+							"cost_df = cost_df.withColumn('InternalRate', F.lit(AZURE_INTERNAL_USD_TO_NOK))\r\n",
+							"cost_df = cost_df.withColumn('MarkupRate', F.col('InternalRate') / F.col('USD2NOK'))\r\n",
+							"cost_df = cost_df.withColumn('AdjustedRetailCost', F.col('RetailCost') / F.col('MarkupRate'))"
 						],
 						"outputs": [],
-						"execution_count": 17
+						"execution_count": 140
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"discounts = np.arange(START_DISCOUNT, END_DISCOUNT + 1, DISCOUNT_INCREMENT)\r\n",
+							"for discount in discounts:\r\n",
+							"    cost_df = cost_df.withColumn(f'DiscountedCost_{discount}', F.col('AdjustedRetailCost') * (1 - (discount / 100)))"
+						],
+						"outputs": [],
+						"execution_count": 141
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"usd_plan_cost_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exchange-rates/usd-plan-cost.parquet\"\r\n",
+							"cost_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(usd_plan_cost_path)"
+						],
+						"outputs": [],
+						"execution_count": 142
 					}
 				]
 			},
@@ -49247,7 +49396,472 @@
 			"location": "northeurope"
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/temporary-refresh-trigger')]",
+			"name": "[concat(parameters('workspaceName'), '/fetch-exchange-rates')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Fetch USD-NOK exchange rate",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Set todays date",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "HttpReadSettings",
+									"requestMethod": "GET"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings",
+									"copyBehavior": "MergeFiles"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "FREQ",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "FREQ",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Frequency",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Frequency",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "BASE_CUR",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "BASE_CUR",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "QUOTE_CUR",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "QUOTE_CUR",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "TENOR",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "TENOR",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "DECIMALS",
+											"type": "Int16",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "DECIMALS",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "CALCULATED",
+											"type": "Boolean",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "CALCULATED",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "UNIT_MULT",
+											"type": "Int16",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "UNIT_MULT",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "COLLECTION",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "COLLECTION",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "TIME_PERIOD",
+											"type": "DateTime",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "TIME_PERIOD",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "OBS_VALUE",
+											"type": "Double",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "OBS_VALUE",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "USDNOKExchangeRateSource",
+								"type": "DatasetReference",
+								"parameters": {
+									"fromDate": "2024-03-01",
+									"toDate": {
+										"value": "@variables('today')",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "USDNOKExchangeRateSink",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "Set todays date",
+						"type": "SetVariable",
+						"dependsOn": [],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "today",
+							"value": {
+								"value": "@formatDateTime(utcNow(), 'yyyy-MM-dd')",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Compute USD plan discounts",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "Fetch USD-NOK exchange rate",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "compute-usd-plan-discounts",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"storageAccount": {
+									"value": {
+										"value": "@pipeline().parameters.storageAccount",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"conf": {}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"storageAccount": {
+						"type": "string",
+						"defaultValue": "[parameters('fetch-exchange-rates_pipelineStorageAccountParameter')]"
+					}
+				},
+				"variables": {
+					"today": {
+						"type": "String"
+					}
+				},
+				"folder": {
+					"name": "PipelinesInProduction"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/USDNOKExchangeRateSource')]",
+				"[concat(variables('workspaceId'), '/datasets/USDNOKExchangeRateSink')]",
+				"[concat(variables('workspaceId'), '/notebooks/compute-usd-plan-discounts')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/NorgesBankRestApi')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "HttpServer",
+				"typeProperties": {
+					"url": "[parameters('NorgesBankRestApi_linkedServiceUrl')]",
+					"enableServerCertificateValidation": true,
+					"authenticationType": "Anonymous"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/USDNOKExchangeRateSource')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('USDNOKExchangeRateSource_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"fromDate": {
+						"type": "string"
+					},
+					"toDate": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "HttpServerLocation",
+						"relativeUrl": {
+							"value": "@concat('api/data/EXR/B.USD.NOK.SP?format=csv&startPeriod=',dataset().fromDate, '&endPeriod=', dataset().toDate, '&locale=en')",
+							"type": "Expression"
+						}
+					},
+					"columnDelimiter": ";",
+					"rowDelimiter": "\n",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "FREQ",
+						"type": "String"
+					},
+					{
+						"name": "Frequency",
+						"type": "String"
+					},
+					{
+						"name": "BASE_CUR",
+						"type": "String"
+					},
+					{
+						"name": "Base Currency",
+						"type": "String"
+					},
+					{
+						"name": "QUOTE_CUR",
+						"type": "String"
+					},
+					{
+						"name": "Quote Currency",
+						"type": "String"
+					},
+					{
+						"name": "TENOR",
+						"type": "String"
+					},
+					{
+						"name": "Tenor",
+						"type": "String"
+					},
+					{
+						"name": "DECIMALS",
+						"type": "String"
+					},
+					{
+						"name": "CALCULATED",
+						"type": "String"
+					},
+					{
+						"name": "UNIT_MULT",
+						"type": "String"
+					},
+					{
+						"name": "Unit Multiplier",
+						"type": "String"
+					},
+					{
+						"name": "COLLECTION",
+						"type": "String"
+					},
+					{
+						"name": "Collection Indicator",
+						"type": "String"
+					},
+					{
+						"name": "TIME_PERIOD",
+						"type": "String"
+					},
+					{
+						"name": "OBS_VALUE",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('USDNOKExchangeRateSource_dataSetLinkedServiceName'))]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/USDNOKExchangeRateSink')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('USDNOKExchangeRateSink_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "usd-to-nok.parquet",
+						"folderPath": "exchange-rates",
+						"fileSystem": "usage"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('USDNOKExchangeRateSink_dataSetLinkedServiceName'))]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/CreateUSDPlanCostView')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "PowerBIViews"
+				},
+				"content": {
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW USDPlanCost\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exchange-rates/usd-plan-cost.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Daily at 3 am')]",
 			"type": "Microsoft.Synapse/workspaces/triggers",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -49256,10 +49870,12 @@
 				"pipelines": [
 					{
 						"pipelineReference": {
-							"referenceName": "full-pbi-refresh-all",
+							"referenceName": "fetch-exchange-rates",
 							"type": "PipelineReference"
 						},
-						"parameters": {}
+						"parameters": {
+							"storageAccount": "s037costmgmt"
+						}
 					}
 				],
 				"type": "ScheduleTrigger",
@@ -49267,22 +49883,21 @@
 					"recurrence": {
 						"frequency": "Day",
 						"interval": 1,
-						"startTime": "2024-05-27T08:20:00",
-						"endTime": "2024-05-28T08:20:00",
+						"startTime": "2024-05-28T11:47:00",
 						"timeZone": "W. Europe Standard Time",
 						"schedule": {
 							"minutes": [
 								0
 							],
 							"hours": [
-								18
+								3
 							]
 						}
 					}
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('workspaceId'), '/pipelines/full-pbi-refresh-all')]"
+				"[concat(variables('workspaceId'), '/pipelines/fetch-exchange-rates')]"
 			]
 		}
 	]
