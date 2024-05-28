@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "cc0d7037-1773-450c-8ede-8cbeda948078"
+				"spark.autotune.trackingId": "efb39ffd-c9bd-49ac-a35b-4d3b48bf5944"
 			}
 		},
 		"metadata": {
@@ -55,7 +55,7 @@
 					"import numpy as np\r\n",
 					"import pyspark.sql.window as W"
 				],
-				"execution_count": 132
+				"execution_count": 133
 			},
 			{
 				"cell_type": "code",
@@ -76,7 +76,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 122
+				"execution_count": 134
 			},
 			{
 				"cell_type": "code",
@@ -98,7 +98,7 @@
 					"END_DISCOUNT = 40\r\n",
 					"DISCOUNT_INCREMENT = 5"
 				],
-				"execution_count": 123
+				"execution_count": 135
 			},
 			{
 				"cell_type": "code",
@@ -117,7 +117,7 @@
 					"exchange_rate_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exchange-rates/usd-to-nok.parquet'\r\n",
 					"exchange_rate_df = spark.read.format('parquet').load(exchange_rate_path)"
 				],
-				"execution_count": 124
+				"execution_count": 136
 			},
 			{
 				"cell_type": "code",
@@ -139,7 +139,7 @@
 					"    .withColumn('DateKey', F.date_format('TIME_PERIOD', 'yyyy-MM-dd')) \\\r\n",
 					"    .drop('TIME_PERIOD')"
 				],
-				"execution_count": 125
+				"execution_count": 137
 			},
 			{
 				"cell_type": "code",
@@ -159,7 +159,7 @@
 					"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
 					"cost_df = cost_df.where(F.col('Date') >= START_DATE)"
 				],
-				"execution_count": 126
+				"execution_count": 138
 			},
 			{
 				"cell_type": "code",
@@ -189,7 +189,7 @@
 					"    .withColumn(\"USD2NOK\", F.when(F.col(\"USD2NOK\").isNull(), F.last(F.col(\"USD2NOK_lag\"), True).over(window_spec)).otherwise(F.col(\"USD2NOK\"))) \\\r\n",
 					"    .drop('DateKey', 'USD2NOK_lag')"
 				],
-				"execution_count": 127
+				"execution_count": 139
 			},
 			{
 				"cell_type": "code",
@@ -209,7 +209,7 @@
 					"cost_df = cost_df.withColumn('MarkupRate', F.col('InternalRate') / F.col('USD2NOK'))\r\n",
 					"cost_df = cost_df.withColumn('AdjustedRetailCost', F.col('RetailCost') / F.col('MarkupRate'))"
 				],
-				"execution_count": 128
+				"execution_count": 140
 			},
 			{
 				"cell_type": "code",
@@ -229,7 +229,7 @@
 					"for discount in discounts:\r\n",
 					"    cost_df = cost_df.withColumn(f'DiscountedCost_{discount}', F.col('AdjustedRetailCost') * (1 - (discount / 100)))"
 				],
-				"execution_count": 129
+				"execution_count": 141
 			},
 			{
 				"cell_type": "code",
@@ -248,7 +248,7 @@
 					"usd_plan_cost_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exchange-rates/usd-plan-cost.parquet\"\r\n",
 					"cost_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(usd_plan_cost_path)"
 				],
-				"execution_count": 130
+				"execution_count": 142
 			}
 		]
 	}
