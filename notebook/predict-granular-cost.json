@@ -1,0 +1,407 @@
+{
+	"name": "predict-granular-cost",
+	"properties": {
+		"folder": {
+			"name": "NotebookInProduction/Cost Prediction"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sprkpool33large",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "112g",
+			"driverCores": 16,
+			"executorMemory": "112g",
+			"executorCores": 16,
+			"numExecutors": 1,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "true",
+				"spark.dynamicAllocation.minExecutors": "1",
+				"spark.dynamicAllocation.maxExecutors": "5",
+				"spark.autotune.trackingId": "65648c7d-c9aa-4bc4-98d6-442524e6ac0f"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large",
+				"name": "sprkpool33large",
+				"type": "Spark",
+				"endpoint": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 16,
+				"memory": 112,
+				"automaticScaleJobs": true
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Initialize script"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"storageAccount = 's037costmgmt'"
+				],
+				"execution_count": 2
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"import pyspark.sql.functions as F\r\n",
+					"from pyspark.ml.regression import LinearRegression\r\n",
+					"from pyspark.ml.regression import GeneralizedLinearRegression\r\n",
+					"from pyspark.ml.feature import VectorAssembler, StringIndexer, OneHotEncoder\r\n",
+					"from pyspark.ml import Pipeline\r\n",
+					"from pyspark.sql.window import Window\r\n",
+					"from datetime import date, timedelta, datetime\r\n",
+					"from dateutil.relativedelta import relativedelta\r\n",
+					"from pyspark.sql import Row\r\n",
+					"from pyspark.sql.types import StructType, StructField, StringType\r\n",
+					"import itertools"
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Load and aggregate usage data"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Load usage source\r\n",
+					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
+					"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
+					"\r\n",
+					"initial_date = datetime.now().date() - relativedelta(years=1)\r\n",
+					"cost_df = cost_df.where(F.col('Date') >= initial_date)\r\n",
+					"\r\n",
+					"# Select appropriate columns\r\n",
+					"cost_df = cost_df.select('Date', 'CostInBillingCurrency', 'SubscriptionName')\r\n",
+					"cost_df = cost_df.withColumn('Date', F.date_trunc('month', 'Date'))\r\n",
+					"cost_df = cost_df.groupBy('Date', 'SubscriptionName').agg(F.sum('CostInBillingCurrency').alias('Cost')).orderBy('Date')\r\n",
+					"\r\n",
+					"# Filter away latest month - as we predict cost per month, it will mess up future predictions\r\n",
+					"cost_df = cost_df.filter(F.col('Date') < F.concat(F.date_format(F.current_date(), 'yyyy'), F.lit('-'), F.date_format(F.current_date(), 'MM'), F.lit('-'), F.lit('01')))"
+				],
+				"execution_count": 4
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Pre-process usage data (zero-fill missing rows)"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Construct zero-fill dataframe\r\n",
+					"\r\n",
+					"dates = [row.Date for row in cost_df.select('Date').distinct().collect()]\r\n",
+					"subscriptions = [row.SubscriptionName for row in cost_df.select(\"SubscriptionName\").distinct().collect()]\r\n",
+					"\r\n",
+					"# schema = StructType([\r\n",
+					"#     StructField(\"Date\", StringType(), True),\r\n",
+					"#     StructField(\"SubscriptionName\", StringType(), True),\r\n",
+					"#     StructField(\"Cost\", StringType(), True)\r\n",
+					"# ])\r\n",
+					"\r\n",
+					"fill_data = list(itertools.product(dates, subscriptions))\r\n",
+					"fill_df = spark.createDataFrame(fill_data, [\"Date\", \"SubscriptionName\"])\r\n",
+					"fill_df = fill_df.subtract(cost_df.select(\"Date\", \"SubscriptionName\"))\r\n",
+					"fill_df = fill_df.withColumn('Cost', F.lit(0))\r\n",
+					"\r\n",
+					"# Zero-fill missing rows where resource doesn't have cost\r\n",
+					"cost_df = cost_df.union(fill_df)"
+				],
+				"execution_count": 5
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Construct feature columns"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# The cost of the previous row will be the main feature for the ML model\r\n",
+					"windowSpec = Window.partitionBy(\"SubscriptionName\").orderBy(\"Date\")\r\n",
+					"cost_df = cost_df.withColumn(\"PrevCost\", F.lag(\"Cost\", 1).over(windowSpec))\r\n",
+					"\r\n",
+					"# Decompose the date into a integer columns for year and month (ML model will only handle number features)\r\n",
+					"cost_df = cost_df.withColumn(\"Year\", F.year(\"Date\"))\r\n",
+					"cost_df = cost_df.withColumn(\"Month\", F.month(\"Date\"))\r\n",
+					"\r\n",
+					"# Remove null values\r\n",
+					"cost_df = cost_df.na.drop()\r\n",
+					"\r\n",
+					"# Add an additional feature indicating whether cost is low or not (important to capture the dynamics of increasing vs diminishing costs)\r\n",
+					"cost_df = cost_df.withColumn('IsLowCost', F.when(F.col('Cost') < 1000, F.lit(True)).otherwise(F.lit(False)))"
+				],
+				"execution_count": 6
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Build linear regression model"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Index and encode string features - prerequisite for fitting model\r\n",
+					"subscription_indexer = StringIndexer(inputCol=\"SubscriptionName\", outputCol=\"SubscriptionIndex\")\r\n",
+					"subscription_encoder = OneHotEncoder(inputCol=\"SubscriptionIndex\", outputCol=\"SubscriptionVec\")\r\n",
+					"\r\n",
+					"# Create structure of input and output values for model\r\n",
+					"assembler = VectorAssembler(inputCols=[\"Year\", \"Month\", \"PrevCost\", \"SubscriptionVec\", \"IsLowCost\"], outputCol=\"features\")\r\n",
+					"\r\n",
+					"# Define the linear regression model parameters and pipeline configuration\r\n",
+					"glr = GeneralizedLinearRegression(featuresCol=\"features\", labelCol=\"Cost\", family=\"gaussian\", link=\"identity\")\r\n",
+					"pipeline = Pipeline(stages=[subscription_indexer, subscription_encoder, assembler, glr])\r\n",
+					"\r\n",
+					"# Build linear regression model\r\n",
+					"pipeline_model = pipeline.fit(cost_df)"
+				],
+				"execution_count": 8
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Preparing dataframe structure for prediction"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Define and build the prediction horizon length in the number of months \r\n",
+					"prediction_interval = 3\r\n",
+					"last_date = last_date = max(dates)\r\n",
+					"future_dates = [last_date + relativedelta(months=i) for i in range(1, prediction_interval + 1)]\r\n",
+					"\r\n",
+					"# Create new dataframe structure containing all possible combinations of features and dates\r\n",
+					"future_data = list(itertools.product(future_dates, subscriptions))\r\n",
+					"future_df = spark.createDataFrame(future_data, [\"Date\", \"SubscriptionName\"])\r\n",
+					"\r\n",
+					"# Split date into months and years to match structure of the original dataFrame\r\n",
+					"future_df = future_df.withColumn(\"Year\", F.year(\"Date\"))\r\n",
+					"future_df = future_df.withColumn(\"Month\", F.month(\"Date\"))\r\n",
+					"\r\n",
+					"# Find the latest cost for each feature set\r\n",
+					"latest_cost_window_spec = Window.partitionBy(\"SubscriptionName\").orderBy(F.desc(\"Date\")).rowsBetween(Window.unboundedPreceding, Window.currentRow)\r\n",
+					"latest_cost_df = cost_df.select('Date', 'SubscriptionName', 'Cost', 'IsLowCost').withColumn(\"rank\", F.row_number().over(latest_cost_window_spec))\r\n",
+					"latest_cost_df = latest_cost_df.where(F.col('rank') == 1)\r\n",
+					"latest_cost_df = latest_cost_df.select('SubscriptionName', 'Cost', 'IsLowCost').withColumnRenamed('Cost', 'PrevCost')\r\n",
+					"\r\n",
+					"# The cost value for each feature set (and for all dates) will be given by the latest known cost for that feature set\r\n",
+					"future_df = future_df.join(latest_cost_df, 'SubscriptionName', 'left')"
+				],
+				"execution_count": 11
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Forecast cost using linear regression model"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"future_predictions = pipeline_model.transform(future_df)"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"post = cost_df.select('Date', 'SubscriptionName', 'Cost')\r\n",
+					"pred = future_predictions.select('Date', 'SubscriptionName', 'prediction').withColumnRenamed('prediction', 'Cost')\r\n",
+					"total = post.union(pred)"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"display(total)"
+				],
+				"execution_count": null
+			}
+		]
+	}
+}
