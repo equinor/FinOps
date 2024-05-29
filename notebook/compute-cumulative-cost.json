@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "60ae0318-995b-428f-aa86-1d94c5ef0917"
+				"spark.autotune.trackingId": "fa5a6497-53fd-4133-94e7-61ed14fc9909"
 			}
 		},
 		"metadata": {
@@ -70,7 +70,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 5
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -507,44 +507,16 @@
 					}
 				},
 				"source": [
-					"# Load usage source\r\n",
-					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
-					"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
-					"\r\n",
-					"# Select appropriate columns\r\n",
-					"cost_df = cost_df.select('Date', 'CostInBillingCurrency', 'PayGPrice', 'Quantity')\r\n",
-					"cost_df = cost_df.withColumn('Date', F.date_trunc('month', 'Date'))\r\n",
-					"cost_df = cost_df.withColumn('RetailCost', F.col('PayGPrice') * F.col('Quantity')).drop('Quantity', 'PayGPrice')\r\n",
-					"cost_df = cost_df.groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('Cost'), F.sum('RetailCost').alias('RetailCost')).orderBy('Date')\r\n",
-					"\r\n",
-					"# Filter away latest month - as we predict cost per month, it will mess up future predictions\r\n",
-					"cost_df = cost_df.filter(F.col('Date') < F.concat(F.date_format(F.current_date(), 'yyyy'), F.lit('-'), F.date_format(F.current_date(), 'MM'), F.lit('-'), F.lit('01')))\r\n",
-					"\r\n",
-					"# Split dataframe into discounted and retail cost\r\n",
-					"discount_df = cost_df.alias('discount_df').drop('RetailCost')\r\n",
-					"retail_df = cost_df.alias('retail_df').drop('Cost').withColumnRenamed('RetailCost', 'Cost')"
-				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
 					"import pyspark.sql.functions as F\r\n",
 					"from pyspark.ml.feature import VectorAssembler\r\n",
 					"from pyspark.ml.regression import LinearRegression\r\n",
 					"from pyspark.ml.evaluation import RegressionEvaluator\r\n",
-					"from pyspark.sql.window import Window"
+					"from pyspark.ml.feature import VectorAssembler, StringIndexer, OneHotEncoder\r\n",
+					"from pyspark.ml import Pipeline\r\n",
+					"from pyspark.sql.window import Window\r\n",
+					"from datetime import date, timedelta, datetime\r\n",
+					"from dateutil.relativedelta import relativedelta\r\n",
+					"from pyspark.sql import Row"
 				],
 				"execution_count": 41
 			},
@@ -566,14 +538,111 @@
 					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
 					"\r\n",
+					"initial_date = datetime.now().date() - relativedelta(years=1)\r\n",
+					"cost_df = cost_df.where(F.col('Date') >= initial_date)\r\n",
+					"\r\n",
 					"# Select appropriate columns\r\n",
-					"cost_df = cost_df.select('Date', 'CostInBillingCurrency', 'PayGPrice', 'Quantity')\r\n",
+					"cost_df = cost_df.select('Date', 'CostInBillingCurrency', 'SubscriptionName')\r\n",
 					"cost_df = cost_df.withColumn('Date', F.date_trunc('month', 'Date'))\r\n",
-					"cost_df = cost_df.withColumn('RetailCost', F.col('PayGPrice') * F.col('Quantity')).drop('Quantity', 'PayGPrice')\r\n",
-					"cost_df = cost_df.groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('Cost'), F.sum('RetailCost').alias('RetailCost')).orderBy('Date')\r\n",
+					"cost_df = cost_df.groupBy('Date', 'SubscriptionName').agg(F.sum('CostInBillingCurrency').alias('Cost')).orderBy('Date')\r\n",
 					"\r\n",
 					"# Filter away latest month - as we predict cost per month, it will mess up future predictions\r\n",
 					"cost_df = cost_df.filter(F.col('Date') < F.concat(F.date_format(F.current_date(), 'yyyy'), F.lit('-'), F.date_format(F.current_date(), 'MM'), F.lit('-'), F.lit('01')))"
+				],
+				"execution_count": 33
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"windowSpec = Window.partitionBy('SubscriptionName').orderBy(\"Date\")\r\n",
+					"cost_df = cost_df.withColumn('PrevCost', F.lag('Cost', 1).over(windowSpec))\r\n",
+					"cost_df = cost_df.withColumn('Year', F.year('Date'))\r\n",
+					"cost_df = cost_df.withColumn('Month', F.month('Date'))\r\n",
+					"cost_df = cost_df.na.drop()"
+				],
+				"execution_count": 34
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"subscription_indexer = StringIndexer(inputCol=\"SubscriptionName\", outputCol=\"SubscriptionIndex\")\r\n",
+					"subscription_encoder = OneHotEncoder(inputCol=\"SubscriptionIndex\", outputCol=\"SubscriptionVec\")"
+				],
+				"execution_count": 37
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"assembler = VectorAssembler(inputCols=[\"Year\", \"Month\", \"PrevCost\", \"SubscriptionVec\"], outputCol=\"features\")"
+				],
+				"execution_count": 38
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"lr = LinearRegression(featuresCol=\"features\", labelCol=\"Cost\")"
+				],
+				"execution_count": 39
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"pipeline = Pipeline(stages=[subscription_indexer, subscription_encoder, assembler, lr])"
 				],
 				"execution_count": 42
 			},
@@ -591,8 +660,7 @@
 					}
 				},
 				"source": [
-					"windowSpec = Window.orderBy(\"Date\")\r\n",
-					"cost_df = cost_df.select('Date', 'Cost').withColumn('PrevCost', F.lag('Cost', 1).over(windowSpec))"
+					"pipeline_model = pipeline.fit(cost_df)"
 				],
 				"execution_count": 43
 			},
@@ -610,10 +678,12 @@
 					}
 				},
 				"source": [
-					"cost_df = cost_df.withColumn('Year', F.year('Date'))\r\n",
-					"cost_df = cost_df.withColumn('Month', F.month('Date'))"
+					"last_date = cost_df.select(\"Date\").orderBy(\"Date\", ascending=False).first()[\"Date\"]\r\n",
+					"prediction_interval = 3\r\n",
+					"future_dates = [last_date + relativedelta(months=i) for i in range(1, prediction_interval + 1)]\r\n",
+					"# future_df = spark.createDataFrame([Row(Date=date) for date in future_dates])"
 				],
-				"execution_count": 44
+				"execution_count": 93
 			},
 			{
 				"cell_type": "code",
@@ -629,9 +699,131 @@
 					}
 				},
 				"source": [
-					"cost_df = cost_df.na.drop()"
+					"import itertools\r\n",
+					"subscriptions = [row.SubscriptionName for row in cost_df.select(\"SubscriptionName\").distinct().collect()]\r\n",
+					"future_data = list(itertools.product(future_dates, subscriptions))\r\n",
+					"future_df = spark.createDataFrame(future_data, [\"Date\", \"SubscriptionName\"])\r\n",
+					"\r\n",
+					"future_df = future_df.withColumn(\"Year\", F.year(\"Date\"))\r\n",
+					"future_df = future_df.withColumn(\"Month\", F.month(\"Date\"))"
 				],
-				"execution_count": 45
+				"execution_count": 95
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# assuming your DataFrame is called \"df\" and the columns are named \"Cost\", \"Date\", and \"Category\"\r\n",
+					"latest_cost_window_spec = W.Window.partitionBy(\"SubscriptionName\").orderBy(F.desc(\"Date\")).rowsBetween(W.Window.unboundedPreceding, W.Window.currentRow)\r\n",
+					"latest_cost_df = cost_df.select('Date', 'SubscriptionName', 'Cost').withColumn(\"rank\", F.row_number().over(latest_cost_window_spec))\r\n",
+					"latest_cost_df = latest_cost_df.where(F.col('rank') == 1)\r\n",
+					"latest_cost_df = latest_cost_df.select('SubscriptionName', 'Cost').withColumnRenamed('Cost', 'PrevCost')"
+				],
+				"execution_count": 81
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"future_df = future_df.join(latest_cost_df, 'SubscriptionName', 'left')"
+				],
+				"execution_count": 99
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"future_predictions = pipeline_model.transform(future_df)"
+				],
+				"execution_count": 100
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(cost_df)"
+				],
+				"execution_count": 104
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"post = cost_df.select('Date', 'SubscriptionName', 'Cost')\r\n",
+					"pred = future_predictions.select('Date', 'SubscriptionName', 'prediction').withColumnRenamed('prediction', 'Cost')\r\n",
+					"total = post.union(pred)"
+				],
+				"execution_count": 105
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(total)"
+				],
+				"execution_count": 106
 			},
 			{
 				"cell_type": "code",
@@ -650,7 +842,7 @@
 					"assembler = VectorAssembler(inputCols=[\"Year\", \"Month\", \"PrevCost\"], outputCol=\"features\")\r\n",
 					"new_df = assembler.transform(cost_df)"
 				],
-				"execution_count": 46
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -691,27 +883,7 @@
 					"# rmse = evaluator.evaluate(predictions)\r\n",
 					"# print(f\"Root Mean Squared Error (RMSE) on test data = {rmse}\")"
 				],
-				"execution_count": 47
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"from datetime import date, timedelta\r\n",
-					"from dateutil.relativedelta import relativedelta\r\n",
-					"from pyspark.sql import Row"
-				],
-				"execution_count": 35
+				"execution_count": 12
 			},
 			{
 				"cell_type": "code",
@@ -734,46 +906,11 @@
 					"    last_date = last_date + relativedelta(months=1)\r\n",
 					"    future_dates.append(last_date)\r\n",
 					"\r\n",
-					"print(future_dates)"
-				],
-				"execution_count": 33
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"future_df = spark.createDataFrame([Row(Date=date) for date in future_dates])"
-				],
-				"execution_count": 36
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
+					"future_df = spark.createDataFrame([Row(Date=date) for date in future_dates])\r\n",
 					"future_df = future_df.withColumn(\"Year\", F.year(\"Date\"))\r\n",
 					"future_df = future_df.withColumn(\"Month\", F.month(\"Date\"))"
 				],
-				"execution_count": 39
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -816,7 +953,7 @@
 				"source": [
 					"display(future_predictions)"
 				],
-				"execution_count": 49
+				"execution_count": 17
 			}
 		]
 	}
