@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "6ed19c6a-5db8-485b-bada-cb592842e671"
+				"spark.autotune.trackingId": "4a89d31b-5196-475d-8c78-90b6b5ddb346"
 			}
 		},
 		"metadata": {
@@ -74,7 +74,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 1
+				"execution_count": 21
 			},
 			{
 				"cell_type": "code",
@@ -100,9 +100,10 @@
 					"from dateutil.relativedelta import relativedelta\r\n",
 					"from pyspark.sql import Row\r\n",
 					"from pyspark.sql.types import StructType, StructField, StringType\r\n",
-					"import itertools"
+					"import itertools\r\n",
+					"import json"
 				],
-				"execution_count": 2
+				"execution_count": 32
 			},
 			{
 				"cell_type": "markdown",
@@ -137,7 +138,7 @@
 					"    'ResourceGroup'\r\n",
 					"]"
 				],
-				"execution_count": 11
+				"execution_count": 23
 			},
 			{
 				"cell_type": "code",
@@ -168,7 +169,7 @@
 					"# Filter away latest month - as we predict cost per month, it will mess up future predictions\r\n",
 					"cost_df = cost_df.filter(F.col('Date') < F.concat(F.date_format(F.current_date(), 'yyyy'), F.lit('-'), F.date_format(F.current_date(), 'MM'), F.lit('-'), F.lit('01')))"
 				],
-				"execution_count": 12
+				"execution_count": 24
 			},
 			{
 				"cell_type": "markdown",
@@ -194,103 +195,72 @@
 						"transient": {
 							"deleting": false
 						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"\r\n",
-					"test = [(row.SubscriptionName, row.ResourceGroup) for row in cost_df.select('SubscriptionName', 'ResourceGroup').distinct().collect()]"
-				],
-				"execution_count": 16
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"fill_test = list(itertools.product(dates, test))"
-				],
-				"execution_count": 18
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"print(fill_test)"
-				],
-				"execution_count": 19
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"test = spark.createDataFrame(fill_data, [\"Date\", \"Test\"])"
-				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
 					}
 				},
 				"source": [
 					"# Construct zero-fill dataframe\r\n",
 					"dates = [row.Date for row in cost_df.select('Date').distinct().collect()]\r\n",
-					"subscriptions = [row.SubscriptionName for row in cost_df.select(\"SubscriptionName\").distinct().collect()]\r\n",
-					"resourceGroups = [row.ResourceGroup for row in cost_df.select(\"ResourceGroup\").distinct().collect()]\r\n",
+					"dimensions = [\r\n",
+					"    json.dumps(\r\n",
+					"        {\r\n",
+					"            'SubscriptionName': row.SubscriptionName, \r\n",
+					"            'ResourceGroup': row.ResourceGroup\r\n",
+					"        }\r\n",
+					"    ) \r\n",
+					"    for row in cost_df.select('SubscriptionName', 'ResourceGroup').distinct().collect()]\r\n",
 					"\r\n",
-					"# schema = StructType([\r\n",
-					"#     StructField(\"Date\", StringType(), True),\r\n",
-					"#     StructField(\"SubscriptionName\", StringType(), True),\r\n",
-					"#     StructField(\"Cost\", StringType(), True)\r\n",
-					"# ])\r\n",
+					"fill_data = list(itertools.product(dates, dimensions))\r\n",
+					"fill_df = spark.createDataFrame(fill_data, [\"Date\", \"Dimensions\"])\r\n",
+					"fill_df = fill_df.withColumn('json', F.from_json('Dimensions', 'map<string,string>', options={'inferSchema': 'true'})).drop('Dimensions')\r\n",
+					"fill_df = fill_df \\\r\n",
+					"    .withColumn('SubscriptionName', F.col('json.SubscriptionName')) \\\r\n",
+					"    .withColumn('ResourceGroup', F.col('json.ResourceGroup')) \\\r\n",
+					"    .drop('json')\r\n",
 					"\r\n",
-					"fill_data = list(itertools.product(dates, subscriptions))\r\n",
-					"fill_df = spark.createDataFrame(fill_data, [\"Date\", \"SubscriptionName\"])\r\n",
-					"fill_df = fill_df.subtract(cost_df.select(\"Date\", \"SubscriptionName\"))\r\n",
+					"fill_df = fill_df.subtract(cost_df.select(\"Date\", \"SubscriptionName\", \"ResourceGroup\"))\r\n",
 					"fill_df = fill_df.withColumn('Cost', F.lit(0))\r\n",
 					"\r\n",
 					"# Zero-fill missing rows where resource doesn't have cost\r\n",
 					"cost_df = cost_df.union(fill_df)"
 				],
-				"execution_count": 4
+				"execution_count": 48
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(cost_df.where(F.col('IsLowCost') == True).count())"
+				],
+				"execution_count": 53
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"display(cost_df.where(F.col('IsLowCost') == False).count())"
+				],
+				"execution_count": 54
 			},
 			{
 				"cell_type": "markdown",
@@ -320,7 +290,7 @@
 				},
 				"source": [
 					"# The cost of the previous row will be the main feature for the ML model\r\n",
-					"windowSpec = Window.partitionBy(\"SubscriptionName\").orderBy(\"Date\")\r\n",
+					"windowSpec = Window.partitionBy(\"SubscriptionName\", \"ResourceGroup\").orderBy(\"Date\")\r\n",
 					"cost_df = cost_df.withColumn(\"PrevCost\", F.lag(\"Cost\", 1).over(windowSpec))\r\n",
 					"\r\n",
 					"# Decompose the date into a integer columns for year and month (ML model will only handle number features)\r\n",
@@ -333,7 +303,25 @@
 					"# Add an additional feature indicating whether cost is low or not (important to capture the dynamics of increasing vs diminishing costs)\r\n",
 					"cost_df = cost_df.withColumn('IsLowCost', F.when(F.col('Cost') < 1000, F.lit(True)).otherwise(F.lit(False)))"
 				],
-				"execution_count": 5
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",
