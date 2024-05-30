@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "65648c7d-c9aa-4bc4-98d6-442524e6ac0f"
+				"spark.autotune.trackingId": "cff910fb-a819-4255-8c3c-59a600885e19"
 			}
 		},
 		"metadata": {
@@ -74,7 +74,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 2
+				"execution_count": 12
 			},
 			{
 				"cell_type": "code",
@@ -102,7 +102,7 @@
 					"from pyspark.sql.types import StructType, StructField, StringType\r\n",
 					"import itertools"
 				],
-				"execution_count": 3
+				"execution_count": 13
 			},
 			{
 				"cell_type": "markdown",
@@ -146,7 +146,7 @@
 					"# Filter away latest month - as we predict cost per month, it will mess up future predictions\r\n",
 					"cost_df = cost_df.filter(F.col('Date') < F.concat(F.date_format(F.current_date(), 'yyyy'), F.lit('-'), F.date_format(F.current_date(), 'MM'), F.lit('-'), F.lit('01')))"
 				],
-				"execution_count": 4
+				"execution_count": 14
 			},
 			{
 				"cell_type": "markdown",
@@ -194,7 +194,7 @@
 					"# Zero-fill missing rows where resource doesn't have cost\r\n",
 					"cost_df = cost_df.union(fill_df)"
 				],
-				"execution_count": 5
+				"execution_count": 15
 			},
 			{
 				"cell_type": "markdown",
@@ -237,7 +237,7 @@
 					"# Add an additional feature indicating whether cost is low or not (important to capture the dynamics of increasing vs diminishing costs)\r\n",
 					"cost_df = cost_df.withColumn('IsLowCost', F.when(F.col('Cost') < 1000, F.lit(True)).otherwise(F.lit(False)))"
 				],
-				"execution_count": 6
+				"execution_count": 16
 			},
 			{
 				"cell_type": "markdown",
@@ -280,7 +280,7 @@
 					"# Build linear regression model\r\n",
 					"pipeline_model = pipeline.fit(cost_df)"
 				],
-				"execution_count": 8
+				"execution_count": 17
 			},
 			{
 				"cell_type": "markdown",
@@ -331,7 +331,7 @@
 					"# The cost value for each feature set (and for all dates) will be given by the latest known cost for that feature set\r\n",
 					"future_df = future_df.join(latest_cost_df, 'SubscriptionName', 'left')"
 				],
-				"execution_count": 11
+				"execution_count": 18
 			},
 			{
 				"cell_type": "markdown",
@@ -362,7 +362,7 @@
 				"source": [
 					"future_predictions = pipeline_model.transform(future_df)"
 				],
-				"execution_count": null
+				"execution_count": 19
 			},
 			{
 				"cell_type": "code",
@@ -382,7 +382,7 @@
 					"pred = future_predictions.select('Date', 'SubscriptionName', 'prediction').withColumnRenamed('prediction', 'Cost')\r\n",
 					"total = post.union(pred)"
 				],
-				"execution_count": null
+				"execution_count": 20
 			},
 			{
 				"cell_type": "code",
@@ -395,12 +395,32 @@
 						"transient": {
 							"deleting": false
 						}
-					}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(total.groupBy('SubscriptionName').agg(F.avg('Cost')))"
+				],
+				"execution_count": 22
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
 				},
 				"source": [
 					"display(total)"
 				],
-				"execution_count": null
+				"execution_count": 21
 			}
 		]
 	}
