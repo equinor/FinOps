@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "4a89d31b-5196-475d-8c78-90b6b5ddb346"
+				"spark.autotune.trackingId": "e5ed1140-6867-4a75-b671-fe8d34e2a64a"
 			}
 		},
 		"metadata": {
@@ -74,7 +74,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 21
+				"execution_count": 57
 			},
 			{
 				"cell_type": "code",
@@ -93,7 +93,7 @@
 					"import pyspark.sql.functions as F\r\n",
 					"from pyspark.ml.regression import LinearRegression\r\n",
 					"from pyspark.ml.regression import GeneralizedLinearRegression\r\n",
-					"from pyspark.ml.feature import VectorAssembler, StringIndexer, OneHotEncoder\r\n",
+					"from pyspark.ml.feature import VectorAssembler, StringIndexer, OneHotEncoder, FeatureHasher\r\n",
 					"from pyspark.ml import Pipeline\r\n",
 					"from pyspark.sql.window import Window\r\n",
 					"from datetime import date, timedelta, datetime\r\n",
@@ -103,7 +103,7 @@
 					"import itertools\r\n",
 					"import json"
 				],
-				"execution_count": 32
+				"execution_count": 65
 			},
 			{
 				"cell_type": "markdown",
@@ -138,7 +138,7 @@
 					"    'ResourceGroup'\r\n",
 					"]"
 				],
-				"execution_count": 23
+				"execution_count": 59
 			},
 			{
 				"cell_type": "code",
@@ -169,7 +169,7 @@
 					"# Filter away latest month - as we predict cost per month, it will mess up future predictions\r\n",
 					"cost_df = cost_df.filter(F.col('Date') < F.concat(F.date_format(F.current_date(), 'yyyy'), F.lit('-'), F.date_format(F.current_date(), 'MM'), F.lit('-'), F.lit('01')))"
 				],
-				"execution_count": 24
+				"execution_count": 60
 			},
 			{
 				"cell_type": "markdown",
@@ -223,44 +223,7 @@
 					"# Zero-fill missing rows where resource doesn't have cost\r\n",
 					"cost_df = cost_df.union(fill_df)"
 				],
-				"execution_count": 48
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(cost_df.where(F.col('IsLowCost') == True).count())"
-				],
-				"execution_count": 53
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"display(cost_df.where(F.col('IsLowCost') == False).count())"
-				],
-				"execution_count": 54
+				"execution_count": 61
 			},
 			{
 				"cell_type": "markdown",
@@ -303,25 +266,7 @@
 					"# Add an additional feature indicating whether cost is low or not (important to capture the dynamics of increasing vs diminishing costs)\r\n",
 					"cost_df = cost_df.withColumn('IsLowCost', F.when(F.col('Cost') < 1000, F.lit(True)).otherwise(F.lit(False)))"
 				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					""
-				],
-				"execution_count": null
+				"execution_count": 62
 			},
 			{
 				"cell_type": "markdown",
@@ -354,6 +299,9 @@
 					"subscription_indexer = StringIndexer(inputCol=\"SubscriptionName\", outputCol=\"SubscriptionIndex\")\r\n",
 					"subscription_encoder = OneHotEncoder(inputCol=\"SubscriptionIndex\", outputCol=\"SubscriptionVec\")\r\n",
 					"\r\n",
+					"rg_indexer = StringIndexer(inputCol=\"ResourceGroup\", outputCol=\"ResourceGroupIndex\")\r\n",
+					"rg_encoder = OneHotEncoder(inputCol=\"ResourceGroupIndex\", outputCol=\"ResourceGroupVec\")\r\n",
+					"\r\n",
 					"# Create structure of input and output values for model\r\n",
 					"assembler = VectorAssembler(inputCols=[\"Year\", \"Month\", \"PrevCost\", \"SubscriptionVec\", \"IsLowCost\"], outputCol=\"features\")\r\n",
 					"\r\n",
@@ -364,7 +312,7 @@
 					"# Build linear regression model\r\n",
 					"pipeline_model = pipeline.fit(cost_df)"
 				],
-				"execution_count": 6
+				"execution_count": 66
 			},
 			{
 				"cell_type": "markdown",
@@ -399,15 +347,20 @@
 					"future_dates = [last_date + relativedelta(months=i) for i in range(1, prediction_interval + 1)]\r\n",
 					"\r\n",
 					"# Create new dataframe structure containing all possible combinations of features and dates\r\n",
-					"future_data = list(itertools.product(future_dates, subscriptions))\r\n",
-					"future_df = spark.createDataFrame(future_data, [\"Date\", \"SubscriptionName\"])\r\n",
+					"future_data = list(itertools.product(future_dates, dimensions))\r\n",
+					"future_df = spark.createDataFrame(future_data, [\"Date\", \"Dimensions\"])\r\n",
+					"future_df = future_df.withColumn('json', F.from_json('Dimensions', 'map<string,string>', options={'inferSchema': 'true'})).drop('Dimensions')\r\n",
+					"future_df = future_df \\\r\n",
+					"    .withColumn('SubscriptionName', F.col('json.SubscriptionName')) \\\r\n",
+					"    .withColumn('ResourceGroup', F.col('json.ResourceGroup')) \\\r\n",
+					"    .drop('json')\r\n",
 					"\r\n",
 					"# Split date into months and years to match structure of the original dataFrame\r\n",
 					"future_df = future_df.withColumn(\"Year\", F.year(\"Date\"))\r\n",
 					"future_df = future_df.withColumn(\"Month\", F.month(\"Date\"))\r\n",
 					"\r\n",
 					"# Find the latest cost for each feature set\r\n",
-					"latest_cost_window_spec = Window.partitionBy(\"SubscriptionName\").orderBy(F.desc(\"Date\")).rowsBetween(Window.unboundedPreceding, Window.currentRow)\r\n",
+					"latest_cost_window_spec = Window.partitionBy(\"SubscriptionName\", \"ResourceGroup\").orderBy(F.desc(\"Date\")).rowsBetween(Window.unboundedPreceding, Window.currentRow)\r\n",
 					"latest_cost_df = cost_df.select('Date', 'SubscriptionName', 'Cost', 'IsLowCost').withColumn(\"rank\", F.row_number().over(latest_cost_window_spec))\r\n",
 					"latest_cost_df = latest_cost_df.where(F.col('rank') == 1)\r\n",
 					"latest_cost_df = latest_cost_df.select('SubscriptionName', 'Cost', 'IsLowCost').withColumnRenamed('Cost', 'PrevCost')\r\n",
@@ -415,7 +368,7 @@
 					"# The cost value for each feature set (and for all dates) will be given by the latest known cost for that feature set\r\n",
 					"future_df = future_df.join(latest_cost_df, 'SubscriptionName', 'left')"
 				],
-				"execution_count": 7
+				"execution_count": 67
 			},
 			{
 				"cell_type": "markdown",
