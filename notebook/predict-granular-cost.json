@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "929df817-ae05-48c3-bbb9-4f24dd970fa0"
+				"spark.autotune.trackingId": "242d5c10-7bec-43c6-b8fc-5aa29aa499b2"
 			}
 		},
 		"metadata": {
@@ -74,7 +74,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 44
+				"execution_count": 77
 			},
 			{
 				"cell_type": "code",
@@ -103,7 +103,7 @@
 					"import itertools\r\n",
 					"import json"
 				],
-				"execution_count": 36
+				"execution_count": 78
 			},
 			{
 				"cell_type": "markdown",
@@ -134,11 +134,12 @@
 				"source": [
 					"cost_columns = [\r\n",
 					"    'SubscriptionName',\r\n",
-					"    'ResourceGroup',\r\n",
-					"    'ResourceName'\r\n",
+					"    'ResourceGroup'\r\n",
+					"    # 'MeterCategory'\r\n",
+					"    # 'ActiveWBS'\r\n",
 					"]"
 				],
-				"execution_count": 37
+				"execution_count": 85
 			},
 			{
 				"cell_type": "code",
@@ -158,7 +159,7 @@
 					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
 					"\r\n",
-					"initial_date = datetime.now().date() - relativedelta(months=36)\r\n",
+					"initial_date = datetime.now().date() - relativedelta(months=6)\r\n",
 					"cost_df = cost_df.where(F.col('Date') >= initial_date)\r\n",
 					"\r\n",
 					"# Select appropriate columns\r\n",
@@ -170,9 +171,53 @@
 					"cost_df = cost_df.filter(F.col('Date') < F.concat(F.date_format(F.current_date(), 'yyyy'), F.lit('-'), F.date_format(F.current_date(), 'MM'), F.lit('-'), F.lit('01')))\r\n",
 					"\r\n",
 					"# Only consider positive cost\r\n",
-					"cost_df = cost_df.where(F.col('Cost') >= 0)"
+					"cost_df = cost_df.where(F.col('Cost') >= 0)\r\n",
+					"\r\n",
+					"# Replace null-values with string value\r\n",
+					"for col_name in cost_columns:\r\n",
+					"    cost_df = cost_df.withColumn(col_name, F.coalesce(F.col(col_name), F.lit('empty')))"
 				],
-				"execution_count": 38
+				"execution_count": 86
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"concat_expr = F.reduce(\r\n",
+					"      [F.concat(F.col(col_name), F.lit('-')) for col_name in cost_columns]\r\n",
+					"  )\r\n",
+					"\r\n",
+					"cost_df = cost_df.withColumn('CostJoinKey', F.expr(concat_expr[:-len(separator)]))"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"print(test)"
+				],
+				"execution_count": 83
 			},
 			{
 				"cell_type": "markdown",
@@ -186,6 +231,24 @@
 				"source": [
 					"## Pre-process usage data (zero-fill missing rows)"
 				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"print(len(dimensions))"
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -229,7 +292,7 @@
 					"# Zero-fill missing rows where resource doesn't have cost\r\n",
 					"cost_df = cost_df.union(fill_df)"
 				],
-				"execution_count": 39
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",
@@ -277,7 +340,7 @@
 					"bucketizer = Bucketizer(splits=bucketizer_splits, inputCol=\"PrevCost\", outputCol=\"CostBin\")\r\n",
 					"cost_df = bucketizer.transform(cost_df)"
 				],
-				"execution_count": 40
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",
@@ -323,7 +386,7 @@
 					"# Build linear regression model\r\n",
 					"pipeline_model = pipeline.fit(cost_df)"
 				],
-				"execution_count": 41
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",
@@ -393,7 +456,7 @@
 					"# Remove all temp columns\r\n",
 					"future_df = future_df.drop(*['temp_' + col_name for col_name in cost_columns])"
 				],
-				"execution_count": 42
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",
@@ -463,6 +526,24 @@
 				},
 				"source": [
 					"display(total)"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
 				],
 				"execution_count": null
 			}
