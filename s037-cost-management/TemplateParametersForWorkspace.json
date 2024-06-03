@@ -68,6 +68,9 @@
 		"compute-hub-deployments_pipelineStorageAccountParameter": {
 			"value": "s037costmgmt"
 		},
+		"fetch-exchange-rates_pipelineStorageAccountParameter": {
+			"value": "s037costmgmt"
+		},
 		"fetch-servicenow-applications_pipelineSparkPoolNameRef": {
 			"value": "sprkpool33large"
 		},
@@ -209,6 +212,12 @@
 		"TestRawCSVSource_dataSetLinkedServiceName": {
 			"value": "s037-cost-management-WorkspaceDefaultStorage"
 		},
+		"USDNOKExchangeRateSink_dataSetLinkedServiceName": {
+			"value": "s037-cost-management-WorkspaceDefaultStorage"
+		},
+		"USDNOKExchangeRateSource_dataSetLinkedServiceName": {
+			"value": "NorgesBankRestApi"
+		},
 		"VMDeploymentSink_dataSetLinkedServiceName": {
 			"value": "HUB Storage Account"
 		},
@@ -262,6 +271,9 @@
 		},
 		"MicrosoftGraphRESTAPI_linkedServiceUrl": {
 			"value": "https://graph.microsoft.com/v1.0/"
+		},
+		"NorgesBankRestApi_linkedServiceUrl": {
+			"value": "https://data.norges-bank.no/"
 		},
 		"Pricesheet API_linkedServiceUrl": {
 			"value": "@{concat('https://consumption.azure.com/v3/enrollments/57950773/billingPeriods/',formatDateTime(utcNow(),'yyyyMM'),'/pricesheet')}"
@@ -647,6 +659,15 @@
 		"persist-latest-pricesheet_notebookSparkPoolEndpointRef": {
 			"value": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
+		"predict-granular-cost_notebookSparkPoolNameRef": {
+			"value": "sprkpool33large"
+		},
+		"predict-granular-cost_notebookSparkPoolIdRef": {
+			"value": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"predict-granular-cost_notebookSparkPoolEndpointRef": {
+			"value": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
 		"predict-service-cost_notebookSparkPoolNameRef": {
 			"value": "sprkpool33large"
 		},
@@ -799,18 +820,6 @@
 		},
 		"sparkpool32_sparkVersion": {
 			"value": "3.2"
-		},
-		"fetch-exchange-rates_pipelineStorageAccountParameter": {
-			"value": "s037costmgmt"
-		},
-		"NorgesBankRestApi_linkedServiceUrl": {
-			"value": "https://data.norges-bank.no/"
-		},
-		"USDNOKExchangeRateSource_dataSetLinkedServiceName": {
-			"value": "NorgesBankRestApi"
-		},
-		"USDNOKExchangeRateSink_dataSetLinkedServiceName": {
-			"value": "s037-cost-management-WorkspaceDefaultStorage"
 		}
 	}
 }
