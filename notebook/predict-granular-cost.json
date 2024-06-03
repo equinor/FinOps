@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "242d5c10-7bec-43c6-b8fc-5aa29aa499b2"
+				"spark.autotune.trackingId": "1851bac2-1af9-47d9-afe9-da1403e88daf"
 			}
 		},
 		"metadata": {
@@ -74,7 +74,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 77
+				"execution_count": 127
 			},
 			{
 				"cell_type": "code",
@@ -103,7 +103,7 @@
 					"import itertools\r\n",
 					"import json"
 				],
-				"execution_count": 78
+				"execution_count": 89
 			},
 			{
 				"cell_type": "markdown",
@@ -135,11 +135,12 @@
 					"cost_columns = [\r\n",
 					"    'SubscriptionName',\r\n",
 					"    'ResourceGroup'\r\n",
-					"    # 'MeterCategory'\r\n",
-					"    # 'ActiveWBS'\r\n",
+					"    # 'MeterCategory',\r\n",
+					"    # 'ActiveWBS',\r\n",
+					"    # 'ResourceName'\r\n",
 					"]"
 				],
-				"execution_count": 85
+				"execution_count": 107
 			},
 			{
 				"cell_type": "code",
@@ -159,7 +160,7 @@
 					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
 					"\r\n",
-					"initial_date = datetime.now().date() - relativedelta(months=6)\r\n",
+					"initial_date = datetime.now().date() - relativedelta(months=24)\r\n",
 					"cost_df = cost_df.where(F.col('Date') >= initial_date)\r\n",
 					"\r\n",
 					"# Select appropriate columns\r\n",
@@ -175,31 +176,12 @@
 					"\r\n",
 					"# Replace null-values with string value\r\n",
 					"for col_name in cost_columns:\r\n",
-					"    cost_df = cost_df.withColumn(col_name, F.coalesce(F.col(col_name), F.lit('empty')))"
-				],
-				"execution_count": 86
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"concat_expr = F.reduce(\r\n",
-					"      [F.concat(F.col(col_name), F.lit('-')) for col_name in cost_columns]\r\n",
-					"  )\r\n",
+					"    cost_df = cost_df.withColumn(col_name, F.coalesce(F.col(col_name), F.lit('empty')))\r\n",
 					"\r\n",
-					"cost_df = cost_df.withColumn('CostJoinKey', F.expr(concat_expr[:-len(separator)]))"
+					"generate_join_key = F.concat(*[F.concat(F.col(col_name), F.lit('.')) for col_name in cost_columns])\r\n",
+					"cost_df = cost_df.withColumn('CostJoinKey', generate_join_key)"
 				],
-				"execution_count": null
+				"execution_count": 108
 			},
 			{
 				"cell_type": "code",
@@ -215,9 +197,21 @@
 					}
 				},
 				"source": [
-					"print(test)"
+					"# # SubscriptionName, ResourceGroup, MeterCategory, WBS\r\n",
+					"# # 99,199 instances of no cost at the latest date\r\n",
+					"# # 43,107 instances with cost on latest date\r\n",
+					"\r\n",
+					"# # Include ResourceName\r\n",
+					"# # 61,586 instances of no cost at the latest date\r\n",
+					"# # 1,048,025 instances with cost on latest date\r\n",
+					"\r\n",
+					"# max_date = max(dates)\r\n",
+					"# test = cost_df.where((F.col('Date') == max_date) & (F.col('Cost') == 0))\r\n",
+					"# test2 = cost_df.where((F.col('Date') == max_date) & (F.col('Cost') > 0))\r\n",
+					"# print(test.count())\r\n",
+					"# print(test2.count())"
 				],
-				"execution_count": 83
+				"execution_count": 110
 			},
 			{
 				"cell_type": "markdown",
@@ -246,7 +240,65 @@
 					}
 				},
 				"source": [
-					"print(len(dimensions))"
+					"fill_df = spark.createDataFrame(fill_rdd, [\"Date\", \"Dimensions\"])"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"fill_df = spark.createDataFrame(fill_data, [\"Date\", \"Dimensions\"])"
+				],
+				"execution_count": 124
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"fill_df = spark.createDataFrame(fill_data, [\"Date\", \"Dimensions\"])\r\n",
+					"fill_df = fill_df.withColumn('json', F.from_json('Dimensions', 'map<string,string>', options={'inferSchema': 'true'})).drop('Dimensions')"
+				],
+				"execution_count": 123
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"for col_name in cost_columns:\r\n",
+					"    fill_df = fill_df.withColumn(col_name, F.col(f'json.{col_name}'))\r\n",
+					"\r\n",
+					"fill_df = fill_df.drop('json')"
 				],
 				"execution_count": null
 			},
@@ -289,10 +341,12 @@
 					"fill_df = fill_df.subtract(cost_df.select(\"Date\", *cost_columns))\r\n",
 					"fill_df = fill_df.withColumn('Cost', F.lit(0))\r\n",
 					"\r\n",
+					"fill_df = fill_df.withColumn('CostJoinKey', generate_join_key)\r\n",
+					"\r\n",
 					"# Zero-fill missing rows where resource doesn't have cost\r\n",
 					"cost_df = cost_df.union(fill_df)"
 				],
-				"execution_count": null
+				"execution_count": 111
 			},
 			{
 				"cell_type": "markdown",
@@ -340,7 +394,7 @@
 					"bucketizer = Bucketizer(splits=bucketizer_splits, inputCol=\"PrevCost\", outputCol=\"CostBin\")\r\n",
 					"cost_df = bucketizer.transform(cost_df)"
 				],
-				"execution_count": null
+				"execution_count": 94
 			},
 			{
 				"cell_type": "markdown",
@@ -386,7 +440,7 @@
 					"# Build linear regression model\r\n",
 					"pipeline_model = pipeline.fit(cost_df)"
 				],
-				"execution_count": null
+				"execution_count": 95
 			},
 			{
 				"cell_type": "markdown",
@@ -434,6 +488,8 @@
 					"future_df = future_df.withColumn(\"Year\", F.year(\"Date\"))\r\n",
 					"future_df = future_df.withColumn(\"Month\", F.month(\"Date\"))\r\n",
 					"\r\n",
+					"future_df = future_df.withColumn('CostJoinKey', generate_join_key)\r\n",
+					"\r\n",
 					"# Find the latest cost for each feature set\r\n",
 					"latest_cost_window_spec = Window.partitionBy(*cost_columns).orderBy(F.desc(\"Date\")).rowsBetween(Window.unboundedPreceding, Window.currentRow)\r\n",
 					"\r\n",
@@ -444,19 +500,22 @@
 					"    .drop('Date', 'rank')\\\r\n",
 					"    .withColumnRenamed('Cost', 'PrevCost')\r\n",
 					"\r\n",
-					"# Add prefix to cost columns to prepare dataframe for join operation\r\n",
-					"for col_name in cost_columns:\r\n",
-					"    latest_cost_df = latest_cost_df.withColumnRenamed(col_name, f'temp_{col_name}')\r\n",
+					"latest_cost_df = latest_cost_df.withColumn('CostJoinKey', generate_join_key)\r\n",
+					"latest_cost_df = latest_cost_df.drop(*cost_columns)\r\n",
+					"\r\n",
+					"# # Add prefix to cost columns to prepare dataframe for join operation\r\n",
+					"# for col_name in cost_columns:\r\n",
+					"#     latest_cost_df = latest_cost_df.withColumnRenamed(col_name, f'temp_{col_name}')\r\n",
 					"\r\n",
 					"latest_cost_df = bucketizer.transform(latest_cost_df)\r\n",
 					"\r\n",
 					"# # The cost value for each feature set (and for all dates) will be given by the latest known cost for that feature set\r\n",
-					"future_df = future_df.join(latest_cost_df, (future_df.SubscriptionName == latest_cost_df.temp_SubscriptionName) & (F.coalesce(future_df.ResourceGroup, F.lit('')) == F.coalesce(latest_cost_df.temp_ResourceGroup, F.lit(''))), 'left')\r\n",
+					"future_df = future_df.join(latest_cost_df, 'CostJoinKey', 'left')\r\n",
 					"\r\n",
 					"# Remove all temp columns\r\n",
-					"future_df = future_df.drop(*['temp_' + col_name for col_name in cost_columns])"
+					"# future_df = future_df.drop(*['temp_' + col_name for col_name in cost_columns])"
 				],
-				"execution_count": null
+				"execution_count": 96
 			},
 			{
 				"cell_type": "markdown",
@@ -487,7 +546,7 @@
 				"source": [
 					"future_predictions = pipeline_model.transform(future_df)"
 				],
-				"execution_count": null
+				"execution_count": 97
 			},
 			{
 				"cell_type": "code",
@@ -508,7 +567,7 @@
 					"total = post.union(pred)\r\n",
 					"total = total.withColumn('Cost', F.when(F.col('Cost') < 0, F.lit(0)).otherwise(F.col('Cost')))"
 				],
-				"execution_count": null
+				"execution_count": 98
 			},
 			{
 				"cell_type": "code",
@@ -527,25 +586,7 @@
 				"source": [
 					"display(total)"
 				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					""
-				],
-				"execution_count": null
+				"execution_count": 99
 			}
 		]
 	}
