@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "cd28e582-200b-47ad-a1f1-aa9d7f978da5"
+				"spark.autotune.trackingId": "47f3ce6d-7ace-467d-afea-13d6cc602134"
 			}
 		},
 		"metadata": {
@@ -74,7 +74,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 183
+				"execution_count": 70
 			},
 			{
 				"cell_type": "code",
@@ -104,7 +104,7 @@
 					"import itertools\r\n",
 					"import json"
 				],
-				"execution_count": 184
+				"execution_count": 71
 			},
 			{
 				"cell_type": "code",
@@ -123,7 +123,7 @@
 					"LOOKBACK_PERIOD = 24 # Number of months\r\n",
 					"PREDICTION_INTERVAL = 12 # Number of months"
 				],
-				"execution_count": 185
+				"execution_count": 72
 			},
 			{
 				"cell_type": "markdown",
@@ -160,7 +160,7 @@
 					"    'ResourceName'\r\n",
 					"]"
 				],
-				"execution_count": 186
+				"execution_count": 73
 			},
 			{
 				"cell_type": "code",
@@ -201,7 +201,7 @@
 					"generate_join_key = F.concat(*[F.concat(F.col(col_name), F.lit('.')) for col_name in cost_columns])\r\n",
 					"cost_df = cost_df.withColumn('CostJoinKey', generate_join_key)"
 				],
-				"execution_count": 187
+				"execution_count": 74
 			},
 			{
 				"cell_type": "markdown",
@@ -243,7 +243,7 @@
 					"# Zero-fill missing rows where resource doesn't have cost\r\n",
 					"cost_df = cost_df.union(fill_df)"
 				],
-				"execution_count": 188
+				"execution_count": 75
 			},
 			{
 				"cell_type": "markdown",
@@ -272,16 +272,27 @@
 					}
 				},
 				"source": [
+					"window_ordered = Window.partitionBy('CostJoinKey').orderBy(\"Date\")\r\n",
+					"window_unordered = Window.partitionBy('CostJoinKey')\r\n",
+					"\r\n",
+					"# Ignore resources where cost is 0 in entire date range\r\n",
+					"cost_df = cost_df.withColumn(\"WindowSum\", F.sum(\"Cost\").over(window_unordered))\r\n",
+					"cost_df = cost_df.where(F.col(\"WindowSum\") > 0)\r\n",
+					"\r\n",
+					"# Get difference in latest and earliest cost\r\n",
+					"cost_df = cost_df.withColumn(\"LatestCost\", F.last(\"Cost\").over(window_unordered))\r\n",
+					"cost_df = cost_df.withColumn(\"EarliestCost\", F.first(\"Cost\").over(window_unordered))\r\n",
+					"cost_df = cost_df.withColumn(\"CostDiff\", F.col(\"LatestCost\") - F.col(\"EarliestCost\")).drop(\"LatestCost\", \"EarliestCost\")\r\n",
+					"\r\n",
 					"# The cost of the previous row will be the main feature for the ML model\r\n",
-					"windowSpec = Window.partitionBy(*cost_columns).orderBy(\"Date\")\r\n",
-					"cost_df = cost_df.withColumn(\"PrevCost\", F.lag(\"Cost\", 1).over(windowSpec))\r\n",
+					"cost_df = cost_df.withColumn(\"PrevCost\", F.lag(\"Cost\", 1).over(window_ordered))\r\n",
 					"\r\n",
 					"# Decompose the date into a integer columns for year and month (ML model will only handle number features)\r\n",
 					"cost_df = cost_df.withColumn(\"Year\", F.year(\"Date\"))\r\n",
 					"cost_df = cost_df.withColumn(\"Month\", F.month(\"Date\"))\r\n",
 					"\r\n",
 					"# Remove null values\r\n",
-					"cost_df = cost_df.dropna(subset=[\"PrevCost\"])\r\n",
+					"cost_df = cost_df.dropna(subset=[\"PrevCost\", \"CostDiff\"])\r\n",
 					"\r\n",
 					"# Add an additional bucket feature indicating the cost level (important to capture the dynamics of increasing vs diminishing costs)\r\n",
 					"# Create logarithmic scale bucket ranges\r\n",
@@ -291,7 +302,26 @@
 					"bucketizer = Bucketizer(splits=bucketizer_splits, inputCol=\"PrevCost\", outputCol=\"CostBin\")\r\n",
 					"cost_df = bucketizer.transform(cost_df)"
 				],
-				"execution_count": 189
+				"execution_count": 76
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(cost_df.where(F.col('ResourceGroup') == 'Synapse'))"
+				],
+				"execution_count": 77
 			},
 			{
 				"cell_type": "markdown",
@@ -321,7 +351,7 @@
 				},
 				"source": [
 					"# Create structure of input and output values for model\r\n",
-					"assembler = VectorAssembler(inputCols=[\"Year\", \"Month\", \"PrevCost\", \"CostBin\"], outputCol=\"features\")\r\n",
+					"assembler = VectorAssembler(inputCols=[\"Year\", \"Month\", \"PrevCost\", \"CostDiff\"], outputCol=\"features\")\r\n",
 					"\r\n",
 					"# Define the linear regression model parameters and pipeline configuration\r\n",
 					"glr = GeneralizedLinearRegression(featuresCol=\"features\", labelCol=\"Cost\", family=\"gaussian\", link=\"identity\")\r\n",
@@ -330,7 +360,7 @@
 					"# Build linear regression model\r\n",
 					"pipeline_model = pipeline.fit(cost_df)"
 				],
-				"execution_count": 190
+				"execution_count": 36
 			},
 			{
 				"cell_type": "markdown",
@@ -379,7 +409,7 @@
 					"latest_cost_window_spec = Window.partitionBy(*cost_columns).orderBy(F.desc(\"Date\")).rowsBetween(Window.unboundedPreceding, Window.currentRow)\r\n",
 					"\r\n",
 					"latest_cost_df = cost_df\\\r\n",
-					"    .select('Date', *cost_columns, 'Cost')\\\r\n",
+					"    .select('Date', *cost_columns, 'Cost', 'CostDiff')\\\r\n",
 					"    .withColumn(\"rank\", F.row_number().over(latest_cost_window_spec)) \\\r\n",
 					"    .where(F.col('rank') == 1) \\\r\n",
 					"    .drop('Date', 'rank')\\\r\n",
@@ -393,7 +423,26 @@
 					"# # The cost value for each feature set (and for all dates) will be given by the latest known cost for that feature set\r\n",
 					"future_df = future_df.join(latest_cost_df, 'CostJoinKey', 'left')"
 				],
-				"execution_count": 191
+				"execution_count": 37
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(future_df)"
+				],
+				"execution_count": 41
 			},
 			{
 				"cell_type": "markdown",
@@ -425,7 +474,7 @@
 					"prediction_df = pipeline_model.transform(future_df)\r\n",
 					"prediction_df = prediction_df.withColumnRenamed('prediction', 'Cost')"
 				],
-				"execution_count": 192
+				"execution_count": 38
 			},
 			{
 				"cell_type": "code",
@@ -448,7 +497,26 @@
 					"# Remove zero and negative cost to reduce data volume\r\n",
 					"combined_df = combined_df.where(F.col('Cost') > 0)"
 				],
-				"execution_count": 193
+				"execution_count": 39
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(combined_df.groupBy('Date').agg(F.sum('Cost')))"
+				],
+				"execution_count": 40
 			},
 			{
 				"cell_type": "code",
@@ -465,10 +533,10 @@
 				},
 				"source": [
 					"# Write predicted cost to file\r\n",
-					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/forecasts/monthly/aggregate/parquet/Extended_ACMMonthlyAmortizedCost_overview_Threeyears.parquet\"\r\n",
-					"combined_df.write.format('parquet').mode('overwrite').partitionBy('Year','Month').option('overwriteSchema', 'true').save(target_path)"
+					"# target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/forecasts/granular-cost-{LOOKBACK_PERIOD}-month-lookback\"\r\n",
+					"# combined_df.write.format('parquet').mode('overwrite').partitionBy('Year','Month').option('overwriteSchema', 'true').save(target_path)"
 				],
-				"execution_count": 194
+				"execution_count": null
 			}
 		]
 	}
