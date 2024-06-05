@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "b35a99e5-cf84-48c0-968a-38b27e87d890"
+				"spark.autotune.trackingId": "bfd98e05-6e9e-4f32-84bd-7917c7aec4ff"
 			}
 		},
 		"metadata": {
@@ -74,7 +74,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 44
+				"execution_count": 67
 			},
 			{
 				"cell_type": "code",
@@ -104,7 +104,7 @@
 					"import itertools\r\n",
 					"import json"
 				],
-				"execution_count": 32
+				"execution_count": 68
 			},
 			{
 				"cell_type": "code",
@@ -123,7 +123,7 @@
 					"LOOKBACK_PERIOD = 24 # Number of months\r\n",
 					"PREDICTION_INTERVAL = 12 # Number of months"
 				],
-				"execution_count": 33
+				"execution_count": 69
 			},
 			{
 				"cell_type": "markdown",
@@ -160,7 +160,7 @@
 					"    'ResourceName'\r\n",
 					"]"
 				],
-				"execution_count": 34
+				"execution_count": 70
 			},
 			{
 				"cell_type": "code",
@@ -201,7 +201,7 @@
 					"generate_join_key = F.concat(*[F.concat(F.col(col_name), F.lit('.')) for col_name in cost_columns])\r\n",
 					"cost_df = cost_df.withColumn('CostJoinKey', generate_join_key)"
 				],
-				"execution_count": 35
+				"execution_count": 71
 			},
 			{
 				"cell_type": "markdown",
@@ -244,7 +244,7 @@
 					"# Zero-fill missing rows where resource doesn't have cost\r\n",
 					"cost_df = cost_df.union(fill_df)"
 				],
-				"execution_count": 36
+				"execution_count": 72
 			},
 			{
 				"cell_type": "markdown",
@@ -258,6 +258,30 @@
 				"source": [
 					"## Construct feature columns"
 				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"feature_columns = [\r\n",
+					"    'Year',\r\n",
+					"    'Month',\r\n",
+					"    'PrevCost',\r\n",
+					"    'CostBin',\r\n",
+					"    'CostDiff'\r\n",
+					"]"
+				],
+				"execution_count": 73
 			},
 			{
 				"cell_type": "code",
@@ -303,7 +327,7 @@
 					"bucketizer = Bucketizer(splits=bucketizer_splits, inputCol=\"PrevCost\", outputCol=\"CostBin\")\r\n",
 					"cost_df = bucketizer.transform(cost_df)"
 				],
-				"execution_count": 37
+				"execution_count": 74
 			},
 			{
 				"cell_type": "markdown",
@@ -333,7 +357,7 @@
 				},
 				"source": [
 					"# Create structure of input and output values for model\r\n",
-					"assembler = VectorAssembler(inputCols=[\"Year\", \"Month\", \"PrevCost\", \"CostDiff\"], outputCol=\"features\")\r\n",
+					"assembler = VectorAssembler(inputCols=[\"Year\", \"Month\", \"PrevCost\", \"CostBin\"], outputCol=\"features\")\r\n",
 					"\r\n",
 					"# Define the linear regression model parameters and pipeline configuration\r\n",
 					"glr = GeneralizedLinearRegression(featuresCol=\"features\", labelCol=\"Cost\", family=\"gaussian\", link=\"identity\")\r\n",
@@ -342,7 +366,7 @@
 					"# Build linear regression model\r\n",
 					"pipeline_model = pipeline.fit(cost_df)"
 				],
-				"execution_count": 38
+				"execution_count": 75
 			},
 			{
 				"cell_type": "markdown",
@@ -373,38 +397,60 @@
 				"source": [
 					"# Define and build the prediction horizon length in the number of months \r\n",
 					"last_date = dates_df.agg(F.max('Date')).collect()[0][0]\r\n",
-					"future_dates = [last_date + relativedelta(months=i) for i in range(1, PREDICTION_INTERVAL + 1)]\r\n",
-					"future_dates_df = spark.createDataFrame([(d,) for d in future_dates], [\"Date\"])\r\n",
-					"future_dates_df = future_dates_df.withColumn(\"Date\", F.col(\"Date\").cast(T.DateType()))\r\n",
-					"\r\n",
-					"# Create new dataframe structure containing all possible combinations of features and dates\r\n",
-					"future_df = future_dates_df.crossJoin(dimensions_df)\r\n",
-					"\r\n",
-					"# Split date into months and years to match structure of the original dataFrame\r\n",
-					"future_df = future_df.withColumn(\"Year\", F.year(\"Date\"))\r\n",
-					"future_df = future_df.withColumn(\"Month\", F.month(\"Date\"))\r\n",
-					"\r\n",
-					"future_df = future_df.withColumn('CostJoinKey', generate_join_key)\r\n",
-					"\r\n",
+					"future_dates = [last_date + relativedelta(months=i) for i in range(1, PREDICTION_INTERVAL + 1)]"
+				],
+				"execution_count": 76
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
 					"# Find the latest cost for each feature set\r\n",
 					"latest_cost_window_spec = Window.partitionBy(*cost_columns).orderBy(F.desc(\"Date\")).rowsBetween(Window.unboundedPreceding, Window.currentRow)\r\n",
+					"result = cost_df.select('Date', *cost_columns, *feature_columns, 'Cost', 'CostJoinKey')\r\n",
+					"for current_date in future_dates:\r\n",
+					"    print(f'Start predicting for {current_date}')\r\n",
+					"    current_df = spark.createDataFrame([(d,) for d in [current_date]], [\"Date\"]).withColumn(\"Date\", F.col(\"Date\").cast(T.DateType()))\r\n",
 					"\r\n",
-					"latest_cost_df = cost_df\\\r\n",
-					"    .select('Date', *cost_columns, 'Cost', 'CostDiff')\\\r\n",
-					"    .withColumn(\"rank\", F.row_number().over(latest_cost_window_spec)) \\\r\n",
-					"    .where(F.col('rank') == 1) \\\r\n",
-					"    .drop('Date', 'rank')\\\r\n",
-					"    .withColumnRenamed('Cost', 'PrevCost')\r\n",
+					"    # Create new dataframe structure containing all possible combinations of features and dates\r\n",
+					"    current_df = current_df.crossJoin(dimensions_df)\r\n",
 					"\r\n",
-					"latest_cost_df = latest_cost_df.withColumn('CostJoinKey', generate_join_key)\r\n",
-					"latest_cost_df = latest_cost_df.drop(*cost_columns)\r\n",
+					"    # Split date into months and years to match structure of the original dataFrame\r\n",
+					"    current_df = current_df.withColumn(\"Year\", F.year(\"Date\"))\r\n",
+					"    current_df = current_df.withColumn(\"Month\", F.month(\"Date\"))\r\n",
 					"\r\n",
-					"latest_cost_df = bucketizer.transform(latest_cost_df)\r\n",
+					"    current_df = current_df.withColumn('CostJoinKey', generate_join_key)\r\n",
 					"\r\n",
-					"# # The cost value for each feature set (and for all dates) will be given by the latest known cost for that feature set\r\n",
-					"future_df = future_df.join(latest_cost_df, 'CostJoinKey', 'left')"
+					"    latest_cost_df = result \\\r\n",
+					"        .withColumn(\"rank\", F.row_number().over(latest_cost_window_spec)) \\\r\n",
+					"        .where(F.col('rank') == 1) \\\r\n",
+					"        .drop('Date', 'rank')\\\r\n",
+					"        .withColumn('PrevCost', F.col('Cost'))\r\n",
+					"\r\n",
+					"    latest_cost_df = latest_cost_df.select('CostJoinKey', 'PrevCost', 'CostDiff')\r\n",
+					"\r\n",
+					"    latest_cost_df = bucketizer.transform(latest_cost_df)\r\n",
+					"\r\n",
+					"    # # The cost value for each feature set (and for all dates) will be given by the latest known cost for that feature set\r\n",
+					"    current_df = current_df.join(latest_cost_df, 'CostJoinKey', 'left')\r\n",
+					"\r\n",
+					"    prediction_df = pipeline_model.transform(current_df)\r\n",
+					"    prediction_df = prediction_df.withColumnRenamed('prediction', 'Cost')\r\n",
+					"    prediction_df = prediction_df.select('Date', *cost_columns, *feature_columns, 'Cost', 'CostJoinKey')\r\n",
+					"\r\n",
+					"    result = result.union(prediction_df)"
 				],
-				"execution_count": 39
+				"execution_count": 79
 			},
 			{
 				"cell_type": "code",
@@ -440,11 +486,40 @@
 					}
 				},
 				"source": [
-					"result = cost_df.select('Date', *cost_columns, 'Cost', 'Year', 'Month')\r\n",
-					"for current_date in future_dates:\r\n",
-					"    "
+					"# Define and build the prediction horizon length in the number of months \r\n",
+					"last_date = dates_df.agg(F.max('Date')).collect()[0][0]\r\n",
+					"future_dates = [last_date + relativedelta(months=i) for i in range(1, PREDICTION_INTERVAL + 1)]\r\n",
+					"future_dates_df = spark.createDataFrame([(d,) for d in future_dates], [\"Date\"])\r\n",
+					"future_dates_df = future_dates_df.withColumn(\"Date\", F.col(\"Date\").cast(T.DateType()))\r\n",
+					"\r\n",
+					"# Create new dataframe structure containing all possible combinations of features and dates\r\n",
+					"future_df = future_dates_df.crossJoin(dimensions_df)\r\n",
+					"\r\n",
+					"# Split date into months and years to match structure of the original dataFrame\r\n",
+					"future_df = future_df.withColumn(\"Year\", F.year(\"Date\"))\r\n",
+					"future_df = future_df.withColumn(\"Month\", F.month(\"Date\"))\r\n",
+					"\r\n",
+					"future_df = future_df.withColumn('CostJoinKey', generate_join_key)\r\n",
+					"\r\n",
+					"# Find the latest cost for each feature set\r\n",
+					"latest_cost_window_spec = Window.partitionBy(*cost_columns).orderBy(F.desc(\"Date\")).rowsBetween(Window.unboundedPreceding, Window.currentRow)\r\n",
+					"\r\n",
+					"latest_cost_df = cost_df \\\r\n",
+					"    .select('Date', *cost_columns, 'Cost', 'CostDiff') \\\r\n",
+					"    .withColumn(\"rank\", F.row_number().over(latest_cost_window_spec)) \\\r\n",
+					"    .where(F.col('rank') == 1) \\\r\n",
+					"    .drop('Date', 'rank') \\\r\n",
+					"    .withColumnRenamed('Cost', 'PrevCost')\r\n",
+					"\r\n",
+					"latest_cost_df = latest_cost_df.withColumn('CostJoinKey', generate_join_key)\r\n",
+					"latest_cost_df = latest_cost_df.drop(*cost_columns)\r\n",
+					"\r\n",
+					"latest_cost_df = bucketizer.transform(latest_cost_df)\r\n",
+					"\r\n",
+					"# # The cost value for each feature set (and for all dates) will be given by the latest known cost for that feature set\r\n",
+					"future_df = future_df.join(latest_cost_df, 'CostJoinKey', 'left')"
 				],
-				"execution_count": null
+				"execution_count": 39
 			},
 			{
 				"cell_type": "code",
