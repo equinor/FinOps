@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "64666047-227b-45d2-ae28-e0704ca7fea9"
+				"spark.autotune.trackingId": "540b95d1-7f29-4583-9fbd-fa94c6355983"
 			}
 		},
 		"metadata": {
@@ -399,7 +399,7 @@
 					"last_date = dates_df.agg(F.max('Date')).collect()[0][0]\r\n",
 					"future_dates = [last_date + relativedelta(months=i) for i in range(1, PREDICTION_INTERVAL + 1)]"
 				],
-				"execution_count": null
+				"execution_count": 68
 			},
 			{
 				"cell_type": "code",
@@ -561,7 +561,7 @@
 					"# # The cost value for each feature set (and for all dates) will be given by the latest known cost for that feature set\r\n",
 					"future_df = future_df.join(latest_cost_df, 'CostJoinKey', 'left')"
 				],
-				"execution_count": 34
+				"execution_count": 69
 			},
 			{
 				"cell_type": "markdown",
@@ -593,7 +593,25 @@
 					"prediction_df = pipeline_model.transform(future_df)\r\n",
 					"prediction_df = prediction_df.withColumnRenamed('prediction', 'Cost')"
 				],
-				"execution_count": 35
+				"execution_count": 70
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"display(prediction_df)"
+				],
+				"execution_count": 71
 			},
 			{
 				"cell_type": "code",
