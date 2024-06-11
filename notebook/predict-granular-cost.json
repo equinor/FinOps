@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "8d4ce7c6-426c-421b-bf8a-0b325b40d2d0"
+				"spark.autotune.trackingId": "09b58962-ef98-4754-a464-f9e6c41264b4"
 			}
 		},
 		"metadata": {
@@ -401,7 +401,7 @@
 					"last_date = dates_df.agg(F.max('Date')).collect()[0][0]\r\n",
 					"future_dates = [last_date + relativedelta(months=i) for i in range(1, PREDICTION_INTERVAL + 1)]"
 				],
-				"execution_count": null
+				"execution_count": 141
 			},
 			{
 				"cell_type": "code",
@@ -464,7 +464,7 @@
 					"\r\n",
 					"    result = result.union(prediction_df)"
 				],
-				"execution_count": null
+				"execution_count": 142
 			},
 			{
 				"cell_type": "code",
@@ -482,7 +482,7 @@
 				"source": [
 					"result = result.where(F.col('Cost') > 0)"
 				],
-				"execution_count": null
+				"execution_count": 143
 			},
 			{
 				"cell_type": "code",
@@ -500,7 +500,7 @@
 				"source": [
 					"print(result.count())"
 				],
-				"execution_count": null
+				"execution_count": 144
 			},
 			{
 				"cell_type": "code",
@@ -513,12 +513,13 @@
 						"transient": {
 							"deleting": false
 						}
-					}
+					},
+					"collapsed": false
 				},
 				"source": [
 					"display(result)"
 				],
-				"execution_count": null
+				"execution_count": 145
 			},
 			{
 				"cell_type": "code",
