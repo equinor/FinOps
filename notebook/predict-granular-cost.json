@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "322afb30-21d4-4626-a115-0ce85bca5713"
+				"spark.autotune.trackingId": "05dee795-3681-4467-8280-451c9b555104"
 			}
 		},
 		"metadata": {
@@ -480,9 +480,27 @@
 					}
 				},
 				"source": [
+					"result = result.where(F.col('Cost') > 0)"
+				],
+				"execution_count": 130
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
 					"display(result)"
 				],
-				"execution_count": 129
+				"execution_count": 131
 			},
 			{
 				"cell_type": "code",
@@ -625,25 +643,6 @@
 					"combined_df = combined_df.where(F.col('Cost') > 0)"
 				],
 				"execution_count": 39
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(result.groupBy('Date').agg(F.sum('Cost')))"
-				],
-				"execution_count": 104
 			},
 			{
 				"cell_type": "code",
