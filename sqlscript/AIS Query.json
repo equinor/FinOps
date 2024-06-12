@@ -1,0 +1,17 @@
+{
+	"name": "AIS Query",
+	"properties": {
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    TOP 100 *\n    --distinct(SubscriptionName)\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/20240601-20240630/Extended_v3_ACMMonthlyActualCost_20240601-20240630.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where \n    SubscriptionName like 'S7%'\n    OR\n    SubscriptionName like 'S8%'\n    OR\n    SubscriptionName like 'A%'\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}
