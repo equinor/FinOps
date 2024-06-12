@@ -2,7 +2,7 @@
 	"name": "AIS Query",
 	"properties": {
 		"content": {
-			"query": "-- This is auto-generated code\nSELECT\n    TOP 100 *\n    --distinct(SubscriptionName)\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/20240601-20240630/Extended_v3_ACMMonthlyActualCost_20240601-20240630.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where \n    SubscriptionName like 'S7%'\n    OR\n    SubscriptionName like 'S8%'\n    OR\n    SubscriptionName like 'A%'\n",
+			"query": "-- This is auto-generated code\nSELECT\n    TOP 100 \n    --*\n    SubscriptionName\n    ,MeterCategory\n    ,MeterSubCategory\n    ,ResourceGroup\n    ,ActiveWBS\n    ,CostAllocationType\n    ,CostAllocationTypeTag\n    ,CostAllocationCode\n    ,CostAllocationCodeTag\n    ,SubscriptionWBS\n    ,[SubscriptionServiceNow-App]\n    ,ActiveWBSReason\n    ,AppID\n    ,Application_Name\n    --sum(CostInBillingCurrency)\n    --distinct(SubscriptionName)\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/202406*/Extended_v3_ACMMonthlyActualCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where \n    (SubscriptionName like 'S7%'\n    OR\n    SubscriptionName like 'S8%'\n    OR\n    SubscriptionName like 'A%')\n    AND\n    ActiveWBSReason <> 'AppID WBS Lookup from SNOW'\n",
 			"metadata": {
 				"language": "sql"
 			},
