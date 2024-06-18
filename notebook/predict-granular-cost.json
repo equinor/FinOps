@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "b7f92b46-e9df-4bfe-9df2-6c6fc6a54816"
+				"spark.autotune.trackingId": "e206896c-7693-4b43-aab3-6b01bf48ee70"
 			}
 		},
 		"metadata": {
@@ -74,7 +74,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 17
+				"execution_count": 12
 			},
 			{
 				"cell_type": "code",
@@ -104,7 +104,7 @@
 					"import itertools\r\n",
 					"import json"
 				],
-				"execution_count": 18
+				"execution_count": 13
 			},
 			{
 				"cell_type": "code",
@@ -123,7 +123,7 @@
 					"LOOKBACK_PERIOD = 24 # Number of months\r\n",
 					"PREDICTION_INTERVAL = 12 # Number of months"
 				],
-				"execution_count": 19
+				"execution_count": 14
 			},
 			{
 				"cell_type": "markdown",
@@ -160,7 +160,7 @@
 					"    'ResourceName'\r\n",
 					"]"
 				],
-				"execution_count": 20
+				"execution_count": 15
 			},
 			{
 				"cell_type": "code",
@@ -206,7 +206,7 @@
 					"cost_df = cost_df.withColumn(\"WindowSum\", F.sum(\"Cost\").over(Window.partitionBy('CostJoinKey')))\r\n",
 					"cost_df = cost_df.where(F.col(\"WindowSum\") > 0).drop(\"WindowSum\")"
 				],
-				"execution_count": 21
+				"execution_count": 16
 			},
 			{
 				"cell_type": "markdown",
@@ -249,7 +249,7 @@
 					"# Zero-fill missing rows where resource doesn't have cost\r\n",
 					"cost_df = cost_df.union(fill_df)"
 				],
-				"execution_count": 22
+				"execution_count": 17
 			},
 			{
 				"cell_type": "markdown",
@@ -286,7 +286,7 @@
 					"    'CostDiff'\r\n",
 					"]"
 				],
-				"execution_count": 23
+				"execution_count": 18
 			},
 			{
 				"cell_type": "code",
@@ -325,7 +325,7 @@
 					"bucketizer = Bucketizer(splits=bucketizer_splits, inputCol=\"PrevCost\", outputCol=\"CostBin\")\r\n",
 					"cost_df = bucketizer.transform(cost_df)"
 				],
-				"execution_count": 24
+				"execution_count": 19
 			},
 			{
 				"cell_type": "markdown",
@@ -364,7 +364,7 @@
 					"# Build linear regression model\r\n",
 					"pipeline_model = pipeline.fit(cost_df)"
 				],
-				"execution_count": 25
+				"execution_count": 20
 			},
 			{
 				"cell_type": "markdown",
@@ -397,7 +397,7 @@
 					"last_date = dates_df.agg(F.max('Date')).collect()[0][0]\r\n",
 					"future_dates = [last_date + relativedelta(months=i) for i in range(1, PREDICTION_INTERVAL + 1)]"
 				],
-				"execution_count": 26
+				"execution_count": 21
 			},
 			{
 				"cell_type": "markdown",
@@ -478,7 +478,7 @@
 					"result = result.where(F.col('Cost') > 0)\r\n",
 					"result = result.select('Date', *cost_columns, 'Cost', 'Year', 'Month')"
 				],
-				"execution_count": 27
+				"execution_count": 22
 			},
 			{
 				"cell_type": "code",
@@ -498,7 +498,7 @@
 					"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/forecasts/granular-cost-{LOOKBACK_PERIOD}-month-lookback\"\r\n",
 					"result.write.format('parquet').mode('overwrite').partitionBy('Year','Month').option('overwriteSchema', 'true').save(target_path)"
 				],
-				"execution_count": 28
+				"execution_count": 23
 			}
 		]
 	}
