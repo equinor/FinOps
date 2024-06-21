@@ -883,15 +883,15 @@
 		},
 		"predict-granular-cost_notebookSparkPoolNameRef": {
 			"type": "string",
-			"defaultValue": "sprkpool33large"
+			"defaultValue": "prodcluster"
 		},
 		"predict-granular-cost_notebookSparkPoolIdRef": {
 			"type": "string",
-			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/prodcluster"
 		},
 		"predict-granular-cost_notebookSparkPoolEndpointRef": {
 			"type": "string",
-			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/prodcluster"
 		},
 		"predict-service-cost_notebookSparkPoolNameRef": {
 			"type": "string",
@@ -1037,17 +1037,29 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
-		"wbs-owner-lookup_notebookSparkPoolNameRef": {
-			"type": "string",
-			"defaultValue": "sprkpool33large"
+		"sparkpool32_delayInMinutes": {
+			"type": "int",
+			"defaultValue": 15
 		},
-		"wbs-owner-lookup_notebookSparkPoolIdRef": {
-			"type": "string",
-			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		"sparkpool32_maxNodeCount": {
+			"type": "int",
+			"defaultValue": 5
 		},
-		"wbs-owner-lookup_notebookSparkPoolEndpointRef": {
+		"sparkpool32_minNodeCount": {
+			"type": "int",
+			"defaultValue": 3
+		},
+		"sparkpool32_nodeCount": {
+			"type": "int",
+			"defaultValue": 0
+		},
+		"sparkpool32_nodeSize": {
 			"type": "string",
-			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+			"defaultValue": "Medium"
+		},
+		"sparkpool32_sparkVersion": {
+			"type": "string",
+			"defaultValue": "3.2"
 		},
 		"sprkpool33large_delayInMinutes": {
 			"type": "int",
@@ -1073,29 +1085,37 @@
 			"type": "string",
 			"defaultValue": "3.3"
 		},
-		"sparkpool32_delayInMinutes": {
+		"prodcluster_delayInMinutes": {
 			"type": "int",
-			"defaultValue": 15
+			"defaultValue": 30
 		},
-		"sparkpool32_maxNodeCount": {
+		"prodcluster_maxNodeCount": {
 			"type": "int",
-			"defaultValue": 5
+			"defaultValue": 10
 		},
-		"sparkpool32_minNodeCount": {
+		"prodcluster_minNodeCount": {
 			"type": "int",
 			"defaultValue": 3
 		},
-		"sparkpool32_nodeCount": {
+		"prodcluster_nodeCount": {
 			"type": "int",
-			"defaultValue": 0
+			"defaultValue": 10
 		},
-		"sparkpool32_nodeSize": {
+		"prodcluster_nodeSize": {
 			"type": "string",
-			"defaultValue": "Medium"
+			"defaultValue": "Large"
 		},
-		"sparkpool32_sparkVersion": {
+		"prodcluster_sparkVersion": {
 			"type": "string",
-			"defaultValue": "3.2"
+			"defaultValue": "3.4"
+		},
+		"WBSOwnerSource_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
+		},
+		"WBSOwnerSink_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
 		}
 	},
 	"variables": {
@@ -20490,8 +20510,8 @@
 			"properties": {
 				"activities": [
 					{
-						"name": "Process WBS Owners",
-						"type": "SynapseNotebook",
+						"name": "persist latest wbs owner",
+						"type": "Copy",
 						"dependsOn": [],
 						"policy": {
 							"timeout": "0.12:00:00",
@@ -20502,24 +20522,59 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
-							"notebook": {
-								"referenceName": "wbs-owner-lookup",
-								"type": "NotebookReference"
-							},
-							"parameters": {
-								"storageAccount": {
-									"value": "s037costmgmt",
-									"type": "string"
+							"source": {
+								"type": "ParquetSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "ParquetReadSettings"
 								}
 							},
-							"snapshot": true,
-							"conf": {
-								"spark.dynamicAllocation.enabled": null,
-								"spark.dynamicAllocation.minExecutors": null,
-								"spark.dynamicAllocation.maxExecutors": null
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
 							},
-							"numExecutors": null
-						}
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "WBSOwnerSource",
+								"type": "DatasetReference",
+								"parameters": {
+									"year": {
+										"value": "@formatDateTime(utcNow(), 'yyyy')",
+										"type": "Expression"
+									},
+									"month": {
+										"value": "@formatDateTime(utcNow(), 'MM')",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "WBSOwnerSink",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
 					}
 				],
 				"policy": {
@@ -20531,7 +20586,8 @@
 				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('workspaceId'), '/notebooks/wbs-owner-lookup')]"
+				"[concat(variables('workspaceId'), '/datasets/WBSOwnerSource')]",
+				"[concat(variables('workspaceId'), '/datasets/WBSOwnerSink')]"
 			]
 		},
 		{
@@ -24677,13 +24733,6 @@
 							"type": "PipelineReference"
 						},
 						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "process-wbs-owners",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
 					}
 				],
 				"type": "ScheduleTrigger",
@@ -24705,8 +24754,7 @@
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('workspaceId'), '/pipelines/Azure Advisor Recommendations')]",
-				"[concat(variables('workspaceId'), '/pipelines/process-wbs-owners')]"
+				"[concat(variables('workspaceId'), '/pipelines/Azure Advisor Recommendations')]"
 			]
 		},
 		{
@@ -25855,7 +25903,7 @@
 					"name": "OGBG Benchmark 2022/2023"
 				},
 				"content": {
-					"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 \n    substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8) as [Date]\n    --,Quantity\n    --,ai_VCPUs\n    --,Quantity * ai_VCPUs as [CPU Hours]\n    ,sum(Quantity * ai_VCPUs) as [CPU Hours]\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/2023*/Extended_v3_ACMMonthlyActualCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nWHERE MeterCategory = 'Virtual Machines' and ChargeType = 'Usage' --and benefitName is not NULL --and JSON_VALUE(AdditionalInfo, '$.ServiceType') is NULL --or MeterCategory = 'Cloud Services'\ngroup by substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8)\norder by substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8) --, Quantity DESC",
+					"query": "-- This is auto-generated code\nSELECT\n    --TOP 100 \n    substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8) as [Date]\n    --,Quantity\n    --,ai_VCPUs\n    --,Quantity * ai_VCPUs as [CPU Hours]\n    --,ai_VCPUs as VCPUs\n    ,sum(Quantity * ai_VCPUs) as [CPU Normalised Hours]\n    ,sum(Quantity) as [CPU Non-Normalised Hours]\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/2023*/Extended_v3_ACMMonthlyActualCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\nWHERE MeterCategory = 'Virtual Machines' and ChargeType = 'Usage' --and benefitName is not NULL --and JSON_VALUE(AdditionalInfo, '$.ServiceType') is NULL --or MeterCategory = 'Cloud Services'\ngroup by substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8)\norder by substring(FORMAT ([Date],'yyyy-MM-DD') ,0,8) --, Quantity DESC",
 					"metadata": {
 						"language": "sql"
 					},
@@ -25925,6 +25973,26 @@
 				},
 				"content": {
 					"query": "\nSELECT\n    --upper(SubscriptionName) as SubscriptionName\n    --,upper(ResourceGroup) as ResourceGroup\n    --,CostInBillingCurrency as Cost\n    --,Tags\n    sum(CostInBillingCurrency)\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyAmortizedCost/20240201-20240229/ACMMonthlyAmortizedCost_20240201-20240229.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where \n    upper(Tags) not like N'%\"COSTALLOCATIONTYPE\": \"WBS\"%' AND    \n    upper(SubscriptionName) like 'S913-AURORA-NON-PRODUCTION'\n    and lower(ResourceGroup) = 'mc_dev-aurora-ngrm-00_dev-aurora-ngrm-00_northeurope'\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/AIS Query')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "-- This is auto-generated code\nSELECT\n    TOP 100 \n    --*\n    SubscriptionName\n    ,MeterCategory\n    ,MeterSubCategory\n    ,ResourceGroup\n    ,ActiveWBS\n    ,CostAllocationType\n    ,CostAllocationTypeTag\n    ,CostAllocationCode\n    ,CostAllocationCodeTag\n    ,SubscriptionWBS\n    ,[SubscriptionServiceNow-App]\n    ,ActiveWBSReason\n    ,AppID\n    ,Application_Name\n    --sum(CostInBillingCurrency)\n    --distinct(SubscriptionName)\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/ACMMonthlyActualCost/202406*/Extended_v3_ACMMonthlyActualCost_*.parquet/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    where \n    (SubscriptionName like 'S7%'\n    OR\n    SubscriptionName like 'S8%'\n    OR\n    SubscriptionName like 'A%')\n    AND\n    ActiveWBSReason <> 'AppID WBS Lookup from SNOW'\n",
 					"metadata": {
 						"language": "sql"
 					},
@@ -26952,6 +27020,29 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/CreateGranularCostPredictionView')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "PowerBIViews"
+				},
+				"content": {
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW GranularCostPrediction\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/forecasts/granular-cost-24-month-lookback/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/CreateHUBDeploymentsView')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
@@ -27305,7 +27396,7 @@
 					"name": "PowerBIViews"
 				},
 				"content": {
-					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW WBSOwners\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/sap/wbs-owner-latest.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n\n",
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW WBSOwners\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/finops-wbs-dev/WBS-latest.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n\n",
 					"metadata": {
 						"language": "sql"
 					},
@@ -42859,7 +42950,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "ceae8626-2b14-4074-8e45-feb3bf6b4240"
+						"spark.autotune.trackingId": "95aef653-4973-4305-a98c-39b9d57a2477"
 					}
 				},
 				"metadata": {
@@ -42884,15 +42975,13 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"import numpy as np\r\n",
@@ -44970,8 +45059,8 @@
 					"conf": {
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
-						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "242d5c10-7bec-43c6-b8fc-5aa29aa499b2"
+						"spark.dynamicAllocation.maxExecutors": "4",
+						"spark.autotune.trackingId": "a4947d75-4e92-4abd-b33d-b7b86f1a2e06"
 					}
 				},
 				"metadata": {
@@ -44993,8 +45082,8 @@
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net"
 						},
-						"sparkVersion": "3.3",
-						"nodeCount": 3,
+						"sparkVersion": "3.4",
+						"nodeCount": 10,
 						"cores": 16,
 						"memory": 112
 					},
@@ -45025,7 +45114,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 77
+						"execution_count": 12
 					},
 					{
 						"cell_type": "code",
@@ -45042,6 +45131,7 @@
 						},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
+							"import pyspark.sql.types as T\r\n",
 							"from pyspark.ml.regression import LinearRegression\r\n",
 							"from pyspark.ml.regression import GeneralizedLinearRegression\r\n",
 							"from pyspark.ml.feature import VectorAssembler, StringIndexer, OneHotEncoder, FeatureHasher, Bucketizer\r\n",
@@ -45055,7 +45145,27 @@
 							"import json"
 						],
 						"outputs": [],
-						"execution_count": 78
+						"execution_count": 13
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"LOOKBACK_PERIOD = 24 # Number of months\r\n",
+							"PREDICTION_INTERVAL = 12 # Number of months"
+						],
+						"outputs": [],
+						"execution_count": 14
 					},
 					{
 						"cell_type": "markdown",
@@ -45086,13 +45196,14 @@
 						"source": [
 							"cost_columns = [\r\n",
 							"    'SubscriptionName',\r\n",
-							"    'ResourceGroup'\r\n",
-							"    # 'MeterCategory'\r\n",
-							"    # 'ActiveWBS'\r\n",
+							"    'ResourceGroup',\r\n",
+							"    'MeterCategory',\r\n",
+							"    'ActiveWBS',\r\n",
+							"    'ResourceName'\r\n",
 							"]"
 						],
 						"outputs": [],
-						"execution_count": 85
+						"execution_count": 15
 					},
 					{
 						"cell_type": "code",
@@ -45112,7 +45223,8 @@
 							"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
 							"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
 							"\r\n",
-							"initial_date = datetime.now().date() - relativedelta(months=6)\r\n",
+							"# Only consider cost inside the defined lookback period\r\n",
+							"initial_date = datetime.now().date() - relativedelta(months=LOOKBACK_PERIOD)\r\n",
 							"cost_df = cost_df.where(F.col('Date') >= initial_date)\r\n",
 							"\r\n",
 							"# Select appropriate columns\r\n",
@@ -45128,52 +45240,17 @@
 							"\r\n",
 							"# Replace null-values with string value\r\n",
 							"for col_name in cost_columns:\r\n",
-							"    cost_df = cost_df.withColumn(col_name, F.coalesce(F.col(col_name), F.lit('empty')))"
-						],
-						"outputs": [],
-						"execution_count": 86
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"concat_expr = F.reduce(\r\n",
-							"      [F.concat(F.col(col_name), F.lit('-')) for col_name in cost_columns]\r\n",
-							"  )\r\n",
+							"    cost_df = cost_df.withColumn(col_name, F.coalesce(F.col(col_name), F.lit('empty')))\r\n",
 							"\r\n",
-							"cost_df = cost_df.withColumn('CostJoinKey', F.expr(concat_expr[:-len(separator)]))"
+							"generate_join_key = F.concat(*[F.concat(F.col(col_name), F.lit('.')) for col_name in cost_columns])\r\n",
+							"cost_df = cost_df.withColumn('CostJoinKey', generate_join_key)\r\n",
+							"\r\n",
+							"# Ignore resources where cost is 0 in entire date range\r\n",
+							"cost_df = cost_df.withColumn(\"WindowSum\", F.sum(\"Cost\").over(Window.partitionBy('CostJoinKey')))\r\n",
+							"cost_df = cost_df.where(F.col(\"WindowSum\") > 0).drop(\"WindowSum\")"
 						],
 						"outputs": [],
-						"execution_count": null
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"print(test)"
-						],
-						"outputs": [],
-						"execution_count": 83
+						"execution_count": 16
 					},
 					{
 						"cell_type": "markdown",
@@ -45202,55 +45279,22 @@
 							}
 						},
 						"source": [
-							"print(len(dimensions))"
-						],
-						"outputs": [],
-						"execution_count": null
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
 							"# Construct zero-fill dataframe\r\n",
-							"dates = [row.Date for row in cost_df.select('Date').distinct().collect()]\r\n",
+							"dates_df = cost_df.select('Date').distinct()\r\n",
+							"dimensions_df = cost_df.select(*cost_columns).distinct()\r\n",
+							"fill_df = dates_df.crossJoin(dimensions_df)\r\n",
 							"\r\n",
-							"def build_json(row, columns):\r\n",
-							"    json_object = {}\r\n",
-							"    for col in columns:\r\n",
-							"        json_object.update({\r\n",
-							"            col: row[col]\r\n",
-							"        })\r\n",
-							"    return json_object\r\n",
-							"\r\n",
-							"dimensions = [json.dumps(build_json(row, cost_columns)) for row in cost_df.select(*cost_columns).distinct().collect()]\r\n",
-							"\r\n",
-							"fill_data = list(itertools.product(dates, dimensions))\r\n",
-							"fill_df = spark.createDataFrame(fill_data, [\"Date\", \"Dimensions\"])\r\n",
-							"fill_df = fill_df.withColumn('json', F.from_json('Dimensions', 'map<string,string>', options={'inferSchema': 'true'})).drop('Dimensions')\r\n",
-							"\r\n",
-							"for col_name in cost_columns:\r\n",
-							"    fill_df = fill_df.withColumn(col_name, F.col(f'json.{col_name}'))\r\n",
-							"\r\n",
-							"fill_df = fill_df.drop('json')\r\n",
-							"\r\n",
+							"# Don't zero-fill for dates where we already have cost\r\n",
 							"fill_df = fill_df.subtract(cost_df.select(\"Date\", *cost_columns))\r\n",
 							"fill_df = fill_df.withColumn('Cost', F.lit(0))\r\n",
+							"\r\n",
+							"fill_df = fill_df.withColumn('CostJoinKey', generate_join_key)\r\n",
 							"\r\n",
 							"# Zero-fill missing rows where resource doesn't have cost\r\n",
 							"cost_df = cost_df.union(fill_df)"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 17
 					},
 					{
 						"cell_type": "markdown",
@@ -45279,16 +45323,45 @@
 							}
 						},
 						"source": [
+							"feature_columns = [\r\n",
+							"    'Year',\r\n",
+							"    'Month',\r\n",
+							"    'PrevCost',\r\n",
+							"    'CostBin',\r\n",
+							"    'CostDiff'\r\n",
+							"]"
+						],
+						"outputs": [],
+						"execution_count": 18
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Get difference in latest and earliest cost\r\n",
+							"cost_df = cost_df.withColumn(\"LatestCost\", F.last(\"Cost\").over(Window.partitionBy('CostJoinKey')))\r\n",
+							"cost_df = cost_df.withColumn(\"EarliestCost\", F.first(\"Cost\").over(Window.partitionBy('CostJoinKey')))\r\n",
+							"cost_df = cost_df.withColumn(\"CostDiff\", F.col(\"LatestCost\") - F.col(\"EarliestCost\")).drop(\"LatestCost\", \"EarliestCost\")\r\n",
+							"\r\n",
 							"# The cost of the previous row will be the main feature for the ML model\r\n",
-							"windowSpec = Window.partitionBy(*cost_columns).orderBy(\"Date\")\r\n",
-							"cost_df = cost_df.withColumn(\"PrevCost\", F.lag(\"Cost\", 1).over(windowSpec))\r\n",
+							"cost_df = cost_df.withColumn(\"PrevCost\", F.lag(\"Cost\", 1).over(Window.partitionBy('CostJoinKey').orderBy(\"Date\")))\r\n",
 							"\r\n",
 							"# Decompose the date into a integer columns for year and month (ML model will only handle number features)\r\n",
 							"cost_df = cost_df.withColumn(\"Year\", F.year(\"Date\"))\r\n",
 							"cost_df = cost_df.withColumn(\"Month\", F.month(\"Date\"))\r\n",
 							"\r\n",
 							"# Remove null values\r\n",
-							"cost_df = cost_df.dropna(subset=[\"PrevCost\"])\r\n",
+							"cost_df = cost_df.dropna(subset=[\"PrevCost\", \"CostDiff\"])\r\n",
 							"\r\n",
 							"# Add an additional bucket feature indicating the cost level (important to capture the dynamics of increasing vs diminishing costs)\r\n",
 							"# Create logarithmic scale bucket ranges\r\n",
@@ -45299,7 +45372,7 @@
 							"cost_df = bucketizer.transform(cost_df)"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 19
 					},
 					{
 						"cell_type": "markdown",
@@ -45328,13 +45401,6 @@
 							}
 						},
 						"source": [
-							"# # Index and encode string features - prerequisite for fitting model\r\n",
-							"# subscription_indexer = StringIndexer(inputCol=\"SubscriptionName\", outputCol=\"SubscriptionIndex\")\r\n",
-							"# subscription_encoder = OneHotEncoder(inputCol=\"SubscriptionIndex\", outputCol=\"SubscriptionVec\")\r\n",
-							"\r\n",
-							"# rg_indexer = StringIndexer(inputCol=\"ResourceGroup\", outputCol=\"ResourceGroupIndex\")\r\n",
-							"# rg_encoder = OneHotEncoder(inputCol=\"ResourceGroupIndex\", outputCol=\"ResourceGroupVec\")\r\n",
-							"\r\n",
 							"# Create structure of input and output values for model\r\n",
 							"assembler = VectorAssembler(inputCols=[\"Year\", \"Month\", \"PrevCost\", \"CostBin\"], outputCol=\"features\")\r\n",
 							"\r\n",
@@ -45346,7 +45412,7 @@
 							"pipeline_model = pipeline.fit(cost_df)"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 20
 					},
 					{
 						"cell_type": "markdown",
@@ -45376,48 +45442,11 @@
 						},
 						"source": [
 							"# Define and build the prediction horizon length in the number of months \r\n",
-							"prediction_interval = 12\r\n",
-							"last_date = last_date = max(dates)\r\n",
-							"future_dates = [last_date + relativedelta(months=i) for i in range(1, prediction_interval + 1)]\r\n",
-							"\r\n",
-							"# Create new dataframe structure containing all possible combinations of features and dates\r\n",
-							"future_data = list(itertools.product(future_dates, dimensions))\r\n",
-							"future_df = spark.createDataFrame(future_data, [\"Date\", \"Dimensions\"])\r\n",
-							"future_df = future_df.withColumn('json', F.from_json('Dimensions', 'map<string,string>', options={'inferSchema': 'true'})).drop('Dimensions')\r\n",
-							"\r\n",
-							"for col_name in cost_columns:\r\n",
-							"    future_df = future_df.withColumn(col_name, F.col(f'json.{col_name}'))\r\n",
-							"\r\n",
-							"future_df = future_df .drop('json')\r\n",
-							"\r\n",
-							"# Split date into months and years to match structure of the original dataFrame\r\n",
-							"future_df = future_df.withColumn(\"Year\", F.year(\"Date\"))\r\n",
-							"future_df = future_df.withColumn(\"Month\", F.month(\"Date\"))\r\n",
-							"\r\n",
-							"# Find the latest cost for each feature set\r\n",
-							"latest_cost_window_spec = Window.partitionBy(*cost_columns).orderBy(F.desc(\"Date\")).rowsBetween(Window.unboundedPreceding, Window.currentRow)\r\n",
-							"\r\n",
-							"latest_cost_df = cost_df\\\r\n",
-							"    .select('Date', *cost_columns, 'Cost')\\\r\n",
-							"    .withColumn(\"rank\", F.row_number().over(latest_cost_window_spec)) \\\r\n",
-							"    .where(F.col('rank') == 1) \\\r\n",
-							"    .drop('Date', 'rank')\\\r\n",
-							"    .withColumnRenamed('Cost', 'PrevCost')\r\n",
-							"\r\n",
-							"# Add prefix to cost columns to prepare dataframe for join operation\r\n",
-							"for col_name in cost_columns:\r\n",
-							"    latest_cost_df = latest_cost_df.withColumnRenamed(col_name, f'temp_{col_name}')\r\n",
-							"\r\n",
-							"latest_cost_df = bucketizer.transform(latest_cost_df)\r\n",
-							"\r\n",
-							"# # The cost value for each feature set (and for all dates) will be given by the latest known cost for that feature set\r\n",
-							"future_df = future_df.join(latest_cost_df, (future_df.SubscriptionName == latest_cost_df.temp_SubscriptionName) & (F.coalesce(future_df.ResourceGroup, F.lit('')) == F.coalesce(latest_cost_df.temp_ResourceGroup, F.lit(''))), 'left')\r\n",
-							"\r\n",
-							"# Remove all temp columns\r\n",
-							"future_df = future_df.drop(*['temp_' + col_name for col_name in cost_columns])"
+							"last_date = dates_df.agg(F.max('Date')).collect()[0][0]\r\n",
+							"future_dates = [last_date + relativedelta(months=i) for i in range(1, PREDICTION_INTERVAL + 1)]"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 21
 					},
 					{
 						"cell_type": "markdown",
@@ -45446,10 +45475,60 @@
 							}
 						},
 						"source": [
-							"future_predictions = pipeline_model.transform(future_df)"
+							"# Find the latest cost for each feature set\r\n",
+							"latest_cost_window_spec = Window.partitionBy(*cost_columns).orderBy(F.desc(\"Date\")).rowsBetween(Window.unboundedPreceding, Window.currentRow)\r\n",
+							"result = cost_df.select('Date', *cost_columns, *feature_columns, 'Cost', 'CostJoinKey')\r\n",
+							"\r\n",
+							"# Create new dataframe structure containing all possible combinations of features and dates\r\n",
+							"date_df = spark.createDataFrame([(d,) for d in future_dates], [\"Date\"]).withColumn(\"Date\", F.col(\"Date\").cast(T.DateType()))\r\n",
+							"date_df = date_df.crossJoin(dimensions_df)\r\n",
+							"\r\n",
+							"# Split date into months and years to match structure of the original dataFrame\r\n",
+							"date_df = date_df.withColumn(\"Year\", F.year(\"Date\"))\r\n",
+							"date_df = date_df.withColumn(\"Month\", F.month(\"Date\"))\r\n",
+							"date_df = date_df.withColumn('CostJoinKey', generate_join_key)\r\n",
+							"\r\n",
+							"latest_cost_df = result \\\r\n",
+							"    .withColumn(\"rank\", F.row_number().over(latest_cost_window_spec)) \\\r\n",
+							"    .where(F.col('rank') == 1) \\\r\n",
+							"    .drop('Date', 'rank') \\\r\n",
+							"    .withColumn('PrevCost', F.col('Cost')) \\\r\n",
+							"    .select('CostJoinKey', 'PrevCost', 'CostDiff')\r\n",
+							"\r\n",
+							"for current_date in future_dates:\r\n",
+							"    print(f'Start predicting for {current_date}')\r\n",
+							"\r\n",
+							"    # Re-compute the CostBin feature as latest cost dataframe is updated in every iteration\r\n",
+							"    latest_cost_df = bucketizer.transform(latest_cost_df)\r\n",
+							"\r\n",
+							"    # Only predict cost for the date in the current iteration\r\n",
+							"    current_df = date_df.where(F.col('Date') == current_date)\r\n",
+							"\r\n",
+							"    # The cost value for each feature set (and for all dates) will be given by the latest known cost for that feature set\r\n",
+							"    current_df = current_df.join(latest_cost_df, 'CostJoinKey', 'left')\r\n",
+							"\r\n",
+							"    # Predict cost using glr model\r\n",
+							"    prediction_df = pipeline_model.transform(current_df)\r\n",
+							"    prediction_df = prediction_df.withColumnRenamed('prediction', 'Cost')\r\n",
+							"    prediction_df = prediction_df.select('Date', *cost_columns, *feature_columns, 'Cost', 'CostJoinKey')\r\n",
+							"\r\n",
+							"    # Set negative predictions to 0 as the model does not handle negative cost\r\n",
+							"    prediction_df = prediction_df.withColumn('Cost', F.when(F.col('Cost') < 0, F.lit(0)).otherwise(F.col('Cost')))\r\n",
+							"\r\n",
+							"    # Update the latest cost dataframe to the current prediction - as this will be used as the latest cost in the next iteration\r\n",
+							"    latest_cost_df = prediction_df.alias(f'prediction_copy_{current_date}') \\\r\n",
+							"        .select('CostJoinKey', 'Cost', 'CostDiff') \\\r\n",
+							"        .withColumnRenamed('Cost', 'PrevCost')\r\n",
+							"\r\n",
+							"    # Concatenate the prediction result into a single dataframe\r\n",
+							"    result = result.union(prediction_df)\r\n",
+							"\r\n",
+							"# Reduce volume of resulting data frame by removing zero-value rows\r\n",
+							"result = result.where(F.col('Cost') > 0)\r\n",
+							"result = result.select('Date', *cost_columns, 'Cost', 'Year', 'Month')"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 22
 					},
 					{
 						"cell_type": "code",
@@ -45465,52 +45544,12 @@
 							}
 						},
 						"source": [
-							"post = cost_df.select('Date', *cost_columns, 'Cost', 'CostBin')\r\n",
-							"pred = future_predictions.select('Date', *cost_columns, 'prediction', 'CostBin').withColumnRenamed('prediction', 'Cost')\r\n",
-							"total = post.union(pred)\r\n",
-							"total = total.withColumn('Cost', F.when(F.col('Cost') < 0, F.lit(0)).otherwise(F.col('Cost')))"
+							"# Write predicted cost to file\r\n",
+							"target_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/forecasts/granular-cost-{LOOKBACK_PERIOD}-month-lookback\"\r\n",
+							"result.write.format('parquet').mode('overwrite').partitionBy('Year','Month').option('overwriteSchema', 'true').save(target_path)"
 						],
 						"outputs": [],
-						"execution_count": null
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							},
-							"collapsed": false
-						},
-						"source": [
-							"display(total)"
-						],
-						"outputs": [],
-						"execution_count": null
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							""
-						],
-						"outputs": [],
-						"execution_count": null
+						"execution_count": 23
 					}
 				]
 			},
@@ -50245,218 +50284,6 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/wbs-owner-lookup')]",
-			"type": "Microsoft.Synapse/workspaces/notebooks",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"folder": {
-					"name": "NotebookInProduction/SAP"
-				},
-				"nbformat": 4,
-				"nbformat_minor": 2,
-				"bigDataPool": {
-					"referenceName": "[parameters('wbs-owner-lookup_notebookSparkPoolNameRef')]",
-					"type": "BigDataPoolReference"
-				},
-				"sessionProperties": {
-					"driverMemory": "112g",
-					"driverCores": 16,
-					"executorMemory": "112g",
-					"executorCores": 16,
-					"numExecutors": 1,
-					"conf": {
-						"spark.dynamicAllocation.enabled": "true",
-						"spark.dynamicAllocation.minExecutors": "1",
-						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "d7b04fe9-512f-49be-9ae9-8c329e6cf5b2"
-					}
-				},
-				"metadata": {
-					"saveOutput": true,
-					"enableDebugMode": false,
-					"kernelspec": {
-						"name": "synapse_pyspark",
-						"display_name": "Synapse PySpark"
-					},
-					"language_info": {
-						"name": "python"
-					},
-					"a365ComputeOptions": {
-						"id": "[parameters('wbs-owner-lookup_notebookSparkPoolIdRef')]",
-						"name": "[parameters('wbs-owner-lookup_notebookSparkPoolNameRef')]",
-						"type": "Spark",
-						"endpoint": "[parameters('wbs-owner-lookup_notebookSparkPoolEndpointRef')]",
-						"auth": {
-							"type": "AAD",
-							"authResource": "https://dev.azuresynapse.net"
-						},
-						"sparkVersion": "3.3",
-						"nodeCount": 3,
-						"cores": 16,
-						"memory": 112
-					},
-					"sessionKeepAliveTimeout": 30
-				},
-				"cells": [
-					{
-						"cell_type": "code",
-						"source": [
-							"import pyspark.sql.functions as F"
-						],
-						"outputs": [],
-						"execution_count": 11
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							},
-							"tags": [
-								"parameters"
-							]
-						},
-						"source": [
-							"storageAccount = 's037costmgmt'"
-						],
-						"outputs": [],
-						"execution_count": 12
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"graph_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/AzureAD_BusinessAreaLevel/gold/usersWithBusinessAreaSnapshot_v1.parquet'\r\n",
-							"graph_df = spark.read.format('parquet').load(graph_path)"
-						],
-						"outputs": [],
-						"execution_count": 13
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"sap_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/sap/sap-wbs-latest.parquet'\r\n",
-							"sap_df = spark.read.format('parquet').load(sap_path)"
-						],
-						"outputs": [],
-						"execution_count": 14
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"sap_df = sap_df.withColumn('WBS_Owner_ID', F.when(F.length(F.col('WBS_Owner_ID')) == 5, F.lpad(F.col('WBS_Owner_ID'), 6, '0')).otherwise(F.col('WBS_Owner_ID')))"
-						],
-						"outputs": [],
-						"execution_count": 15
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"sap_df = sap_df.join(graph_df, sap_df.WBS_Owner_ID == graph_df.employeeId, \"left\")\r\n",
-							"sap_df = sap_df.drop('WBS_Owner_ID')"
-						],
-						"outputs": [],
-						"execution_count": 17
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"wbs_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/sap/wbs-owner-latest.parquet\"\r\n",
-							"sap_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(wbs_path)"
-						],
-						"outputs": [],
-						"execution_count": 18
-					}
-				]
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
-			"type": "Microsoft.Synapse/workspaces/bigDataPools",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"autoPause": {
-					"enabled": true,
-					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
-				},
-				"autoScale": {
-					"enabled": true,
-					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
-					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
-				},
-				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
-				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
-				"nodeSizeFamily": "MemoryOptimized",
-				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
-				"isComputeIsolationEnabled": false,
-				"sessionLevelPackagesEnabled": true,
-				"annotations": []
-			},
-			"dependsOn": [],
-			"location": "northeurope"
-		},
-		{
 			"name": "[concat(parameters('workspaceName'), '/sparkpool32')]",
 			"type": "Microsoft.Synapse/workspaces/bigDataPools",
 			"apiVersion": "2019-06-01-preview",
@@ -50485,6 +50312,150 @@
 			},
 			"dependsOn": [],
 			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
+				},
+				"autoScale": {
+					"enabled": true,
+					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
+					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
+				},
+				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
+				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": true,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/prodcluster')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": "[parameters('prodcluster_delayInMinutes')]"
+				},
+				"autoScale": {
+					"enabled": true,
+					"maxNodeCount": "[parameters('prodcluster_maxNodeCount')]",
+					"minNodeCount": "[parameters('prodcluster_minNodeCount')]"
+				},
+				"nodeCount": "[parameters('prodcluster_nodeCount')]",
+				"nodeSize": "[parameters('prodcluster_nodeSize')]",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "[parameters('prodcluster_sparkVersion')]",
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": false,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/wbs-push-from-fabric')]",
+			"type": "Microsoft.Synapse/workspaces/triggers",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "process-wbs-owners",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "BlobEventsTrigger",
+				"typeProperties": {
+					"blobPathBeginsWith": "/usage/blobs/finops-wbs-dev",
+					"blobPathEndsWith": "WBS.parquet",
+					"ignoreEmptyBlobs": true,
+					"scope": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt",
+					"events": [
+						"Microsoft.Storage.BlobCreated"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/process-wbs-owners')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/WBSOwnerSource')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('WBSOwnerSource_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"year": {
+						"type": "string"
+					},
+					"month": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "WBS.parquet",
+						"folderPath": {
+							"value": "@concat('finops-wbs-dev/', dataset().year, '/', dataset().month)",
+							"type": "Expression"
+						},
+						"fileSystem": "usage"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('WBSOwnerSource_dataSetLinkedServiceName'))]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/WBSOwnerSink')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('WBSOwnerSink_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "WBS-latest.parquet",
+						"folderPath": "finops-wbs-dev",
+						"fileSystem": "usage"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('WBSOwnerSink_dataSetLinkedServiceName'))]"
+			]
 		}
 	]
 }
