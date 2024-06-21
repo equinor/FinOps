@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "bd32fbba-6bfe-44e6-8120-ca62245a8176"
+				"spark.autotune.trackingId": "84dceb54-f9ec-40c8-ac25-e8e12ce0ff6f"
 			}
 		},
 		"metadata": {
@@ -73,13 +73,13 @@
 					]
 				},
 				"source": [
-					"toDate = '20240331'\n",
-					"fromDate = '20240301'\n",
+					"toDate = '20240630'\n",
+					"fromDate = '20240601'\n",
 					"container = 'usage'\n",
 					"storageAccount = 's037costmgmt'\n",
-					"reportType = 'ActualCost'"
+					"reportType = 'AmortizedCost'"
 				],
-				"execution_count": 10
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -106,7 +106,7 @@
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 11
+				"execution_count": 3
 			},
 			{
 				"cell_type": "markdown",
@@ -137,7 +137,7 @@
 				"source": [
 					"%run /cost-extend-utilities"
 				],
-				"execution_count": 12
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -160,7 +160,7 @@
 					"    subscriptions_df = subscriptions_df.withColumnRenamed('Application', 'SubscriptionServiceNow-App')\r\n",
 					"    return subscriptions_df"
 				],
-				"execution_count": 13
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -183,7 +183,7 @@
 					"    cost_df.write.format('parquet').mode('overwrite').option('path', destinationFilename).save()\n",
 					"    print('File write complete!')"
 				],
-				"execution_count": 14
+				"execution_count": 6
 			},
 			{
 				"cell_type": "markdown",
@@ -257,16 +257,23 @@
 					"application_df = spark.read.format('parquet').load(application_path)\r\n",
 					"application_df = application_df.withColumn('AppID', F.col('AppID').cast(\"int\"))\r\n",
 					"\r\n",
+					"# Load WBS file\r\n",
+					"current_year = fromDate[:4]\r\n",
+					"current_month = fromDate[4:6]\r\n",
+					"wbs_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/finops-wbs-dev/{current_year}/{current_month}/WBS.parquet'\r\n",
+					"wbs_df = spark.read.format('parquet').load(wbs_path)\r\n",
+					"\r\n",
 					"# Transform data\r\n",
 					"cost_df = transform_cost_data(cost_df)\r\n",
 					"cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\r\n",
+					"cost_df = validate_wbs(cost_df, wbs_df)\r\n",
 					"cost_df = compute_hub_and_sp(cost_df, pricesheet_df)\r\n",
 					"cost_df = add_azure_service_information(cost_df, service_df)\r\n",
 					"write_output_file(cost_df, cost_target_path)\r\n",
 					"\r\n",
 					"print(' ')"
 				],
-				"execution_count": 15
+				"execution_count": 24
 			}
 		]
 	}
