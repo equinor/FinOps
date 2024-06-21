@@ -5,6 +5,8 @@
 			{
 				"name": "Process WBS Owners",
 				"type": "SynapseNotebook",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
@@ -35,7 +37,7 @@
 				}
 			},
 			{
-				"name": "Copy data1",
+				"name": "persist latest wbs owner",
 				"type": "Copy",
 				"dependsOn": [],
 				"policy": {
@@ -47,8 +49,58 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"enableStaging": false
-				}
+					"source": {
+						"type": "ParquetSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "ParquetReadSettings"
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "WBSOwnerSource",
+						"type": "DatasetReference",
+						"parameters": {
+							"year": {
+								"value": "@formatDateTime(utcNow(), 'yyyy')",
+								"type": "Expression"
+							},
+							"month": {
+								"value": "@formatDateTime(utcNow(), 'MM')",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "WBSOwnerSink",
+						"type": "DatasetReference"
+					}
+				]
 			}
 		],
 		"folder": {
