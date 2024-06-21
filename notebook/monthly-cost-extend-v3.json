@@ -21,7 +21,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "4",
-				"spark.autotune.trackingId": "90f61565-938e-4d33-b390-e8e7777e23e7"
+				"spark.autotune.trackingId": "b324e14c-a03a-4345-9993-b913780a041a"
 			}
 		},
 		"metadata": {
@@ -73,8 +73,8 @@
 					]
 				},
 				"source": [
-					"toDate = '20240131'\n",
-					"fromDate = '20240101'\n",
+					"toDate = '20240630'\n",
+					"fromDate = '20240601'\n",
 					"container = 'usage'\n",
 					"storageAccount = 's037costmgmt'\n",
 					"reportType = 'AmortizedCost'"
@@ -290,10 +290,20 @@
 					"application_path = f'abfss://{container}@{storageAccount}.dfs.core.windows.net/applications/processed.parquet'\n",
 					"application_df = load_and_process_applications(application_path)\n",
 					"\n",
+					"# Load WBS file\n",
+					"current_year = fromDate[:4]\n",
+					"current_month = fromDate[4:6]\n",
+					"wbs_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/finops-wbs-dev/{current_year}/{current_month}/WBS.parquet'\n",
+					"\n",
 					"# Process cost data\n",
 					"cost_df = spark.read.format('parquet').load(cost_source_path)\n",
 					"cost_df = transform_cost_data(cost_df)\n",
 					"cost_df = combine_subscriptions_and_applications(cost_df, subscription_df, application_df)\n",
+					"\n",
+					"if (mssparkutils.fs.exists(wbs_path)):\n",
+					"    wbs_df = spark.read.format('parquet').load(wbs_path)\n",
+					"    cost_df = validate_wbs(cost_df, wbs_df)\n",
+					"\n",
 					"cost_df = compute_hub_and_sp(cost_df, pricesheet_df)\n",
 					"cost_df = add_azure_service_information(cost_df, service_df)\n",
 					"write_output_file(cost_df, cost_target_path)\n",
