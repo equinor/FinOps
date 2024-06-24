@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "ad7615a3-b117-42a4-89e9-d3df7a353227"
+				"spark.autotune.trackingId": "8cf0a351-3b74-447f-b38d-4c06a6a69582"
 			}
 		},
 		"metadata": {
@@ -406,9 +406,6 @@
 					"cost_df = cost_df.drop('NodeCount')\r\n",
 					"cost_df = cost_df.orderBy(F.desc('HUBSavingsPerVCPU'))\r\n",
 					"\r\n",
-					"# TODO: REMOVE ONCE 2 VCPU TS VMs HAVE BEEN DISABLED\r\n",
-					"ts_df = cost_df.where(F.col('ResourceGroup').isin(TS_VM_RG))\r\n",
-					"\r\n",
 					"# # Exclude terminal server VMs (as their HUB assignment are managed separately)\r\n",
 					"cost_df = cost_df.where(~F.col('ResourceGroup').isin(TS_VM_RG))\r\n",
 					"\r\n",
@@ -451,14 +448,6 @@
 					}
 				},
 				"source": [
-					"# TODO: REMOVE WHEN 2 VCPU TS VMS HAVE BEEN DISABLED\r\n",
-					"cost_copy_df = cost_copy_df.where(~F.col('ResourceGroup').isin(TS_VM_RG))\r\n",
-					"\r\n",
-					"# TODO: REMOVE WHEN 2 VCPU TS VMS HAVE BEEN DISABLED\r\n",
-					"ts_df = ts_df \\\r\n",
-					"    .where(F.col('ai_VCPUs') == 2) \\\r\n",
-					"    .select(*selected_columns)\r\n",
-					"\r\n",
 					"# Only VMs with HUB enabled are eligible to being disabled\r\n",
 					"vm_disable_df = cost_copy_df.where(F.col('WindowsAHB') == 'Enabled')\r\n",
 					"\r\n",
@@ -468,11 +457,7 @@
 					"    .count().drop('count')\r\n",
 					"\r\n",
 					"# Exclude VMs that are already in the list of enabled VMs\r\n",
-					"vm_disable_df = vm_disable_df.join(vm_enable_df, 'ResourceId', 'left_anti') \\\r\n",
-					"    .select(*selected_columns) # TODO: REMOVE ONCE 2 VCPU TS VMs HAVE BEEN DISABLED\r\n",
-					"\r\n",
-					"# TODO: REMOVE ONCE 2 VCPU TS VMs HAVE BEEN DISABLED\r\n",
-					"vm_disable_df = vm_disable_df.union(ts_df)"
+					"vm_disable_df = vm_disable_df.join(vm_enable_df, 'ResourceId', 'left_anti')"
 				],
 				"execution_count": 49
 			},
