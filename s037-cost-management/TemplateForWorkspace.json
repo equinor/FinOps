@@ -38568,7 +38568,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "06ebd69a-1753-4306-ac11-8859dfad3088"
+						"spark.autotune.trackingId": "bde97d3e-2701-46fc-971b-0d7f80ee7c9f"
 					}
 				},
 				"metadata": {
@@ -38593,7 +38593,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -40550,7 +40551,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "29d3fd16-0f4a-4c2d-b4ff-56f88e3f9100"
+						"spark.autotune.trackingId": "5a6e4fcb-d8b1-4b00-990d-356ac99cfbb4"
 					}
 				},
 				"metadata": {
@@ -40575,13 +40576,15 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F"
 						],
@@ -43314,7 +43317,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "11ad523b-2100-44a0-bc8c-75c8006c6f85"
+						"spark.autotune.trackingId": "1d1882a2-89ff-46b1-b1d9-e443527cc8a0"
 					}
 				},
 				"metadata": {
@@ -43339,7 +43342,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -43417,6 +43421,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"def get_last_day_prev_month(to_date):\r\n",
 							"    current_month = int(to_date[4:6])\r\n",
@@ -44116,7 +44121,7 @@
 							"\r\n",
 							"    # If active WBS is closed, it should be re-assigned to the subscriptn WBS\r\n",
 							"    is_closed_wbs = (F.col('IsActive') == False) & (F.col('CostAllocationType') != 'SubscriptionWBS')\r\n",
-							"    cost_df = cost_df.withColumn('ActiveWBS', F.when(is_closed_wbs, F.col('SubscriptionWBS')).otherwise(F.col('ActiveWBS')))\r\n",
+							"    cost_df = cost_df.withColumn('ActiveWBS', F.when(is_closed_wbs & (F.col('SubscriptionWBS').IsNotNull()), F.col('SubscriptionWBS')).otherwise(F.col('ActiveWBS')))\r\n",
 							"    cost_df = cost_df.withColumn('ActiveWBSReason', F.when(is_closed_wbs, F.lit('Assigned WBS is closed.')).otherwise(F.col('ActiveWBSReason')))\r\n",
 							"    cost_df = cost_df.withColumn('CostAllocationType', F.when(is_closed_wbs, F.lit('SubscriptionWBS')).otherwise(F.col('CostAllocationType')))\r\n",
 							"\r\n",
@@ -45094,7 +45099,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "c88fc8da-726a-422b-8a19-80439853392f"
+						"spark.autotune.trackingId": "903b1dd7-7884-4166-b9d6-6cc3a9d3cc48"
 					}
 				},
 				"metadata": {
@@ -45119,7 +45124,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -46135,7 +46141,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "3e7d4e87-ea93-4059-a1d7-d757ff0a58a4"
+						"spark.autotune.trackingId": "0d2495fc-c941-4413-81b0-2d0126d34a79"
 					}
 				},
 				"metadata": {
@@ -46504,7 +46510,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "e04b1dbd-4137-4bc5-84ff-65f129688a4d"
+						"spark.autotune.trackingId": "c02d3d00-1cdd-4cfe-bf6d-3fee40003396"
 					}
 				},
 				"metadata": {
@@ -46529,7 +46535,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -46574,6 +46581,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet'\r\n",
 							"cost_df = spark.read.format('parquet').load(cost_path)"
@@ -46929,7 +46937,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "4abf4c7c-1150-49bb-90cc-ce9c8fbfd1de"
+						"spark.autotune.trackingId": "7cffb05d-6a62-4d61-b60f-65f5bf4e31aa"
 					}
 				},
 				"metadata": {
@@ -46954,7 +46962,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -46996,6 +47005,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"import pandas as pd \r\n",
 							"from pyspark.sql import SparkSession\r\n",
@@ -49841,7 +49851,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "54b8ed3d-10ff-4e74-bbb8-fb68acbdba5f"
+						"spark.autotune.trackingId": "f48632b9-99fd-41fd-a456-6e0e1c381a3e"
 					}
 				},
 				"metadata": {
