@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "11ad523b-2100-44a0-bc8c-75c8006c6f85"
+				"spark.autotune.trackingId": "7ad6782f-02ff-4f98-9fbc-6a3be313f437"
 			}
 		},
 		"metadata": {
@@ -808,7 +808,7 @@
 					"\r\n",
 					"    # If active WBS is closed, it should be re-assigned to the subscriptn WBS\r\n",
 					"    is_closed_wbs = (F.col('IsActive') == False) & (F.col('CostAllocationType') != 'SubscriptionWBS')\r\n",
-					"    cost_df = cost_df.withColumn('ActiveWBS', F.when(is_closed_wbs, F.col('SubscriptionWBS')).otherwise(F.col('ActiveWBS')))\r\n",
+					"    cost_df = cost_df.withColumn('ActiveWBS', F.when(is_closed_wbs & (F.col('SubscriptionWBS').IsNotNull()), F.col('SubscriptionWBS')).otherwise(F.col('ActiveWBS')))\r\n",
 					"    cost_df = cost_df.withColumn('ActiveWBSReason', F.when(is_closed_wbs, F.lit('Assigned WBS is closed.')).otherwise(F.col('ActiveWBSReason')))\r\n",
 					"    cost_df = cost_df.withColumn('CostAllocationType', F.when(is_closed_wbs, F.lit('SubscriptionWBS')).otherwise(F.col('CostAllocationType')))\r\n",
 					"\r\n",
