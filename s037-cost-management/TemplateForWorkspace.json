@@ -37604,7 +37604,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "30559981-3cc7-43a9-842c-8cc3925cc741"
+						"spark.autotune.trackingId": "9a08c812-a4a2-45f4-a25c-91523484dab6"
 					}
 				},
 				"metadata": {
@@ -43315,7 +43315,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "43e76f2f-9d1d-4310-ae7b-3509f19611e5"
+						"spark.autotune.trackingId": "bbe6faaa-9363-4aae-b478-f10bf8971948"
 					}
 				},
 				"metadata": {
@@ -44119,7 +44119,7 @@
 							"\r\n",
 							"    # If active WBS is closed, it should be re-assigned to the subscriptn WBS\r\n",
 							"    is_closed_wbs = (F.col('IsActive') == F.lit(False)) & (F.col('CostAllocationType') != F.lit('SubscriptionWBS'))\r\n",
-							"    cost_df = cost_df.withColumn('ActiveWBS', F.when((is_closed_wbs) & (F.col('SubscriptionWBS').IsNotNull()), F.col('SubscriptionWBS')).otherwise(F.col('ActiveWBS')))\r\n",
+							"    cost_df = cost_df.withColumn('ActiveWBS', F.when(is_closed_wbs & (F.col('SubscriptionWBS').isNotNull()), F.col('SubscriptionWBS')).otherwise(F.col('ActiveWBS')))\r\n",
 							"    cost_df = cost_df.withColumn('ActiveWBSReason', F.when(is_closed_wbs, F.lit('Assigned WBS is closed.')).otherwise(F.col('ActiveWBSReason')))\r\n",
 							"    cost_df = cost_df.withColumn('CostAllocationType', F.when(is_closed_wbs, F.lit('SubscriptionWBS')).otherwise(F.col('CostAllocationType')))\r\n",
 							"\r\n",
@@ -44475,7 +44475,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "2556962a-ffe9-4748-8aca-f9bd33ecc843"
+						"spark.autotune.trackingId": "82d30e90-6fd9-47cc-b9fb-9a6784b32a20"
 					}
 				},
 				"metadata": {
@@ -45098,7 +45098,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "11e4bef1-4bc7-4fef-b95a-eee0eab58c9a"
+						"spark.autotune.trackingId": "cca96f11-90e2-43e8-8e81-8e89874de2fa"
 					}
 				},
 				"metadata": {
