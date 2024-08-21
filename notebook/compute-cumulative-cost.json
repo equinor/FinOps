@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "7193e8a8-ae35-4073-8488-b86bb46c8b73"
+				"spark.autotune.trackingId": "0728a985-eb68-4d04-ac17-1f9581ac41b5"
 			}
 		},
 		"metadata": {
@@ -70,7 +70,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 1
+				"execution_count": 16
 			},
 			{
 				"cell_type": "code",
@@ -81,7 +81,7 @@
 					"import pandas as pd\n",
 					"import numpy as np"
 				],
-				"execution_count": 2
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -100,7 +100,7 @@
 					"# Define rolling window for accumulation\n",
 					"window = W.Window.orderBy(\"Date\").rowsBetween(W.Window.unboundedPreceding, 0)"
 				],
-				"execution_count": 3
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",
@@ -146,7 +146,7 @@
 					"discount_df = cost_df.alias('discount_df').drop('RetailCost')\n",
 					"retail_df = cost_df.alias('retail_df').drop('Cost').withColumnRenamed('RetailCost', 'Cost')"
 				],
-				"execution_count": 4
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",
@@ -185,7 +185,7 @@
 					"    .withColumn('Cost', F.col('TotalUsage') - F.col('Adjustments') + F.col('AzureMarketplaceServiceCharges')) \\\n",
 					"    .withColumn('Date', F.to_date(F.col('BillingPeriod'), 'yyyyMM'))\\\n",
 					"    .select('Cost', 'Date') \\\n",
-					"    .where(F.col('Date') < '2024-04-01') \\\n",
+					"    .where(F.col('Date') < F.date_format(F.current_date(), 'yyyy-MM-01')) \\\n",
 					"    .orderBy('Date')"
 				],
 				"execution_count": 5
