@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "df0f41be-de21-40ab-9f24-a3c7b71d66f8"
+				"spark.autotune.trackingId": "ff137845-e559-4c3b-bff2-bc106f3b63c8"
 			}
 		},
 		"metadata": {
@@ -61,7 +61,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 90
+				"execution_count": 28
 			},
 			{
 				"cell_type": "code",
@@ -82,7 +82,7 @@
 					"from pyspark.sql import Window\n",
 					"from enum import Enum"
 				],
-				"execution_count": 91
+				"execution_count": 29
 			},
 			{
 				"cell_type": "code",
@@ -131,7 +131,7 @@
 					"    Organic = \"Organic\"\n",
 					"    InOrganic = \"Inorganic\""
 				],
-				"execution_count": 92
+				"execution_count": 30
 			},
 			{
 				"cell_type": "markdown",
@@ -164,7 +164,7 @@
 					"billing_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/cumulative-cost-prediction.parquet/**\"\n",
 					"billing_df = spark.read.format('parquet').load(billing_path)"
 				],
-				"execution_count": 93
+				"execution_count": 31
 			},
 			{
 				"cell_type": "code",
@@ -184,7 +184,7 @@
 					"adjusted_billing_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/adjusted-cumulative-cost-prediction.parquet/**\"\n",
 					"adjusted_billing_df = spark.read.format('parquet').load(adjusted_billing_path)"
 				],
-				"execution_count": 94
+				"execution_count": 32
 			},
 			{
 				"cell_type": "code",
@@ -204,7 +204,7 @@
 					"retail_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/retail-cost-prediction.parquet/**\"\n",
 					"retail_df = spark.read.format('parquet').load(retail_path)"
 				],
-				"execution_count": 95
+				"execution_count": 33
 			},
 			{
 				"cell_type": "markdown",
@@ -241,7 +241,7 @@
 					"\n",
 					"inorganic_consumption_df = spark.read.options(**csv_options).csv(inorganic_consumption_path)"
 				],
-				"execution_count": 96
+				"execution_count": 34
 			},
 			{
 				"cell_type": "markdown",
@@ -279,7 +279,7 @@
 					"    '2030': '30/31',\n",
 					"}"
 				],
-				"execution_count": 97
+				"execution_count": 35
 			},
 			{
 				"cell_type": "code",
@@ -301,7 +301,7 @@
 					"inorganic_consumption_df = inorganic_consumption_df.replace(to_replace=inorganic_period_mapper, subset=['Period'])\n",
 					"inorganic_consumption_df = inorganic_consumption_df.withColumnRenamed('Period', 'PeriodLabel')"
 				],
-				"execution_count": 98
+				"execution_count": 36
 			},
 			{
 				"cell_type": "markdown",
@@ -344,7 +344,7 @@
 					"    'PredictedCostFullLookback': Lookback.Full.value\n",
 					"}"
 				],
-				"execution_count": 99
+				"execution_count": 37
 			},
 			{
 				"cell_type": "code",
@@ -371,7 +371,7 @@
 					"\n",
 					"    df = df \\\n",
 					"        .select('Date', *prediction_columns) \\\n",
-					"        .where((F.col('Date') >= '2025-05-01') & (F.col('Date') <= '2030-04-01'))\n",
+					"        .where((F.col('Date') >= '2025-05-01') & (F.col('Date') <= '2031-04-01'))\n",
 					"\n",
 					"    df = df.withColumn('PeriodLabel',\n",
 					"        F.when((F.col('Date') >= '2025-05-01') & (F.col('Date') <= '2026-04-01'), '25/26')\n",
@@ -395,7 +395,7 @@
 					"    \n",
 					"    return total_df"
 				],
-				"execution_count": 100
+				"execution_count": 38
 			},
 			{
 				"cell_type": "code",
@@ -418,7 +418,7 @@
 					"\n",
 					"consumption_forecast_df = agg_billing_df.union(agg_adjusted_billing_df).union(agg_retail_df)"
 				],
-				"execution_count": 101
+				"execution_count": 39
 			},
 			{
 				"cell_type": "code",
@@ -445,7 +445,7 @@
 					"consumption_forecast_df = consumption_forecast_df.withColumn('SapScenario', F.lit(SAPScenario.NotApplicable.value))\n",
 					"consumption_forecast_df = consumption_forecast_df.withColumn('Key', F.concat(F.col('Project'), F.lit('-'), F.col('UsageOption'), F.lit('-'), F.col('SubScenario'), F.lit('-'), F.col('SapScenario')))"
 				],
-				"execution_count": 102
+				"execution_count": 40
 			},
 			{
 				"cell_type": "code",
@@ -475,7 +475,7 @@
 					"\n",
 					"expanded_forecast_df = early_forecast_df.union(late_forecast_df)"
 				],
-				"execution_count": 103
+				"execution_count": 41
 			},
 			{
 				"cell_type": "code",
@@ -494,7 +494,7 @@
 					"expanded_forecast_df = expanded_forecast_df.withColumn('ConsumptionType', F.lit(ConsumptionType.Organic.value))\n",
 					"expanded_forecast_df = expanded_forecast_df.drop('Key')"
 				],
-				"execution_count": 104
+				"execution_count": 42
 			},
 			{
 				"cell_type": "markdown",
@@ -525,7 +525,26 @@
 				"source": [
 					"expanded_forecast_df = expanded_forecast_df.union(inorganic_consumption_df)"
 				],
-				"execution_count": 107
+				"execution_count": 43
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(expanded_forecast_df)"
+				],
+				"execution_count": 44
 			},
 			{
 				"cell_type": "markdown",
