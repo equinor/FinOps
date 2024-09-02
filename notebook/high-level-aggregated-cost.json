@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "290f6f5b-a66b-41ff-ae10-5f9c696b7f87"
+				"spark.autotune.trackingId": "4da09ddf-940e-4e4d-96b1-188226b05d95"
 			}
 		},
 		"metadata": {
@@ -55,9 +55,18 @@
 				"cell_type": "code",
 				"source": [
 					"import pyspark.sql.functions as F\n",
-					"import pyspark.sql.types as T"
+					"import pyspark.sql.types as T\n",
+					"import pyspark.sql.window as W\n",
+					"import statsmodels.api as sm\n",
+					"import pandas as pd\n",
+					"import numpy as np\n",
+					"from datetime import datetime, timedelta\n",
+					"import time\n",
+					"\n",
+					"import warnings\n",
+					"warnings.filterwarnings(\"ignore\", category=FutureWarning)"
 				],
-				"execution_count": 49
+				"execution_count": 214
 			},
 			{
 				"cell_type": "markdown",
@@ -89,7 +98,7 @@
 					"cost_path = 'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet'\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 50
+				"execution_count": 215
 			},
 			{
 				"cell_type": "code",
@@ -110,7 +119,7 @@
 					"    'Application_Name'\n",
 					"]"
 				],
-				"execution_count": 51
+				"execution_count": 216
 			},
 			{
 				"cell_type": "code",
@@ -128,7 +137,7 @@
 				"source": [
 					"cost_df = cost_df.select('Date', 'CostInBillingCurrency', *selected_columns)"
 				],
-				"execution_count": 52
+				"execution_count": 217
 			},
 			{
 				"cell_type": "code",
@@ -144,12 +153,13 @@
 					}
 				},
 				"source": [
-					"cost_df = cost_df.withColumn('Year', F.year('Date')).drop('Date')\n",
+					"cost_df = cost_df.withColumn('Date', F.date_format('Date', 'yyyy-MM-01').cast(T.DateType()))\n",
 					"cost_df = cost_df \\\n",
-					"    .groupBy('Year', *selected_columns) \\\n",
-					"    .agg(F.sum('CostInBillingCurrency').alias('Cost'))"
+					"    .groupBy('Date', *selected_columns) \\\n",
+					"    .agg(F.sum('CostInBillingCurrency').alias('Cost')) \\\n",
+					"    .orderBy('Date')"
 				],
-				"execution_count": 53
+				"execution_count": 218
 			},
 			{
 				"cell_type": "markdown",
@@ -181,7 +191,7 @@
 					"app_path = 'abfss://usage@s037costmgmt.dfs.core.windows.net/applications/processed.parquet/**'\n",
 					"app_df = spark.read.format('parquet').load(app_path)"
 				],
-				"execution_count": 54
+				"execution_count": 219
 			},
 			{
 				"cell_type": "code",
@@ -199,7 +209,7 @@
 				"source": [
 					"app_df = app_df.select('ApplicationName', 'OrgUnitLevel0')"
 				],
-				"execution_count": 55
+				"execution_count": 220
 			},
 			{
 				"cell_type": "markdown",
@@ -231,7 +241,7 @@
 					"cost_df = cost_df.join(app_df, cost_df.Application_Name == app_df.ApplicationName, 'left')\n",
 					"cost_df = cost_df.drop('Application_Name', 'ApplicationName')"
 				],
-				"execution_count": 56
+				"execution_count": 221
 			},
 			{
 				"cell_type": "markdown",
@@ -265,7 +275,274 @@
 					"    .otherwise(F.col('OrgUnitLevel0'))\n",
 					")"
 				],
-				"execution_count": 57
+				"execution_count": 222
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Predict cost per meter category and "
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Integers represent number of months\n",
+					"PREDICTION_END_DATE = '2024-12-01'\n",
+					"LOOKBACK = 12"
+				],
+				"execution_count": 223
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"today = datetime.today().replace(day=1)\n",
+					"\n",
+					"prediction_end_date = datetime.strptime(PREDICTION_END_DATE, '%Y-%m-%d')\n",
+					"prediction_interval = (prediction_end_date.year - today.year) * 12 + (prediction_end_date.month - today.month)\n",
+					"\n",
+					"lookback_date = (today - timedelta(days=LOOKBACK*30)).replace(day=1)\n",
+					"lookback_date_formatted = lookback_date.strftime('%Y-%m-%d')\n",
+					"lookback_diff = (today.year - lookback_date.year) * 12 + (today.month - lookback_date.month)"
+				],
+				"execution_count": 224
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Filter away latest month - as we predict cost per month, it will mess up future predictions\n",
+					"cost_df = cost_df.filter(F.col('Date') < today)"
+				],
+				"execution_count": 225
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Create a Meter Category + OrgUnitLevel0 identifier - as we will build one regression model for each identifier\n",
+					"prediction_df = cost_df.withColumn('ModelIdentifier', F.concat(F.col('MeterCategory'), F.lit('.'), F.col('OrgUnitLevel0')))\n",
+					"\n",
+					"# Create window for iterating over meter categories\n",
+					"window = W.Window.partitionBy(\"ModelIdentifier\")\n",
+					"\n",
+					"# Only look at data within the lookback period\n",
+					"count_df = prediction_df.where((F.col('Cost') > 0) & (F.col('Date') >= lookback_date_formatted))\n",
+					"\n",
+					"# Calculate the number of month between cost date and today\n",
+					"count_df = count_df.withColumn('months_from_today', F.months_between(F.lit(today), 'Date'))\n",
+					"\n",
+					"# Find the lowest month difference across each meter category\n",
+					"count_df = count_df.withColumn('min_month_diff', F.min('months_from_today').over(window))\n",
+					"\n",
+					"# Keep identifiers where lowest diff is 0 month - this means it has cost last month - candidate for forecasting\n",
+					"count_df = count_df.withColumn('keep_service', F.when(F.col('min_month_diff') == 0, True).otherwise(False))\n",
+					"\n",
+					"# Remove duplicates and prepare for join operation\n",
+					"count_df = count_df.select('ModelIdentifier', 'keep_service').dropDuplicates(subset=[\"ModelIdentifier\", \"keep_service\"])"
+				],
+				"execution_count": 226
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"prediction_df = prediction_df.join(count_df, 'ModelIdentifier').where(F.col('keep_service') == True).drop('keep_service')"
+				],
+				"execution_count": 227
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"distinct_model_identifiers = [row[0] for row in prediction_df.select('ModelIdentifier').distinct().collect()]"
+				],
+				"execution_count": 228
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Create schema for resulting df\n",
+					"schema = T.StructType([\n",
+					"    T.StructField(\"Date\", T.DateType(), True),\n",
+					"    T.StructField(\"MeterCategory\", T.StringType(), True),\n",
+					"    T.StructField(\"Cost\", T.DoubleType(), True),\n",
+					"    T.StructField(\"OrgUnitLevel0\", T.StringType(), True)\n",
+					"])\n",
+					"\n",
+					"result_df = spark.createDataFrame([], schema)"
+				],
+				"execution_count": 229
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"for model_identifier in distinct_model_identifiers:\n",
+					"    print(f'Processing {model_identifier} cost')\n",
+					"    start_time = time.time()\n",
+					"    temp_df = prediction_df.where(F.col('ModelIdentifier') == model_identifier).orderBy(F.asc('Date')).select('Date', 'Cost')\n",
+					"\n",
+					"    # Convert pyspark df to pandas for OLS model\n",
+					"    temp_pdf = temp_df.toPandas()\n",
+					"    temp_pdf.set_index(\"Date\", inplace=True)\n",
+					"\n",
+					"    temp_pdf['x'] = range(len(temp_pdf))\n",
+					"\n",
+					"    # Estimate OLS model\n",
+					"    if LOOKBACK > len(temp_pdf['Cost']):\n",
+					"        y = temp_pdf['Cost'].values\n",
+					"        x = temp_pdf['x'].values\n",
+					"    else:\n",
+					"        y = temp_pdf['Cost'].tail(LOOKBACK)\n",
+					"        x = temp_pdf['x'].tail(LOOKBACK)\n",
+					"        \n",
+					"    model = sm.OLS(y, sm.add_constant(x))\n",
+					"    result = model.fit()\n",
+					"\n",
+					"    # Configure prediction period\n",
+					"    future_months = pd.date_range(start=temp_pdf.index[-1], periods=prediction_interval, freq=\"MS\")[1:]\n",
+					"    future_x = np.arange(temp_pdf['x'][-1] + 1, temp_pdf['x'][-1] + prediction_interval)\n",
+					"\n",
+					"    # Predict future cost\n",
+					"    x = sm.add_constant(future_x)\n",
+					"    predicted_cost = result.predict(x)\n",
+					"\n",
+					"    predicted_df = pd.DataFrame({\"Date\": future_months, \"Cost\": predicted_cost})\n",
+					"\n",
+					"    split_model_identifier = model_identifier.split('.')\n",
+					"    meter_category = split_model_identifier[0]\n",
+					"    business_area = split_model_identifier[1]\n",
+					"\n",
+					"    predicted_df = spark.createDataFrame(predicted_df).withColumn('MeterCategory', F.lit(meter_category))\n",
+					"    predicted_df = spark.createDataFrame(predicted_df).withColumn('OrgUnitLevel0', F.lit(business_area))\n",
+					"    predicted_df = predicted_df.select('Date', 'MeterCategory', 'Cost', 'OrgUnitLevel0')\n",
+					"\n",
+					"    result_df = result_df.union(updated_df)\n",
+					"    end_time = time.time()\n",
+					"    print(f'Successfully processed {meter_category} cost in {round(end_time - start_time, 2)} seconds.')"
+				],
+				"execution_count": 230
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cost_df = cost_df.union(result_df)"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Save processed data"
+				]
 			},
 			{
 				"cell_type": "code",
