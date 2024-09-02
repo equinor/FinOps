@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "4da09ddf-940e-4e4d-96b1-188226b05d95"
+				"spark.autotune.trackingId": "4f07469f-1956-4391-a24f-13ce86ab6b1f"
 			}
 		},
 		"metadata": {
@@ -504,14 +504,14 @@
 					"    business_area = split_model_identifier[1]\n",
 					"\n",
 					"    predicted_df = spark.createDataFrame(predicted_df).withColumn('MeterCategory', F.lit(meter_category))\n",
-					"    predicted_df = spark.createDataFrame(predicted_df).withColumn('OrgUnitLevel0', F.lit(business_area))\n",
+					"    predicted_df = predicted_df.withColumn('OrgUnitLevel0', F.lit(business_area))\n",
 					"    predicted_df = predicted_df.select('Date', 'MeterCategory', 'Cost', 'OrgUnitLevel0')\n",
 					"\n",
-					"    result_df = result_df.union(updated_df)\n",
+					"    result_df = result_df.union(predicted_df)\n",
 					"    end_time = time.time()\n",
 					"    print(f'Successfully processed {meter_category} cost in {round(end_time - start_time, 2)} seconds.')"
 				],
-				"execution_count": 230
+				"execution_count": 232
 			},
 			{
 				"cell_type": "code",
@@ -561,7 +561,7 @@
 					"target_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/high-level-aggregated-cost\"\n",
 					"cost_df.write.format('parquet').mode('overwrite').save(target_path)"
 				],
-				"execution_count": 58
+				"execution_count": null
 			}
 		]
 	}
