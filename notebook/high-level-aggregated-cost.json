@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "0d002ef6-6a51-4716-a16c-f5da6f2fcf7a"
+				"spark.autotune.trackingId": "57f1edcf-ec7e-4f9e-a010-9edd653aac8e"
 			}
 		},
 		"metadata": {
@@ -161,86 +161,6 @@
 					"    .orderBy('Date')"
 				],
 				"execution_count": 291
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"## Rank meter categories and group less expensive together"
-				]
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# category_window = Window.partitionBy(\"MeterCategory\")\n",
-					"# cost_df = cost_df.withColumn(\"MCTotalCost\", F.sum(\"Cost\").over(category_window))\n",
-					"\n",
-					"# rank_window = Window.orderBy(F.col(\"MCTotalCost\").desc())\n",
-					"# cost_df = cost_df.withColumn(\"Rank\", F.dense_rank().over(rank_window))\n",
-					"\n",
-					"# cost_df = cost_df.withColumn('MeterCategory',\n",
-					"#     F.when(F.col('Rank') > 10, 'Other')\n",
-					"#     .otherwise(F.col('MeterCategory'))\n",
-					"# )\n",
-					"\n",
-					"# cost_df = cost_df.drop('MCTotalCost', 'Rank')"
-				],
-				"execution_count": 292
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"## Load forecast and combine with amortized cost"
-				]
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# forecast_path = 'abfss://usage@s037costmgmt.dfs.core.windows.net/forecasts/granular-cost-12-month-lookback-for-high-level-aggregation/*/*/*.parquet'\n",
-					"# forecast_df = spark.read.format('parquet').load(forecast_path)\n",
-					"\n",
-					"# # Only consider predictions up until end of 2024\n",
-					"# forecast_df = forecast_df.where((F.col('Date') >= '2024-09-01') & (F.col('Date') <= '2024-12-01'))\n",
-					"\n",
-					"# # Combine forecast with historic cost\n",
-					"# cost_df = cost_df.union(forecast_df)"
-				],
-				"execution_count": 293
 			},
 			{
 				"cell_type": "markdown",
