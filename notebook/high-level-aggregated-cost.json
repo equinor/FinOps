@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "8188fe78-b438-4aad-afa6-3b2a9bba9e7c"
+				"spark.autotune.trackingId": "c8b4ded2-0616-47fd-b4ef-a8ebe3ba9abe"
 			}
 		},
 		"metadata": {
@@ -56,17 +56,15 @@
 				"source": [
 					"import pyspark.sql.functions as F\n",
 					"import pyspark.sql.types as T\n",
-					"import pyspark.sql.window as W\n",
-					"import statsmodels.api as sm\n",
-					"import pandas as pd\n",
-					"import numpy as np\n",
-					"from datetime import datetime, timedelta\n",
-					"import time\n",
-					"\n",
-					"import warnings\n",
-					"warnings.filterwarnings(\"ignore\", category=FutureWarning)"
+					"from pyspark.ml.regression import LinearRegression\n",
+					"from pyspark.ml.regression import GeneralizedLinearRegression\n",
+					"from pyspark.ml.feature import VectorAssembler, StringIndexer, OneHotEncoder, FeatureHasher, Bucketizer\n",
+					"from pyspark.ml import Pipeline\n",
+					"from pyspark.sql.window import Window\n",
+					"from datetime import date, timedelta, datetime\n",
+					"from dateutil.relativedelta import relativedelta"
 				],
-				"execution_count": 214
+				"execution_count": 1
 			},
 			{
 				"cell_type": "markdown",
@@ -98,7 +96,7 @@
 					"cost_path = 'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet'\n",
 					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": 215
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -119,7 +117,7 @@
 					"    'Application_Name'\n",
 					"]"
 				],
-				"execution_count": 216
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -137,7 +135,7 @@
 				"source": [
 					"cost_df = cost_df.select('Date', 'CostInBillingCurrency', *selected_columns)"
 				],
-				"execution_count": 217
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -159,7 +157,7 @@
 					"    .agg(F.sum('CostInBillingCurrency').alias('Cost')) \\\n",
 					"    .orderBy('Date')"
 				],
-				"execution_count": 218
+				"execution_count": 5
 			},
 			{
 				"cell_type": "markdown",
@@ -191,7 +189,7 @@
 					"app_path = 'abfss://usage@s037costmgmt.dfs.core.windows.net/applications/processed.parquet/**'\n",
 					"app_df = spark.read.format('parquet').load(app_path)"
 				],
-				"execution_count": 219
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -209,7 +207,7 @@
 				"source": [
 					"app_df = app_df.select('ApplicationName', 'OrgUnitLevel0')"
 				],
-				"execution_count": 220
+				"execution_count": 7
 			},
 			{
 				"cell_type": "markdown",
@@ -241,7 +239,7 @@
 					"cost_df = cost_df.join(app_df, cost_df.Application_Name == app_df.ApplicationName, 'left')\n",
 					"cost_df = cost_df.drop('Application_Name', 'ApplicationName')"
 				],
-				"execution_count": 221
+				"execution_count": 8
 			},
 			{
 				"cell_type": "markdown",
@@ -275,7 +273,7 @@
 					"    .otherwise(F.col('OrgUnitLevel0'))\n",
 					")"
 				],
-				"execution_count": 222
+				"execution_count": 9
 			},
 			{
 				"cell_type": "markdown",
@@ -305,35 +303,11 @@
 				},
 				"source": [
 					"# Integers represent number of months\n",
-					"PREDICTION_END_DATE = '2024-12-01'\n",
-					"LOOKBACK = 12"
+					"PREDICTION_END_DATE = '2025-01-01'\n",
+					"LOOKBACK_PERIOD = 12\n",
+					"TODAY = datetime.today().replace(day=1)"
 				],
-				"execution_count": 223
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"today = datetime.today().replace(day=1)\n",
-					"\n",
-					"prediction_end_date = datetime.strptime(PREDICTION_END_DATE, '%Y-%m-%d')\n",
-					"prediction_interval = (prediction_end_date.year - today.year) * 12 + (prediction_end_date.month - today.month)\n",
-					"\n",
-					"lookback_date = (today - timedelta(days=LOOKBACK*30)).replace(day=1)\n",
-					"lookback_date_formatted = lookback_date.strftime('%Y-%m-%d')\n",
-					"lookback_diff = (today.year - lookback_date.year) * 12 + (today.month - lookback_date.month)"
-				],
-				"execution_count": 224
+				"execution_count": 12
 			},
 			{
 				"cell_type": "code",
@@ -350,9 +324,31 @@
 				},
 				"source": [
 					"# Filter away latest month - as we predict cost per month, it will mess up future predictions\n",
-					"cost_df = cost_df.filter(F.col('Date') < today)"
+					"cost_df = cost_df.filter(F.col('Date') < TODAY)"
 				],
-				"execution_count": 225
+				"execution_count": 14
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cost_df = cost_df.withColumn('ModelIdentifier', F.concat(F.col('MeterCategory'), F.lit('.'), F.col('OrgUnitLevel0')))\n",
+					"\n",
+					"# Ignore resources where cost is 0 in entire date range\n",
+					"cost_df = cost_df.withColumn(\"WindowSum\", F.sum(\"Cost\").over(Window.partitionBy('ModelIdentifier')))\n",
+					"cost_df = cost_df.where(F.col(\"WindowSum\") > 0).drop(\"WindowSum\")"
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
