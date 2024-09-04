@@ -1069,29 +1069,29 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
-		"prodcluster_delayInMinutes": {
+		"sparkpool32_delayInMinutes": {
 			"type": "int",
-			"defaultValue": 30
+			"defaultValue": 15
 		},
-		"prodcluster_maxNodeCount": {
+		"sparkpool32_maxNodeCount": {
 			"type": "int",
-			"defaultValue": 10
+			"defaultValue": 5
 		},
-		"prodcluster_minNodeCount": {
+		"sparkpool32_minNodeCount": {
 			"type": "int",
 			"defaultValue": 3
 		},
-		"prodcluster_nodeCount": {
+		"sparkpool32_nodeCount": {
 			"type": "int",
-			"defaultValue": 10
+			"defaultValue": 0
 		},
-		"prodcluster_nodeSize": {
+		"sparkpool32_nodeSize": {
 			"type": "string",
-			"defaultValue": "Large"
+			"defaultValue": "Medium"
 		},
-		"prodcluster_sparkVersion": {
+		"sparkpool32_sparkVersion": {
 			"type": "string",
-			"defaultValue": "3.4"
+			"defaultValue": "3.2"
 		},
 		"sprkpool33large_delayInMinutes": {
 			"type": "int",
@@ -1117,29 +1117,29 @@
 			"type": "string",
 			"defaultValue": "3.3"
 		},
-		"sparkpool32_delayInMinutes": {
+		"prodcluster_delayInMinutes": {
 			"type": "int",
-			"defaultValue": 15
+			"defaultValue": 30
 		},
-		"sparkpool32_maxNodeCount": {
+		"prodcluster_maxNodeCount": {
 			"type": "int",
-			"defaultValue": 5
+			"defaultValue": 10
 		},
-		"sparkpool32_minNodeCount": {
+		"prodcluster_minNodeCount": {
 			"type": "int",
 			"defaultValue": 3
 		},
-		"sparkpool32_nodeCount": {
+		"prodcluster_nodeCount": {
 			"type": "int",
-			"defaultValue": 0
+			"defaultValue": 10
 		},
-		"sparkpool32_nodeSize": {
+		"prodcluster_nodeSize": {
 			"type": "string",
-			"defaultValue": "Medium"
+			"defaultValue": "Large"
 		},
-		"sparkpool32_sparkVersion": {
+		"prodcluster_sparkVersion": {
 			"type": "string",
-			"defaultValue": "3.2"
+			"defaultValue": "3.4"
 		}
 	},
 	"variables": {
@@ -27298,7 +27298,7 @@
 						"language": "sql"
 					},
 					"currentConnection": {
-						"databaseName": "costmgmt",
+						"databaseName": "master",
 						"poolName": "Built-in"
 					},
 					"resultLimit": 5000
@@ -40652,7 +40652,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "8e5fe584-fdca-4173-9c34-05bde21ff304"
+						"spark.autotune.trackingId": "da62e320-9a31-4795-84cd-be8d58e9f27e"
 					}
 				},
 				"metadata": {
@@ -40677,7 +40677,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -40693,7 +40694,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 43
+						"execution_count": 1
 					},
 					{
 						"cell_type": "code",
@@ -40715,7 +40716,7 @@
 							"from enum import Enum"
 						],
 						"outputs": [],
-						"execution_count": 44
+						"execution_count": 2
 					},
 					{
 						"cell_type": "code",
@@ -40749,6 +40750,7 @@
 							"    ANFLowCase = \"ANF Low Case\"\n",
 							"    QumuloHighCase = \"Qumulo High Case\"\n",
 							"    QumuloLowCase = \"Qumulo Low Case\"\n",
+							"    ZeroInorganicCost = \"Zero Inorganic Cost\"\n",
 							"    NotApplicable = \"NotApplicable\"\n",
 							"\n",
 							"class SAPScenario(Enum):\n",
@@ -40771,7 +40773,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 45
+						"execution_count": 3
 					},
 					{
 						"cell_type": "markdown",
@@ -40805,7 +40807,7 @@
 							"billing_df = spark.read.format('parquet').load(billing_path)"
 						],
 						"outputs": [],
-						"execution_count": 46
+						"execution_count": 4
 					},
 					{
 						"cell_type": "code",
@@ -40826,7 +40828,7 @@
 							"adjusted_billing_df = spark.read.format('parquet').load(adjusted_billing_path)"
 						],
 						"outputs": [],
-						"execution_count": 47
+						"execution_count": 5
 					},
 					{
 						"cell_type": "code",
@@ -40847,7 +40849,7 @@
 							"retail_df = spark.read.format('parquet').load(retail_path)"
 						],
 						"outputs": [],
-						"execution_count": 48
+						"execution_count": 6
 					},
 					{
 						"cell_type": "markdown",
@@ -40885,7 +40887,7 @@
 							"inorganic_consumption_df = spark.read.options(**csv_options).csv(inorganic_consumption_path)"
 						],
 						"outputs": [],
-						"execution_count": 49
+						"execution_count": 7
 					},
 					{
 						"cell_type": "markdown",
@@ -40924,7 +40926,7 @@
 							"}"
 						],
 						"outputs": [],
-						"execution_count": 50
+						"execution_count": 8
 					},
 					{
 						"cell_type": "code",
@@ -40947,7 +40949,7 @@
 							"inorganic_consumption_df = inorganic_consumption_df.withColumnRenamed('Period', 'PeriodLabel')"
 						],
 						"outputs": [],
-						"execution_count": 51
+						"execution_count": 9
 					},
 					{
 						"cell_type": "code",
@@ -40973,7 +40975,7 @@
 							"inorganic_consumption_df = inorganic_discounted_df.union(inorganic_retail_df)"
 						],
 						"outputs": [],
-						"execution_count": 52
+						"execution_count": 10
 					},
 					{
 						"cell_type": "markdown",
@@ -41017,7 +41019,7 @@
 							"}"
 						],
 						"outputs": [],
-						"execution_count": 53
+						"execution_count": 11
 					},
 					{
 						"cell_type": "code",
@@ -41069,7 +41071,7 @@
 							"    return total_df"
 						],
 						"outputs": [],
-						"execution_count": 54
+						"execution_count": 12
 					},
 					{
 						"cell_type": "code",
@@ -41093,7 +41095,7 @@
 							"consumption_forecast_df = agg_billing_df.union(agg_adjusted_billing_df).union(agg_retail_df)"
 						],
 						"outputs": [],
-						"execution_count": 55
+						"execution_count": 13
 					},
 					{
 						"cell_type": "code",
@@ -41121,7 +41123,7 @@
 							"consumption_forecast_df = consumption_forecast_df.withColumn('Key', F.concat(F.col('Project'), F.lit('-'), F.col('UsageOption'), F.lit('-'), F.col('SubScenario'), F.lit('-'), F.col('SapScenario')))"
 						],
 						"outputs": [],
-						"execution_count": 56
+						"execution_count": 14
 					},
 					{
 						"cell_type": "code",
@@ -41152,7 +41154,7 @@
 							"expanded_forecast_df = early_forecast_df.union(late_forecast_df)"
 						],
 						"outputs": [],
-						"execution_count": 57
+						"execution_count": 15
 					},
 					{
 						"cell_type": "code",
@@ -41173,7 +41175,7 @@
 							"expanded_forecast_df = expanded_forecast_df.drop('Key')"
 						],
 						"outputs": [],
-						"execution_count": 58
+						"execution_count": 16
 					},
 					{
 						"cell_type": "markdown",
@@ -41205,7 +41207,7 @@
 							"expanded_forecast_df = expanded_forecast_df.union(inorganic_consumption_df)"
 						],
 						"outputs": [],
-						"execution_count": 59
+						"execution_count": 17
 					},
 					{
 						"cell_type": "markdown",
@@ -41238,7 +41240,7 @@
 							"expanded_forecast_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(expanded_forecast_path)"
 						],
 						"outputs": [],
-						"execution_count": 60
+						"execution_count": 18
 					}
 				]
 			},
@@ -45488,7 +45490,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "f9037321-c246-41dd-a506-4aaf66d720a6"
+						"spark.autotune.trackingId": "57f1edcf-ec7e-4f9e-a010-9edd653aac8e"
 					}
 				},
 				"metadata": {
@@ -45513,15 +45515,13 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\n",
 							"import pyspark.sql.types as T\n",
@@ -47031,7 +47031,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "921913bb-06c4-4868-b89f-6afe55d27d85"
+						"spark.autotune.trackingId": "210ce1a4-b237-4a32-9ec6-90f2f0117e06"
 					}
 				},
 				"metadata": {
@@ -47056,8 +47056,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -51722,25 +51721,30 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/prodcluster')]",
+			"name": "[concat(parameters('workspaceName'), '/sparkpool32')]",
 			"type": "Microsoft.Synapse/workspaces/bigDataPools",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"autoPause": {
 					"enabled": true,
-					"delayInMinutes": "[parameters('prodcluster_delayInMinutes')]"
+					"delayInMinutes": "[parameters('sparkpool32_delayInMinutes')]"
 				},
 				"autoScale": {
 					"enabled": true,
-					"maxNodeCount": "[parameters('prodcluster_maxNodeCount')]",
-					"minNodeCount": "[parameters('prodcluster_minNodeCount')]"
+					"maxNodeCount": "[parameters('sparkpool32_maxNodeCount')]",
+					"minNodeCount": "[parameters('sparkpool32_minNodeCount')]"
 				},
-				"nodeCount": "[parameters('prodcluster_nodeCount')]",
-				"nodeSize": "[parameters('prodcluster_nodeSize')]",
+				"nodeCount": "[parameters('sparkpool32_nodeCount')]",
+				"nodeSize": "[parameters('sparkpool32_nodeSize')]",
 				"nodeSizeFamily": "MemoryOptimized",
-				"sparkVersion": "[parameters('prodcluster_sparkVersion')]",
+				"sparkVersion": "[parameters('sparkpool32_sparkVersion')]",
+				"libraryRequirements": {
+					"content": "azure.mgmt.billing\nazure.mgmt.consumption\nazure.mgmt.resource\nazure.identity\nazure.keyvault\n\n",
+					"filename": "requirements.txt",
+					"time": "2023-01-25T09:06:41.7702231Z"
+				},
 				"isComputeIsolationEnabled": false,
-				"sessionLevelPackagesEnabled": false,
+				"sessionLevelPackagesEnabled": true,
 				"annotations": []
 			},
 			"dependsOn": [],
@@ -51772,30 +51776,25 @@
 			"location": "northeurope"
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/sparkpool32')]",
+			"name": "[concat(parameters('workspaceName'), '/prodcluster')]",
 			"type": "Microsoft.Synapse/workspaces/bigDataPools",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"autoPause": {
 					"enabled": true,
-					"delayInMinutes": "[parameters('sparkpool32_delayInMinutes')]"
+					"delayInMinutes": "[parameters('prodcluster_delayInMinutes')]"
 				},
 				"autoScale": {
 					"enabled": true,
-					"maxNodeCount": "[parameters('sparkpool32_maxNodeCount')]",
-					"minNodeCount": "[parameters('sparkpool32_minNodeCount')]"
+					"maxNodeCount": "[parameters('prodcluster_maxNodeCount')]",
+					"minNodeCount": "[parameters('prodcluster_minNodeCount')]"
 				},
-				"nodeCount": "[parameters('sparkpool32_nodeCount')]",
-				"nodeSize": "[parameters('sparkpool32_nodeSize')]",
+				"nodeCount": "[parameters('prodcluster_nodeCount')]",
+				"nodeSize": "[parameters('prodcluster_nodeSize')]",
 				"nodeSizeFamily": "MemoryOptimized",
-				"sparkVersion": "[parameters('sparkpool32_sparkVersion')]",
-				"libraryRequirements": {
-					"content": "azure.mgmt.billing\nazure.mgmt.consumption\nazure.mgmt.resource\nazure.identity\nazure.keyvault\n\n",
-					"filename": "requirements.txt",
-					"time": "2023-01-25T09:06:41.7702231Z"
-				},
+				"sparkVersion": "[parameters('prodcluster_sparkVersion')]",
 				"isComputeIsolationEnabled": false,
-				"sessionLevelPackagesEnabled": true,
+				"sessionLevelPackagesEnabled": false,
 				"annotations": []
 			},
 			"dependsOn": [],
