@@ -6,6 +6,9 @@
 				"name": "Extend Actual Cost",
 				"type": "ExecutePipeline",
 				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
 				"userProperties": [],
 				"typeProperties": {
 					"pipeline": {
@@ -65,7 +68,7 @@
 				"type": "SynapseNotebook",
 				"dependsOn": [
 					{
-						"activity": "Run cumulative cost prediction",
+						"activity": "Compute consumption plan",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -92,6 +95,39 @@
 							},
 							"type": "string"
 						}
+					},
+					"snapshot": true,
+					"conf": {
+						"spark.dynamicAllocation.enabled": null,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"numExecutors": null
+				}
+			},
+			{
+				"name": "Compute consumption plan",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "Run cumulative cost prediction",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "compute-consumption-plan",
+						"type": "NotebookReference"
 					},
 					"snapshot": true
 				}
