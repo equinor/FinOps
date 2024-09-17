@@ -21,6 +21,10 @@
 			"metadata": "Secure string for 'connectionString' of 's037-cost-management-WorkspaceDefaultSqlServer'",
 			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:s037-cost-management.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
 		},
+		"FinopsWbsProdGold_servicePrincipalCredential": {
+			"type": "secureString",
+			"metadata": "Secure string for 'servicePrincipalCredential' of 'FinopsWbsProdGold'"
+		},
 		"Ad-hoc Combined Extend AI column and WBS tags - Extended Parquet_pipelineStorageAccountVariable": {
 			"type": "string",
 			"defaultValue": "s037costmgmt"
@@ -309,11 +313,7 @@
 			"type": "string",
 			"defaultValue": "HUB Storage Account"
 		},
-		"WBSOwnerSink_dataSetLinkedServiceName": {
-			"type": "string",
-			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
-		},
-		"WBSOwnerSource_dataSetLinkedServiceName": {
+		"WBSLatest_dataSetLinkedServiceName": {
 			"type": "string",
 			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
 		},
@@ -1140,6 +1140,14 @@
 		"sparkpool32_sparkVersion": {
 			"type": "string",
 			"defaultValue": "3.2"
+		},
+		"FinopsWbsProdGold_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "FinopsWbsProdGold"
+		},
+		"WBSSource_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
 		}
 	},
 	"variables": {
@@ -5552,7 +5560,12 @@
 								"type": "NotebookReference"
 							},
 							"snapshot": true,
-							"conf": {}
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"numExecutors": null
 						}
 					}
 				],
@@ -20565,7 +20578,14 @@
 					{
 						"name": "persist latest wbs owner",
 						"type": "Copy",
-						"dependsOn": [],
+						"dependsOn": [
+							{
+								"activity": "pull wbs table from fabric finops-wbs-prod workspace",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
 						"policy": {
 							"timeout": "0.12:00:00",
 							"retry": 0,
@@ -20589,6 +20609,66 @@
 							"sink": {
 								"type": "ParquetSink",
 								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings",
+									"copyBehavior": "PreserveHierarchy"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "WBSSource",
+								"type": "DatasetReference",
+								"parameters": {
+									"year": {
+										"value": "@formatDateTime(utcNow(), 'yyyy')",
+										"type": "Expression"
+									},
+									"month": {
+										"value": "@formatDateTime(utcNow(), 'MM')",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "WBSLatest",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "pull wbs table from fabric finops-wbs-prod workspace",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "LakehouseTableSource"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
 									"type": "AzureBlobFSWriteSettings"
 								},
 								"formatSettings": {
@@ -20607,7 +20687,14 @@
 						},
 						"inputs": [
 							{
-								"referenceName": "WBSOwnerSource",
+								"referenceName": "FinopsWbsProdGold",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "WBSSource",
 								"type": "DatasetReference",
 								"parameters": {
 									"year": {
@@ -20619,13 +20706,6 @@
 										"type": "Expression"
 									}
 								}
-							}
-						],
-						"outputs": [
-							{
-								"referenceName": "WBSOwnerSink",
-								"type": "DatasetReference",
-								"parameters": {}
 							}
 						]
 					}
@@ -20639,8 +20719,9 @@
 				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('workspaceId'), '/datasets/WBSOwnerSource')]",
-				"[concat(variables('workspaceId'), '/datasets/WBSOwnerSink')]"
+				"[concat(variables('workspaceId'), '/datasets/WBSSource')]",
+				"[concat(variables('workspaceId'), '/datasets/WBSLatest')]",
+				"[concat(variables('workspaceId'), '/datasets/FinopsWbsProdGold')]"
 			]
 		},
 		{
@@ -23584,12 +23665,12 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/WBSOwnerSink')]",
+			"name": "[concat(parameters('workspaceName'), '/WBSLatest')]",
 			"type": "Microsoft.Synapse/workspaces/datasets",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"linkedServiceName": {
-					"referenceName": "[parameters('WBSOwnerSink_dataSetLinkedServiceName')]",
+					"referenceName": "[parameters('WBSLatest_dataSetLinkedServiceName')]",
 					"type": "LinkedServiceReference"
 				},
 				"annotations": [],
@@ -23598,7 +23679,7 @@
 					"location": {
 						"type": "AzureBlobFSLocation",
 						"fileName": "WBS-latest.parquet",
-						"folderPath": "finops-wbs-dev",
+						"folderPath": "finops-wbs-prod",
 						"fileSystem": "usage"
 					},
 					"compressionCodec": "snappy"
@@ -23606,44 +23687,7 @@
 				"schema": []
 			},
 			"dependsOn": [
-				"[concat(variables('workspaceId'), '/linkedServices/', parameters('WBSOwnerSink_dataSetLinkedServiceName'))]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/WBSOwnerSource')]",
-			"type": "Microsoft.Synapse/workspaces/datasets",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "[parameters('WBSOwnerSource_dataSetLinkedServiceName')]",
-					"type": "LinkedServiceReference"
-				},
-				"parameters": {
-					"year": {
-						"type": "string"
-					},
-					"month": {
-						"type": "string"
-					}
-				},
-				"annotations": [],
-				"type": "Parquet",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobFSLocation",
-						"fileName": "WBS.parquet",
-						"folderPath": {
-							"value": "@concat('finops-wbs-dev/', dataset().year, '/', dataset().month)",
-							"type": "Expression"
-						},
-						"fileSystem": "usage"
-					},
-					"compressionCodec": "snappy"
-				},
-				"schema": []
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/linkedServices/', parameters('WBSOwnerSource_dataSetLinkedServiceName'))]"
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('WBSLatest_dataSetLinkedServiceName'))]"
 			]
 		},
 		{
@@ -24966,6 +25010,13 @@
 							"type": "PipelineReference"
 						},
 						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "process-wbs-owners",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
 					}
 				],
 				"type": "ScheduleTrigger",
@@ -24988,7 +25039,8 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/pipelines/fetch-servicenow-applications')]",
-				"[concat(variables('workspaceId'), '/pipelines/fetch-servicenow-subscriptions')]"
+				"[concat(variables('workspaceId'), '/pipelines/fetch-servicenow-subscriptions')]",
+				"[concat(variables('workspaceId'), '/pipelines/process-wbs-owners')]"
 			]
 		},
 		{
@@ -25326,37 +25378,6 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/pipelines/full-pbi-refresh-all')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/wbs-push-from-fabric')]",
-			"type": "Microsoft.Synapse/workspaces/triggers",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Started",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "process-wbs-owners",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "BlobEventsTrigger",
-				"typeProperties": {
-					"blobPathBeginsWith": "/usage/blobs/finops-wbs-dev",
-					"blobPathEndsWith": "WBS.parquet",
-					"ignoreEmptyBlobs": true,
-					"scope": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Storage/storageAccounts/s037costmgmt",
-					"events": [
-						"Microsoft.Storage.BlobCreated"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/pipelines/process-wbs-owners')]"
 			]
 		},
 		{
@@ -39219,7 +39240,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "439af211-3900-4a1b-ae73-058362d8c653"
+						"spark.autotune.trackingId": "ca134e96-8491-442c-bc6c-57f2d872e40c"
 					}
 				},
 				"metadata": {
@@ -39244,8 +39265,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -39475,7 +39495,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet'\r\n",
 							"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
@@ -40683,7 +40702,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "69998f9c-ccd0-4d3b-bbe5-2d89e7614530"
+						"spark.autotune.trackingId": "7918b17f-28be-4138-b48f-644771738e2c"
 					}
 				},
 				"metadata": {
@@ -40708,8 +40727,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -41515,7 +41533,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "964b5dd9-3c93-4793-bf38-dd6d71c67cb0"
+						"spark.autotune.trackingId": "cb3e2492-4479-405e-8a74-49dfdd943e0a"
 					}
 				},
 				"metadata": {
@@ -41540,8 +41558,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -41566,11 +41583,10 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 16
+						"execution_count": 1
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\n",
 							"import pyspark.sql.window as W\n",
@@ -41579,7 +41595,7 @@
 							"import numpy as np"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 2
 					},
 					{
 						"cell_type": "code",
@@ -41599,7 +41615,7 @@
 							"window = W.Window.orderBy(\"Date\").rowsBetween(W.Window.unboundedPreceding, 0)"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 3
 					},
 					{
 						"cell_type": "markdown",
@@ -41646,7 +41662,7 @@
 							"retail_df = cost_df.alias('retail_df').drop('Cost').withColumnRenamed('RetailCost', 'Cost')"
 						],
 						"outputs": [],
-						"execution_count": null
+						"execution_count": 4
 					},
 					{
 						"cell_type": "markdown",
@@ -44067,7 +44083,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "2e18fef4-2d9c-4f74-922a-a2bcf499f91a"
+						"spark.autotune.trackingId": "fce41c3b-fe59-4009-9357-0122d0495a19"
 					}
 				},
 				"metadata": {
@@ -44092,7 +44108,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -44170,6 +44187,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"def get_last_day_prev_month(to_date):\r\n",
 							"    current_month = int(to_date[4:6])\r\n",
@@ -44938,7 +44956,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "d43b4f57-11ea-4c03-85aa-d969a3e0f0f9"
+						"spark.autotune.trackingId": "c65641f8-cfbc-43bc-b57c-90d164da42fb"
 					}
 				},
 				"metadata": {
@@ -44963,7 +44981,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -45181,7 +45200,7 @@
 							"# Load WBS file\r\n",
 							"current_year = fromDate[:4]\r\n",
 							"current_month = fromDate[4:6]\r\n",
-							"wbs_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/finops-wbs-dev/{current_year}/{current_month}/WBS.parquet'\r\n",
+							"wbs_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/finops-wbs-prod/{current_year}/{current_month}/WBS.parquet'\r\n",
 							"wbs_df = spark.read.format('parquet').load(wbs_path)\r\n",
 							"\r\n",
 							"# Transform data\r\n",
@@ -45225,7 +45244,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "7ef0c6d9-a33c-4680-9e43-584afbd9096d"
+						"spark.autotune.trackingId": "05f3953b-070c-42ad-8b2e-d23309f6ccc0"
 					}
 				},
 				"metadata": {
@@ -45404,7 +45423,7 @@
 							}
 						},
 						"source": [
-							"access_token = \"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6IktRMnRBY3JFN2xCYVZWR0JtYzVGb2JnZEpvNCIsImtpZCI6IktRMnRBY3JFN2xCYVZWR0JtYzVGb2JnZEpvNCJ9.eyJhdWQiOiJodHRwczovL21hbmFnZW1lbnQuY29yZS53aW5kb3dzLm5ldCIsImlzcyI6Imh0dHBzOi8vc3RzLndpbmRvd3MubmV0LzNhYTRhMjM1LWI2ZTItNDhkNS05MTk1LTdmY2YwNWI0NTliMC8iLCJpYXQiOjE3MjQxNjE0MTUsIm5iZiI6MTcyNDE2MTQxNSwiZXhwIjoxNzI0MTY2NTM2LCJhY3IiOiIxIiwiYWlvIjoiQWJRQVMvOFhBQUFBMFQvWmdFL3FndFlJUVJMZGNWK1dVZUJXWXFiVmF1dFRHNStBMjN6a3duRElJenkwZDd1cHJVTFpuTjdvUURZbUo5TEovbVVNV2pxQWU5clgzUWVYd29OK0QyLytwSU1xNzg5ZzhYcW0rTmRETGNhRmd6cSt5Y2d4dlJ1VVdCdVNyb001S00yUGRXOCtaendBR0hmV2E1L3E5Vll4RWVBR2M1d00yUmJMSzZlbUl2TU8wQThtbGc1YldWWFlVUnB4M21DVnNrcGZmWmZ1cDZ6bHVNQng5bXR2U1gvMUs0eHFBSUdXOGxTWnhSND0iLCJhbXIiOlsicnNhIiwibWZhIl0sImFwcGlkIjoiMThmYmNhMTYtMjIyNC00NWY2LTg1YjAtZjdiZjJiMzliM2YzIiwiYXBwaWRhY3IiOiIwIiwiZGV2aWNlaWQiOiIzNzVmZjhhNS0xOTg5LTQ0NWEtYTkzYi1mZGZiMDg4N2Y1ZmIiLCJmYW1pbHlfbmFtZSI6IkZsb29kIiwiZ2l2ZW5fbmFtZSI6IkRhdmlkIiwiZ3JvdXBzIjpbIjk0Y2RkZjAwLWRlMGYtNGM1OC1hMDM0LWRlMzQ2NDU3ZmRhMCIsIjZhMGY3MzAxLTAzOGUtNDIzMS1hZDU2LTZkMDFhZGNiODRlZiIsImQ4NjJjYTAyLTlkOTgtNDczZC05NzYwLTUxYzhlZjY5YmVmZiIsImZmYWVhNjAzLTc1OWEtNDQ5MC05MzdjLTg3NTI2ZjQyZDMxZSIsImVmMjlkYTA1LWE0ODktNGE4NC05ODNkLTZlMmNlMzJhMWM0ZiIsImZhY2IwNDA2LWE5OWUtNGIxYy05YmQxLWI1ODkwM2FkNjBjOSIsImNiYjlmYzA2LWM1ZDYtNDg3Mi04Yzg1LTQ4MDI0ZTg5YzY0OSIsIjllYjI2MzA5LTM1ZTAtNGE4MC05NmFkLWU0YzllYzU3MTFiZSIsIjk2MjlhMjBhLWVhZWMtNDliMy05Nzg0LTBhZTlhNjU3MGZjOSIsIjFkYjZiYTBjLTFkMmYtNGQ3Ni05ZGFlLTA4ODFlNTkxM2M1YyIsImNiMzhjMjBkLWY0YTMtNGVjMy1iMjU4LWVkMDJjOTM2ODRmMCIsImZiM2RjYjBkLTIxMmQtNGU3OC1iNTNmLTNjN2I5MzJlZTI1YiIsIjE5M2NmMTBkLTdkZDAtNDZkNy1hMTAxLTQ1NTgyMDIzNGE1NiIsImY2Mzg0ODBmLWIyOTUtNDc3Zi1iZGVhLWI5OWVkNDIxZGJhMiIsIjMxOTg5ZTBmLWQ2ZTUtNDhlNy05OTUyLTEwYTdmZmFlM2JiOCIsIjQ5MWYyMjEwLTQ2NWEtNDcwZC1hZTkwLWQwMGRmZDI3Yzk3YSIsIjA3N2UzODExLTc4M2EtNGI5YS05YTRiLTViOTllN2U2NzFjMCIsIjMxMDA0NzEyLWQ5MGUtNDlmNi05ZTc5LTJlOTdmNjhmNmQ1MCIsIjA0N2ZiMDEyLTY5NGMtNDRjMy04ZDQ4LTkyN2NiMzQ5Nzg4YyIsIjMzZThjZDEzLTg1YzUtNGVkYS04NTM3LTBiZjIwMDkwZjA0YyIsImI3MmI2ODE0LWQxNzItNGUzNi1iYjkwLTBiM2YxNWE5MTk3NyIsImYyYzk4ODE1LWUxNjYtNGY5MC1hNWY0LTFmNTM1ZjVlZGNjOCIsIjcxMTNjMzE1LWM0YjEtNGRjNi1hZDZiLTBhMWUyMTIyOGEwMSIsIjA1Yjk2ZDE2LWI2NDQtNGZjZi04YWU1LWZmMGMwZjgyNWI1ZiIsImJjMzlmMjE3LTQ0MTktNDI5MS05NTI3LTM1NjE0NzdhMmZiNyIsImMwMzNlZDE5LTBiMWMtNGQ1OS04ZTAxLTA4M2VkN2NkMzQ5ZCIsIjAwMDMxMTFiLTBjMmUtNDA0MS1iMWRkLTBiMmVkMWVmNmY3OCIsImJmYzEzOTFjLTY4MTQtNDE0My04M2M3LTNjNDZhZjhjNzhhOCIsIjMwNzI4ZTFlLTQ2ZjAtNGI2MS1hMGJjLTZiYzNmNzM2MGI4YSIsImM2OGU1MDFmLTZkMWYtNGI0Yi04ZjM3LTBjNDY4MTU2ZGRmMiIsIjVhZjA5OTIxLWZkNmEtNDYxMS05ZWE5LWEzYmZiMWYzNWJiZSIsIjdlZjM2YzIzLTNmNmItNDMyMS1iMDI4LWI4MWE5YjQ1OTk5MSIsImRmNjVlYTIzLTg4YzMtNDMxYS1hODdmLTYwNTVjZjliZDU0OSIsIjNiOTVkYTI3LTMzN2EtNDRjMS1iNjlkLTU2NDRiNTFhNDgzNiIsIjhmYTNiYjI4LTg0ZjktNGIwNi1hNGQ1LTA4OTA3ZThkZDZmYSIsImUwNDBjNDI4LWFjNTctNDU0Mi1hMzI4LTJmNjcyYTM0Y2NiOCIsImUxY2FhNDJhLWJmNjktNDM5MS05YTVlLWM4Y2ZkYWUxYjQxNyIsIjlmZTZlNjJhLTMxMTgtNDcwNC1hZmJlLTgzNDgyMmNiMGQ0MyIsIjBiMTAyYjJjLTNjOTctNGI3Ni1iNGRmLWUwMzk4Njg2YWY1NiIsIjc0OGEwMjJlLTk2OGUtNGE5NC1hZGUzLTkyNGUyNmJhZGFhOCIsImRhNWEzMzJlLTE0NzAtNDBmMy05ODAzLTQ5NzVlNTY5NGU1YiIsImIzZGU0MzJmLWRmNzUtNGJjYS1iMDg2LTlmODg4M2Q2OGRkMCIsIjRmNmY0ZTJmLWIyMjMtNGU3My1iMzMzLTViYjFmNzYwMTRmNCIsIjI5ZTAzNTMwLWY4MTgtNDAzNi1iMjhiLTk3YjhiOTRmMjY1MCIsImFkNTc3ODMyLWEwZTEtNGEwOC1iYmY0LTEyNzI0M2M2YTc1MiIsIjA1MDYwYTM0LTgwYjAtNDc4My1iYzRmLWIyNmZmNmRiODY5MSIsIjFkZmViZDM1LTdlNGQtNGYzOS05MjI1LTAxMWRhZGRkZGViMCIsIjMwNDk0ZTM2LTIwNDEtNDA5Ni1hY2Y4LWIzNjg0YTYzMDllNCIsIjVkZDU1YzM3LTBiODQtNDBiNC04NzYxLTUzYmI5YTkzYWM4ZiIsImE1ZWRmMDM4LTZjMmYtNDQzOC04ZjJmLWNkZjVhZWI5MWFjNSIsIjM5MjcwOTNhLThkNTktNDExOS04MzNlLWU3YTAyZmI4ODc4YyIsIjYxMmFjYjNmLWUyZDgtNGI1Ni1iNTUwLTBmZTU1Njg5NDI4NCIsImI0MDc0ZjQyLTQwMWItNGM1ZS04MTdlLTZlZjgzMzU5YjdiZiIsIjhjYmVmZjQyLTdjNGYtNDFkNy1iODBlLWYyNDJmMTc4MWJlYiIsIjg0OWNmNDQzLTljNWMtNGUzMi1hMmVhLTU1ZWFlZGQ5ZTZhNiIsIjI2MTU0MDQ0LTJhNzgtNGM4Mi05OTkzLTE2ZTA4NDVjNTU4MiIsImIzNmIyOTQ1LTFkMjQtNGM4My05YmE1LTI1MTRhNTZmNDlhMyIsIjZjNGEyNTQ5LTgwZWItNDZhOS05OTcyLTkyNzE3OGY0YzRmZiIsImE4ZmI1YTQ5LTIyMjUtNDc1Ny04NGZjLWQzZmRjMDc4YzQzZSIsImM1ZDI2MjRiLTY1ZjgtNDNkNC1hMWE4LTUyOGYxYzUyOTdkMyIsIjI0MWYxYzRjLTYyMTEtNDhhYy1hMDg4LWI2MmUxYzBiMzNhYyIsIjQ1MjJhNDRkLTY2MGQtNDRlYy04MDczLWFmZGMxNmU0YWQ3YiIsIjUzMDFiNDRkLWY1MDUtNDQwNy04NzZkLWVmYWU1YjdiZTk4MCIsIjYyYzRjYTRlLTAzM2ItNDZkYS1iNjc1LTFmMzg2YTkwMzIyYSIsImU3MTY3NzUwLTVjNWItNGI3Ni04OGIyLTY1OGViZjIxM2YxZSIsIjkxYTRhYjUwLWM0NDEtNGE5ZC1iZTQzLWEwMmM0ODVmOTVmMyIsIjFhYjMxODUxLWMzNmMtNDk2Zi04ZDRjLTNhN2FhNDU5MzRjOCIsIjMyZGFkODUxLTBiNmEtNDUzMS1iODM1LTMwNzBjYmU5MGM1MCIsIjY0ODBjNDU0LTVmNmEtNGQxOS1hZDRmLTVkMDRjODY1YmE4NSIsImFmMzRlMDU1LTJlODUtNDQ3Mi04YjczLWVhYjQxMGE3YTE1YSIsImIxYzI2MjU2LTk2ZGYtNDM3Zi1hM2FiLThlMTY2M2U2NmFiMSIsImYyOWYyNDU3LWMwNjAtNGM4My1hNjY2LTM0NTkyYzJjYzFmYiIsImRkZmMyNjVhLTBiYmYtNDljZS1iYjAyLTY3ZDUxM2I3N2MyYiIsImVhYjc3YzViLTBlNmQtNDVkZi04M2Y4LWE2NWQ5NzA3MjE1ZCIsIjIwNGVkNjViLWMzODYtNDI1NC1hNGU0LTg1ODM1MWVjZjU0NiIsImJjN2Y2ZjVlLWI0YjEtNGNmMy1hZDg3LWRlNmUxZWMyN2U0MyIsImQwMGZhODVmLTcyNzMtNGY5MS1iYWI4LTJlY2E4NTYxMmJhOSIsImUyY2U5MzYwLWRiZDYtNGRkNC04NTUyLTgwNjJhNTE3YjVkZCIsIjczMjk5YjYwLTYwMjMtNGNmZC05OGMxLTVkNjVlMmZjYjQ3ZiIsIjBmZTFlZTYwLTYzMDUtNGQwYS05YjEwLTMxYjUwMjZmMjVjNyIsIjkwMDcwZjYxLTY1NzItNGQ0Zi04ZDA0LTI1YTRhZWI1YjM3OSIsIjc1MmFmNTYxLTI5ODYtNGQ0MS05NjA0LWZlNjkyOGE2ZTU2NSIsIjNlMTM2OTYzLTFmMzktNDhiOC1iNWYyLTI2NGRhMDFhN2FhNSIsImIwMzE1OTY0LThjYjMtNGQxMi04YWQ3LTk0ZTg4Y2E2YjcwNyIsIjEyZWViOTY1LWM1NWYtNGJiNC04ZGJiLWY0ZTZlMDhjYzMwYSIsIjkzNDVlODY2LWZhZmYtNGU3ZS1iOWMwLTZkYjJkNjU4Zjc5MyIsIjQ4ZWQ0YzY3LWM3YTctNDczYi1hYjdhLTY1MTIxYTc0NzM3OSIsIjliNjE3NTY5LTY3NDUtNDVhNS1hN2YyLTIwYTc2ZmNkYTgwZiIsImIxMzFkNTY5LWVlM2UtNDY4ZS1iM2FiLTYxMDQzZDlhMjY1ZSIsIjY4YjZkNDZhLTk2OTItNDllMS1hMWE2LWIwNzVmNmEyZTlkOSIsIjlmNjJlYzZjLWVlNDEtNDRlOS05MTMxLTk5Yjc5MjU0MTM4MiIsImZjNjQzNDZlLTBmNTItNGNkMi05NTQ2LTU5NjVmZDQyZGUyNSIsIjFhYzEzNzZlLWYwNGEtNDRiNi1iZTU4LWFhMTYwMDNlYTk2ZSIsIjljMzhmYTZmLTRhOGYtNDI1ZC1hYjQ4LWI3Nzk3YWNjZjhkZSIsImZlY2U0YTcwLWE5NjgtNGI3ZC05OGJhLTlhZTEzMDk3OGM5YyIsIjJjODhmOTcxLTk3MmMtNGM0OC1iNmM2LTA4NjMxYzE5MTRhNyIsIjBkZjUyOTc1LWRiMTktNGZhMy1iY2Q4LTYxZDhiMmUyODJkOCIsImMxMGU3YTc2LWMyZGMtNDkzYy04YjUyLWY2MWFlMmM4YmUwNiIsImRhZWYwNDc3LTM0MWItNGRkZS05M2ZjLTRiODE5MDExYjI5NCIsIjg5NDlhMjc3LWRhMzQtNGJiMC1hZjAxLWJkYmRmZjY1ZWI2YSIsImM0MGRlMDc5LTJhNTYtNDkzMi04ZjM1LTA1Mjk3OWJkYzBmYyIsIjFiNGM4ZTdiLWFjMGMtNDE5YS1iODcxLTc4OWVmYTYxYTY3ZSIsImZiN2I2NTdlLWJhNTktNDhjMy04NjU2LTIyNDRmNzcwMzNjZCIsIjMwMDE2MDgwLTI4NWMtNDdjNy04OGQwLTIwZjJhYjU4YjczMCIsIjQ3MzEzZjgxLTA2Y2QtNDk3OS04MDA4LTQxY2E2YTkwN2FlNyIsImM2M2M3NTg0LWQ1MTgtNGM1Ni04MTM4LWU3YTAzMjNiNzNiOCIsIjc1ZmZiMzg0LTRlZDktNDFjYy04ZjMyLTE2N2I4NmJlMzhkMiIsIjUxOGIwYzg2LWZhYWEtNGJiNi1hMTg4LTlkZmM0NzliNDkxMSIsIjQxMjE3YTg2LWU1NWUtNGQ4OC1iYzdjLWExZTEwMTFmNzY0YiIsIjc5OGY5Yzg4LTBlMWEtNDI4OC1iNzA0LTBkNjgzNDUwNzBlNCIsImJmM2MwZjhhLWI0OWEtNDNjNC1iODdhLThkODJlNDhkZGE4YiIsImYyYzhjYjhiLTI3NjktNGI0Ni1hOTY2LTY3OGEyNWE5MWQzYyIsIjZjNThlZjhiLWM0YjItNDM4Zi05NDc1LWI5ZGYxY2FiOGMwZiIsIjNlYWI5OThjLTgyNGQtNGFiOS04NWE1LWU0MjRhMGEyMTFjMSIsImU0MTFjMDhkLTcwNDMtNGQxYi1iYmMxLTExNjUwZWMyZTJhZSIsIjdkNjNkYThkLTQ3MzAtNGJhMC05NmJlLWFlZWFiZTY2ZWY4MSIsIjFhYmNiMzkwLTgwMTItNDUwZi04OWRlLWI5ZjBmZDdmMjAzMiIsImNjYzNmNzkwLTI2YzItNDIwOC1iYzVmLTk3M2Y2ZWNjYmU0NyIsIjAwMDVkMzkyLTc1N2QtNGFjNS05M2MyLWZhNDE1ODZiYjNiZiIsImJiMjNmYTk2LWU4NTktNDBmZS05ZTVjLTM5NWZjNjBmYWJhZCIsIjFlOTdhYzk3LTY5NjAtNDA3MC04ZTQxLTczYTFjMWM5YWE4NCIsIjgwNjdkMjk4LTNmNTUtNDQyMi05ZTYxLTU3MWFjOGRiNjg0YiIsIjAwOWI1MzljLWRjZTMtNDczYS04NjQzLTdkYjk0ZDE2Mjg0NCIsIjM3YjQ4MzllLTViMGMtNDI5My1hZjg4LTFhMjVhYTgwMGY2NyIsImE2MzYyNjlmLWE5NjctNDViMi1iYjRlLTNlMDJkYmI2MjRhMiIsImE0N2RmMmEyLTc5OWEtNGQ4ZC1hNzQ2LTU3OTQxMWFjZDE4NSIsImRmNDFlNWE1LTk3NDktNDMwZi1hNDA5LTJiNjM1MzQzMzAzYSIsImQ2MTMwNGE2LTI0MzYtNDg2ZS04YjQwLWQ1MzUxMmYzYTViZiIsIjFjMTc0M2E4LTg5NzEtNDUyYi1iM2ZkLTY5YWVhM2E5NzUyMyIsImVkODk4M2E4LWFmNzQtNDM0Ni04NTZmLWI2MzE4ZjI1YjYyOCIsImI2Mjc1MWFhLWI5MDMtNDgxNS1iZjRhLTZjYTFmZDY0M2VlNyIsImU1MjZlZWFjLWE0NDAtNDM2NC05MTRkLTEwOWNmZTM3OTQxZSIsImFmZjRiMGFkLTdjM2MtNGQ5NS04M2RmLWJiNTYxOGY2MWQwYiIsIjI4ZTQ2MWIxLTBkY2QtNGU2ZC1iMzZmLTRmNDc0N2Y3MjlhYiIsIjFmYmRkZWIyLTFkYmEtNDFiYS05Y2E1LWRjNGJkMWMxNTBhYiIsIjUyOTAzNGIzLWM0NTAtNDBhOC1iY2M1LWM0MjM4MzJmNDU2MiIsImQxN2JmMGIzLTkzOTgtNGI3NC1hZjNjLWNjZTA1NGQ2ZWY1MiIsImY5OTUyOWI0LWE1OWMtNGJhMS1hMzJkLWZhZDBkZTMwMDlhYyIsImZhNDE3MWI0LTI3NDAtNGIzNi1hMDI2LTgwZGVjY2VjNTU0MCIsIjI5Mzk4NGI0LWU1MTktNDY3Ni05ZDJhLTZmYTNmNjcyYmQxYyIsImNiNDIyNWI3LTM1YWYtNDUzMy04ODlmLTcyNDFjOTlmMTUxYyIsIjBkN2FkYWI5LWYxOWQtNGFmOS05ZTZiLTdkZDVhM2Q3ZDk5ZiIsIjNlYTgzNmJjLTRhMjUtNGZkYi05ZTE4LTQ2NTQ3NTQ5M2Q2ZiIsIjE2ZjgxMGJlLWUyNzktNGUyMi04MWMxLTYyZjQ5NDZjYTUwNiIsImRlNTBlN2JlLTI1YzctNGY5My1hZDUyLTNiZjVhZTgxNTMyMiIsImE1MTBjZWJmLTFlNzktNGM5Yi1iMjFlLTY5OWY5ZDc1MTlmOSIsImJkNjNmNmMwLWNjNjEtNDVlYi1iYjBhLTk3NTE4NWZjNjAxZiIsIjVmMDZkY2MxLTMyNjMtNDFmNi05YmZhLWZhNmYwY2ViODZkOSIsIjRmNjA4MGM5LWNlMzgtNGQ1ZS1iMTY3LWVjNTM3N2JkZGY4OSIsImI0OWIxNGNhLTAzYzYtNGVjMy1iY2E1LTBkNDM2OTM1MDZhYiIsImRhMzM3MWNhLTgwNjItNDY3MS1iMGM4LTUzOGE5YzZmMmFkZCIsImU4OTE0OGNiLTRhMWQtNDM2Ny04YWE0LWM3YWE2NDQyZjQ3MSIsImI0YzQ3MWNiLWYyNjMtNGUyMi1hMDM2LTE2ZDhkMTY0NDZmZSIsImE4NmI4MWNjLWEwZmEtNGRjZC1hNDcwLWM5ZDRmZmI0ZDM0NyIsIjRlYjEzZmNmLTIwYjYtNDc4NC1hZTUzLTMxNDUyYWU3ZmVkMSIsIjA3Yzk2YmQyLWJkNjItNDNkNS05Nzg4LWE0ZDA0Mzg2Y2U1OCIsIjcxMzM3YWQzLTFmNmItNDk3ZS05YTQ1LWZjNmU5NzgyMzc4YiIsIjBiYWZhMGQ3LTNhMDQtNGEwZi05MTdkLTQ3NDJmYjQxMzVkZSIsImE5M2ExM2Q5LTYzMTEtNDFlMS1iM2I2LWY5OWQ0ZmIwMmVhZCIsImYxNjc5NmRhLTM0ZjMtNGY2YS1hYzQzLWM2YTE2OTFmYmIzYyIsImZhMjA2MmRjLTYwNjgtNDYxYy05MmFkLWJiZmY2MDEyNmQxOSIsIjQ2MjkzYmRkLTE4YzEtNGRhYy1hYWE0LTE4MGFhNGIzMzdhZCIsImJkMjVjNGRkLTcxYjgtNDVkMy04NzAyLTk4YzQ3ZmUwMDE5ZCIsIjA5NDVjNGRmLTAxZjEtNGQxYy05MTk3LTZhYTdhZjRjZTczNyIsIjRjYmJkNWRmLWFjMjktNDZmYy1hMjZlLTU3MGMxZjQ4NTk4OCIsImI5MDY0MGUwLWNjNTgtNGU1Yi1iMjFiLTljMTc5NzA4MGRiMyIsIjYxYzk3M2UwLWEwMzMtNGJiYS05YTM5LTRkZmZhOGEzMTJkMiIsImVmYjA3MWUyLWNmYWEtNDBjNy05OGU1LTcyMDU2NmEwZjIyNSIsImI4YTNiM2UzLWQ5ZGYtNDk1Ni05ZmE3LTZkYWE2NTA2MjU3OCIsIjYyMGEyMGU2LWNmMDYtNDA2Yi1hNzUwLTFmM2M0Y2MwYWMzMyIsIjFhYjNjOWU3LWRkZTAtNGFmMS1hZDg5LWU3ZmRlYjdiYjhkOCIsIjJlZjMyYWVkLTBmOGMtNDE0My04ZTIyLWM1MWY4NjFiMzU3NyIsIjI2YjNiZGVlLTFjOGYtNDRlYy04OWJkLTA2ZjgwM2IxNzc4NyIsImQ5OWNlZGVmLWJjODctNDFjYS1iYWFkLTU3M2ZjM2VmMjBlZCIsIjgyZjhmM2VmLTkwNjAtNGEyZi1hNTg3LTVmNDdjYTIzOGFiNyIsImNhNDVmOWVmLWExNzktNDhmOC04MzFkLTk0MWM0ZWMyMjExMyIsImIwYWNiN2YwLTRiZGQtNGQ4My1hY2IwLTI0ZGQ4NmNhZDkwNCIsIjEwNGIyOGYyLWViMmQtNDQ1ZS04ZDRiLTAwMTFlMTE5NmZhZCIsImVmN2ZjMGYyLWU4NTUtNGI3ZS05NzZlLWY0ZDhhZTcwYjVhOCIsIjIxMTU0MmYzLWNjYmQtNGQ5YS05M2E2LWM1ZmJiZDkyMTlhMyIsImZmZDY0NmY0LTkxOTQtNGU2Ny04YTM5LWI2ZjkyZTc3NzU2NCIsIjc5ODYzMmY4LWIwNDUtNGNjMS1hODRkLTgxZWQ1Njc3MWNhYiIsIjU2N2ZiNmY4LTcwNTgtNDk5Ni1hNTNiLTJmMmMxYmQyMTg0ZCIsIjJmNGFiM2Y5LTY4MmQtNDZkNi05MjA0LTdlYmRhN2JiZDQxYyIsIjk2MDE4OGZhLTQwOGUtNDkwMS05NTBlLWQ2ZTE5ZmVkNTRlZiIsIjkwYjZkN2ZhLWZhMjYtNGE4NS05MmUzLTlkYTIwNWVkNDZjNSIsImFhYzM3YmZiLTdlODEtNDMxYy1iYjcwLTVjZTRlODBiY2JkZCIsIjk5ZTYyYWZmLTRmNzYtNDYwYS1hNjExLWY4YTQ4ZTk4Zjc0MSJdLCJpZHR5cCI6InVzZXIiLCJpcGFkZHIiOiI5MC4yNTAuOS40OCIsIm5hbWUiOiJEYXZpZCBGbG9vZCIsIm9pZCI6ImQ1NGVhODllLTdlMmQtNDNhNC1iZTQ1LTU2YzM1MDllZDNhNiIsIm9ucHJlbV9zaWQiOiJTLTEtNS0yMS0yMjA1MjMzODgtMTA4NTAzMTIxNC03MjUzNDU1NDMtMjIyMjI4MSIsInB1aWQiOiIxMDAzM0ZGRjhEQkM1RTA3IiwicmgiOiIwLkFRSUFOYUtrT3VLMjFVaVJsWF9QQmJSWnNFWklmM2tBdXRkUHVrUGF3ZmoyTUJNQ0FKMC4iLCJzY3AiOiJ1c2VyX2ltcGVyc29uYXRpb24iLCJzdWIiOiJ3b2xNbGJBaWtELUxuLXdBSDR0NXdncTBqNEJfelRvZm14YWRpWXRLLUtBIiwidGlkIjoiM2FhNGEyMzUtYjZlMi00OGQ1LTkxOTUtN2ZjZjA1YjQ1OWIwIiwidW5pcXVlX25hbWUiOiJERkxPT0BlcXVpbm9yLmNvbSIsInVwbiI6IkRGTE9PQGVxdWlub3IuY29tIiwidXRpIjoiMTdqd0IyaUVTVTZ0QWRoZU9wb19BQSIsInZlciI6IjEuMCIsIndpZHMiOlsiYjc5ZmJmNGQtM2VmOS00Njg5LTgxNDMtNzZiMTk0ZTg1NTA5Il0sInhtc19pZHJlbCI6IjEgMjIiLCJ4bXNfdGNkdCI6MTM0NDU4MzYwMn0.xqGlTWIA2l1oVqCMKNFt4L1_n5m2DrJPgmbH18MB8psacqNrWEpnL1pGhN8zFprrnN-BHksgou5oo8kuUvB3k-v0KY8HOZAXwZUUeXdwRASTrSwpLbR5qI3ICN2tXGeWQaWdnfe0M3fCoGuguazOmS4i9P60WwGDAYTdjLYUwmsgA6eonneXCN_1-aMWyHl6YwIKaH_aVylN5zozYtwIrOA7g6W9cOguVmj8qoHKZQDm8VvwSGfsRu9jr8Cr_PIqySMDl1DTdtRVm8fCsDHFhqk_vWTS8FGFC4CSoSNtfgZTGIS1vVeJbLovcckZSmcq2sJ8M9upvXFsHHRoFRW6jQ\""
+							"access_token = \"...\""
 						],
 						"outputs": [],
 						"execution_count": 7
@@ -46110,7 +46129,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "b324e14c-a03a-4345-9993-b913780a041a"
+						"spark.autotune.trackingId": "2fbcde68-556f-4ad0-8435-8d182bc4c75a"
 					}
 				},
 				"metadata": {
@@ -46135,7 +46154,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -46386,7 +46406,7 @@
 							"# Load WBS file\n",
 							"current_year = fromDate[:4]\n",
 							"current_month = fromDate[4:6]\n",
-							"wbs_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/finops-wbs-dev/{current_year}/{current_month}/WBS.parquet'\n",
+							"wbs_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/finops-wbs-prod/{current_year}/{current_month}/WBS.parquet'\n",
 							"\n",
 							"# Process cost data\n",
 							"cost_df = spark.read.format('parquet').load(cost_source_path)\n",
@@ -47474,7 +47494,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "2192f289-2022-41cf-a1d8-957f30750f0e"
+						"spark.autotune.trackingId": "83debda8-7d2e-4af8-8160-3a15069b1ce4"
 					}
 				},
 				"metadata": {
@@ -47499,15 +47519,13 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\r\n",
 							"import pyspark.sql.types as T\r\n",
@@ -51777,8 +51795,7 @@
 				"sessionLevelPackagesEnabled": false,
 				"annotations": []
 			},
-			"dependsOn": [],
-			"location": "northeurope"
+			"dependsOn": []
 		},
 		{
 			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
@@ -51802,8 +51819,7 @@
 				"sessionLevelPackagesEnabled": true,
 				"annotations": []
 			},
-			"dependsOn": [],
-			"location": "northeurope"
+			"dependsOn": []
 		},
 		{
 			"name": "[concat(parameters('workspaceName'), '/sparkpool32')]",
@@ -51832,8 +51848,185 @@
 				"sessionLevelPackagesEnabled": true,
 				"annotations": []
 			},
-			"dependsOn": [],
-			"location": "northeurope"
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/FinopsWbsProdGold')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "Lakehouse",
+				"typeProperties": {
+					"workspaceId": "e64e9aca-92cf-4d15-965c-321d6308bca6",
+					"artifactId": "2d2ed7e3-1ec8-4e43-b8bb-2a3c0454c5a8",
+					"tenant": "3aa4a235-b6e2-48d5-9195-7fcf05b459b0",
+					"servicePrincipalId": "4c1cded2-f7a7-4c00-8d65-0a3287cbd682",
+					"servicePrincipalCredentialType": "ServicePrincipalKey",
+					"servicePrincipalCredential": {
+						"type": "SecureString",
+						"value": "[parameters('FinopsWbsProdGold_servicePrincipalCredential')]"
+					}
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/FinopsWbsProdGold')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('FinopsWbsProdGold_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "LakehouseTable",
+				"schema": [
+					{
+						"name": "TaskResponsibility",
+						"type": "string"
+					},
+					{
+						"name": "WBSID",
+						"type": "string"
+					},
+					{
+						"name": "WBS",
+						"type": "string"
+					},
+					{
+						"name": "Description",
+						"type": "string"
+					},
+					{
+						"name": "ActiveStatusIds",
+						"type": "string"
+					},
+					{
+						"name": "CreatedDate",
+						"type": "date"
+					},
+					{
+						"name": "ModifiedDate",
+						"type": "date"
+					},
+					{
+						"name": "IsActive",
+						"type": "boolean"
+					},
+					{
+						"name": "WBSOwnerEMployeeID",
+						"type": "string"
+					},
+					{
+						"name": "WBSOwnerName",
+						"type": "string"
+					},
+					{
+						"name": "WBSOwnerShortName",
+						"type": "string"
+					}
+				],
+				"typeProperties": {
+					"table": "wbs"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('FinopsWbsProdGold_dataSetLinkedServiceName'))]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/WBSSource')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('WBSSource_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"year": {
+						"type": "string"
+					},
+					"month": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "WBS.parquet",
+						"folderPath": {
+							"value": "@concat('finops-wbs-prod/', dataset().year, '/', dataset().month)",
+							"type": "Expression"
+						},
+						"fileSystem": "usage"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": [
+					{
+						"name": "employeeId",
+						"type": "UTF8"
+					},
+					{
+						"name": "displayName",
+						"type": "UTF8"
+					},
+					{
+						"name": "userPrincipalName",
+						"type": "UTF8"
+					},
+					{
+						"name": "accountEnabled",
+						"type": "BOOLEAN"
+					},
+					{
+						"name": "department",
+						"type": "UTF8"
+					},
+					{
+						"name": "officeLocation",
+						"type": "UTF8"
+					},
+					{
+						"name": "country",
+						"type": "UTF8"
+					},
+					{
+						"name": "city",
+						"type": "UTF8"
+					},
+					{
+						"name": "manager_employeeId",
+						"type": "UTF8"
+					},
+					{
+						"name": "manager_displayName",
+						"type": "UTF8"
+					},
+					{
+						"name": "manager_userPrincipalName",
+						"type": "UTF8"
+					},
+					{
+						"name": "manager_department",
+						"type": "UTF8"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('WBSSource_dataSetLinkedServiceName'))]"
+			]
 		}
 	]
 }
