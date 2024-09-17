@@ -5,7 +5,14 @@
 			{
 				"name": "persist latest wbs owner",
 				"type": "Copy",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "pull wbs table from fabric finops-wbs-prod workspace",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -29,6 +36,65 @@
 					"sink": {
 						"type": "ParquetSink",
 						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings",
+							"copyBehavior": "PreserveHierarchy"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "WBSSource",
+						"type": "DatasetReference",
+						"parameters": {
+							"year": {
+								"value": "@formatDateTime(utcNow(), 'yyyy')",
+								"type": "Expression"
+							},
+							"month": {
+								"value": "@formatDateTime(utcNow(), 'MM')",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "WBSLatest",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "pull wbs table from fabric finops-wbs-prod workspace",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "LakehouseTableSource"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
 							"type": "AzureBlobFSWriteSettings"
 						},
 						"formatSettings": {
@@ -47,7 +113,13 @@
 				},
 				"inputs": [
 					{
-						"referenceName": "WBSOwnerSource",
+						"referenceName": "FinopsWbsProdGold",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "WBSSource",
 						"type": "DatasetReference",
 						"parameters": {
 							"year": {
@@ -59,12 +131,6 @@
 								"type": "Expression"
 							}
 						}
-					}
-				],
-				"outputs": [
-					{
-						"referenceName": "WBSOwnerSink",
-						"type": "DatasetReference"
 					}
 				]
 			}
