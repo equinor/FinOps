@@ -1,0 +1,81 @@
+{
+	"name": "WBSSink",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "s037-cost-management-WorkspaceDefaultStorage",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"year": {
+				"type": "string"
+			},
+			"month": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "WBS.parquet",
+				"folderPath": {
+					"value": "@concat('finops-wbs-prod/', dataset().year, '/', dataset().month)",
+					"type": "Expression"
+				},
+				"fileSystem": "usage"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": [
+			{
+				"name": "employeeId",
+				"type": "UTF8"
+			},
+			{
+				"name": "displayName",
+				"type": "UTF8"
+			},
+			{
+				"name": "userPrincipalName",
+				"type": "UTF8"
+			},
+			{
+				"name": "accountEnabled",
+				"type": "BOOLEAN"
+			},
+			{
+				"name": "department",
+				"type": "UTF8"
+			},
+			{
+				"name": "officeLocation",
+				"type": "UTF8"
+			},
+			{
+				"name": "country",
+				"type": "UTF8"
+			},
+			{
+				"name": "city",
+				"type": "UTF8"
+			},
+			{
+				"name": "manager_employeeId",
+				"type": "UTF8"
+			},
+			{
+				"name": "manager_displayName",
+				"type": "UTF8"
+			},
+			{
+				"name": "manager_userPrincipalName",
+				"type": "UTF8"
+			},
+			{
+				"name": "manager_department",
+				"type": "UTF8"
+			}
+		]
+	}
+}
