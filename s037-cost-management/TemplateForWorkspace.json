@@ -11,6 +11,10 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'accountKey' of 'AzureDataLakeStorage1'"
 		},
+		"FinopsWbsProdGold_servicePrincipalCredential": {
+			"type": "secureString",
+			"metadata": "Secure string for 'servicePrincipalCredential' of 'FinopsWbsProdGold'"
+		},
 		"NewServiceNow_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'NewServiceNow'",
@@ -20,10 +24,6 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 's037-cost-management-WorkspaceDefaultSqlServer'",
 			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:s037-cost-management.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
-		},
-		"FinopsWbsProdGold_servicePrincipalCredential": {
-			"type": "secureString",
-			"metadata": "Secure string for 'servicePrincipalCredential' of 'FinopsWbsProdGold'"
 		},
 		"Ad-hoc Combined Extend AI column and WBS tags - Extended Parquet_pipelineStorageAccountVariable": {
 			"type": "string",
@@ -156,6 +156,10 @@
 		"CleanedCSVDestSink_dataSetLinkedServiceName": {
 			"type": "string",
 			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
+		},
+		"FinopsWbsProdGold_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "FinopsWbsProdGold"
 		},
 		"Monthly_Parquet_dataSetLinkedServiceName": {
 			"type": "string",
@@ -314,6 +318,10 @@
 			"defaultValue": "HUB Storage Account"
 		},
 		"WBSLatest_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
+		},
+		"WBSSource_dataSetLinkedServiceName": {
 			"type": "string",
 			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
 		},
@@ -1140,14 +1148,6 @@
 		"sparkpool32_sparkVersion": {
 			"type": "string",
 			"defaultValue": "3.2"
-		},
-		"FinopsWbsProdGold_dataSetLinkedServiceName": {
-			"type": "string",
-			"defaultValue": "FinopsWbsProdGold"
-		},
-		"WBSSource_dataSetLinkedServiceName": {
-			"type": "string",
-			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
 		}
 	},
 	"variables": {
@@ -21342,6 +21342,71 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/FinopsWbsProdGold')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('FinopsWbsProdGold_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "LakehouseTable",
+				"schema": [
+					{
+						"name": "TaskResponsibility",
+						"type": "string"
+					},
+					{
+						"name": "WBSID",
+						"type": "string"
+					},
+					{
+						"name": "WBS",
+						"type": "string"
+					},
+					{
+						"name": "Description",
+						"type": "string"
+					},
+					{
+						"name": "ActiveStatusIds",
+						"type": "string"
+					},
+					{
+						"name": "CreatedDate",
+						"type": "date"
+					},
+					{
+						"name": "ModifiedDate",
+						"type": "date"
+					},
+					{
+						"name": "IsActive",
+						"type": "boolean"
+					},
+					{
+						"name": "WBSOwnerEMployeeID",
+						"type": "string"
+					},
+					{
+						"name": "WBSOwnerName",
+						"type": "string"
+					},
+					{
+						"name": "WBSOwnerShortName",
+						"type": "string"
+					}
+				],
+				"typeProperties": {
+					"table": "wbs"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('FinopsWbsProdGold_dataSetLinkedServiceName'))]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/Monthly_Parquet')]",
 			"type": "Microsoft.Synapse/workspaces/datasets",
 			"apiVersion": "2019-06-01-preview",
@@ -23691,6 +23756,92 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/WBSSource')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('WBSSource_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"year": {
+						"type": "string"
+					},
+					"month": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "WBS.parquet",
+						"folderPath": {
+							"value": "@concat('finops-wbs-prod/', dataset().year, '/', dataset().month)",
+							"type": "Expression"
+						},
+						"fileSystem": "usage"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": [
+					{
+						"name": "employeeId",
+						"type": "UTF8"
+					},
+					{
+						"name": "displayName",
+						"type": "UTF8"
+					},
+					{
+						"name": "userPrincipalName",
+						"type": "UTF8"
+					},
+					{
+						"name": "accountEnabled",
+						"type": "BOOLEAN"
+					},
+					{
+						"name": "department",
+						"type": "UTF8"
+					},
+					{
+						"name": "officeLocation",
+						"type": "UTF8"
+					},
+					{
+						"name": "country",
+						"type": "UTF8"
+					},
+					{
+						"name": "city",
+						"type": "UTF8"
+					},
+					{
+						"name": "manager_employeeId",
+						"type": "UTF8"
+					},
+					{
+						"name": "manager_displayName",
+						"type": "UTF8"
+					},
+					{
+						"name": "manager_userPrincipalName",
+						"type": "UTF8"
+					},
+					{
+						"name": "manager_department",
+						"type": "UTF8"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('WBSSource_dataSetLinkedServiceName'))]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/ds_CSV_File')]",
 			"type": "Microsoft.Synapse/workspaces/datasets",
 			"apiVersion": "2019-06-01-preview",
@@ -24421,6 +24572,33 @@
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]",
 				"[concat(variables('workspaceId'), '/linkedServices/ACM_Toolkit_kv')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/FinopsWbsProdGold')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "Lakehouse",
+				"typeProperties": {
+					"workspaceId": "e64e9aca-92cf-4d15-965c-321d6308bca6",
+					"artifactId": "2d2ed7e3-1ec8-4e43-b8bb-2a3c0454c5a8",
+					"tenant": "3aa4a235-b6e2-48d5-9195-7fcf05b459b0",
+					"servicePrincipalId": "4c1cded2-f7a7-4c00-8d65-0a3287cbd682",
+					"servicePrincipalCredentialType": "ServicePrincipalKey",
+					"servicePrincipalCredential": {
+						"type": "SecureString",
+						"value": "[parameters('FinopsWbsProdGold_servicePrincipalCredential')]"
+					}
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
 			]
 		},
 		{
@@ -27642,7 +27820,7 @@
 					"name": "PowerBIViews"
 				},
 				"content": {
-					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW WBSOwners\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/finops-wbs-dev/WBS-latest.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n\n",
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW WBSOwners\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/finops-wbs-prod/WBS-latest.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n\n",
 					"metadata": {
 						"language": "sql"
 					},
@@ -44083,7 +44261,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "fce41c3b-fe59-4009-9357-0122d0495a19"
+						"spark.autotune.trackingId": "2e18fef4-2d9c-4f74-922a-a2bcf499f91a"
 					}
 				},
 				"metadata": {
@@ -44108,8 +44286,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -44187,7 +44364,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"def get_last_day_prev_month(to_date):\r\n",
 							"    current_month = int(to_date[4:6])\r\n",
@@ -44956,7 +45132,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "c65641f8-cfbc-43bc-b57c-90d164da42fb"
+						"spark.autotune.trackingId": "14eb8daa-8383-417c-8466-199bda2b611e"
 					}
 				},
 				"metadata": {
@@ -44981,8 +45157,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -46129,7 +46304,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "2fbcde68-556f-4ad0-8435-8d182bc4c75a"
+						"spark.autotune.trackingId": "af8e305c-8160-40e6-b398-5b24e4796ed8"
 					}
 				},
 				"metadata": {
@@ -51849,184 +52024,6 @@
 				"annotations": []
 			},
 			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/FinopsWbsProdGold')]",
-			"type": "Microsoft.Synapse/workspaces/linkedServices",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"annotations": [],
-				"type": "Lakehouse",
-				"typeProperties": {
-					"workspaceId": "e64e9aca-92cf-4d15-965c-321d6308bca6",
-					"artifactId": "2d2ed7e3-1ec8-4e43-b8bb-2a3c0454c5a8",
-					"tenant": "3aa4a235-b6e2-48d5-9195-7fcf05b459b0",
-					"servicePrincipalId": "4c1cded2-f7a7-4c00-8d65-0a3287cbd682",
-					"servicePrincipalCredentialType": "ServicePrincipalKey",
-					"servicePrincipalCredential": {
-						"type": "SecureString",
-						"value": "[parameters('FinopsWbsProdGold_servicePrincipalCredential')]"
-					}
-				},
-				"connectVia": {
-					"referenceName": "AutoResolveIntegrationRuntime",
-					"type": "IntegrationRuntimeReference"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/FinopsWbsProdGold')]",
-			"type": "Microsoft.Synapse/workspaces/datasets",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "[parameters('FinopsWbsProdGold_dataSetLinkedServiceName')]",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "LakehouseTable",
-				"schema": [
-					{
-						"name": "TaskResponsibility",
-						"type": "string"
-					},
-					{
-						"name": "WBSID",
-						"type": "string"
-					},
-					{
-						"name": "WBS",
-						"type": "string"
-					},
-					{
-						"name": "Description",
-						"type": "string"
-					},
-					{
-						"name": "ActiveStatusIds",
-						"type": "string"
-					},
-					{
-						"name": "CreatedDate",
-						"type": "date"
-					},
-					{
-						"name": "ModifiedDate",
-						"type": "date"
-					},
-					{
-						"name": "IsActive",
-						"type": "boolean"
-					},
-					{
-						"name": "WBSOwnerEMployeeID",
-						"type": "string"
-					},
-					{
-						"name": "WBSOwnerName",
-						"type": "string"
-					},
-					{
-						"name": "WBSOwnerShortName",
-						"type": "string"
-					}
-				],
-				"typeProperties": {
-					"table": "wbs"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/linkedServices/', parameters('FinopsWbsProdGold_dataSetLinkedServiceName'))]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/WBSSource')]",
-			"type": "Microsoft.Synapse/workspaces/datasets",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "[parameters('WBSSource_dataSetLinkedServiceName')]",
-					"type": "LinkedServiceReference"
-				},
-				"parameters": {
-					"year": {
-						"type": "string"
-					},
-					"month": {
-						"type": "string"
-					}
-				},
-				"annotations": [],
-				"type": "Parquet",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobFSLocation",
-						"fileName": "WBS.parquet",
-						"folderPath": {
-							"value": "@concat('finops-wbs-prod/', dataset().year, '/', dataset().month)",
-							"type": "Expression"
-						},
-						"fileSystem": "usage"
-					},
-					"compressionCodec": "snappy"
-				},
-				"schema": [
-					{
-						"name": "employeeId",
-						"type": "UTF8"
-					},
-					{
-						"name": "displayName",
-						"type": "UTF8"
-					},
-					{
-						"name": "userPrincipalName",
-						"type": "UTF8"
-					},
-					{
-						"name": "accountEnabled",
-						"type": "BOOLEAN"
-					},
-					{
-						"name": "department",
-						"type": "UTF8"
-					},
-					{
-						"name": "officeLocation",
-						"type": "UTF8"
-					},
-					{
-						"name": "country",
-						"type": "UTF8"
-					},
-					{
-						"name": "city",
-						"type": "UTF8"
-					},
-					{
-						"name": "manager_employeeId",
-						"type": "UTF8"
-					},
-					{
-						"name": "manager_displayName",
-						"type": "UTF8"
-					},
-					{
-						"name": "manager_userPrincipalName",
-						"type": "UTF8"
-					},
-					{
-						"name": "manager_department",
-						"type": "UTF8"
-					}
-				]
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/linkedServices/', parameters('WBSSource_dataSetLinkedServiceName'))]"
-			]
 		}
 	]
 }
