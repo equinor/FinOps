@@ -11,10 +11,6 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'accountKey' of 'AzureDataLakeStorage1'"
 		},
-		"FinopsWbsProdGold_servicePrincipalCredential": {
-			"type": "secureString",
-			"metadata": "Secure string for 'servicePrincipalCredential' of 'FinopsWbsProdGold'"
-		},
 		"NewServiceNow_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'NewServiceNow'",
@@ -24597,8 +24593,12 @@
 					"servicePrincipalId": "4c1cded2-f7a7-4c00-8d65-0a3287cbd682",
 					"servicePrincipalCredentialType": "ServicePrincipalKey",
 					"servicePrincipalCredential": {
-						"type": "SecureString",
-						"value": "[parameters('FinopsWbsProdGold_servicePrincipalCredential')]"
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "ACM_Toolkit_kv",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "sp-password"
 					}
 				},
 				"connectVia": {
@@ -24607,7 +24607,8 @@
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]",
+				"[concat(variables('workspaceId'), '/linkedServices/ACM_Toolkit_kv')]"
 			]
 		},
 		{
