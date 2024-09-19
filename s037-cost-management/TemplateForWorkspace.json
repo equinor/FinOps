@@ -1077,29 +1077,29 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
-		"prodcluster_delayInMinutes": {
+		"sparkpool32_delayInMinutes": {
 			"type": "int",
-			"defaultValue": 30
+			"defaultValue": 15
 		},
-		"prodcluster_maxNodeCount": {
+		"sparkpool32_maxNodeCount": {
 			"type": "int",
-			"defaultValue": 10
+			"defaultValue": 5
 		},
-		"prodcluster_minNodeCount": {
+		"sparkpool32_minNodeCount": {
 			"type": "int",
 			"defaultValue": 3
 		},
-		"prodcluster_nodeCount": {
+		"sparkpool32_nodeCount": {
 			"type": "int",
-			"defaultValue": 10
+			"defaultValue": 0
 		},
-		"prodcluster_nodeSize": {
+		"sparkpool32_nodeSize": {
 			"type": "string",
-			"defaultValue": "Large"
+			"defaultValue": "Medium"
 		},
-		"prodcluster_sparkVersion": {
+		"sparkpool32_sparkVersion": {
 			"type": "string",
-			"defaultValue": "3.4"
+			"defaultValue": "3.2"
 		},
 		"sprkpool33large_delayInMinutes": {
 			"type": "int",
@@ -1125,29 +1125,29 @@
 			"type": "string",
 			"defaultValue": "3.3"
 		},
-		"sparkpool32_delayInMinutes": {
+		"prodcluster_delayInMinutes": {
 			"type": "int",
-			"defaultValue": 15
+			"defaultValue": 30
 		},
-		"sparkpool32_maxNodeCount": {
+		"prodcluster_maxNodeCount": {
 			"type": "int",
-			"defaultValue": 5
+			"defaultValue": 10
 		},
-		"sparkpool32_minNodeCount": {
+		"prodcluster_minNodeCount": {
 			"type": "int",
 			"defaultValue": 3
 		},
-		"sparkpool32_nodeCount": {
+		"prodcluster_nodeCount": {
 			"type": "int",
-			"defaultValue": 0
+			"defaultValue": 10
 		},
-		"sparkpool32_nodeSize": {
+		"prodcluster_nodeSize": {
 			"type": "string",
-			"defaultValue": "Medium"
+			"defaultValue": "Large"
 		},
-		"sparkpool32_sparkVersion": {
+		"prodcluster_sparkVersion": {
 			"type": "string",
-			"defaultValue": "3.2"
+			"defaultValue": "3.4"
 		}
 	},
 	"variables": {
@@ -20661,7 +20661,16 @@
 							"secureOutput": false,
 							"secureInput": false
 						},
-						"userProperties": [],
+						"userProperties": [
+							{
+								"name": "Source",
+								"value": "wbs"
+							},
+							{
+								"name": "Destination",
+								"value": "usage/@{concat('finops-wbs-prod/', formatDateTime(utcNow(), 'yyyy'), '/', formatDateTime(utcNow(), 'MM'))}/WBS.parquet"
+							}
+						],
 						"typeProperties": {
 							"source": {
 								"type": "LakehouseTableSource"
@@ -46304,7 +46313,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "af8e305c-8160-40e6-b398-5b24e4796ed8"
+						"spark.autotune.trackingId": "8e98c541-e59d-4641-a79f-1906e1b09cc2"
 					}
 				},
 				"metadata": {
@@ -46329,8 +46338,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -51949,54 +51957,6 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/prodcluster')]",
-			"type": "Microsoft.Synapse/workspaces/bigDataPools",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"autoPause": {
-					"enabled": true,
-					"delayInMinutes": "[parameters('prodcluster_delayInMinutes')]"
-				},
-				"autoScale": {
-					"enabled": true,
-					"maxNodeCount": "[parameters('prodcluster_maxNodeCount')]",
-					"minNodeCount": "[parameters('prodcluster_minNodeCount')]"
-				},
-				"nodeCount": "[parameters('prodcluster_nodeCount')]",
-				"nodeSize": "[parameters('prodcluster_nodeSize')]",
-				"nodeSizeFamily": "MemoryOptimized",
-				"sparkVersion": "[parameters('prodcluster_sparkVersion')]",
-				"isComputeIsolationEnabled": false,
-				"sessionLevelPackagesEnabled": false,
-				"annotations": []
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
-			"type": "Microsoft.Synapse/workspaces/bigDataPools",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"autoPause": {
-					"enabled": true,
-					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
-				},
-				"autoScale": {
-					"enabled": true,
-					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
-					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
-				},
-				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
-				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
-				"nodeSizeFamily": "MemoryOptimized",
-				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
-				"isComputeIsolationEnabled": false,
-				"sessionLevelPackagesEnabled": true,
-				"annotations": []
-			},
-			"dependsOn": []
-		},
-		{
 			"name": "[concat(parameters('workspaceName'), '/sparkpool32')]",
 			"type": "Microsoft.Synapse/workspaces/bigDataPools",
 			"apiVersion": "2019-06-01-preview",
@@ -52023,7 +51983,58 @@
 				"sessionLevelPackagesEnabled": true,
 				"annotations": []
 			},
-			"dependsOn": []
+			"dependsOn": [],
+			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
+				},
+				"autoScale": {
+					"enabled": true,
+					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
+					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
+				},
+				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
+				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": true,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/prodcluster')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": "[parameters('prodcluster_delayInMinutes')]"
+				},
+				"autoScale": {
+					"enabled": true,
+					"maxNodeCount": "[parameters('prodcluster_maxNodeCount')]",
+					"minNodeCount": "[parameters('prodcluster_minNodeCount')]"
+				},
+				"nodeCount": "[parameters('prodcluster_nodeCount')]",
+				"nodeSize": "[parameters('prodcluster_nodeSize')]",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "[parameters('prodcluster_sparkVersion')]",
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": false,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "northeurope"
 		}
 	]
 }
