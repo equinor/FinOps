@@ -87,7 +87,16 @@
 					"secureOutput": false,
 					"secureInput": false
 				},
-				"userProperties": [],
+				"userProperties": [
+					{
+						"name": "Source",
+						"value": "wbs"
+					},
+					{
+						"name": "Destination",
+						"value": "usage/@{concat('finops-wbs-prod/', formatDateTime(utcNow(), 'yyyy'), '/', formatDateTime(utcNow(), 'MM'))}/WBS.parquet"
+					}
+				],
 				"typeProperties": {
 					"source": {
 						"type": "LakehouseTableSource"
