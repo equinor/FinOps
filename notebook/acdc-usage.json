@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "c5fe5aaa-b639-401e-9a31-9cae8c1939d9"
+				"spark.autotune.trackingId": "159c79c0-4377-48f0-aae6-0bbf0182f450"
 			}
 		},
 		"metadata": {
@@ -54,9 +54,10 @@
 			{
 				"cell_type": "code",
 				"source": [
-					"import pyspark.sql.functions as F"
+					"import pyspark.sql.functions as F\r\n",
+					"import pyspark.sql.types as T"
 				],
-				"execution_count": 7
+				"execution_count": 53
 			},
 			{
 				"cell_type": "code",
@@ -72,10 +73,10 @@
 					}
 				},
 				"source": [
-					"acdc_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/ACDC/cost_details.parquet'\r\n",
+					"acdc_path = 'abfss://usage@s037costmgmt.dfs.core.windows.net/ACDC/cost_details.parquet'\r\n",
 					"acdc_df = spark.read.format('parquet').load(acdc_path)"
 				],
-				"execution_count": 2
+				"execution_count": 54
 			},
 			{
 				"cell_type": "code",
@@ -102,30 +103,22 @@
 					"    'AllocType',\r\n",
 					"    'ResourceCostAllocationType',\r\n",
 					"    'LatestCostAllocationCode',\r\n",
-					"    'LatestCostAllocationStatus',\r\n",
-					"    ''\r\n",
-					")"
+					"    'LatestCostAllocationCodeStatus',\r\n",
+					"    'LatestCostCenter',\r\n",
+					"    'LatestCostCenterStatus',\r\n",
+					"    'ServiceNowWBS',\r\n",
+					"    'ServiceNowWBSStatus',\r\n",
+					"    'Line_Text',\r\n",
+					"    'SAP_Line_Text',\r\n",
+					"    'Document_Number',\r\n",
+					"    'SAP_Response_Text',\r\n",
+					"    'Period'\r\n",
+					")\r\n",
+					"\r\n",
+					"acdc_df = acdc_df.withColumn('Date', F.to_date('Period', 'yyyy/MM'))\r\n",
+					"acdc_df = acdc_df.withColumn('Amount', F.regexp_replace(\"Amount\", \",\", \".\").cast(T.DoubleType()))"
 				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"display(acdc_df)"
-				],
-				"execution_count": 3
+				"execution_count": 55
 			},
 			{
 				"cell_type": "code",
@@ -141,9 +134,97 @@
 					}
 				},
 				"source": [
-					""
+					"cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet'\r\n",
+					"cost_df = spark.read.format('parquet').load(cost_path)"
 				],
-				"execution_count": null
+				"execution_count": 56
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cost_df = cost_df.select(\r\n",
+					"    'CostInBillingCurrency',\r\n",
+					"    'SubscriptionId',\r\n",
+					"    'SubscriptionName',\r\n",
+					"    'ResourceGroup',\r\n",
+					"    'Application_Name',\r\n",
+					"    'ActiveWBS',\r\n",
+					"    'Date'\r\n",
+					")"
+				],
+				"execution_count": 57
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cost_df = cost_df.withColumn('Date', F.date_format('Date', 'yyyy-MM-01'))\r\n",
+					"cost_df = cost_df.where(F.col('Date') >= '2022-05-01')"
+				],
+				"execution_count": 58
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"cost_df = cost_df \\\r\n",
+					"    .groupBy('Date', 'SubscriptionId', 'SubscriptionName', 'ResourceGroup', 'Application_Name', 'ActiveWBS') \\\r\n",
+					"    .agg(F.sum('CostInBillingCurrency').alias('Amount'))"
+				],
+				"execution_count": 59
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"acdc_processed_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/ACDC/processed_acdc_details.parquet\"\r\n",
+					"acdc_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(acdc_processed_path)\r\n",
+					"\r\n",
+					"cost_processed_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/ACDC/processed_finops_details.parquet\"\r\n",
+					"cost_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(cost_processed_path)"
+				],
+				"execution_count": 60
 			}
 		]
 	}
