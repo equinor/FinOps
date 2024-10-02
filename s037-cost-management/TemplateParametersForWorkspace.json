@@ -11,6 +11,9 @@
 		"NewServiceNow_connectionString": {
 			"value": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=smdatasqlprod.database.windows.net;Initial Catalog=ServiceNow"
 		},
+		"omniaacdcsqlprod_connectionString": {
+			"value": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=omniaacdcsqlprod.database.windows.net;Initial Catalog=common"
+		},
 		"s037-cost-management-WorkspaceDefaultSqlServer_connectionString": {
 			"value": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:s037-cost-management.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
 		},
@@ -85,6 +88,12 @@
 		},
 		"process-cost-history_pipelineStorageAccountVariable": {
 			"value": "s037costmgmt"
+		},
+		"ACDCCostViewDetails_dataSetLinkedServiceName": {
+			"value": "omniaacdcsqlprod"
+		},
+		"ACDCUsageDetails_dataSetLinkedServiceName": {
+			"value": "s037-cost-management-WorkspaceDefaultStorage"
 		},
 		"Adhoc_CSV_Source_dataSetLinkedServiceName": {
 			"value": "s037-cost-management-WorkspaceDefaultStorage"
@@ -505,6 +514,15 @@
 		},
 		"VM-utilization-historic_notebookSparkPoolEndpointRef": {
 			"value": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
+		},
+		"acdc-usage_notebookSparkPoolNameRef": {
+			"value": "sprkpool33large"
+		},
+		"acdc-usage_notebookSparkPoolIdRef": {
+			"value": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"acdc-usage_notebookSparkPoolEndpointRef": {
+			"value": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
 		"advisor-recommendations-processing_notebookSparkPoolNameRef": {
 			"value": "sprkpool33large"

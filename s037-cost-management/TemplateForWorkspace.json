@@ -16,6 +16,11 @@
 			"metadata": "Secure string for 'connectionString' of 'NewServiceNow'",
 			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=smdatasqlprod.database.windows.net;Initial Catalog=ServiceNow"
 		},
+		"omniaacdcsqlprod_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'omniaacdcsqlprod'",
+			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=omniaacdcsqlprod.database.windows.net;Initial Catalog=common"
+		},
 		"s037-cost-management-WorkspaceDefaultSqlServer_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 's037-cost-management-WorkspaceDefaultSqlServer'",
@@ -116,6 +121,14 @@
 		"process-cost-history_pipelineStorageAccountVariable": {
 			"type": "string",
 			"defaultValue": "s037costmgmt"
+		},
+		"ACDCCostViewDetails_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "omniaacdcsqlprod"
+		},
+		"ACDCUsageDetails_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
 		},
 		"Adhoc_CSV_Source_dataSetLinkedServiceName": {
 			"type": "string",
@@ -676,6 +689,18 @@
 		"VM-utilization-historic_notebookSparkPoolEndpointRef": {
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool32"
+		},
+		"acdc-usage_notebookSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"acdc-usage_notebookSparkPoolIdRef": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"acdc-usage_notebookSparkPoolEndpointRef": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
 		"advisor-recommendations-processing_notebookSparkPoolNameRef": {
 			"type": "string",
@@ -8178,6 +8203,114 @@
 				"[concat(variables('workspaceId'), '/datasets/Monthly_Parquet')]",
 				"[concat(variables('workspaceId'), '/notebooks/monthly-cost-extend-v3')]",
 				"[concat(variables('workspaceId'), '/bigDataPools/', parameters('Extend Monthly Cost_pipelineSparkPoolNameRef'))]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Ingest ACDC Usage')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "ingest acdc cost usage",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"queryTimeout": "02:00:00",
+								"isolationLevel": "Snapshot",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings",
+									"copyBehavior": "PreserveHierarchy"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "ACDCCostViewDetails",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ACDCUsageDetails",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "process acdc usage",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "ingest acdc cost usage",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "acdc-usage",
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"numExecutors": null
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "PipelinesInProduction/Cost"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/ACDCCostViewDetails')]",
+				"[concat(variables('workspaceId'), '/datasets/ACDCUsageDetails')]",
+				"[concat(variables('workspaceId'), '/notebooks/acdc-usage')]"
 			]
 		},
 		{
@@ -20730,6 +20863,174 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/ACDCCostViewDetails')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('ACDCCostViewDetails_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "Id",
+						"type": "uniqueidentifier"
+					},
+					{
+						"name": "WBS",
+						"type": "nvarchar"
+					},
+					{
+						"name": "SubscriptionId",
+						"type": "nvarchar"
+					},
+					{
+						"name": "SubscriptionName",
+						"type": "nvarchar"
+					},
+					{
+						"name": "ResourceGroup",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Amount",
+						"type": "nvarchar"
+					},
+					{
+						"name": "ServiceNowAppName",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Posting_Date",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Company_Code",
+						"type": "nvarchar"
+					},
+					{
+						"name": "General_Ledger_Account",
+						"type": "nvarchar"
+					},
+					{
+						"name": "AllocType",
+						"type": "nvarchar"
+					},
+					{
+						"name": "ResourceCostAllocationType",
+						"type": "nvarchar"
+					},
+					{
+						"name": "LatestCostAllocationCode",
+						"type": "nvarchar"
+					},
+					{
+						"name": "LatestCostAllocationCodeStatus",
+						"type": "nvarchar"
+					},
+					{
+						"name": "LatestCostAllocationCodeCompanyCode",
+						"type": "nvarchar"
+					},
+					{
+						"name": "LatestCostCenter",
+						"type": "nvarchar"
+					},
+					{
+						"name": "LatestCostCenterStatus",
+						"type": "nvarchar"
+					},
+					{
+						"name": "LatestCostCenterCompanyCode",
+						"type": "nvarchar"
+					},
+					{
+						"name": "ServiceNowWBS",
+						"type": "nvarchar"
+					},
+					{
+						"name": "ServiceNowWBSStatus",
+						"type": "nvarchar"
+					},
+					{
+						"name": "ServiceNowWBSCompanyCode",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Line_Text",
+						"type": "nvarchar"
+					},
+					{
+						"name": "SAP_Line_Text",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Document_Number",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Document_Header",
+						"type": "nvarchar"
+					},
+					{
+						"name": "SAP_Response_Text",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Period",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Original_Id",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Purchasing_Document_Number",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Purchasing_Document_Item_Number",
+						"type": "nvarchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "acdc",
+					"table": "view_cost_details"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('ACDCCostViewDetails_dataSetLinkedServiceName'))]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ACDCUsageDetails')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('ACDCUsageDetails_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "cost_details.parquet",
+						"folderPath": "ACDC",
+						"fileSystem": "usage"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('ACDCUsageDetails_dataSetLinkedServiceName'))]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/Adhoc_CSV_Source')]",
 			"type": "Microsoft.Synapse/workspaces/datasets",
 			"apiVersion": "2019-06-01-preview",
@@ -24981,6 +25282,39 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/omniaacdcsqlprod')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": {
+						"type": "SecureString",
+						"value": "[parameters('omniaacdcsqlprod_connectionString')]"
+					},
+					"servicePrincipalId": "4c1cded2-f7a7-4c00-8d65-0a3287cbd682",
+					"servicePrincipalKey": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "ACM_Toolkit_kv",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "sp-password"
+					},
+					"tenant": "3aa4a235-b6e2-48d5-9195-7fcf05b459b0"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]",
+				"[concat(variables('workspaceId'), '/linkedServices/ACM_Toolkit_kv')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/s037-cost-management-WorkspaceDefaultSqlServer')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
@@ -25309,6 +25643,47 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/pipelines/Daily VM Utilization')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Monthly at 2nd')]",
+			"type": "Microsoft.Synapse/workspaces/triggers",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "Ingest ACDC Usage",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Month",
+						"interval": 1,
+						"startTime": "2024-10-02T12:06:00",
+						"timeZone": "W. Europe Standard Time",
+						"schedule": {
+							"minutes": [
+								0
+							],
+							"hours": [
+								5
+							],
+							"monthDays": [
+								2
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/Ingest ACDC Usage')]"
 			]
 		},
 		{
@@ -27177,6 +27552,29 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/CreateACDCCostDetailsView')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "PowerBIViews"
+				},
+				"content": {
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW ACDCCostDetails\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/ACDC/processed_acdc_details.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/CreateAdvisorRecommendationsView')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
@@ -27417,6 +27815,29 @@
 				},
 				"content": {
 					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW RetailCumulativeCost\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/retail-cost-prediction.parquet/',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/CreateFinOpsCostDetailsView')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "PowerBIViews"
+				},
+				"content": {
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW FinOpsCostDetails\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/ACDC/processed_acdc_details.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n\n",
 					"metadata": {
 						"language": "sql"
 					},
@@ -29784,6 +30205,26 @@
 						"poolName": "Built-in"
 					},
 					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQL script 52')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "-- This is auto-generated code\nSELECT\n    distinct(Period)\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/ACDC/cost_details.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n    order by Period DESC\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "master",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
 				},
 				"type": "SqlQuery"
 			},
@@ -38879,6 +39320,195 @@
 						],
 						"outputs": [],
 						"execution_count": 186
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/acdc-usage')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "NotebookInProduction"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "[parameters('acdc-usage_notebookSparkPoolNameRef')]",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "112g",
+					"driverCores": 16,
+					"executorMemory": "112g",
+					"executorCores": 16,
+					"numExecutors": 1,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "5",
+						"spark.autotune.trackingId": "af0eb58d-6ebd-48e2-93f6-5dfdb2d9bb85"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "[parameters('acdc-usage_notebookSparkPoolIdRef')]",
+						"name": "[parameters('acdc-usage_notebookSparkPoolNameRef')]",
+						"type": "Spark",
+						"endpoint": "[parameters('acdc-usage_notebookSparkPoolEndpointRef')]",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 16,
+						"memory": 112
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"source": [
+							"import pyspark.sql.functions as F\r\n",
+							"import pyspark.sql.types as T"
+						],
+						"outputs": [],
+						"execution_count": 65
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Load ACDC usage"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"acdc_path = 'abfss://usage@s037costmgmt.dfs.core.windows.net/ACDC/cost_details.parquet'\r\n",
+							"acdc_df = spark.read.format('parquet').load(acdc_path)"
+						],
+						"outputs": [],
+						"execution_count": 66
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Pre-process ACDC usage"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"acdc_df = acdc_df.select(\r\n",
+							"    'WBS',\r\n",
+							"    'SubscriptionId',\r\n",
+							"    'SubscriptionName',\r\n",
+							"    'ResourceGroup',\r\n",
+							"    'Amount',\r\n",
+							"    'ServiceNowAppName',\r\n",
+							"    'Posting_Date',\r\n",
+							"    'AllocType',\r\n",
+							"    'ResourceCostAllocationType',\r\n",
+							"    'LatestCostAllocationCode',\r\n",
+							"    'LatestCostAllocationCodeStatus',\r\n",
+							"    'LatestCostCenter',\r\n",
+							"    'LatestCostCenterStatus',\r\n",
+							"    'ServiceNowWBS',\r\n",
+							"    'ServiceNowWBSStatus',\r\n",
+							"    'Line_Text',\r\n",
+							"    'SAP_Line_Text',\r\n",
+							"    'Document_Number',\r\n",
+							"    'SAP_Response_Text',\r\n",
+							"    'Period'\r\n",
+							")\r\n",
+							"\r\n",
+							"acdc_df = acdc_df.withColumn('Date', F.to_date('Period', 'yyyy/MM'))\r\n",
+							"acdc_df = acdc_df.withColumn('Amount', F.regexp_replace(\"Amount\", \",\", \".\").cast(T.DoubleType()))"
+						],
+						"outputs": [],
+						"execution_count": 67
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Save processed data as new file"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"acdc_processed_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/ACDC/processed_acdc_details.parquet\"\r\n",
+							"acdc_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(acdc_processed_path)"
+						],
+						"outputs": [],
+						"execution_count": 73
 					}
 				]
 			},
