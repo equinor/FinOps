@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "159c79c0-4377-48f0-aae6-0bbf0182f450"
+				"spark.autotune.trackingId": "af0eb58d-6ebd-48e2-93f6-5dfdb2d9bb85"
 			}
 		},
 		"metadata": {
@@ -57,7 +57,20 @@
 					"import pyspark.sql.functions as F\r\n",
 					"import pyspark.sql.types as T"
 				],
-				"execution_count": 53
+				"execution_count": 65
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Load ACDC usage"
+				]
 			},
 			{
 				"cell_type": "code",
@@ -76,7 +89,20 @@
 					"acdc_path = 'abfss://usage@s037costmgmt.dfs.core.windows.net/ACDC/cost_details.parquet'\r\n",
 					"acdc_df = spark.read.format('parquet').load(acdc_path)"
 				],
-				"execution_count": 54
+				"execution_count": 66
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"## Pre-process ACDC usage"
+				]
 			},
 			{
 				"cell_type": "code",
@@ -118,15 +144,11 @@
 					"acdc_df = acdc_df.withColumn('Date', F.to_date('Period', 'yyyy/MM'))\r\n",
 					"acdc_df = acdc_df.withColumn('Amount', F.regexp_replace(\"Amount\", \",\", \".\").cast(T.DoubleType()))"
 				],
-				"execution_count": 55
+				"execution_count": 67
 			},
 			{
-				"cell_type": "code",
+				"cell_type": "markdown",
 				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
 					"nteract": {
 						"transient": {
 							"deleting": false
@@ -134,75 +156,8 @@
 					}
 				},
 				"source": [
-					"cost_path = f'abfss://usage@s037costmgmt.dfs.core.windows.net/exports/monthly/ACMMonthlyAmortizedCost/*/Extended_v3_ACMMonthlyAmortizedCost_*.parquet'\r\n",
-					"cost_df = spark.read.format('parquet').load(cost_path)"
-				],
-				"execution_count": 56
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"cost_df = cost_df.select(\r\n",
-					"    'CostInBillingCurrency',\r\n",
-					"    'SubscriptionId',\r\n",
-					"    'SubscriptionName',\r\n",
-					"    'ResourceGroup',\r\n",
-					"    'Application_Name',\r\n",
-					"    'ActiveWBS',\r\n",
-					"    'Date'\r\n",
-					")"
-				],
-				"execution_count": 57
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"cost_df = cost_df.withColumn('Date', F.date_format('Date', 'yyyy-MM-01'))\r\n",
-					"cost_df = cost_df.where(F.col('Date') >= '2022-05-01')"
-				],
-				"execution_count": 58
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"cost_df = cost_df \\\r\n",
-					"    .groupBy('Date', 'SubscriptionId', 'SubscriptionName', 'ResourceGroup', 'Application_Name', 'ActiveWBS') \\\r\n",
-					"    .agg(F.sum('CostInBillingCurrency').alias('Amount'))"
-				],
-				"execution_count": 59
+					"## Save processed data as new file"
+				]
 			},
 			{
 				"cell_type": "code",
@@ -219,12 +174,9 @@
 				},
 				"source": [
 					"acdc_processed_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/ACDC/processed_acdc_details.parquet\"\r\n",
-					"acdc_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(acdc_processed_path)\r\n",
-					"\r\n",
-					"cost_processed_path = \"abfss://usage@s037costmgmt.dfs.core.windows.net/ACDC/processed_finops_details.parquet\"\r\n",
-					"cost_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(cost_processed_path)"
+					"acdc_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(acdc_processed_path)"
 				],
-				"execution_count": 60
+				"execution_count": 73
 			}
 		]
 	}
