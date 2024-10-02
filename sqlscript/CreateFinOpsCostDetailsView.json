@@ -1,0 +1,20 @@
+{
+	"name": "CreateFinOpsCostDetailsView",
+	"properties": {
+		"folder": {
+			"name": "PowerBIViews"
+		},
+		"content": {
+			"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW FinOpsCostDetails\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/ACDC/processed_acdc_details.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "costmgmt",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
