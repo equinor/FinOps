@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "cb3e2492-4479-405e-8a74-49dfdd943e0a"
+				"spark.autotune.trackingId": "3dbb3f9f-5387-435e-8fbf-c6cc984a6065"
 			}
 		},
 		"metadata": {
@@ -70,7 +70,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 1
+				"execution_count": 52
 			},
 			{
 				"cell_type": "code",
@@ -81,7 +81,7 @@
 					"import pandas as pd\n",
 					"import numpy as np"
 				],
-				"execution_count": 2
+				"execution_count": 43
 			},
 			{
 				"cell_type": "code",
@@ -100,7 +100,7 @@
 					"# Define rolling window for accumulation\n",
 					"window = W.Window.orderBy(\"Date\").rowsBetween(W.Window.unboundedPreceding, 0)"
 				],
-				"execution_count": 3
+				"execution_count": 35
 			},
 			{
 				"cell_type": "markdown",
@@ -129,18 +129,89 @@
 					}
 				},
 				"source": [
-					"# Load usage source\n",
-					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\n",
-					"cost_df = spark.read.format('parquet').load(cost_path)\n",
-					"\n",
+					"# Load usage source\r\n",
+					"cost_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ACMMonthlyActualCost/*/Extended_v3_ACMMonthlyActualCost_*.parquet'\r\n",
+					"cost_df = spark.read.format('parquet').load(cost_path)\r\n",
+					"\r\n",
+					"# Filter away latest month - as we predict cost per month, it will mess up future predictions\r\n",
+					"cost_df = cost_df.filter(F.col('Date') < F.date_format(F.current_date(), 'yyyy-MM-01'))\r\n",
+					"cost_df = cost_df.withColumn('Date', F.date_trunc('month', 'Date'))"
+				],
+				"execution_count": 44
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"additional_discount_cost_df = cost_df.alias('additional_discount_cost_df')\r\n",
+					"additional_discount_cost_df = additional_discount_cost_df.select('Date', 'CostInBillingCurrency', 'PricingModel', 'ChargeType')\r\n",
+					"\r\n",
+					"# RI purchases have an applied 5% discount in our EA agreement, compared to buying RI retail\r\n",
+					"# The EA agreement also have a 30% discount applied to the retail for OnDemand usage\r\n",
+					"# The discount-adjusted cost below aims to compute prices where we consider a 10% RI purchase discount and 32.5% OnDemand usage discount instead\r\n",
+					"additional_discount_cost_df = additional_discount_cost_df.withColumn('DiscountAdjustedCost',\r\n",
+					"    F.when((F.col('ChargeType') == 'Usage') & (F.col('PricingModel') == 'Spot'), F.col('CostInBillingCurrency')) # Keep unchanged\r\n",
+					"    .when((F.col('ChargeType') == 'Usage') & (F.col('PricingModel') == 'OnDemand'), F.col('CostInBillingCurrency') * ( 0.675 / 0.70)) # Cost = Retail * 0.70 --> Retail = Cost / 0.70 --> NewCost = Retail * 0.675 --> NewCost = (Cost / 0.70) * 0.675 = Cost * (0.675 / 0.70)\r\n",
+					"    .when((F.col('ChargeType') == 'Usage') & (F.col('PricingModel') == 'SavingsPlan'), F.col('CostInBillingCurrency')) # SavingsPlan usage will have 0 cost in actual cost file\r\n",
+					"    .when((F.col('ChargeType') == 'Usage') & (F.col('PricingModel') == 'Reservation'), F.col('CostInBillingCurrency')) # Reservation usage will have 0 cost in actual cost file\r\n",
+					"    .when((F.col('ChargeType') == 'Purchase') & (F.col('PricingModel') == 'Reservation'), F.col('CostInBillingCurrency') * (0.90 / 0.95)) # Cost = Retail * 0.95 --> Retail = Cost / 0.95 --> NewCost = Retail * 0.90 --> NewCost = (Cost / 0.95) * 0.90 --> NewCost = Cost * (0.90 / 0.95)\r\n",
+					"    .when((F.col('ChargeType') == 'Purchase') & (F.col('PricingModel') == 'SavingsPlan'), F.col('CostInBillingCurrency')) # Keep SavingsPlan unchanged\r\n",
+					"    .when((F.col('ChargeType') == 'Purchase') & (F.col('PricingModel') == 'OnDemand'), F.col('CostInBillingCurrency')) # Keep unchanged\r\n",
+					"    .when((F.col('ChargeType') == 'Refund') & (F.col('PricingModel') == 'Reservation'), F.col('CostInBillingCurrency')) # Keep unchanged\r\n",
+					"    .otherwise(F.col('CostInBillingCurrency'))\r\n",
+					")\r\n",
+					"\r\n",
+					"additional_discount_cost_df = additional_discount_cost_df.groupBy('Date').agg(F.sum('DiscountAdjustedCost').alias('Cost'))"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"discount_df = cost_df.alias('discount_df')\r\n",
+					"discount_df = discount_df.select('Date', 'CostInBillingCurrency')"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
 					"# Select appropriate columns\n",
 					"cost_df = cost_df.select('Date', 'CostInBillingCurrency', 'PayGPrice', 'Quantity')\n",
-					"cost_df = cost_df.withColumn('Date', F.date_trunc('month', 'Date'))\n",
 					"cost_df = cost_df.withColumn('RetailCost', F.col('PayGPrice') * F.col('Quantity')).drop('Quantity', 'PayGPrice')\n",
 					"cost_df = cost_df.groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('Cost'), F.sum('RetailCost').alias('RetailCost')).orderBy('Date')\n",
-					"\n",
-					"# Filter away latest month - as we predict cost per month, it will mess up future predictions\n",
-					"cost_df = cost_df.filter(F.col('Date') < F.concat(F.date_format(F.current_date(), 'yyyy'), F.lit('-'), F.date_format(F.current_date(), 'MM'), F.lit('-'), F.lit('01')))\n",
 					"\n",
 					"# Split dataframe into discounted and retail cost\n",
 					"discount_df = cost_df.alias('discount_df').drop('RetailCost')\n",
