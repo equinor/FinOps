@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "4b0470a1-7e87-4ea0-85ef-9fdadb9a07b1"
+				"spark.autotune.trackingId": "583419a1-d37e-4c93-8a16-7c8d89af8ee1"
 			}
 		},
 		"metadata": {
@@ -70,7 +70,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 5
+				"execution_count": 26
 			},
 			{
 				"cell_type": "code",
@@ -81,7 +81,7 @@
 					"import pandas as pd\n",
 					"import numpy as np"
 				],
-				"execution_count": 6
+				"execution_count": 27
 			},
 			{
 				"cell_type": "code",
@@ -100,7 +100,7 @@
 					"# Define rolling window for accumulation\n",
 					"window = W.Window.orderBy(\"Date\").rowsBetween(W.Window.unboundedPreceding, 0)"
 				],
-				"execution_count": 7
+				"execution_count": 28
 			},
 			{
 				"cell_type": "markdown",
@@ -137,7 +137,7 @@
 					"cost_df = cost_df.filter(F.col('Date') < F.date_format(F.current_date(), 'yyyy-MM-01'))\r\n",
 					"cost_df = cost_df.withColumn('Date', F.date_trunc('month', 'Date'))"
 				],
-				"execution_count": 8
+				"execution_count": 29
 			},
 			{
 				"cell_type": "code",
@@ -173,7 +173,7 @@
 					"\r\n",
 					"additional_discount_cost_df = additional_discount_cost_df.groupBy('Date').agg(F.sum('DiscountAdjustedCost').alias('Cost')).orderBy('Date')"
 				],
-				"execution_count": 9
+				"execution_count": 30
 			},
 			{
 				"cell_type": "code",
@@ -193,7 +193,7 @@
 					"discount_df = discount_df.select('Date', 'CostInBillingCurrency')\r\n",
 					"discount_df = discount_df.groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('Cost')).orderBy('Date')"
 				],
-				"execution_count": 10
+				"execution_count": 31
 			},
 			{
 				"cell_type": "code",
@@ -214,7 +214,7 @@
 					"retail_df = retail_df.withColumn('RetailCost', F.col('PayGPrice') * F.col('Quantity')).drop('Quantity', 'PayGPrice')\r\n",
 					"retail_df = retail_df.groupBy('Date').agg(F.sum('RetailCost').alias('Cost')).orderBy('Date')"
 				],
-				"execution_count": 11
+				"execution_count": 32
 			},
 			{
 				"cell_type": "markdown",
@@ -256,7 +256,7 @@
 					"    .where(F.col('Date') < F.date_format(F.current_date(), 'yyyy-MM-01')) \\\n",
 					"    .orderBy('Date')"
 				],
-				"execution_count": 12
+				"execution_count": 33
 			},
 			{
 				"cell_type": "markdown",
@@ -297,7 +297,7 @@
 					"COST_INCREASE_2024 = 1.12\n",
 					"COST_INCREASE_DATE_2024 = '2024-02-01'"
 				],
-				"execution_count": 13
+				"execution_count": 34
 			},
 			{
 				"cell_type": "code",
@@ -320,7 +320,7 @@
 					"    .otherwise(F.col('Cost'))\n",
 					")"
 				],
-				"execution_count": 14
+				"execution_count": 35
 			},
 			{
 				"cell_type": "markdown",
@@ -375,7 +375,7 @@
 					"    predicted_df = predicted_df.withColumn(f'PredictedCumulativeCost{column_label}',  F.sum(f\"PredictedCost{column_label}\").over(window) + input_df['CumulativeCost'][-1])\n",
 					"    return predicted_df"
 				],
-				"execution_count": 15
+				"execution_count": 36
 			},
 			{
 				"cell_type": "code",
@@ -412,7 +412,7 @@
 					"\n",
 					"    return input_df"
 				],
-				"execution_count": 16
+				"execution_count": 37
 			},
 			{
 				"cell_type": "code",
@@ -434,7 +434,7 @@
 					"retail_df = produce_ols_results(retail_df, interval=90)\n",
 					"additional_discount_cost_df = produce_ols_results(additional_discount_cost_df, interval=90)"
 				],
-				"execution_count": 17
+				"execution_count": 38
 			},
 			{
 				"cell_type": "markdown",
@@ -466,7 +466,7 @@
 					"billing_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/cumulative-cost-prediction.parquet\"\n",
 					"billing_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(billing_path)"
 				],
-				"execution_count": 18
+				"execution_count": 39
 			},
 			{
 				"cell_type": "code",
@@ -485,7 +485,7 @@
 					"adjusted_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/adjusted-cumulative-cost-prediction.parquet\"\n",
 					"adjusted_billing_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(adjusted_path)"
 				],
-				"execution_count": 19
+				"execution_count": 40
 			},
 			{
 				"cell_type": "code",
@@ -504,7 +504,7 @@
 					"discount_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/discounted-cost-prediction.parquet\"\n",
 					"discount_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(discount_path)"
 				],
-				"execution_count": 20
+				"execution_count": 41
 			},
 			{
 				"cell_type": "code",
@@ -523,7 +523,7 @@
 					"retail_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/retail-cost-prediction.parquet\"\n",
 					"retail_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(retail_path)"
 				],
-				"execution_count": 21
+				"execution_count": 42
 			},
 			{
 				"cell_type": "code",
@@ -542,7 +542,7 @@
 					"additional_discount_cost_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/additional-discount-cost-prediction.parquet\"\r\n",
 					"additional_discount_cost_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(additional_discount_cost_path)"
 				],
-				"execution_count": 22
+				"execution_count": 43
 			},
 			{
 				"cell_type": "markdown",
@@ -579,7 +579,7 @@
 					"#     predicted_df = spark.createDataFrame(predicted_df)\n",
 					"#     return predicted_df"
 				],
-				"execution_count": 23
+				"execution_count": 44
 			}
 		]
 	}
