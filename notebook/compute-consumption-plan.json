@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "7918b17f-28be-4138-b48f-644771738e2c"
+				"spark.autotune.trackingId": "d3cf8f83-05f2-484b-b603-c785bc417a0e"
 			}
 		},
 		"metadata": {
@@ -61,7 +61,7 @@
 				"source": [
 					"storageAccount = 's037costmgmt'"
 				],
-				"execution_count": 1
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -82,7 +82,7 @@
 					"from pyspark.sql import Window\n",
 					"from enum import Enum"
 				],
-				"execution_count": 2
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -101,6 +101,7 @@
 					"class UsageOption(Enum):\n",
 					"    EQNRateWFX = \"Equinor Rate with Forex Increases\"\n",
 					"    EQNRateWOFX = \"Equinor Rate without Forex Increases\"\n",
+					"    EQNRateP1 = \"Equinor Rate Phase 1\"\n",
 					"    Retail = \"Retail\"\n",
 					"    NotApplicable = \"NotApplicable\"\n",
 					"\n",
@@ -138,7 +139,7 @@
 					"    NotApplicable = \"NotApplicable\"\n",
 					""
 				],
-				"execution_count": 3
+				"execution_count": 4
 			},
 			{
 				"cell_type": "markdown",
@@ -171,7 +172,7 @@
 					"billing_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/cumulative-cost-prediction.parquet/**\"\n",
 					"billing_df = spark.read.format('parquet').load(billing_path)"
 				],
-				"execution_count": 4
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -191,7 +192,26 @@
 					"adjusted_billing_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/adjusted-cumulative-cost-prediction.parquet/**\"\n",
 					"adjusted_billing_df = spark.read.format('parquet').load(adjusted_billing_path)"
 				],
-				"execution_count": 5
+				"execution_count": 6
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"additional_discount_cost_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/additional-discount-cost-prediction.parquet\"\r\n",
+					"additional_discount_cost_df = spark.read.format('parquet').load(additional_discount_cost_path)"
+				],
+				"execution_count": 7
 			},
 			{
 				"cell_type": "code",
@@ -211,7 +231,7 @@
 					"retail_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/retail-cost-prediction.parquet/**\"\n",
 					"retail_df = spark.read.format('parquet').load(retail_path)"
 				],
-				"execution_count": 6
+				"execution_count": 8
 			},
 			{
 				"cell_type": "markdown",
@@ -248,7 +268,7 @@
 					"\n",
 					"inorganic_consumption_df = spark.read.options(**csv_options).csv(inorganic_consumption_path)"
 				],
-				"execution_count": 7
+				"execution_count": 9
 			},
 			{
 				"cell_type": "markdown",
@@ -286,7 +306,7 @@
 					"    '2030': '30/31',\n",
 					"}"
 				],
-				"execution_count": 8
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -308,7 +328,7 @@
 					"inorganic_consumption_df = inorganic_consumption_df.replace(to_replace=inorganic_period_mapper, subset=['Period'])\n",
 					"inorganic_consumption_df = inorganic_consumption_df.withColumnRenamed('Period', 'PeriodLabel')"
 				],
-				"execution_count": 9
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -333,7 +353,7 @@
 					"\n",
 					"inorganic_consumption_df = inorganic_discounted_df.union(inorganic_retail_df)"
 				],
-				"execution_count": 10
+				"execution_count": 12
 			},
 			{
 				"cell_type": "markdown",
@@ -376,7 +396,7 @@
 					"    'PredictedCostFullLookback': Lookback.Full.value\n",
 					"}"
 				],
-				"execution_count": 11
+				"execution_count": 13
 			},
 			{
 				"cell_type": "code",
@@ -427,7 +447,7 @@
 					"    \n",
 					"    return total_df"
 				],
-				"execution_count": 12
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -447,10 +467,11 @@
 					"agg_billing_df = compute_aggregated_forecasts(billing_df, usage_option=UsageOption.EQNRateWFX.value)\n",
 					"agg_adjusted_billing_df = compute_aggregated_forecasts(adjusted_billing_df, usage_option=UsageOption.EQNRateWOFX.value)\n",
 					"agg_retail_df = compute_aggregated_forecasts(retail_df, usage_option=UsageOption.Retail.value)\n",
+					"agg_eqnp1_df = compute_aggregated_forecasts(additional_discount_cost_df, usage_option=UsageOption.EQNRateP1.value)\n",
 					"\n",
-					"consumption_forecast_df = agg_billing_df.union(agg_adjusted_billing_df).union(agg_retail_df)"
+					"consumption_forecast_df = agg_billing_df.union(agg_adjusted_billing_df).union(agg_retail_df).union(agg_eqnp1_df)"
 				],
-				"execution_count": 13
+				"execution_count": 15
 			},
 			{
 				"cell_type": "code",
@@ -477,7 +498,7 @@
 					"consumption_forecast_df = consumption_forecast_df.withColumn('SapScenario', F.lit(SAPScenario.NotApplicable.value))\n",
 					"consumption_forecast_df = consumption_forecast_df.withColumn('Key', F.concat(F.col('Project'), F.lit('-'), F.col('UsageOption'), F.lit('-'), F.col('SubScenario'), F.lit('-'), F.col('SapScenario')))"
 				],
-				"execution_count": 14
+				"execution_count": 16
 			},
 			{
 				"cell_type": "code",
@@ -507,7 +528,7 @@
 					"\n",
 					"expanded_forecast_df = early_forecast_df.union(late_forecast_df)"
 				],
-				"execution_count": 15
+				"execution_count": 17
 			},
 			{
 				"cell_type": "code",
@@ -527,7 +548,7 @@
 					"expanded_forecast_df = expanded_forecast_df.withColumn('InorganicPricingOption', F.lit(InorganicPricingOption.NotApplicable.value))\n",
 					"expanded_forecast_df = expanded_forecast_df.drop('Key')"
 				],
-				"execution_count": 16
+				"execution_count": 18
 			},
 			{
 				"cell_type": "markdown",
@@ -558,7 +579,7 @@
 				"source": [
 					"expanded_forecast_df = expanded_forecast_df.union(inorganic_consumption_df)"
 				],
-				"execution_count": 18
+				"execution_count": 19
 			},
 			{
 				"cell_type": "markdown",
@@ -590,7 +611,7 @@
 					"expanded_forecast_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/consumption-forecast\"\n",
 					"expanded_forecast_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(expanded_forecast_path)"
 				],
-				"execution_count": 23
+				"execution_count": 20
 			}
 		]
 	}
