@@ -398,10 +398,6 @@
 			"type": "string",
 			"defaultValue": "@{concat('https://consumption.azure.com/v3/enrollments/57950773/billingPeriods/',formatDateTime(utcNow(),'yyyyMM'),'/pricesheet')}"
 		},
-		"S926FinOpsHubTest_linkedServiceUrl": {
-			"type": "string",
-			"defaultValue": "https://myfinopshub5f2xqvwwmha5y.dfs.core.windows.net/"
-		},
 		"ServiceNowLinkedService_linkedServiceUrl": {
 			"type": "string",
 			"defaultValue": "https://api.gateway.equinor.com/api/x_stasa_serv_mgnt/v1/"
@@ -25069,25 +25065,6 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/S926FinOpsHubTest')]",
-			"type": "Microsoft.Synapse/workspaces/linkedServices",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"annotations": [],
-				"type": "AzureBlobFS",
-				"typeProperties": {
-					"url": "[parameters('S926FinOpsHubTest_linkedServiceUrl')]"
-				},
-				"connectVia": {
-					"referenceName": "AutoResolveIntegrationRuntime",
-					"type": "IntegrationRuntimeReference"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('workspaceName'), '/ServiceNowLinkedService')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
@@ -27751,6 +27728,29 @@
 					},
 					"currentConnection": {
 						"databaseName": "master",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/CreateCumulativeAdditionalDiscountCostView')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "PowerBIViews"
+				},
+				"content": {
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW AdditionalDiscountCumulativeCost\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/additional-discount-cost-prediction.parquet/',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "costmgmt",
 						"poolName": "Built-in"
 					},
 					"resultLimit": 5000
@@ -41520,7 +41520,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "412494dd-795a-418b-9551-aa924922f1d2"
+						"spark.autotune.trackingId": "20ca970b-d46f-4707-b5bc-3e3ec2206a6f"
 					}
 				},
 				"metadata": {
@@ -41562,7 +41562,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 41
+						"execution_count": 29
 					},
 					{
 						"cell_type": "code",
@@ -41584,7 +41584,7 @@
 							"from enum import Enum"
 						],
 						"outputs": [],
-						"execution_count": 42
+						"execution_count": 30
 					},
 					{
 						"cell_type": "code",
@@ -41604,6 +41604,8 @@
 							"    EQNRateWFX = \"Equinor Rate with Forex Increases\"\n",
 							"    EQNRateWOFX = \"Equinor Rate without Forex Increases\"\n",
 							"    EQNRateP1 = \"Equinor Rate Phase 1\"\n",
+							"    ReservationPurchases = \"Reservation Purchases\"\n",
+							"    OnDemandUsage = \"OnDemand Usage\"\n",
 							"    Retail = \"Retail\"\n",
 							"    NotApplicable = \"NotApplicable\"\n",
 							"\n",
@@ -41643,7 +41645,7 @@
 							""
 						],
 						"outputs": [],
-						"execution_count": 43
+						"execution_count": 31
 					},
 					{
 						"cell_type": "markdown",
@@ -41677,7 +41679,7 @@
 							"billing_df = spark.read.format('parquet').load(billing_path)"
 						],
 						"outputs": [],
-						"execution_count": 44
+						"execution_count": 32
 					},
 					{
 						"cell_type": "code",
@@ -41698,7 +41700,7 @@
 							"adjusted_billing_df = spark.read.format('parquet').load(adjusted_billing_path)"
 						],
 						"outputs": [],
-						"execution_count": 45
+						"execution_count": 33
 					},
 					{
 						"cell_type": "code",
@@ -41714,11 +41716,12 @@
 							}
 						},
 						"source": [
+							"# Load usage cost with additional discounts applied (32.5% base discount and 10% RI discount)\r\n",
 							"additional_discount_cost_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/additional-discount-cost-prediction.parquet\"\r\n",
 							"additional_discount_cost_df = spark.read.format('parquet').load(additional_discount_cost_path)"
 						],
 						"outputs": [],
-						"execution_count": 46
+						"execution_count": 34
 					},
 					{
 						"cell_type": "code",
@@ -41739,7 +41742,50 @@
 							"retail_df = spark.read.format('parquet').load(retail_path)"
 						],
 						"outputs": [],
-						"execution_count": 47
+						"execution_count": 35
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Load reservation purchase predictions\r\n",
+							"reservation_purchases_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/benefit-purchases-prediction.parquet/**\"\r\n",
+							"reservation_purchases_df = spark.read.format('parquet').load(reservation_purchases_path)"
+						],
+						"outputs": [],
+						"execution_count": 36
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Load on demand usage predictions\r\n",
+							"# Load reservation purchase predictions\r\n",
+							"ondemand_usage_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ondemand-usage-prediction.parquet/**\"\r\n",
+							"ondemand_usage_df = spark.read.format('parquet').load(ondemand_usage_path)"
+						],
+						"outputs": [],
+						"execution_count": 37
 					},
 					{
 						"cell_type": "markdown",
@@ -41777,7 +41823,7 @@
 							"inorganic_consumption_df = spark.read.options(**csv_options).csv(inorganic_consumption_path)"
 						],
 						"outputs": [],
-						"execution_count": 48
+						"execution_count": 38
 					},
 					{
 						"cell_type": "markdown",
@@ -41816,7 +41862,7 @@
 							"}"
 						],
 						"outputs": [],
-						"execution_count": 49
+						"execution_count": 39
 					},
 					{
 						"cell_type": "code",
@@ -41839,7 +41885,7 @@
 							"inorganic_consumption_df = inorganic_consumption_df.withColumnRenamed('Period', 'PeriodLabel')"
 						],
 						"outputs": [],
-						"execution_count": 50
+						"execution_count": 40
 					},
 					{
 						"cell_type": "code",
@@ -41869,7 +41915,7 @@
 							"inorganic_consumption_df = inorganic_discounted_df.union(inorganic_retail_df).union(inorganic_phase1_df)"
 						],
 						"outputs": [],
-						"execution_count": 51
+						"execution_count": 41
 					},
 					{
 						"cell_type": "markdown",
@@ -41913,7 +41959,7 @@
 							"}"
 						],
 						"outputs": [],
-						"execution_count": 52
+						"execution_count": 42
 					},
 					{
 						"cell_type": "code",
@@ -41965,7 +42011,7 @@
 							"    return total_df"
 						],
 						"outputs": [],
-						"execution_count": 53
+						"execution_count": 43
 					},
 					{
 						"cell_type": "code",
@@ -41986,11 +42032,13 @@
 							"agg_adjusted_billing_df = compute_aggregated_forecasts(adjusted_billing_df, usage_option=UsageOption.EQNRateWOFX.value)\n",
 							"agg_retail_df = compute_aggregated_forecasts(retail_df, usage_option=UsageOption.Retail.value)\n",
 							"agg_eqnp1_df = compute_aggregated_forecasts(additional_discount_cost_df, usage_option=UsageOption.EQNRateP1.value)\n",
+							"agg_reservations_df = compute_aggregated_forecasts(reservation_purchases_df, usage_option=UsageOption.ReservationPurchases.value)\n",
+							"agg_ondemand_df = compute_aggregated_forecasts(ondemand_usage_df, usage_option=UsageOption.OnDemandUsage.value)\n",
 							"\n",
-							"consumption_forecast_df = agg_billing_df.union(agg_adjusted_billing_df).union(agg_retail_df).union(agg_eqnp1_df)"
+							"consumption_forecast_df = agg_billing_df.union(agg_adjusted_billing_df).union(agg_retail_df).union(agg_eqnp1_df).union(agg_reservations_df).union(agg_ondemand_df)"
 						],
 						"outputs": [],
-						"execution_count": 54
+						"execution_count": 44
 					},
 					{
 						"cell_type": "code",
@@ -42018,7 +42066,7 @@
 							"consumption_forecast_df = consumption_forecast_df.withColumn('Key', F.concat(F.col('Project'), F.lit('-'), F.col('UsageOption'), F.lit('-'), F.col('SubScenario'), F.lit('-'), F.col('SapScenario')))"
 						],
 						"outputs": [],
-						"execution_count": 55
+						"execution_count": 45
 					},
 					{
 						"cell_type": "code",
@@ -42049,7 +42097,7 @@
 							"expanded_forecast_df = early_forecast_df.union(late_forecast_df)"
 						],
 						"outputs": [],
-						"execution_count": 56
+						"execution_count": 46
 					},
 					{
 						"cell_type": "code",
@@ -42070,7 +42118,7 @@
 							"expanded_forecast_df = expanded_forecast_df.drop('Key')"
 						],
 						"outputs": [],
-						"execution_count": 57
+						"execution_count": 47
 					},
 					{
 						"cell_type": "markdown",
@@ -42102,7 +42150,7 @@
 							"expanded_forecast_df = expanded_forecast_df.union(inorganic_consumption_df)"
 						],
 						"outputs": [],
-						"execution_count": 58
+						"execution_count": 48
 					},
 					{
 						"cell_type": "markdown",
@@ -42135,7 +42183,7 @@
 							"expanded_forecast_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(expanded_forecast_path)"
 						],
 						"outputs": [],
-						"execution_count": 59
+						"execution_count": 49
 					}
 				]
 			},
@@ -42379,7 +42427,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "aebc3dbe-ac86-47e5-a415-7631f67c8044"
+						"spark.autotune.trackingId": "4dea71ab-82df-410d-9949-ff73bdf3140a"
 					}
 				},
 				"metadata": {
@@ -42430,7 +42478,7 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 26
+						"execution_count": 47
 					},
 					{
 						"cell_type": "code",
@@ -42443,7 +42491,7 @@
 							"import numpy as np"
 						],
 						"outputs": [],
-						"execution_count": 27
+						"execution_count": 48
 					},
 					{
 						"cell_type": "code",
@@ -42463,7 +42511,7 @@
 							"window = W.Window.orderBy(\"Date\").rowsBetween(W.Window.unboundedPreceding, 0)"
 						],
 						"outputs": [],
-						"execution_count": 28
+						"execution_count": 49
 					},
 					{
 						"cell_type": "markdown",
@@ -42501,7 +42549,7 @@
 							"cost_df = cost_df.withColumn('Date', F.date_trunc('month', 'Date'))"
 						],
 						"outputs": [],
-						"execution_count": 29
+						"execution_count": 50
 					},
 					{
 						"cell_type": "code",
@@ -42529,7 +42577,7 @@
 							"    .when((F.col('ChargeType') == 'Usage') & (F.col('PricingModel') == 'SavingsPlan'), F.col('CostInBillingCurrency')) # SavingsPlan usage will have 0 cost in actual cost file\r\n",
 							"    .when((F.col('ChargeType') == 'Usage') & (F.col('PricingModel') == 'Reservation'), F.col('CostInBillingCurrency')) # Reservation usage will have 0 cost in actual cost file\r\n",
 							"    .when((F.col('ChargeType') == 'Purchase') & (F.col('PricingModel') == 'Reservation'), F.col('CostInBillingCurrency') * (0.90 / 0.95)) # Cost = Retail * 0.95 --> Retail = Cost / 0.95 --> NewCost = Retail * 0.90 --> NewCost = (Cost / 0.95) * 0.90 --> NewCost = Cost * (0.90 / 0.95)\r\n",
-							"    .when((F.col('ChargeType') == 'Purchase') & (F.col('PricingModel') == 'SavingsPlan'), F.col('CostInBillingCurrency')) # Keep SavingsPlan unchanged\r\n",
+							"    .when((F.col('ChargeType') == 'Purchase') & (F.col('PricingModel') == 'SavingsPlan'), F.col('CostInBillingCurrency') * 0.90) # Keep SavingsPlan unchanged\r\n",
 							"    .when((F.col('ChargeType') == 'Purchase') & (F.col('PricingModel') == 'OnDemand'), F.col('CostInBillingCurrency')) # Keep unchanged\r\n",
 							"    .when((F.col('ChargeType') == 'Refund') & (F.col('PricingModel') == 'Reservation'), F.col('CostInBillingCurrency')) # Keep unchanged\r\n",
 							"    .otherwise(F.col('CostInBillingCurrency'))\r\n",
@@ -42538,7 +42586,54 @@
 							"additional_discount_cost_df = additional_discount_cost_df.groupBy('Date').agg(F.sum('DiscountAdjustedCost').alias('Cost')).orderBy('Date')"
 						],
 						"outputs": [],
-						"execution_count": 30
+						"execution_count": 51
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"ondemand_usage_df = cost_df.alias('ondemand_usage_df')\r\n",
+							"ondemand_usage_df = ondemand_usage_df.select('Date', 'CostInBillingCurrency', 'PricingModel', 'ChargeType')\r\n",
+							"is_ondemand_usage = (F.col('ChargeType') == 'Usage') & (F.col('PricingModel') == 'OnDemand')\r\n",
+							"ondemand_usage_df = ondemand_usage_df.where(is_ondemand_usage)\r\n",
+							"ondemand_usage_df = ondemand_usage_df.groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('Cost')).orderBy('Date')"
+						],
+						"outputs": [],
+						"execution_count": 52
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"reservation_purchases_df = cost_df.alias('reservation_purchases_df')\r\n",
+							"reservation_purchases_df = reservation_purchases_df.select('Date', 'CostInBillingCurrency', 'PricingModel', 'ChargeType')\r\n",
+							"\r\n",
+							"is_reservation_purchase = (F.col('ChargeType') == 'Purchase') & (F.col('PricingModel') == 'Reservation')\r\n",
+							"reservation_purchases_df = reservation_purchases_df.where(is_reservation_purchase)\r\n",
+							"reservation_purchases_df = reservation_purchases_df.groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('Cost')).orderBy('Date')"
+						],
+						"outputs": [],
+						"execution_count": 53
 					},
 					{
 						"cell_type": "code",
@@ -42559,7 +42654,7 @@
 							"discount_df = discount_df.groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('Cost')).orderBy('Date')"
 						],
 						"outputs": [],
-						"execution_count": 31
+						"execution_count": 54
 					},
 					{
 						"cell_type": "code",
@@ -42581,7 +42676,7 @@
 							"retail_df = retail_df.groupBy('Date').agg(F.sum('RetailCost').alias('Cost')).orderBy('Date')"
 						],
 						"outputs": [],
-						"execution_count": 32
+						"execution_count": 55
 					},
 					{
 						"cell_type": "markdown",
@@ -42624,7 +42719,7 @@
 							"    .orderBy('Date')"
 						],
 						"outputs": [],
-						"execution_count": 33
+						"execution_count": 56
 					},
 					{
 						"cell_type": "markdown",
@@ -42666,7 +42761,7 @@
 							"COST_INCREASE_DATE_2024 = '2024-02-01'"
 						],
 						"outputs": [],
-						"execution_count": 34
+						"execution_count": 57
 					},
 					{
 						"cell_type": "code",
@@ -42690,7 +42785,7 @@
 							")"
 						],
 						"outputs": [],
-						"execution_count": 35
+						"execution_count": 58
 					},
 					{
 						"cell_type": "markdown",
@@ -42746,7 +42841,7 @@
 							"    return predicted_df"
 						],
 						"outputs": [],
-						"execution_count": 36
+						"execution_count": 59
 					},
 					{
 						"cell_type": "code",
@@ -42784,7 +42879,7 @@
 							"    return input_df"
 						],
 						"outputs": [],
-						"execution_count": 37
+						"execution_count": 60
 					},
 					{
 						"cell_type": "code",
@@ -42804,10 +42899,12 @@
 							"adjusted_billing_df = produce_ols_results(adjusted_billing_df, interval=90)\n",
 							"discount_df = produce_ols_results(discount_df, interval=90)\n",
 							"retail_df = produce_ols_results(retail_df, interval=90)\n",
-							"additional_discount_cost_df = produce_ols_results(additional_discount_cost_df, interval=90)"
+							"additional_discount_cost_df = produce_ols_results(additional_discount_cost_df, interval=90)\n",
+							"ondemand_usage_df = produce_ols_results(ondemand_usage_df, interval=90)\n",
+							"reservation_purchases_df = produce_ols_results(reservation_purchases_df, interval=90)"
 						],
 						"outputs": [],
-						"execution_count": 38
+						"execution_count": 61
 					},
 					{
 						"cell_type": "markdown",
@@ -42840,7 +42937,7 @@
 							"billing_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(billing_path)"
 						],
 						"outputs": [],
-						"execution_count": 39
+						"execution_count": 62
 					},
 					{
 						"cell_type": "code",
@@ -42860,7 +42957,7 @@
 							"adjusted_billing_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(adjusted_path)"
 						],
 						"outputs": [],
-						"execution_count": 40
+						"execution_count": 63
 					},
 					{
 						"cell_type": "code",
@@ -42880,7 +42977,7 @@
 							"discount_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(discount_path)"
 						],
 						"outputs": [],
-						"execution_count": 41
+						"execution_count": 64
 					},
 					{
 						"cell_type": "code",
@@ -42900,7 +42997,7 @@
 							"retail_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(retail_path)"
 						],
 						"outputs": [],
-						"execution_count": 42
+						"execution_count": 65
 					},
 					{
 						"cell_type": "code",
@@ -42920,7 +43017,47 @@
 							"additional_discount_cost_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(additional_discount_cost_path)"
 						],
 						"outputs": [],
-						"execution_count": 43
+						"execution_count": 66
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"ondemand_usage_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/ondemand-usage-prediction.parquet\"\r\n",
+							"ondemand_usage_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(ondemand_usage_path)"
+						],
+						"outputs": [],
+						"execution_count": 67
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"reservation_purchases_path = f\"abfss://usage@{storageAccount}.dfs.core.windows.net/exports/monthly/benefit-purchases-prediction.parquet\"\r\n",
+							"reservation_purchases_df.write.format('parquet').mode('overwrite').option('overwriteSchema', 'true').save(reservation_purchases_path)"
+						],
+						"outputs": [],
+						"execution_count": 68
 					},
 					{
 						"cell_type": "markdown",
@@ -42958,7 +43095,7 @@
 							"#     return predicted_df"
 						],
 						"outputs": [],
-						"execution_count": 44
+						"execution_count": 69
 					}
 				]
 			},
@@ -45023,7 +45160,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "a30cd217-527e-4c74-819f-8df0a894e13a"
+						"spark.autotune.trackingId": "2e18fef4-2d9c-4f74-922a-a2bcf499f91a"
 					}
 				},
 				"metadata": {
@@ -45048,8 +45185,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -45127,7 +45263,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"def get_last_day_prev_month(to_date):\r\n",
 							"    current_month = int(to_date[4:6])\r\n",
@@ -46208,8 +46343,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -52791,29 +52925,6 @@
 			},
 			"dependsOn": [],
 			"location": "northeurope"
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/CreateCumulativeAdditionalDiscountCostView')]",
-			"type": "Microsoft.Synapse/workspaces/sqlscripts",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"folder": {
-					"name": "PowerBIViews"
-				},
-				"content": {
-					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW AdditionalDiscountCumulativeCost\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/exports/monthly/additional-discount-cost-prediction.parquet/',\n        FORMAT = 'PARQUET'\n    ) AS [result]",
-					"metadata": {
-						"language": "sql"
-					},
-					"currentConnection": {
-						"databaseName": "costmgmt",
-						"poolName": "Built-in"
-					},
-					"resultLimit": 5000
-				},
-				"type": "SqlQuery"
-			},
-			"dependsOn": []
 		}
 	]
 }
