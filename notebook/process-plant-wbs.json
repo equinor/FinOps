@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "true",
 				"spark.dynamicAllocation.minExecutors": "1",
 				"spark.dynamicAllocation.maxExecutors": "5",
-				"spark.autotune.trackingId": "9e8432aa-be36-4e21-837c-790c44694ab2"
+				"spark.autotune.trackingId": "6abc24b4-8bf6-48f6-b294-9ed214968019"
 			}
 		},
 		"metadata": {
@@ -56,7 +56,7 @@
 				"source": [
 					"import pyspark.sql.functions as F"
 				],
-				"execution_count": 1
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -78,7 +78,7 @@
 					"year = '2024'\r\n",
 					"month = '10'"
 				],
-				"execution_count": null
+				"execution_count": 3
 			},
 			{
 				"cell_type": "markdown",
@@ -109,7 +109,7 @@
 				"source": [
 					"wbs_df = spark.read.format('parquet').load(f'abfss://usage@s037costmgmt.dfs.core.windows.net/sap/{year}/{month}/WBS-raw.parquet')"
 				],
-				"execution_count": null
+				"execution_count": 4
 			},
 			{
 				"cell_type": "markdown",
@@ -149,7 +149,7 @@
 					"    'taskResponsibleShortName'\r\n",
 					")"
 				],
-				"execution_count": null
+				"execution_count": 5
 			},
 			{
 				"cell_type": "markdown",
@@ -188,7 +188,7 @@
 					"    .otherwise(True)\r\n",
 					")"
 				],
-				"execution_count": null
+				"execution_count": 6
 			},
 			{
 				"cell_type": "markdown",
@@ -226,7 +226,7 @@
 					"wbs_df = wbs_df.withColumnRenamed('taskResponsibleShortName', 'WBSOwnerShortName')\r\n",
 					"wbs_df = wbs_df.withColumnRenamed('taskResponsibleEmployeeID', 'WBSOwnerEmployeeID')"
 				],
-				"execution_count": null
+				"execution_count": 7
 			},
 			{
 				"cell_type": "markdown",
@@ -258,7 +258,7 @@
 					"wbs_df = wbs_df.orderBy(F.desc('CreatedDate'))\r\n",
 					"wbs_df = wbs_df.dropDuplicates(subset=[\"WBS\"])"
 				],
-				"execution_count": null
+				"execution_count": 8
 			},
 			{
 				"cell_type": "markdown",
@@ -290,7 +290,7 @@
 					"wbs_df = wbs_df.withColumn('WBSOwnerEmployeeID', F.when(F.col('WBSOwnerEmployeeID') == '00000000', None).otherwise(F.col('WBSOwnerEmployeeID')))\r\n",
 					"wbs_df = wbs_df.withColumn('WBSOwnerShortName', F.when(F.col('WBSOwnerShortName') == '', None).otherwise(F.col('WBSOwnerShortName')))"
 				],
-				"execution_count": null
+				"execution_count": 9
 			},
 			{
 				"cell_type": "markdown",
@@ -322,7 +322,7 @@
 					"target_path = f\"abfss://usage@s037costmgmt.dfs.core.windows.net/sap/{year}/{month}/WBS.parquet\"\r\n",
 					"wbs_df.write.format('parquet').mode('overwrite').save(target_path)"
 				],
-				"execution_count": null
+				"execution_count": 10
 			}
 		]
 	}
