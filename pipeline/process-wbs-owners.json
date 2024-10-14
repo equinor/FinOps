@@ -3,151 +3,6 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "persist latest wbs owner",
-				"type": "Copy",
-				"state": "Inactive",
-				"onInactiveMarkAs": "Succeeded",
-				"dependsOn": [
-					{
-						"activity": "pull wbs table from fabric finops-wbs-prod workspace",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"source": {
-						"type": "ParquetSource",
-						"storeSettings": {
-							"type": "AzureBlobFSReadSettings",
-							"recursive": true,
-							"enablePartitionDiscovery": false
-						},
-						"formatSettings": {
-							"type": "ParquetReadSettings"
-						}
-					},
-					"sink": {
-						"type": "ParquetSink",
-						"storeSettings": {
-							"type": "AzureBlobFSWriteSettings",
-							"copyBehavior": "PreserveHierarchy"
-						},
-						"formatSettings": {
-							"type": "ParquetWriteSettings"
-						}
-					},
-					"enableStaging": false,
-					"translator": {
-						"type": "TabularTranslator",
-						"typeConversion": true,
-						"typeConversionSettings": {
-							"allowDataTruncation": true,
-							"treatBooleanAsNumber": false
-						}
-					}
-				},
-				"inputs": [
-					{
-						"referenceName": "WBSSource",
-						"type": "DatasetReference",
-						"parameters": {
-							"year": {
-								"value": "@formatDateTime(utcNow(), 'yyyy')",
-								"type": "Expression"
-							},
-							"month": {
-								"value": "@formatDateTime(utcNow(), 'MM')",
-								"type": "Expression"
-							}
-						}
-					}
-				],
-				"outputs": [
-					{
-						"referenceName": "WBSLatest",
-						"type": "DatasetReference"
-					}
-				]
-			},
-			{
-				"name": "pull wbs table from fabric finops-wbs-prod workspace",
-				"type": "Copy",
-				"state": "Inactive",
-				"onInactiveMarkAs": "Succeeded",
-				"dependsOn": [],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [
-					{
-						"name": "Source",
-						"value": "wbs"
-					},
-					{
-						"name": "Destination",
-						"value": "usage/@{concat('finops-wbs-prod/', formatDateTime(utcNow(), 'yyyy'), '/', formatDateTime(utcNow(), 'MM'))}/WBS.parquet"
-					}
-				],
-				"typeProperties": {
-					"source": {
-						"type": "LakehouseTableSource"
-					},
-					"sink": {
-						"type": "ParquetSink",
-						"storeSettings": {
-							"type": "AzureBlobFSWriteSettings"
-						},
-						"formatSettings": {
-							"type": "ParquetWriteSettings"
-						}
-					},
-					"enableStaging": false,
-					"translator": {
-						"type": "TabularTranslator",
-						"typeConversion": true,
-						"typeConversionSettings": {
-							"allowDataTruncation": true,
-							"treatBooleanAsNumber": false
-						}
-					}
-				},
-				"inputs": [
-					{
-						"referenceName": "FinopsWbsProdGold",
-						"type": "DatasetReference"
-					}
-				],
-				"outputs": [
-					{
-						"referenceName": "WBSSource",
-						"type": "DatasetReference",
-						"parameters": {
-							"year": {
-								"value": "@formatDateTime(utcNow(), 'yyyy')",
-								"type": "Expression"
-							},
-							"month": {
-								"value": "@formatDateTime(utcNow(), 'MM')",
-								"type": "Expression"
-							}
-						}
-					}
-				]
-			},
-			{
 				"name": "pull wbs from plant db",
 				"type": "Copy",
 				"dependsOn": [],
@@ -207,6 +62,124 @@
 							},
 							"file_name": "WBS-raw"
 						}
+					}
+				]
+			},
+			{
+				"name": "process plant wbs data",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "pull wbs from plant db",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "process-plant-wbs",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"year": {
+							"value": {
+								"value": "@utcNow('yyyy')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"month": {
+							"value": {
+								"value": "@utcNow('MM')",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true
+				}
+			},
+			{
+				"name": "persist latest wbs owner",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "process plant wbs data",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ParquetSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "ParquetReadSettings"
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings",
+							"copyBehavior": "PreserveHierarchy"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "WBSSource",
+						"type": "DatasetReference",
+						"parameters": {
+							"year": {
+								"value": "@formatDateTime(utcNow(), 'yyyy')",
+								"type": "Expression"
+							},
+							"month": {
+								"value": "@formatDateTime(utcNow(), 'MM')",
+								"type": "Expression"
+							},
+							"file_name": "WBS"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "WBSLatest",
+						"type": "DatasetReference"
 					}
 				]
 			}
