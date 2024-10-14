@@ -11,6 +11,9 @@
 			},
 			"month": {
 				"type": "string"
+			},
+			"file_name": {
+				"type": "string"
 			}
 		},
 		"annotations": [],
@@ -18,9 +21,12 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
-				"fileName": "WBS.parquet",
+				"fileName": {
+					"value": "@{dataset().file_name}.parquet",
+					"type": "Expression"
+				},
 				"folderPath": {
-					"value": "@concat('finops-wbs-prod/', dataset().year, '/', dataset().month)",
+					"value": "@concat('sap/', dataset().year, '/', dataset().month)",
 					"type": "Expression"
 				},
 				"fileSystem": "usage"
