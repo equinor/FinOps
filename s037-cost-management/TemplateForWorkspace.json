@@ -7,9 +7,13 @@
 			"metadata": "Workspace name",
 			"defaultValue": "s037-cost-management"
 		},
-		"AzureDataLakeStorage1_accountKey": {
+		"FinOpsHubsTest_accountKey": {
 			"type": "secureString",
-			"metadata": "Secure string for 'accountKey' of 'AzureDataLakeStorage1'"
+			"metadata": "Secure string for 'accountKey' of 'FinOpsHubsTest'"
+		},
+		"FinopsWbsProdGold_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'FinopsWbsProdGold'"
 		},
 		"NewServiceNow_connectionString": {
 			"type": "secureString",
@@ -25,6 +29,10 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 's037-cost-management-WorkspaceDefaultSqlServer'",
 			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:s037-cost-management.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
+		},
+		"subscriptions_bronze_dev_lakehouse_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'subscriptions_bronze_dev_lakehouse'"
 		},
 		"Ad-hoc Combined Extend AI column and WBS tags - Extended Parquet_pipelineStorageAccountVariable": {
 			"type": "string",
@@ -166,10 +174,6 @@
 			"type": "string",
 			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
 		},
-		"FinopsWbsProdGold_dataSetLinkedServiceName": {
-			"type": "string",
-			"defaultValue": "FinopsWbsProdGold"
-		},
 		"Monthly_Parquet_dataSetLinkedServiceName": {
 			"type": "string",
 			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
@@ -197,6 +201,10 @@
 		"Parquet_for_Deletion_dataSetLinkedServiceName": {
 			"type": "string",
 			"defaultValue": "s037-cost-management-WorkspaceDefaultStorage"
+		},
+		"PlantSapWbs_dataSetLinkedServiceName": {
+			"type": "string",
+			"defaultValue": "PlantSapDb"
 		},
 		"PricesheetExportSink_dataSetLinkedServiceName": {
 			"type": "string",
@@ -362,10 +370,6 @@
 			"type": "string",
 			"defaultValue": "ms_consumption_api_rest"
 		},
-		"AzureDataLakeStorage1_linkedServiceUrl": {
-			"type": "string",
-			"defaultValue": "https://s037costmgmt.dfs.core.windows.net/"
-		},
 		"AzureManagementAPI_linkedServiceUrl": {
 			"type": "string",
 			"defaultValue": "https://management.azure.com/"
@@ -380,7 +384,11 @@
 		},
 		"FinOpsHubsTest_linkedServiceUrl": {
 			"type": "string",
-			"defaultValue": "https://myfinopshub5f2xqvwwmha5y.dfs.core.windows.net/"
+			"defaultValue": "https://s037costmgmt.dfs.core.windows.net/"
+		},
+		"FinopsWbsProdGold_linkedServiceUrl": {
+			"type": "string",
+			"defaultValue": "https://s037costmgmt.dfs.core.windows.net/"
 		},
 		"HUB Storage Account_linkedServiceUrl": {
 			"type": "string",
@@ -429,6 +437,10 @@
 		"s037-cost-management-WorkspaceDefaultStorage_linkedServiceUrl": {
 			"type": "string",
 			"defaultValue": "https://s037costmgmt.dfs.core.windows.net"
+		},
+		"subscriptions_bronze_dev_lakehouse_linkedServiceUrl": {
+			"type": "string",
+			"defaultValue": "https://s037costmgmt.dfs.core.windows.net/"
 		},
 		"Remove First Two Lines_sourceDataflowLinkedServiceNameRef": {
 			"type": "string",
@@ -999,6 +1011,18 @@
 			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
 		},
 		"process-benefit-purchases_notebookSparkPoolEndpointRef": {
+			"type": "string",
+			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
+		},
+		"process-plant-wbs_notebookSparkPoolNameRef": {
+			"type": "string",
+			"defaultValue": "sprkpool33large"
+		},
+		"process-plant-wbs_notebookSparkPoolIdRef": {
+			"type": "string",
+			"defaultValue": "/subscriptions/13d66f54-0a19-4912-b4f3-54d15897368d/resourceGroups/Synapse/providers/Microsoft.Synapse/workspaces/s037-cost-management/bigDataPools/sprkpool33large"
+		},
+		"process-plant-wbs_notebookSparkPoolEndpointRef": {
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
@@ -20705,11 +20729,124 @@
 			"properties": {
 				"activities": [
 					{
+						"name": "pull wbs from plant db",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"queryTimeout": "02:00:00",
+								"isolationLevel": "Serializable",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings",
+									"copyBehavior": "PreserveHierarchy"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "PlantSapWbs",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "WBSSource",
+								"type": "DatasetReference",
+								"parameters": {
+									"year": {
+										"value": "@formatDateTime(utcNow(), 'yyyy')",
+										"type": "Expression"
+									},
+									"month": {
+										"value": "@formatDateTime(utcNow(), 'MM')",
+										"type": "Expression"
+									},
+									"file_name": "WBS-raw"
+								}
+							}
+						]
+					},
+					{
+						"name": "process plant wbs data",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "pull wbs from plant db",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "process-plant-wbs",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"year": {
+									"value": {
+										"value": "@utcNow('yyyy')",
+										"type": "Expression"
+									},
+									"type": "string"
+								},
+								"month": {
+									"value": {
+										"value": "@utcNow('MM')",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"numExecutors": null
+						}
+					},
+					{
 						"name": "persist latest wbs owner",
 						"type": "Copy",
 						"dependsOn": [
 							{
-								"activity": "pull wbs table from fabric finops-wbs-prod workspace",
+								"activity": "process plant wbs data",
 								"dependencyConditions": [
 									"Succeeded"
 								]
@@ -20767,7 +20904,8 @@
 									"month": {
 										"value": "@formatDateTime(utcNow(), 'MM')",
 										"type": "Expression"
-									}
+									},
+									"file_name": "WBS"
 								}
 							}
 						],
@@ -20776,74 +20914,6 @@
 								"referenceName": "WBSLatest",
 								"type": "DatasetReference",
 								"parameters": {}
-							}
-						]
-					},
-					{
-						"name": "pull wbs table from fabric finops-wbs-prod workspace",
-						"type": "Copy",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [
-							{
-								"name": "Source",
-								"value": "wbs"
-							},
-							{
-								"name": "Destination",
-								"value": "usage/@{concat('finops-wbs-prod/', formatDateTime(utcNow(), 'yyyy'), '/', formatDateTime(utcNow(), 'MM'))}/WBS.parquet"
-							}
-						],
-						"typeProperties": {
-							"source": {
-								"type": "LakehouseTableSource"
-							},
-							"sink": {
-								"type": "ParquetSink",
-								"storeSettings": {
-									"type": "AzureBlobFSWriteSettings"
-								},
-								"formatSettings": {
-									"type": "ParquetWriteSettings"
-								}
-							},
-							"enableStaging": false,
-							"translator": {
-								"type": "TabularTranslator",
-								"typeConversion": true,
-								"typeConversionSettings": {
-									"allowDataTruncation": true,
-									"treatBooleanAsNumber": false
-								}
-							}
-						},
-						"inputs": [
-							{
-								"referenceName": "FinopsWbsProdGold",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						],
-						"outputs": [
-							{
-								"referenceName": "WBSSource",
-								"type": "DatasetReference",
-								"parameters": {
-									"year": {
-										"value": "@formatDateTime(utcNow(), 'yyyy')",
-										"type": "Expression"
-									},
-									"month": {
-										"value": "@formatDateTime(utcNow(), 'MM')",
-										"type": "Expression"
-									}
-								}
 							}
 						]
 					}
@@ -20857,9 +20927,10 @@
 				"annotations": []
 			},
 			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/PlantSapWbs')]",
 				"[concat(variables('workspaceId'), '/datasets/WBSSource')]",
-				"[concat(variables('workspaceId'), '/datasets/WBSLatest')]",
-				"[concat(variables('workspaceId'), '/datasets/FinopsWbsProdGold')]"
+				"[concat(variables('workspaceId'), '/notebooks/process-plant-wbs')]",
+				"[concat(variables('workspaceId'), '/datasets/WBSLatest')]"
 			]
 		},
 		{
@@ -21648,71 +21719,6 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/FinopsWbsProdGold')]",
-			"type": "Microsoft.Synapse/workspaces/datasets",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "[parameters('FinopsWbsProdGold_dataSetLinkedServiceName')]",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "LakehouseTable",
-				"schema": [
-					{
-						"name": "TaskResponsibility",
-						"type": "string"
-					},
-					{
-						"name": "WBSID",
-						"type": "string"
-					},
-					{
-						"name": "WBS",
-						"type": "string"
-					},
-					{
-						"name": "Description",
-						"type": "string"
-					},
-					{
-						"name": "ActiveStatusIds",
-						"type": "string"
-					},
-					{
-						"name": "CreatedDate",
-						"type": "date"
-					},
-					{
-						"name": "ModifiedDate",
-						"type": "date"
-					},
-					{
-						"name": "IsActive",
-						"type": "boolean"
-					},
-					{
-						"name": "WBSOwnerEMployeeID",
-						"type": "string"
-					},
-					{
-						"name": "WBSOwnerName",
-						"type": "string"
-					},
-					{
-						"name": "WBSOwnerShortName",
-						"type": "string"
-					}
-				],
-				"typeProperties": {
-					"table": "wbs"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/linkedServices/', parameters('FinopsWbsProdGold_dataSetLinkedServiceName'))]"
-			]
-		},
-		{
 			"name": "[concat(parameters('workspaceName'), '/Monthly_Parquet')]",
 			"type": "Microsoft.Synapse/workspaces/datasets",
 			"apiVersion": "2019-06-01-preview",
@@ -22238,6 +22244,167 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/linkedServices/', parameters('Parquet_for_Deletion_dataSetLinkedServiceName'))]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/PlantSapWbs')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('PlantSapWbs_dataSetLinkedServiceName')]",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "wbsId",
+						"type": "nvarchar"
+					},
+					{
+						"name": "companyId",
+						"type": "nvarchar"
+					},
+					{
+						"name": "controllingArea",
+						"type": "nvarchar"
+					},
+					{
+						"name": "code",
+						"type": "nvarchar"
+					},
+					{
+						"name": "plantId",
+						"type": "nvarchar"
+					},
+					{
+						"name": "description",
+						"type": "nvarchar"
+					},
+					{
+						"name": "activeStatusIds",
+						"type": "nvarchar"
+					},
+					{
+						"name": "systemStatusIds",
+						"type": "nvarchar"
+					},
+					{
+						"name": "userStatusIds",
+						"type": "nvarchar"
+					},
+					{
+						"name": "createdDate",
+						"type": "date"
+					},
+					{
+						"name": "modifiedDate",
+						"type": "date"
+					},
+					{
+						"name": "internalProductValueChain",
+						"type": "nvarchar"
+					},
+					{
+						"name": "internalCustomerProcessArea",
+						"type": "nvarchar"
+					},
+					{
+						"name": "processId",
+						"type": "nvarchar"
+					},
+					{
+						"name": "serviceId",
+						"type": "nvarchar"
+					},
+					{
+						"name": "serviceCategoryId",
+						"type": "nvarchar"
+					},
+					{
+						"name": "serviceCategory",
+						"type": "nvarchar"
+					},
+					{
+						"name": "wellboreId",
+						"type": "nvarchar"
+					},
+					{
+						"name": "deliveryNumber",
+						"type": "nvarchar"
+					},
+					{
+						"name": "plannedProject",
+						"type": "nvarchar"
+					},
+					{
+						"name": "applicationId",
+						"type": "nvarchar"
+					},
+					{
+						"name": "levelInHierarchy",
+						"type": "tinyint",
+						"precision": 3
+					},
+					{
+						"name": "taskResponsibility",
+						"type": "nvarchar"
+					},
+					{
+						"name": "taskStructure",
+						"type": "nvarchar"
+					},
+					{
+						"name": "expenditureCategory",
+						"type": "nvarchar"
+					},
+					{
+						"name": "JointVentureObjectType",
+						"type": "nvarchar"
+					},
+					{
+						"name": "OmniaDatasetTimeStamp",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					},
+					{
+						"name": "operativeIndAccAssignmentElement",
+						"type": "nvarchar"
+					},
+					{
+						"name": "operativeIndPlanningElement",
+						"type": "nvarchar"
+					},
+					{
+						"name": "operativeIndBillingElement",
+						"type": "nvarchar"
+					},
+					{
+						"name": "taskResponsibleUser",
+						"type": "nvarchar"
+					},
+					{
+						"name": "taskResponsibleEmployeeID",
+						"type": "nvarchar"
+					},
+					{
+						"name": "taskResponsibleShortName",
+						"type": "nvarchar"
+					},
+					{
+						"name": "taskResponsibleEmail",
+						"type": "nvarchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "enterprise",
+					"table": "WBS_v1"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/', parameters('PlantSapWbs_dataSetLinkedServiceName'))]"
 			]
 		},
 		{
@@ -24050,7 +24217,7 @@
 					"location": {
 						"type": "AzureBlobFSLocation",
 						"fileName": "WBS-latest.parquet",
-						"folderPath": "finops-wbs-prod",
+						"folderPath": "sap",
 						"fileSystem": "usage"
 					},
 					"compressionCodec": "snappy"
@@ -24076,6 +24243,9 @@
 					},
 					"month": {
 						"type": "string"
+					},
+					"file_name": {
+						"type": "string"
 					}
 				},
 				"annotations": [],
@@ -24083,9 +24253,12 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
-						"fileName": "WBS.parquet",
+						"fileName": {
+							"value": "@{dataset().file_name}.parquet",
+							"type": "Expression"
+						},
 						"folderPath": {
-							"value": "@concat('finops-wbs-prod/', dataset().year, '/', dataset().month)",
+							"value": "@concat('sap/', dataset().year, '/', dataset().month)",
 							"type": "Expression"
 						},
 						"fileSystem": "usage"
@@ -24717,29 +24890,6 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/AzureDataLakeStorage1')]",
-			"type": "Microsoft.Synapse/workspaces/linkedServices",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"annotations": [],
-				"type": "AzureBlobFS",
-				"typeProperties": {
-					"url": "[parameters('AzureDataLakeStorage1_linkedServiceUrl')]",
-					"accountKey": {
-						"type": "SecureString",
-						"value": "[parameters('AzureDataLakeStorage1_accountKey')]"
-					}
-				},
-				"connectVia": {
-					"referenceName": "AutoResolveIntegrationRuntime",
-					"type": "IntegrationRuntimeReference"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('workspaceName'), '/AzureManagementAPI')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
@@ -24858,16 +25008,9 @@
 				"type": "AzureBlobFS",
 				"typeProperties": {
 					"url": "[parameters('FinOpsHubsTest_linkedServiceUrl')]",
-					"tenant": "3aa4a235-b6e2-48d5-9195-7fcf05b459b0",
-					"servicePrincipalId": "4c1cded2-f7a7-4c00-8d65-0a3287cbd682",
-					"servicePrincipalCredentialType": "ServicePrincipalKey",
-					"servicePrincipalCredential": {
-						"type": "AzureKeyVaultSecret",
-						"store": {
-							"referenceName": "ACM_Toolkit_kv",
-							"type": "LinkedServiceReference"
-						},
-						"secretName": "sp-password"
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('FinOpsHubsTest_accountKey')]"
 					}
 				},
 				"connectVia": {
@@ -24876,8 +25019,7 @@
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]",
-				"[concat(variables('workspaceId'), '/linkedServices/ACM_Toolkit_kv')]"
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
 			]
 		},
 		{
@@ -24886,20 +25028,12 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"annotations": [],
-				"type": "Lakehouse",
+				"type": "AzureBlobFS",
 				"typeProperties": {
-					"workspaceId": "e64e9aca-92cf-4d15-965c-321d6308bca6",
-					"artifactId": "2d2ed7e3-1ec8-4e43-b8bb-2a3c0454c5a8",
-					"tenant": "3aa4a235-b6e2-48d5-9195-7fcf05b459b0",
-					"servicePrincipalId": "4c1cded2-f7a7-4c00-8d65-0a3287cbd682",
-					"servicePrincipalCredentialType": "ServicePrincipalKey",
-					"servicePrincipalCredential": {
-						"type": "AzureKeyVaultSecret",
-						"store": {
-							"referenceName": "ACM_Toolkit_kv",
-							"type": "LinkedServiceReference"
-						},
-						"secretName": "sp-password"
+					"url": "[parameters('FinopsWbsProdGold_linkedServiceUrl')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('FinopsWbsProdGold_accountKey')]"
 					}
 				},
 				"connectVia": {
@@ -24908,8 +25042,7 @@
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]",
-				"[concat(variables('workspaceId'), '/linkedServices/ACM_Toolkit_kv')]"
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
 			]
 		},
 		{
@@ -25019,18 +25152,38 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/PowerBIWorkspace1')]",
+			"name": "[concat(parameters('workspaceName'), '/PlantSapDb')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"annotations": [],
-				"type": "PowerBIWorkspace",
+				"type": "AzureSqlDatabase",
 				"typeProperties": {
-					"workspaceID": "c775d006-ff61-4ed8-b67d-c66d63eb55f2",
-					"tenantID": "3aa4a235-b6e2-48d5-9195-7fcf05b459b0"
+					"server": "plantengineeringsqlprod.database.windows.net",
+					"database": "SAP",
+					"encrypt": "mandatory",
+					"trustServerCertificate": false,
+					"authenticationType": "ServicePrincipal",
+					"servicePrincipalId": "4c1cded2-f7a7-4c00-8d65-0a3287cbd682",
+					"servicePrincipalCredential": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "ACM_Toolkit_kv",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "sp-password"
+					},
+					"tenant": "3aa4a235-b6e2-48d5-9195-7fcf05b459b0"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
 				}
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]",
+				"[concat(variables('workspaceId'), '/linkedServices/ACM_Toolkit_kv')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('workspaceName'), '/Pricesheet API')]",
@@ -25366,20 +25519,12 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"annotations": [],
-				"type": "Lakehouse",
+				"type": "AzureBlobFS",
 				"typeProperties": {
-					"workspaceId": "c7651b6f-1da5-4098-b89c-912f51ebfbe2",
-					"artifactId": "bad450e1-2e58-4da2-9f00-5b500f717224",
-					"tenant": "3aa4a235-b6e2-48d5-9195-7fcf05b459b0",
-					"servicePrincipalId": "4c1cded2-f7a7-4c00-8d65-0a3287cbd682",
-					"servicePrincipalCredentialType": "ServicePrincipalKey",
-					"servicePrincipalCredential": {
-						"type": "AzureKeyVaultSecret",
-						"store": {
-							"referenceName": "ACM_Toolkit_kv",
-							"type": "LinkedServiceReference"
-						},
-						"secretName": "sp-password"
+					"url": "[parameters('subscriptions_bronze_dev_lakehouse_linkedServiceUrl')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('subscriptions_bronze_dev_lakehouse_accountKey')]"
 					}
 				},
 				"connectVia": {
@@ -25388,8 +25533,7 @@
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]",
-				"[concat(variables('workspaceId'), '/linkedServices/ACM_Toolkit_kv')]"
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
 			]
 		},
 		{
@@ -41520,7 +41664,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "20ca970b-d46f-4707-b5bc-3e3ec2206a6f"
+						"spark.autotune.trackingId": "a0a078e3-a274-4063-bf98-42cbbbb4c647"
 					}
 				},
 				"metadata": {
@@ -41545,8 +41689,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -42427,7 +42570,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "4dea71ab-82df-410d-9949-ff73bdf3140a"
+						"spark.autotune.trackingId": "83063df5-785f-4537-91a7-b52d11e6c934"
 					}
 				},
 				"metadata": {
@@ -42452,8 +42595,7 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112,
-						"automaticScaleJobs": true
+						"memory": 112
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -42478,11 +42620,10 @@
 							"storageAccount = 's037costmgmt'"
 						],
 						"outputs": [],
-						"execution_count": 47
+						"execution_count": 26
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"import pyspark.sql.functions as F\n",
 							"import pyspark.sql.window as W\n",
@@ -42491,7 +42632,7 @@
 							"import numpy as np"
 						],
 						"outputs": [],
-						"execution_count": 48
+						"execution_count": 27
 					},
 					{
 						"cell_type": "code",
@@ -42511,7 +42652,7 @@
 							"window = W.Window.orderBy(\"Date\").rowsBetween(W.Window.unboundedPreceding, 0)"
 						],
 						"outputs": [],
-						"execution_count": 49
+						"execution_count": 28
 					},
 					{
 						"cell_type": "markdown",
@@ -42549,7 +42690,7 @@
 							"cost_df = cost_df.withColumn('Date', F.date_trunc('month', 'Date'))"
 						],
 						"outputs": [],
-						"execution_count": 50
+						"execution_count": 29
 					},
 					{
 						"cell_type": "code",
@@ -42586,30 +42727,7 @@
 							"additional_discount_cost_df = additional_discount_cost_df.groupBy('Date').agg(F.sum('DiscountAdjustedCost').alias('Cost')).orderBy('Date')"
 						],
 						"outputs": [],
-						"execution_count": 51
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
-						"source": [
-							"ondemand_usage_df = cost_df.alias('ondemand_usage_df')\r\n",
-							"ondemand_usage_df = ondemand_usage_df.select('Date', 'CostInBillingCurrency', 'PricingModel', 'ChargeType')\r\n",
-							"is_ondemand_usage = (F.col('ChargeType') == 'Usage') & (F.col('PricingModel') == 'OnDemand')\r\n",
-							"ondemand_usage_df = ondemand_usage_df.where(is_ondemand_usage)\r\n",
-							"ondemand_usage_df = ondemand_usage_df.groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('Cost')).orderBy('Date')"
-						],
-						"outputs": [],
-						"execution_count": 52
+						"execution_count": 30
 					},
 					{
 						"cell_type": "code",
@@ -42633,7 +42751,31 @@
 							"reservation_purchases_df = reservation_purchases_df.groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('Cost')).orderBy('Date')"
 						],
 						"outputs": [],
-						"execution_count": 53
+						"execution_count": 31
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"ondemand_usage_df = cost_df.alias('ondemand_usage_df')\r\n",
+							"ondemand_usage_df = ondemand_usage_df.select('Date', 'CostInBillingCurrency', 'PricingModel', 'ChargeType')\r\n",
+							"is_ondemand_usage = (F.col('ChargeType') == 'Usage') & (F.col('PricingModel') == 'OnDemand')\r\n",
+							"ondemand_usage_df = ondemand_usage_df.where(is_ondemand_usage)\r\n",
+							"# ondemand_usage_df = ondemand_usage_df.where(~is_reservation_purchase)\r\n",
+							"ondemand_usage_df = ondemand_usage_df.groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('Cost')).orderBy('Date')"
+						],
+						"outputs": [],
+						"execution_count": 43
 					},
 					{
 						"cell_type": "code",
@@ -42654,7 +42796,7 @@
 							"discount_df = discount_df.groupBy('Date').agg(F.sum('CostInBillingCurrency').alias('Cost')).orderBy('Date')"
 						],
 						"outputs": [],
-						"execution_count": 54
+						"execution_count": 33
 					},
 					{
 						"cell_type": "code",
@@ -42676,7 +42818,7 @@
 							"retail_df = retail_df.groupBy('Date').agg(F.sum('RetailCost').alias('Cost')).orderBy('Date')"
 						],
 						"outputs": [],
-						"execution_count": 55
+						"execution_count": 34
 					},
 					{
 						"cell_type": "markdown",
@@ -42719,7 +42861,7 @@
 							"    .orderBy('Date')"
 						],
 						"outputs": [],
-						"execution_count": 56
+						"execution_count": 20
 					},
 					{
 						"cell_type": "markdown",
@@ -49329,6 +49471,346 @@
 						],
 						"outputs": [],
 						"execution_count": 6
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/process-plant-wbs')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "NotebookInProduction/SAP"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "[parameters('process-plant-wbs_notebookSparkPoolNameRef')]",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "112g",
+					"driverCores": 16,
+					"executorMemory": "112g",
+					"executorCores": 16,
+					"numExecutors": 1,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "5",
+						"spark.autotune.trackingId": "6abc24b4-8bf6-48f6-b294-9ed214968019"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "[parameters('process-plant-wbs_notebookSparkPoolIdRef')]",
+						"name": "[parameters('process-plant-wbs_notebookSparkPoolNameRef')]",
+						"type": "Spark",
+						"endpoint": "[parameters('process-plant-wbs_notebookSparkPoolEndpointRef')]",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 16,
+						"memory": 112
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"source": [
+							"import pyspark.sql.functions as F"
+						],
+						"outputs": [],
+						"execution_count": 2
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"year = '2024'\r\n",
+							"month = '10'"
+						],
+						"outputs": [],
+						"execution_count": 3
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Load raw WBS ingested from plant db"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"wbs_df = spark.read.format('parquet').load(f'abfss://usage@s037costmgmt.dfs.core.windows.net/sap/{year}/{month}/WBS-raw.parquet')"
+						],
+						"outputs": [],
+						"execution_count": 4
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Select desired columns"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"wbs_df = wbs_df.select(\r\n",
+							"    'wbsId', \r\n",
+							"    'code', \r\n",
+							"    'description', \r\n",
+							"    'activeStatusIds', \r\n",
+							"    'createdDate', \r\n",
+							"    'modifiedDate', \r\n",
+							"    'taskResponsibleEmployeeID',\r\n",
+							"    'taskResponsibleShortName'\r\n",
+							")"
+						],
+						"outputs": [],
+						"execution_count": 5
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Determine activity status"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"wbs_df = wbs_df.withColumn('IsActive', \r\n",
+							"    F.when(F.col('activeStatusIds').contains('TECO'), False)\r\n",
+							"    .when(F.col('activeStatusIds').contains('CLSD'), False)\r\n",
+							"    .when(F.col('activeStatusIds').contains('AALK'), False)\r\n",
+							"    .when(F.col('activeStatusIds').contains('LKD'), False)\r\n",
+							"    .when(F.col('activeStatusIds').contains('WBS3'), False)\r\n",
+							"    .when(F.col('activeStatusIds').contains('WBS2'), False)\r\n",
+							"    .otherwise(True)\r\n",
+							")"
+						],
+						"outputs": [],
+						"execution_count": 6
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Rename columns"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"wbs_df = wbs_df.withColumnRenamed('wbsId', 'WBSID')\r\n",
+							"wbs_df = wbs_df.withColumnRenamed('code', 'WBS')\r\n",
+							"wbs_df = wbs_df.withColumnRenamed('description', 'Description')\r\n",
+							"wbs_df = wbs_df.withColumnRenamed('activeStatusIds', 'ActiveStatusIds')\r\n",
+							"wbs_df = wbs_df.withColumnRenamed('createdDate', 'CreatedDate')\r\n",
+							"wbs_df = wbs_df.withColumnRenamed('modifiedDate', 'ModifiedDate')\r\n",
+							"wbs_df = wbs_df.withColumnRenamed('taskResponsibleShortName', 'WBSOwnerShortName')\r\n",
+							"wbs_df = wbs_df.withColumnRenamed('taskResponsibleEmployeeID', 'WBSOwnerEmployeeID')"
+						],
+						"outputs": [],
+						"execution_count": 7
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Remove WBS value duplicates"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"wbs_df = wbs_df.orderBy(F.desc('CreatedDate'))\r\n",
+							"wbs_df = wbs_df.dropDuplicates(subset=[\"WBS\"])"
+						],
+						"outputs": [],
+						"execution_count": 8
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Assign null values when WBS Owner doesn't exist"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"wbs_df = wbs_df.withColumn('WBSOwnerEmployeeID', F.when(F.col('WBSOwnerEmployeeID') == '00000000', None).otherwise(F.col('WBSOwnerEmployeeID')))\r\n",
+							"wbs_df = wbs_df.withColumn('WBSOwnerShortName', F.when(F.col('WBSOwnerShortName') == '', None).otherwise(F.col('WBSOwnerShortName')))"
+						],
+						"outputs": [],
+						"execution_count": 9
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"## Save transformed file in adls storage"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"target_path = f\"abfss://usage@s037costmgmt.dfs.core.windows.net/sap/{year}/{month}/WBS.parquet\"\r\n",
+							"wbs_df.write.format('parquet').mode('overwrite').save(target_path)"
+						],
+						"outputs": [],
+						"execution_count": 10
 					}
 				]
 			},
