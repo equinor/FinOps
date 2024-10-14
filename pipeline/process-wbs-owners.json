@@ -5,6 +5,8 @@
 			{
 				"name": "persist latest wbs owner",
 				"type": "Copy",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
 						"activity": "pull wbs table from fabric finops-wbs-prod workspace",
@@ -79,6 +81,8 @@
 			{
 				"name": "pull wbs table from fabric finops-wbs-prod workspace",
 				"type": "Copy",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
@@ -154,28 +158,40 @@
 					"secureOutput": false,
 					"secureInput": false
 				},
-				"userProperties": [
-					{
-						"name": "Source",
-						"value": "wbs"
-					},
-					{
-						"name": "Destination",
-						"value": "usage/@{concat('finops-wbs-prod/', formatDateTime(utcNow(), 'yyyy'), '/', formatDateTime(utcNow(), 'MM'))}/WBS.parquet"
-					}
-				],
+				"userProperties": [],
 				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"queryTimeout": "02:00:00",
+						"isolationLevel": "Serializable",
+						"partitionOption": "None"
+					},
 					"sink": {
 						"type": "ParquetSink",
 						"storeSettings": {
-							"type": "AzureBlobFSWriteSettings"
+							"type": "AzureBlobFSWriteSettings",
+							"copyBehavior": "MergeFiles"
 						},
 						"formatSettings": {
 							"type": "ParquetWriteSettings"
 						}
 					},
-					"enableStaging": false
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
 				},
+				"inputs": [
+					{
+						"referenceName": "PlantSapWbs",
+						"type": "DatasetReference"
+					}
+				],
 				"outputs": [
 					{
 						"referenceName": "WBSSource",
@@ -188,7 +204,8 @@
 							"month": {
 								"value": "@formatDateTime(utcNow(), 'MM')",
 								"type": "Expression"
-							}
+							},
+							"file_name": "WBS-raw"
 						}
 					}
 				]
