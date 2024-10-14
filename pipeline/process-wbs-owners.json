@@ -142,6 +142,56 @@
 						}
 					}
 				]
+			},
+			{
+				"name": "pull wbs from plant db",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [
+					{
+						"name": "Source",
+						"value": "wbs"
+					},
+					{
+						"name": "Destination",
+						"value": "usage/@{concat('finops-wbs-prod/', formatDateTime(utcNow(), 'yyyy'), '/', formatDateTime(utcNow(), 'MM'))}/WBS.parquet"
+					}
+				],
+				"typeProperties": {
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false
+				},
+				"outputs": [
+					{
+						"referenceName": "WBSSource",
+						"type": "DatasetReference",
+						"parameters": {
+							"year": {
+								"value": "@formatDateTime(utcNow(), 'yyyy')",
+								"type": "Expression"
+							},
+							"month": {
+								"value": "@formatDateTime(utcNow(), 'MM')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
 			}
 		],
 		"folder": {
