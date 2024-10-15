@@ -20826,6 +20826,11 @@
 								"storeSettings": {
 									"type": "AzureBlobFSReadSettings",
 									"recursive": true,
+									"wildcardFolderPath": {
+										"value": "sap/@{utcNow('yyyy')}/@{utcNow('MM')}/WBS.parquet",
+										"type": "Expression"
+									},
+									"wildcardFileName": "*.parquet",
 									"enablePartitionDiscovery": false
 								},
 								"formatSettings": {
@@ -20836,7 +20841,7 @@
 								"type": "ParquetSink",
 								"storeSettings": {
 									"type": "AzureBlobFSWriteSettings",
-									"copyBehavior": "PreserveHierarchy"
+									"copyBehavior": "MergeFiles"
 								},
 								"formatSettings": {
 									"type": "ParquetWriteSettings"
@@ -28162,7 +28167,7 @@
 					"name": "PowerBIViews"
 				},
 				"content": {
-					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW WBSOwners\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/finops-wbs-prod/WBS-latest.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n\n",
+					"query": "USE costmgmt\nGO\n\nCREATE OR ALTER VIEW WBSOwners\nAS\n\nSELECT\n    *\nFROM\n    OPENROWSET(\n        BULK 'https://s037costmgmt.dfs.core.windows.net/usage/sap/WBS-latest.parquet',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n\n",
 					"metadata": {
 						"language": "sql"
 					},
@@ -45069,7 +45074,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "d0e7ef0d-6b46-4659-9673-0cedbc7d794a"
+						"spark.autotune.trackingId": "0ccb91df-a8e7-4433-a5cf-3f2b8f7a8f6b"
 					}
 				},
 				"metadata": {
@@ -45942,7 +45947,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "013e6a1f-6d44-4909-a9bd-f4c0c4ba0f49"
+						"spark.autotune.trackingId": "640b070a-22f9-4f6e-a24e-e52791eade5d"
 					}
 				},
 				"metadata": {
@@ -47115,7 +47120,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "4bfff01f-42aa-419b-a402-97b62c423120"
+						"spark.autotune.trackingId": "d50c60dd-9988-462a-82c0-274516f1e032"
 					}
 				},
 				"metadata": {
