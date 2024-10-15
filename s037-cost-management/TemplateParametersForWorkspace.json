@@ -5,12 +5,6 @@
 		"workspaceName": {
 			"value": "s037-cost-management"
 		},
-		"FinOpsHubsTest_accountKey": {
-			"value": ""
-		},
-		"FinopsWbsProdGold_accountKey": {
-			"value": ""
-		},
 		"NewServiceNow_connectionString": {
 			"value": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=smdatasqlprod.database.windows.net;Initial Catalog=ServiceNow"
 		},
@@ -19,9 +13,6 @@
 		},
 		"s037-cost-management-WorkspaceDefaultSqlServer_connectionString": {
 			"value": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:s037-cost-management.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
-		},
-		"subscriptions_bronze_dev_lakehouse_accountKey": {
-			"value": ""
 		},
 		"Ad-hoc Combined Extend AI column and WBS tags - Extended Parquet_pipelineStorageAccountVariable": {
 			"value": "s037costmgmt"
@@ -281,15 +272,6 @@
 		"AzureManagementAPIMetricsReader_linkedServiceUrl": {
 			"value": "https://management.azure.com/"
 		},
-		"AzurePriceApi_linkedServiceUrl": {
-			"value": "https://prices.azure.com/"
-		},
-		"FinOpsHubsTest_linkedServiceUrl": {
-			"value": "https://s037costmgmt.dfs.core.windows.net/"
-		},
-		"FinopsWbsProdGold_linkedServiceUrl": {
-			"value": "https://s037costmgmt.dfs.core.windows.net/"
-		},
 		"HUB Storage Account_linkedServiceUrl": {
 			"value": "https://hubautomation.dfs.core.windows.net/"
 		},
@@ -298,9 +280,6 @@
 		},
 		"NorgesBankRestApi_linkedServiceUrl": {
 			"value": "https://data.norges-bank.no/"
-		},
-		"Pricesheet API_linkedServiceUrl": {
-			"value": "@{concat('https://consumption.azure.com/v3/enrollments/57950773/billingPeriods/',formatDateTime(utcNow(),'yyyyMM'),'/pricesheet')}"
 		},
 		"ServiceNowLinkedService_linkedServiceUrl": {
 			"value": "https://api.gateway.equinor.com/api/x_stasa_serv_mgnt/v1/"
@@ -311,23 +290,14 @@
 		"ms_billing_cost_report_download_linkedServiceUrl": {
 			"value": "@{linkedService().blobPath}"
 		},
-		"ms_consumption_api_http_linkedServiceUrl": {
-			"value": "@{linkedService().baseUrl}"
-		},
 		"ms_consumption_api_rest_linkedServiceUrl": {
 			"value": "@{linkedService().baseUrl}"
-		},
-		"ms_management_api_rest_linkedServiceUrl": {
-			"value": "https://management.azure.com"
 		},
 		"omniaacdcdlsprod_linkedServiceUrl": {
 			"value": "https://omniaacdcdlsprod.dfs.core.windows.net"
 		},
 		"s037-cost-management-WorkspaceDefaultStorage_linkedServiceUrl": {
 			"value": "https://s037costmgmt.dfs.core.windows.net"
-		},
-		"subscriptions_bronze_dev_lakehouse_linkedServiceUrl": {
-			"value": "https://s037costmgmt.dfs.core.windows.net/"
 		},
 		"Remove First Two Lines_sourceDataflowLinkedServiceNameRef": {
 			"value": "s037-cost-management-WorkspaceDefaultStorage"
@@ -839,23 +809,23 @@
 		"vm-hub-deployments_notebookSparkPoolEndpointRef": {
 			"value": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
-		"sparkpool32_delayInMinutes": {
-			"value": 15
+		"prodcluster_delayInMinutes": {
+			"value": 30
 		},
-		"sparkpool32_maxNodeCount": {
-			"value": 5
+		"prodcluster_maxNodeCount": {
+			"value": 10
 		},
-		"sparkpool32_minNodeCount": {
+		"prodcluster_minNodeCount": {
 			"value": 3
 		},
-		"sparkpool32_nodeCount": {
-			"value": 0
+		"prodcluster_nodeCount": {
+			"value": 10
 		},
-		"sparkpool32_nodeSize": {
-			"value": "Medium"
+		"prodcluster_nodeSize": {
+			"value": "Large"
 		},
-		"sparkpool32_sparkVersion": {
-			"value": "3.2"
+		"prodcluster_sparkVersion": {
+			"value": "3.4"
 		},
 		"sprkpool33large_delayInMinutes": {
 			"value": 10
@@ -875,23 +845,23 @@
 		"sprkpool33large_sparkVersion": {
 			"value": "3.3"
 		},
-		"prodcluster_delayInMinutes": {
-			"value": 30
+		"sparkpool32_delayInMinutes": {
+			"value": 15
 		},
-		"prodcluster_maxNodeCount": {
-			"value": 10
+		"sparkpool32_maxNodeCount": {
+			"value": 5
 		},
-		"prodcluster_minNodeCount": {
+		"sparkpool32_minNodeCount": {
 			"value": 3
 		},
-		"prodcluster_nodeCount": {
-			"value": 10
+		"sparkpool32_nodeCount": {
+			"value": 0
 		},
-		"prodcluster_nodeSize": {
-			"value": "Large"
+		"sparkpool32_nodeSize": {
+			"value": "Medium"
 		},
-		"prodcluster_sparkVersion": {
-			"value": "3.4"
+		"sparkpool32_sparkVersion": {
+			"value": "3.2"
 		}
 	}
 }

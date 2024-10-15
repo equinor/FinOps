@@ -7,14 +7,6 @@
 			"metadata": "Workspace name",
 			"defaultValue": "s037-cost-management"
 		},
-		"FinOpsHubsTest_accountKey": {
-			"type": "secureString",
-			"metadata": "Secure string for 'accountKey' of 'FinOpsHubsTest'"
-		},
-		"FinopsWbsProdGold_accountKey": {
-			"type": "secureString",
-			"metadata": "Secure string for 'accountKey' of 'FinopsWbsProdGold'"
-		},
 		"NewServiceNow_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'NewServiceNow'",
@@ -29,10 +21,6 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 's037-cost-management-WorkspaceDefaultSqlServer'",
 			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:s037-cost-management.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
-		},
-		"subscriptions_bronze_dev_lakehouse_accountKey": {
-			"type": "secureString",
-			"metadata": "Secure string for 'accountKey' of 'subscriptions_bronze_dev_lakehouse'"
 		},
 		"Ad-hoc Combined Extend AI column and WBS tags - Extended Parquet_pipelineStorageAccountVariable": {
 			"type": "string",
@@ -378,18 +366,6 @@
 			"type": "string",
 			"defaultValue": "https://management.azure.com/"
 		},
-		"AzurePriceApi_linkedServiceUrl": {
-			"type": "string",
-			"defaultValue": "https://prices.azure.com/"
-		},
-		"FinOpsHubsTest_linkedServiceUrl": {
-			"type": "string",
-			"defaultValue": "https://s037costmgmt.dfs.core.windows.net/"
-		},
-		"FinopsWbsProdGold_linkedServiceUrl": {
-			"type": "string",
-			"defaultValue": "https://s037costmgmt.dfs.core.windows.net/"
-		},
 		"HUB Storage Account_linkedServiceUrl": {
 			"type": "string",
 			"defaultValue": "https://hubautomation.dfs.core.windows.net/"
@@ -401,10 +377,6 @@
 		"NorgesBankRestApi_linkedServiceUrl": {
 			"type": "string",
 			"defaultValue": "https://data.norges-bank.no/"
-		},
-		"Pricesheet API_linkedServiceUrl": {
-			"type": "string",
-			"defaultValue": "@{concat('https://consumption.azure.com/v3/enrollments/57950773/billingPeriods/',formatDateTime(utcNow(),'yyyyMM'),'/pricesheet')}"
 		},
 		"ServiceNowLinkedService_linkedServiceUrl": {
 			"type": "string",
@@ -418,17 +390,9 @@
 			"type": "string",
 			"defaultValue": "@{linkedService().blobPath}"
 		},
-		"ms_consumption_api_http_linkedServiceUrl": {
-			"type": "string",
-			"defaultValue": "@{linkedService().baseUrl}"
-		},
 		"ms_consumption_api_rest_linkedServiceUrl": {
 			"type": "string",
 			"defaultValue": "@{linkedService().baseUrl}"
-		},
-		"ms_management_api_rest_linkedServiceUrl": {
-			"type": "string",
-			"defaultValue": "https://management.azure.com"
 		},
 		"omniaacdcdlsprod_linkedServiceUrl": {
 			"type": "string",
@@ -437,10 +401,6 @@
 		"s037-cost-management-WorkspaceDefaultStorage_linkedServiceUrl": {
 			"type": "string",
 			"defaultValue": "https://s037costmgmt.dfs.core.windows.net"
-		},
-		"subscriptions_bronze_dev_lakehouse_linkedServiceUrl": {
-			"type": "string",
-			"defaultValue": "https://s037costmgmt.dfs.core.windows.net/"
 		},
 		"Remove First Two Lines_sourceDataflowLinkedServiceNameRef": {
 			"type": "string",
@@ -1122,29 +1082,29 @@
 			"type": "string",
 			"defaultValue": "https://s037-cost-management.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sprkpool33large"
 		},
-		"sparkpool32_delayInMinutes": {
+		"prodcluster_delayInMinutes": {
 			"type": "int",
-			"defaultValue": 15
+			"defaultValue": 30
 		},
-		"sparkpool32_maxNodeCount": {
+		"prodcluster_maxNodeCount": {
 			"type": "int",
-			"defaultValue": 5
+			"defaultValue": 10
 		},
-		"sparkpool32_minNodeCount": {
+		"prodcluster_minNodeCount": {
 			"type": "int",
 			"defaultValue": 3
 		},
-		"sparkpool32_nodeCount": {
+		"prodcluster_nodeCount": {
 			"type": "int",
-			"defaultValue": 0
+			"defaultValue": 10
 		},
-		"sparkpool32_nodeSize": {
+		"prodcluster_nodeSize": {
 			"type": "string",
-			"defaultValue": "Medium"
+			"defaultValue": "Large"
 		},
-		"sparkpool32_sparkVersion": {
+		"prodcluster_sparkVersion": {
 			"type": "string",
-			"defaultValue": "3.2"
+			"defaultValue": "3.4"
 		},
 		"sprkpool33large_delayInMinutes": {
 			"type": "int",
@@ -1170,29 +1130,29 @@
 			"type": "string",
 			"defaultValue": "3.3"
 		},
-		"prodcluster_delayInMinutes": {
+		"sparkpool32_delayInMinutes": {
 			"type": "int",
-			"defaultValue": 30
+			"defaultValue": 15
 		},
-		"prodcluster_maxNodeCount": {
+		"sparkpool32_maxNodeCount": {
 			"type": "int",
-			"defaultValue": 10
+			"defaultValue": 5
 		},
-		"prodcluster_minNodeCount": {
+		"sparkpool32_minNodeCount": {
 			"type": "int",
 			"defaultValue": 3
 		},
-		"prodcluster_nodeCount": {
+		"sparkpool32_nodeCount": {
 			"type": "int",
-			"defaultValue": 10
+			"defaultValue": 0
 		},
-		"prodcluster_nodeSize": {
+		"sparkpool32_nodeSize": {
 			"type": "string",
-			"defaultValue": "Large"
+			"defaultValue": "Medium"
 		},
-		"prodcluster_sparkVersion": {
+		"sparkpool32_sparkVersion": {
 			"type": "string",
-			"defaultValue": "3.4"
+			"defaultValue": "3.2"
 		}
 	},
 	"variables": {
@@ -24959,27 +24919,6 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/AzurePriceApi')]",
-			"type": "Microsoft.Synapse/workspaces/linkedServices",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"annotations": [],
-				"type": "RestService",
-				"typeProperties": {
-					"url": "[parameters('AzurePriceApi_linkedServiceUrl')]",
-					"enableServerCertificateValidation": false,
-					"authenticationType": "Anonymous"
-				},
-				"connectVia": {
-					"referenceName": "AutoResolveIntegrationRuntime",
-					"type": "IntegrationRuntimeReference"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('workspaceName'), '/CCM Storage')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
@@ -24989,52 +24928,6 @@
 				"typeProperties": {
 					"containerUri": "https://ccmstorageprod.blob.core.windows.net/costmanagementconnector-data",
 					"authenticationType": "Anonymous"
-				},
-				"connectVia": {
-					"referenceName": "AutoResolveIntegrationRuntime",
-					"type": "IntegrationRuntimeReference"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/FinOpsHubsTest')]",
-			"type": "Microsoft.Synapse/workspaces/linkedServices",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"annotations": [],
-				"type": "AzureBlobFS",
-				"typeProperties": {
-					"url": "[parameters('FinOpsHubsTest_linkedServiceUrl')]",
-					"accountKey": {
-						"type": "SecureString",
-						"value": "[parameters('FinOpsHubsTest_accountKey')]"
-					}
-				},
-				"connectVia": {
-					"referenceName": "AutoResolveIntegrationRuntime",
-					"type": "IntegrationRuntimeReference"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/FinopsWbsProdGold')]",
-			"type": "Microsoft.Synapse/workspaces/linkedServices",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"annotations": [],
-				"type": "AzureBlobFS",
-				"typeProperties": {
-					"url": "[parameters('FinopsWbsProdGold_linkedServiceUrl')]",
-					"accountKey": {
-						"type": "SecureString",
-						"value": "[parameters('FinopsWbsProdGold_accountKey')]"
-					}
 				},
 				"connectVia": {
 					"referenceName": "AutoResolveIntegrationRuntime",
@@ -25186,38 +25079,6 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/Pricesheet API')]",
-			"type": "Microsoft.Synapse/workspaces/linkedServices",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"annotations": [],
-				"type": "HttpServer",
-				"typeProperties": {
-					"url": "[parameters('Pricesheet API_linkedServiceUrl')]",
-					"enableServerCertificateValidation": true,
-					"authenticationType": "Anonymous",
-					"authHeaders": {
-						"Authorization": {
-							"type": "AzureKeyVaultSecret",
-							"store": {
-								"referenceName": "ACM_Toolkit_kv",
-								"type": "LinkedServiceReference"
-							},
-							"secretName": "EA-API-PRI-KEY"
-						}
-					}
-				},
-				"connectVia": {
-					"referenceName": "AutoResolveIntegrationRuntime",
-					"type": "IntegrationRuntimeReference"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]",
-				"[concat(variables('workspaceId'), '/linkedServices/ACM_Toolkit_kv')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('workspaceName'), '/ServiceNowLinkedService')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
@@ -25307,44 +25168,6 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/ms_consumption_api_http')]",
-			"type": "Microsoft.Synapse/workspaces/linkedServices",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"parameters": {
-					"baseUrl": {
-						"type": "String",
-						"defaultValue": "https://consumption.azure.com"
-					}
-				},
-				"annotations": [],
-				"type": "HttpServer",
-				"typeProperties": {
-					"url": "[parameters('ms_consumption_api_http_linkedServiceUrl')]",
-					"enableServerCertificateValidation": true,
-					"authenticationType": "Anonymous",
-					"authHeaders": {
-						"Authorization": {
-							"type": "AzureKeyVaultSecret",
-							"store": {
-								"referenceName": "ACM_Toolkit_kv",
-								"type": "LinkedServiceReference"
-							},
-							"secretName": "Bearer-EA-API-PRI-KEY"
-						}
-					}
-				},
-				"connectVia": {
-					"referenceName": "AutoResolveIntegrationRuntime",
-					"type": "IntegrationRuntimeReference"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]",
-				"[concat(variables('workspaceId'), '/linkedServices/ACM_Toolkit_kv')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('workspaceName'), '/ms_consumption_api_rest')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
@@ -25371,39 +25194,6 @@
 							"secretName": "Bearer-EA-API-PRI-KEY"
 						}
 					}
-				},
-				"connectVia": {
-					"referenceName": "AutoResolveIntegrationRuntime",
-					"type": "IntegrationRuntimeReference"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]",
-				"[concat(variables('workspaceId'), '/linkedServices/ACM_Toolkit_kv')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/ms_management_api_rest')]",
-			"type": "Microsoft.Synapse/workspaces/linkedServices",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"annotations": [],
-				"type": "RestService",
-				"typeProperties": {
-					"url": "[parameters('ms_management_api_rest_linkedServiceUrl')]",
-					"enableServerCertificateValidation": true,
-					"authenticationType": "AadServicePrincipal",
-					"servicePrincipalId": "4c1cded2-f7a7-4c00-8d65-0a3287cbd682",
-					"servicePrincipalKey": {
-						"type": "AzureKeyVaultSecret",
-						"store": {
-							"referenceName": "ACM_Toolkit_kv",
-							"type": "LinkedServiceReference"
-						},
-						"secretName": "sp-password"
-					},
-					"tenant": "3aa4a235-b6e2-48d5-9195-7fcf05b459b0",
-					"aadResourceId": "https://management.azure.com"
 				},
 				"connectVia": {
 					"referenceName": "AutoResolveIntegrationRuntime",
@@ -25503,29 +25293,6 @@
 				"type": "AzureBlobFS",
 				"typeProperties": {
 					"url": "[parameters('s037-cost-management-WorkspaceDefaultStorage_linkedServiceUrl')]"
-				},
-				"connectVia": {
-					"referenceName": "AutoResolveIntegrationRuntime",
-					"type": "IntegrationRuntimeReference"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/subscriptions_bronze_dev_lakehouse')]",
-			"type": "Microsoft.Synapse/workspaces/linkedServices",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"annotations": [],
-				"type": "AzureBlobFS",
-				"typeProperties": {
-					"url": "[parameters('subscriptions_bronze_dev_lakehouse_linkedServiceUrl')]",
-					"accountKey": {
-						"type": "SecureString",
-						"value": "[parameters('subscriptions_bronze_dev_lakehouse_accountKey')]"
-					}
 				},
 				"connectVia": {
 					"referenceName": "AutoResolveIntegrationRuntime",
@@ -45302,7 +45069,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "5",
-						"spark.autotune.trackingId": "2e18fef4-2d9c-4f74-922a-a2bcf499f91a"
+						"spark.autotune.trackingId": "d0e7ef0d-6b46-4659-9673-0cedbc7d794a"
 					}
 				},
 				"metadata": {
@@ -45327,7 +45094,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -45405,6 +45173,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"def get_last_day_prev_month(to_date):\r\n",
 							"    current_month = int(to_date[4:6])\r\n",
@@ -46173,7 +45942,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "14eb8daa-8383-417c-8466-199bda2b611e"
+						"spark.autotune.trackingId": "013e6a1f-6d44-4909-a9bd-f4c0c4ba0f49"
 					}
 				},
 				"metadata": {
@@ -46198,7 +45967,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -46416,7 +46186,7 @@
 							"# Load WBS file\r\n",
 							"current_year = fromDate[:4]\r\n",
 							"current_month = fromDate[4:6]\r\n",
-							"wbs_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/finops-wbs-prod/{current_year}/{current_month}/WBS.parquet'\r\n",
+							"wbs_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/sap/{current_year}/{current_month}/WBS.parquet'\r\n",
 							"wbs_df = spark.read.format('parquet').load(wbs_path)\r\n",
 							"\r\n",
 							"# Transform data\r\n",
@@ -47345,7 +47115,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "4",
-						"spark.autotune.trackingId": "8e98c541-e59d-4641-a79f-1906e1b09cc2"
+						"spark.autotune.trackingId": "4bfff01f-42aa-419b-a402-97b62c423120"
 					}
 				},
 				"metadata": {
@@ -47370,7 +47140,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 16,
-						"memory": 112
+						"memory": 112,
+						"automaticScaleJobs": true
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -47621,7 +47392,7 @@
 							"# Load WBS file\n",
 							"current_year = fromDate[:4]\n",
 							"current_month = fromDate[4:6]\n",
-							"wbs_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/finops-wbs-prod/{current_year}/{current_month}/WBS.parquet'\n",
+							"wbs_path = f'abfss://usage@{storageAccount}.dfs.core.windows.net/sap/{current_year}/{current_month}/WBS.parquet'\n",
 							"\n",
 							"# Process cost data\n",
 							"cost_df = spark.read.format('parquet').load(cost_source_path)\n",
@@ -53329,6 +53100,54 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/prodcluster')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": "[parameters('prodcluster_delayInMinutes')]"
+				},
+				"autoScale": {
+					"enabled": true,
+					"maxNodeCount": "[parameters('prodcluster_maxNodeCount')]",
+					"minNodeCount": "[parameters('prodcluster_minNodeCount')]"
+				},
+				"nodeCount": "[parameters('prodcluster_nodeCount')]",
+				"nodeSize": "[parameters('prodcluster_nodeSize')]",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "[parameters('prodcluster_sparkVersion')]",
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": false,
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
+				},
+				"autoScale": {
+					"enabled": true,
+					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
+					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
+				},
+				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
+				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": true,
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/sparkpool32')]",
 			"type": "Microsoft.Synapse/workspaces/bigDataPools",
 			"apiVersion": "2019-06-01-preview",
@@ -53355,58 +53174,7 @@
 				"sessionLevelPackagesEnabled": true,
 				"annotations": []
 			},
-			"dependsOn": [],
-			"location": "northeurope"
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/sprkpool33large')]",
-			"type": "Microsoft.Synapse/workspaces/bigDataPools",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"autoPause": {
-					"enabled": true,
-					"delayInMinutes": "[parameters('sprkpool33large_delayInMinutes')]"
-				},
-				"autoScale": {
-					"enabled": true,
-					"maxNodeCount": "[parameters('sprkpool33large_maxNodeCount')]",
-					"minNodeCount": "[parameters('sprkpool33large_minNodeCount')]"
-				},
-				"nodeCount": "[parameters('sprkpool33large_nodeCount')]",
-				"nodeSize": "[parameters('sprkpool33large_nodeSize')]",
-				"nodeSizeFamily": "MemoryOptimized",
-				"sparkVersion": "[parameters('sprkpool33large_sparkVersion')]",
-				"isComputeIsolationEnabled": false,
-				"sessionLevelPackagesEnabled": true,
-				"annotations": []
-			},
-			"dependsOn": [],
-			"location": "northeurope"
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/prodcluster')]",
-			"type": "Microsoft.Synapse/workspaces/bigDataPools",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"autoPause": {
-					"enabled": true,
-					"delayInMinutes": "[parameters('prodcluster_delayInMinutes')]"
-				},
-				"autoScale": {
-					"enabled": true,
-					"maxNodeCount": "[parameters('prodcluster_maxNodeCount')]",
-					"minNodeCount": "[parameters('prodcluster_minNodeCount')]"
-				},
-				"nodeCount": "[parameters('prodcluster_nodeCount')]",
-				"nodeSize": "[parameters('prodcluster_nodeSize')]",
-				"nodeSizeFamily": "MemoryOptimized",
-				"sparkVersion": "[parameters('prodcluster_sparkVersion')]",
-				"isComputeIsolationEnabled": false,
-				"sessionLevelPackagesEnabled": false,
-				"annotations": []
-			},
-			"dependsOn": [],
-			"location": "northeurope"
+			"dependsOn": []
 		}
 	]
 }
